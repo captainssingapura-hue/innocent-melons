@@ -15,7 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The campus to play ({@link Campus}): the meadow as it lies, its offices standing where its huts stood. The avatar
+ * The campus to play ({@link Campus}): the meadow as it lies, bare of its village's huts, its main office and its
+ * departments standing east of the green, its road on past the well up to the church. The avatar
  * starts where the meadow's does, south of the river before the bridge, the campus beyond it; vehicles parked in a row
  * west of the road there, people standing in a row east of it.
  */
@@ -34,22 +35,23 @@ public record CampusWorld() implements PlayWorld {
 
     @Override
     public String description() {
-        return "The virtual headquarters on the meadow: its " + Campus.OFFICES.size()
-                + " offices in the huts round the well, each furnished, over the river from where you start.";
+        return "The virtual headquarters on the meadow: its main office east of the green, its "
+                + Department.ALL.size() + " departments round it, over the river from where you start; the road on"
+                + " past the well up to the church.";
     }
 
     @Override
     public void lay(final Course.Layout world) {
         Campus.register();
-        world.start(Village.start()).land(Meadow.land()).pieces(Campus.pieces()).rivers(Village.rivers())
-                .ponds(Village.ponds()).ruled(false)
-                .ways(Meadow.roads().roads().stream().flatMap(r -> r.pavements().stream()).map(p -> (Volume) p)
-                        .toList());
+        world.start(Village.start()).land(Meadow.land(Campus.HOUSED)).pieces(Campus.pieces())
+                .rivers(Village.rivers()).ponds(Village.ponds()).ruled(false)
+                .ways(Meadow.roads(Campus.HOUSED).roads().stream().flatMap(r -> r.pavements().stream())
+                        .map(p -> (Volume) p).toList());
     }
 
     @Override
     public Scenery scenery() {
-        return RoadScenery.of(Meadow.roads());
+        return RoadScenery.of(Meadow.roads(Campus.HOUSED));
     }
 
     @Override
@@ -85,6 +87,6 @@ public record CampusWorld() implements PlayWorld {
     private static Place on(final Vec3 from, final double east, final double north, final double yaw) {
         final double x = from.x() + east;
         final double z = from.z() + north;
-        return new Place(x, z, Meadow.land().height(x, z), yaw);
+        return new Place(x, z, Meadow.land(Campus.HOUSED).height(x, z), yaw);
     }
 }

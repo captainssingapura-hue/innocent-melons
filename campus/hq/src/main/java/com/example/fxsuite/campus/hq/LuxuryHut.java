@@ -81,8 +81,9 @@ public record LuxuryHut(String name, EarthHouse.Size size, Finish finish, double
     static final double FINIAL_HIGH = 90;
     /** How far its furniture stands clear of its walls, at least. */
     static final double CLEAR = 15;
-    /** Its floor's top, on its plinth: what stands inside stands on that. */
-    static final double FLOOR = PLINTH + Office.FLOOR;
+    /** How high the earth house's floor of beaten earth is; its floor's top, on its plinth: what stands inside stands on that. */
+    static final double EARTH = 4;
+    static final double FLOOR = PLINTH + EARTH;
     /** How thick its rug is. */
     static final double RUG_THICK = 2;
 

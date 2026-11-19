@@ -393,4 +393,48 @@ class VillageTest {
         final Body waded = walk(world, new Vec3(200_000, 0, Village.riverAt(200_000) - 2_000), 0, 12);
         assertTrue(waded.position().z() > Village.riverAt(200_000) + Village.channel().reach(), "waded across");
     }
+
+    @Test
+    void bareOfItsHousesItsSealedRoadRunsOnOverTheBridgeUpToTheChurch() {
+        final RoadMap bare = Village.roads(false);
+        assertEquals(List.of(), bare.problems());
+        assertEquals(List.of(), Meadow.roads(false).wanted());
+        // no lane: the village road, sealed all the way, its bridge where it was
+        assertTrue(bare.ways().stream().noneMatch(w -> w.name().equals("church lane")), "no lane of gravel");
+        final RoadMap.Way road = bare.ways().stream().filter(w -> w.name().equals("village road")).findFirst()
+                .orElseThrow();
+        final RoadMap.Way housed = Village.roads(true).ways().stream().filter(w -> w.name().equals("village road"))
+                .findFirst().orElseThrow();
+        assertEquals(housed.vertices().subList(0, 3), road.vertices().subList(0, 3), "from the junction over the bridge");
+        assertTrue(road.segments().stream().allMatch(s -> s.kind().equals(housed.segments().getFirst().kind())),
+                "all of it the village road's kind");
+        // as far up to the church as the lane ever went
+        final List<Vec2> housedLane = Village.line("church lane", true);
+        final List<Vec2> sealed = Village.line("village road", false);
+        assertEquals(housedLane.getLast().x(), sealed.getLast().x(), 1);
+        assertEquals(housedLane.getLast().z(), sealed.getLast().z(), 1);
+        // sealed up there: asphalt under it, two thirds of the way up from the bridge and near its end
+        for (final double share : new double[] {0.67, 0.95}) {
+            final Vec2 on = sealed.get((int) (share * (sealed.size() - 1)));
+            assertEquals(1, Meadow.land(false).cover(Land.Cover.ASPHALT, on.x(), on.z()), 1e-9, "asphalt at " + share);
+        }
+        // round west of the well, clear of it
+        final double fromWell = sealed.stream()
+                .mapToDouble(v -> Math.hypot(v.x() - Village.WELL.x(), v.z() - Village.WELL.z())).min().orElseThrow();
+        assertTrue(fromWell > Village.wide("village road") / 2 + 300, "clear of the well: " + fromWell);
+        // housed, its lane still starts clear of the houses, apart from the village road
+        assertTrue(Math.hypot(housedLane.getFirst().x() - Village.square().x(),
+                housedLane.getFirst().z() - Village.square().z()) > 3_000, "housed, the lane kept out past the houses");
+        // none of its houses; its trees where they were, none of them on or beside its road where it now runs
+        final List<Course.Piece> pieces = Village.pieces(Meadow.land(false), false);
+        assertTrue(pieces.stream().noneMatch(p -> p.kind() == Course.Kind.BUILDING && p.tint() >= Village.KEYS
+                && p.tint() < Village.KEYS + Village.VILLAGE.size()), "none of its houses");
+        assertEquals(pieces().size() - Village.VILLAGE.size(), pieces.size(), "all else but them");
+        for (final Course.Piece tree : pieces.stream().filter(p -> p.kind() == Course.Kind.TREE).toList()) {
+            final double nearest = sealed.stream()
+                    .mapToDouble(v -> Math.hypot(v.x() - tree.block().x(), v.z() - tree.block().z())).min()
+                    .orElseThrow();
+            assertTrue(nearest > Village.wide("village road") / 2 + 300, "a tree on or beside its road: " + nearest);
+        }
+    }
 }

@@ -79,6 +79,6 @@ public record Department(int number, String scope, LuxuryHut hut) {
         final double x = MainOffice.EAST + RING * Math.sin(t);
         final double z = MainOffice.NORTH + RING * Math.cos(t);
         final double yaw = Math.toDegrees(Math.atan2(MainOffice.EAST - x, MainOffice.NORTH - z));
-        return new Place(x, z, Meadow.land().height(x, z), yaw);
+        return new Place(x, z, Meadow.land(Campus.HOUSED).height(x, z), yaw);
     }
 }

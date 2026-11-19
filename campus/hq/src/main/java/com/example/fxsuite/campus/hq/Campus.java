@@ -2,38 +2,31 @@ package com.example.fxsuite.campus.hq;
 
 import com.example.fxsuite.avatar.build.Sites;
 import com.example.fxsuite.avatar.build.Town;
-import com.example.fxsuite.avatar.build.Village;
 import com.example.fxsuite.avatar.sim.Course;
+import com.example.fxsuite.avatar.worlds.Meadow;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.IntStream;
 
 /**
- * The campus, the virtual headquarters, as it starts: laid on the meadow ({@link com.example.fxsuite.avatar.worlds.Meadow}),
- * its land, its river and bridge, its roads, its trees, its church on its hill all as they are; its village's huts its
- * offices ({@link Office}), each where the hut stands, numbered in the village's order, furnished; and east of the
+ * The campus, the virtual headquarters: laid on the meadow bare of its village's houses
+ * ({@link Meadow#pieces(boolean)}), its land, its river and bridge, its well, its trees, its church on its hill as they
+ * are, its roads one road from the highway over the bridge, past the well, winding on up to the church; east of the
  * green, its door to the well, its main office ({@link MainOffice}), a hut of the greatest luxury; and in a ring round
  * that, its main shared departments ({@link Department}), each in a hut of luxury of its own.
  */
 public final class Campus {
 
-    /** The keys its offices are drawn by, one each, in order: clear of every other world's. */
+    /** The keys its buildings are drawn by: clear of every other world's. */
     public static final int KEYS = 2_000_000;
 
-    /** The key its main office is drawn by: after room for a thousand offices. */
+    /** The key its main office is drawn by; its departments' after it, in their order. */
     public static final int MAIN = KEYS + 1_000;
 
-    /** Its offices: every hut of the village, numbered from 1. */
-    public static final List<Office> OFFICES = IntStream.range(0, Village.VILLAGE.size())
-            .mapToObj(k -> new Office(k + 1, k)).toList();
+    /** Its base: the meadow bare of its village's houses. */
+    static final boolean HOUSED = false;
 
     private Campus() {
-    }
-
-    /** Office {@code number}'s key. */
-    static int key(final Office office) {
-        return KEYS + office.number() - 1;
     }
 
     /** Department {@code number}'s key: after its main office's, in its order. */
@@ -41,40 +34,19 @@ public final class Campus {
         return MAIN + department.number();
     }
 
-    /**
-     * Its offices, told to the drawing: each key drawn as its office, the hut and its furniture; its main office; its
-     * departments.
-     */
+    /** Its buildings, told to the drawing: its main office's key drawn as it is, each department's as its own is. */
     public static void register() {
-        Sites.register(KEYS, KEYS + OFFICES.size(), k -> OFFICES.get(k).solids());
         Sites.register(MAIN, MAIN + 1 + Department.ALL.size(),
                 k -> k == 0 ? MainOffice.HUT.solids() : Department.ALL.get(k - 1).hut().solids());
     }
 
-    /**
-     * What stands on it: the meadow's pieces but the village's huts, and in their places its offices, each one piece,
-     * in the way as its hut and its furniture are.
-     */
+    /** What stands on it: the meadow's pieces, bare of its village's houses; its main office; its departments. */
     public static List<Course.Piece> pieces() {
-        final List<Course.Piece> pieces = new ArrayList<>();
-        for (final Course.Piece p : com.example.fxsuite.avatar.worlds.Meadow.pieces()) {
-            if (!hut(p)) {
-                pieces.add(p);
-            }
-        }
-        for (final Office o : OFFICES) {
-            pieces.add(Town.building(o.solids(), o.place(), key(o), o.shape(), 1));
-        }
+        final List<Course.Piece> pieces = new ArrayList<>(Meadow.pieces(HOUSED));
         pieces.add(Town.building(MainOffice.HUT.solids(), MainOffice.place(), MAIN, MainOffice.HUT.shape(), 1));
         for (final Department d : Department.ALL) {
             pieces.add(Town.building(d.hut().solids(), d.place(), key(d), d.hut().shape(), 1));
         }
         return pieces;
-    }
-
-    /** Whether {@code p} is one of the village's huts: a building drawn by one of their keys. */
-    static boolean hut(final Course.Piece p) {
-        return p.kind() == Course.Kind.BUILDING && p.tint() >= Village.KEYS
-                && p.tint() < Village.KEYS + Village.VILLAGE.size();
     }
 }

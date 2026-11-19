@@ -16,8 +16,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * The main shared departments: each named once, each in a hut of luxury of its own, no two finished alike; standing in
- * a ring round the main office, each its door to it, on level ground, clear of one another, of the main office, of
- * every office, of the roads; each a piece of the campus by its own key.
+ * a ring round the main office, each its door to it, on level ground, clear of one another, of the main office and
+ * of the roads; each a piece of the campus by its own key.
  */
 class DepartmentTest {
 
@@ -48,7 +48,7 @@ class DepartmentTest {
     }
 
     @Test
-    void onLevelGroundClearOfOneAnotherTheMainOfficeTheOfficesAndTheRoads() {
+    void onLevelGroundClearOfOneAnotherTheMainOfficeAndTheRoads() {
         final List<Department> all = Department.ALL;
         for (int i = 0; i < all.size(); i++) {
             final Department d = all.get(i);
@@ -62,18 +62,15 @@ class DepartmentTest {
             final Place main = MainOffice.place();
             assertTrue(Math.hypot(main.x() - at.x(), main.z() - at.z()) > reach + MainOffice.HUT.reach() + 1_500,
                     d.name() + ": 15 m of court between it and the main office");
-            for (final Office o : Campus.OFFICES) {
-                assertTrue(Math.hypot(o.place().x() - at.x(), o.place().z() - at.z())
-                        > reach + o.hut().size().width() / 2 + 500, d.name() + " and " + o.name() + ": 5 m clear");
-            }
-            for (final String road : List.of("village road", "church lane")) {
-                for (final Vec2 v : Village.line(road)) {
+            for (final String road : List.of("village road")) {
+                for (final Vec2 v : Village.line(road, Campus.HOUSED)) {
                     assertTrue(Math.hypot(v.x() - at.x(), v.z() - at.z()) > reach + 1_000, d.name() + ", " + road);
                 }
             }
             for (int k = 0; k < 16; k++) {
                 final double a = 2 * Math.PI * k / 16;
-                assertEquals(at.height(), Meadow.land().height(at.x() + reach * Math.sin(a), at.z() + reach * Math.cos(a)),
+                assertEquals(at.height(), Meadow.land(Campus.HOUSED).height(at.x() + reach * Math.sin(a),
+                                at.z() + reach * Math.cos(a)),
                         5, d.name() + ": level under it, all round");
             }
         }

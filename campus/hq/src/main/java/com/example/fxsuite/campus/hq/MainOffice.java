@@ -40,6 +40,6 @@ public final class MainOffice {
     /** Where it stands, facing as its door does: to the well. */
     public static Place place() {
         final double yaw = Math.toDegrees(Math.atan2(Village.WELL.x() - EAST, Village.WELL.z() - NORTH));
-        return new Place(EAST, NORTH, Meadow.land().height(EAST, NORTH), yaw);
+        return new Place(EAST, NORTH, Meadow.land(Campus.HOUSED).height(EAST, NORTH), yaw);
     }
 }

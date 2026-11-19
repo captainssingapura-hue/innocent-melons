@@ -117,21 +117,39 @@ public final class Meadow implements DrawnDemo {
         return Laid.LAND;
     }
 
+    /**
+     * Its roads ({@link #roads()}) and its land ({@link #land()}) with its village {@code housed}; or bare of its
+     * village's houses, as a base for another world: its lane to the church running on from the village road's end
+     * ({@link Village#roads(boolean)}), its land as those roads leave it.
+     */
+    public static Roadworks roads(final boolean housed) {
+        return housed ? Laid.WORKS : Bare.WORKS;
+    }
+
+    public static Land land(final boolean housed) {
+        return housed ? Laid.LAND : Bare.LAND;
+    }
+
     private static final class Laid {
-        static final Roadworks WORKS = lay();
+        static final Roadworks WORKS = lay(true);
+        static final Land LAND = Village.ground().with(WORKS.land(Double.NaN));
+    }
+
+    private static final class Bare {
+        static final Roadworks WORKS = lay(false);
         static final Land LAND = Village.ground().with(WORKS.land(Double.NaN));
     }
 
     /**
-     * Its roads as described, laid in order over its ground: each along its line worked out ({@link Mapped}), of its
-     * kind; a one-way road's line moved to its pavement's edge; its bridges given where its description has them, its
-     * pinned heights held.
+     * Its roads as described, its village {@code housed} or not, laid in order over its ground: each along its line
+     * worked out ({@link Mapped}), of its kind; a one-way road's line moved to its pavement's edge; its bridges given
+     * where its description has them, its pinned heights held.
      */
-    static Roadworks lay() {
+    static Roadworks lay(final boolean housed) {
         final Map<String, Section> kinds = Sections.parse(KINDS);
         final Land ground = Village.ground();
         final Profile raw = (x, z, below) -> ground.height(x, z);
-        return Roadworks.design(raw, Mapped.plans(Village.roads(), (way, kind) -> kinds.get(kind), raw, null));
+        return Roadworks.design(raw, Mapped.plans(Village.roads(housed), (way, kind) -> kinds.get(kind), raw, null));
     }
 
     /**
@@ -139,8 +157,13 @@ public final class Meadow implements DrawnDemo {
      * For a world laid on the meadow to keep, or leave out, as it will.
      */
     public static List<Course.Piece> pieces() {
-        final List<Course.Piece> pieces = new ArrayList<>(Village.pieces(land()));
-        pieces.addAll(Decks.pieces(roads(), DECK_KEYS, true));
+        return pieces(true);
+    }
+
+    /** As {@link #pieces()}, its village {@code housed}, or the meadow bare of its houses, as its roads are then. */
+    public static List<Course.Piece> pieces(final boolean housed) {
+        final List<Course.Piece> pieces = new ArrayList<>(Village.pieces(land(housed), housed));
+        pieces.addAll(Decks.pieces(roads(housed), DECK_KEYS, true));
         return pieces;
     }
 
