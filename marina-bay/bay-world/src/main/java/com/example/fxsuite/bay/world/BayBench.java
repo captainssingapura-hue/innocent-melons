@@ -1,5 +1,9 @@
-package com.example.fxsuite.avatar.buildings;
+package com.example.fxsuite.bay.world;
 
+import com.example.fxsuite.bay.buildings.Mbfc;
+import com.example.fxsuite.bay.buildings.Orq;
+import com.example.fxsuite.bay.buildings.AsiaSquare;
+import com.example.fxsuite.avatar.buildings.Standing;
 import com.example.fxsuite.avatar.bench.kit.Bus;
 import com.example.fxsuite.avatar.bench.kit.ModelView;
 import com.example.fxsuite.avatar.bench.kit.Player;
@@ -101,7 +105,7 @@ public final class BayBench extends Application {
     private void show(final Made m) {
         built = m.built();
         view.show(m.models());
-        final StringBuilder figures = new StringBuilder();
+        final StringBuilder figures = new StringBuilder(ProjectOffice.BAY.said()).append(String.format("%n%n"));
         for (int k = 0; k < towers.size(); k++) {
             final Place at = towers.get(k).at();
             figures.append(String.format(Locale.ROOT, "%s at %.0f, %.0f m, turned %.1f°%n%s%n%n",

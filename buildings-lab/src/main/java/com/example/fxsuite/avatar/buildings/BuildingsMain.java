@@ -3,9 +3,9 @@ package com.example.fxsuite.avatar.buildings;
 import com.example.fxsuite.avatar.Game;
 
 /**
- * The buildings lab's jar, run: its tower bench ({@link TowerBench}), or with {@code bay} its Marina Bay bench
- * ({@link BayBench}). Started from a class that is not JavaFX's, so the jar runs with JavaFX on its class path; the
- * game's worlds told of the simulation first, as any game window needs.
+ * The buildings lab's jar, run: its tower bench ({@link TowerBench}). Started from a class that is not JavaFX's, so the
+ * jar runs with JavaFX on its class path; the game's worlds told of the simulation first, as any game window needs.
+ * Marina Bay's bench is the bay's own, in its own project.
  */
 public final class BuildingsMain {
 
@@ -14,7 +14,6 @@ public final class BuildingsMain {
 
     public static void main(final String[] args) {
         Game.tellWorlds();
-        final boolean bay = args.length > 0 && args[0].equalsIgnoreCase("bay");
-        javafx.application.Application.launch(bay ? BayBench.class : TowerBench.class, args);
+        javafx.application.Application.launch(TowerBench.class, args);
     }
 }

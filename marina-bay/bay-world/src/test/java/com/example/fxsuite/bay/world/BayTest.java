@@ -1,6 +1,6 @@
-package com.example.fxsuite.avatar.worlds;
+package com.example.fxsuite.bay.world;
 
-import com.example.fxsuite.avatar.build.MarinaBay;
+import com.example.fxsuite.bay.land.MarinaBay;
 import com.example.fxsuite.avatar.build.TowerMap;
 import com.example.fxsuite.avatar.sim.Course;
 import com.example.fxsuite.avatar.sim.Demos;

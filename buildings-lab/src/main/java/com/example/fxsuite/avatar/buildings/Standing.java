@@ -23,18 +23,18 @@ import java.util.List;
  * @param at    where its middle stands, which way it faces
  * @param key   the first key it is drawn by
  */
-record Standing(OfficeTower tower, Place at, int key) {
+public record Standing(OfficeTower tower, Place at, int key) {
 
     /** How many keys a tower may take: its frame, its moving parts' kinds, its panes. */
-    static final int KEYS = 5_000;
+    public static final int KEYS = 5_000;
 
     /** It as built, whole, in its own frame. */
-    Built built() {
+    public Built built() {
         return tower.built(tower.storeys(), true);
     }
 
     /** What it is drawn by: told to the drawing, each key what it draws; its frame with its landings' doors shut. */
-    void register(final Built built) {
+    public void register(final Built built) {
         final int keyed = built.keyed().size();
         if (keyed + built.panes().size() > KEYS) {
             throw new IllegalStateException(tower.name() + ": more to draw than its keys");
@@ -51,7 +51,7 @@ record Standing(OfficeTower tower, Place at, int key) {
      * volume, its storeys its cells, as finely as the focus wants it. Its lifts' cars no pieces of the world: they
      * belong to its fine model, to come; till then its lifts stand shut. {@link #register} tells how it is drawn.
      */
-    List<Course.Piece> pieces(final Built built) {
+    public List<Course.Piece> pieces(final Built built) {
         final List<Solid> frame = new java.util.ArrayList<>(built.standing());
         frame.addAll(tower.landingsShut());
         final Staged staged = new Staged(tower.coarse(),
@@ -60,18 +60,18 @@ record Standing(OfficeTower tower, Place at, int key) {
     }
 
     /** A spot in its own frame, where it stands. */
-    Spot placed(final Spot spot) {
+    public Spot placed(final Spot spot) {
         return new Spot(spot.name(), placed(spot.place()));
     }
 
     /** A place in its own frame (its middle across and along, its height, which way it faces), where it stands. */
-    Place placed(final Place p) {
+    public Place placed(final Place p) {
         final double[] w = world(p.x(), p.z());
         return new Place(w[0], w[1], p.height() + at.height(), p.yaw() + at.yaw());
     }
 
     /** Solids in its own frame, where it stands. */
-    List<Solid> placed(final List<Solid> solids) {
+    public List<Solid> placed(final List<Solid> solids) {
         return solids.stream().map(s -> new Solid(s.name(), s.role(), s.material(), s.corners().stream().map(p -> {
             final double[] w = world(p.across(), p.along());
             return new Point(w[0], w[1], p.up() + at.height());
@@ -79,7 +79,7 @@ record Standing(OfficeTower tower, Place at, int key) {
     }
 
     /** Where ({@code across}, {@code along}) in its own frame is in the world, as the game turns a thing. */
-    double[] world(final double across, final double along) {
+    public double[] world(final double across, final double along) {
         final double r = Math.toRadians(at.yaw());
         final double c = Math.cos(r);
         final double s = Math.sin(r);

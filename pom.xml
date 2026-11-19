@@ -19,5 +19,6 @@
         <module>lifts-lab</module>
         <module>buildings-lab</module>
         <module>campus</module>
+        <module>marina-bay</module>
     </modules>
 </project>

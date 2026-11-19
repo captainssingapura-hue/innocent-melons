@@ -405,6 +405,10 @@ public final class Roadworks {
 
             @Override
             public double cover(final Land.Cover cover, final double x, final double z) {
+                // roads lay only their tops and the earth they bare: asked of any other cover, none, and no road sought
+                if (cover != Land.Cover.ASPHALT && cover != Land.Cover.GRAVEL && cover != Land.Cover.EARTH) {
+                    return 0;
+                }
                 for (final int m : index.near(x, z)) {
                     final Roadway road = roads.get(m);
                     if (road.occupies(x, z) && !Double.isNaN(road.surface(x, z))) {

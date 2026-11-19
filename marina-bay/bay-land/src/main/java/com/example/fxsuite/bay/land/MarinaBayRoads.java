@@ -1,4 +1,4 @@
-package com.example.fxsuite.avatar.build;
+package com.example.fxsuite.bay.land;
 
 /**
  * Marina Bay's roads, as the road map's text ({@code RoadMap.parse}), in metres from the middle tower, turned as

@@ -1,5 +1,8 @@
-package com.example.fxsuite.avatar.buildings;
+package com.example.fxsuite.bay.buildings;
 
+import com.example.fxsuite.avatar.buildings.OfficeTower;
+import com.example.fxsuite.avatar.buildings.Standing;
+import com.example.fxsuite.avatar.buildings.Placed;
 import com.example.fxsuite.avatar.lifts.HighRiseBank;
 import com.example.fxsuite.avatar.sim.Place;
 
@@ -15,7 +18,7 @@ import java.util.List;
  * <p>Each in its own frame, its plan's north along, cm, about its outline's middle; a storey the model's, the lobby
  * the first (0), double height, the building's floors 1 and 2; floor {@code n} over it the model's {@code n - 2}.
  */
-final class Orq {
+public final class Orq {
 
     private Orq() {
     }
@@ -24,15 +27,15 @@ final class Orq {
     static final int KEYS = 990_000;
 
     /**
-     * The pair where they stand in the bay ({@link com.example.fxsuite.avatar.build.MarinaBay}'s frame, cm): each where
+     * The pair where they stand in the bay ({@link com.example.fxsuite.bay.land.MarinaBay}'s frame, cm): each where
      * the map has its middle, turned as its sides run there, its feet on its land. The North Tower's plan's north to its
      * north-west face, where the map draws the jogs its plan has at that face's corners; the South Tower's long sides
      * along the longer pair of the map's, its outline drawn small there.
      */
-    static List<Standing> standing() {
+    public static List<Standing> standing() {
         final double[][] where = {{-85_040, -49_850, -48.3}, {-87_950, -57_550, -74.3}};
         final List<OfficeTower> towers = List.of(north(), south());
-        final com.example.fxsuite.avatar.sim.Land land = com.example.fxsuite.avatar.build.MarinaBay.land();
+        final com.example.fxsuite.avatar.sim.Land land = com.example.fxsuite.bay.land.MarinaBay.land();
         final List<Standing> standing = new ArrayList<>();
         for (int k = 0; k < towers.size(); k++) {
             final double[] w = where[k];
@@ -54,7 +57,7 @@ final class Orq {
      * under them); toilets in a zone's lobby where it does not stop, and where the low zone's east bank was over it.
      * Twenty lifts in three zones. Its way in on its south side.
      */
-    static OfficeTower north() {
+    public static OfficeTower north() {
         final double a = 2751;
         final double l = 1913.5;
         final double in = 2636;
@@ -112,7 +115,7 @@ final class Orq {
      * zone's lobby under where it stops, and where the low zone's east bank was over it. Sixteen lifts in two zones. Its
      * way in on its south side.
      */
-    static OfficeTower south() {
+    public static OfficeTower south() {
         final double a = 3219.5;
         final double l = 2622;
         final List<double[]> outline = List.of(new double[] {-a, -l}, new double[] {a, -l}, new double[] {a, l},

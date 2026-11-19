@@ -37,9 +37,10 @@ import java.util.Map;
  * a model to look at, its lifts' cars and doors where they stand at the start; its figures read out. Played, to walk
  * into it and ride its lifts: what moves is seen there, not here. Put together of the bench kit's parts.
  *
- * <p>Or a real tower, described from its figures ({@link #TOWERS}): its own size and lifts, shown as the knobs say.
+ * <p>Or a real tower a world offers ({@link #offer}), described from its figures: its own size and lifts, shown as the
+ * knobs say.
  *
- * <p>{@code -Dtower.model="MBFC Tower 1"} which tower; {@code -Dtower.set=floors=40,zones=3} its knobs;
+ * <p>{@code -Dtower.model="a tower's name"} which tower; {@code -Dtower.set=floors=40,zones=3} its knobs;
  * {@code -Dtower.yaw}, {@code -Dtower.pitch}, {@code -Dtower.distance} (m) where it is seen from; {@code -Dbench.play=true}
  * plays it at once; {@code -Dbench.snapshot=out.png} saves the window after {@code -Dbench.settle} ms and exits.
  */
@@ -69,18 +70,22 @@ public final class TowerBench extends Application {
     private boolean framed;
     private boolean playWhenShown = Boolean.getBoolean("bench.play");
 
-    /** The towers to choose from: the one made from the knobs' figures, and those described from a real one's. */
+    /**
+     * The towers to choose from: the one made from the knobs' figures; and any described from a real one's that a world
+     * offers ({@link #offer}), as Marina Bay offers its own before it opens the bench.
+     */
     static final Map<String, java.util.function.Supplier<OfficeTower>> TOWERS = new java.util.LinkedHashMap<>();
 
     static {
         TOWERS.put("generic", null);
-        TOWERS.put("MBFC Tower 1", Mbfc::tower1);
-        TOWERS.put("MBFC Tower 2", Mbfc::tower2);
-        TOWERS.put("MBFC Tower 3", Mbfc::tower3);
-        TOWERS.put("ORQ North Tower", Orq::north);
-        TOWERS.put("ORQ South Tower", Orq::south);
-        TOWERS.put("Asia Square Tower 1", AsiaSquare::tower1);
-        TOWERS.put("Asia Square Tower 2", AsiaSquare::tower2);
+    }
+
+    /** {@code tower}, described from a real one's figures, offered among the towers to choose from as {@code name}. */
+    public static synchronized void offer(final String name, final java.util.function.Supplier<OfficeTower> tower) {
+        if (name.equals("generic") || tower == null) {
+            throw new IllegalArgumentException("a real tower, by a name of its own");
+        }
+        TOWERS.put(name, tower);
     }
 
     /** Which tower is chosen; the knobs ({@code set}), for the generic one's figures and how it is shown. */

@@ -1,5 +1,8 @@
-package com.example.fxsuite.avatar.buildings;
+package com.example.fxsuite.bay.buildings;
 
+import com.example.fxsuite.avatar.buildings.OfficeTower;
+import com.example.fxsuite.avatar.buildings.Standing;
+import com.example.fxsuite.avatar.buildings.Placed;
 import com.example.fxsuite.avatar.lifts.HighRiseBank;
 import com.example.fxsuite.avatar.sim.Place;
 
@@ -16,7 +19,7 @@ import java.util.List;
  * <p>Each in its own frame, its plan's top along, cm, about its outline's middle; a storey the model's, the lobby the
  * first (0), double height, the building's floors 1 and 2; floor {@code n} over it the model's {@code n - 2}.
  */
-final class AsiaSquare {
+public final class AsiaSquare {
 
     private AsiaSquare() {
     }
@@ -25,15 +28,15 @@ final class AsiaSquare {
     static final int KEYS = 1_000_000;
 
     /**
-     * The pair where they stand in the bay ({@link com.example.fxsuite.avatar.build.MarinaBay}'s frame, cm): each where
+     * The pair where they stand in the bay ({@link com.example.fxsuite.bay.land.MarinaBay}'s frame, cm): each where
      * the map has its middle, turned as its sides run there. The map draws both the same, 64.6 by 56.5 m, its long sides
      * at 106°; Tower 1's plan's long sides along them, Tower 2's, nearly square, its longer sides along them. Which end
      * of each is its plan's top, the plans do not say: a guess.
      */
-    static List<Standing> standing() {
+    public static List<Standing> standing() {
         final double[][] where = {{-85_590, -78_710, -74.2}, {-88_680, -89_810, 15.9}};
         final List<OfficeTower> towers = List.of(tower1(), tower2());
-        final com.example.fxsuite.avatar.sim.Land land = com.example.fxsuite.avatar.build.MarinaBay.land();
+        final com.example.fxsuite.avatar.sim.Land land = com.example.fxsuite.bay.land.MarinaBay.land();
         final List<Standing> standing = new ArrayList<>();
         for (int k = 0; k < towers.size(); k++) {
             final double[] w = where[k];
@@ -55,7 +58,7 @@ final class AsiaSquare {
      * of some ten floors: an estimate, no sheet saying. Toilets in a zone's lobby where it does not stop, and where a
      * zone's banks were over it, as its plans have them. Its way in on its south side, between its notches.
      */
-    static OfficeTower tower1() {
+    public static OfficeTower tower1() {
         final List<double[]> outline = notched(2820, 3315, new double[] {-1180, -730, 940, 1380},
                 new double[] {-995, -765, 1545, 1775}, 190);
         final int top = 43;
@@ -111,7 +114,7 @@ final class AsiaSquare {
      * Its offices taken as floors 3 to 31, in zones of some ten floors: an estimate. Its hotel's lifts not built; over
      * its offices, the east block's lobbies and shafts its core. Its way in on its south side, between its notches.
      */
-    static OfficeTower tower2() {
+    public static OfficeTower tower2() {
         final List<double[]> outline = notched(3000, 2925, new double[] {-1190, -870, 840, 1190},
                 new double[] {-1140, -690, 790, 1180}, 190);
         final int top = 46;

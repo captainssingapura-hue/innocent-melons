@@ -1,5 +1,8 @@
-package com.example.fxsuite.avatar.buildings;
+package com.example.fxsuite.bay.buildings;
 
+import com.example.fxsuite.avatar.buildings.OfficeTower;
+import com.example.fxsuite.avatar.buildings.Standing;
+import com.example.fxsuite.avatar.buildings.Placed;
 import com.example.fxsuite.avatar.lifts.HighRiseBank;
 
 import java.util.ArrayList;
@@ -16,7 +19,7 @@ import java.util.List;
  * <p>A storey here is one of the model's: the lobby the first (0), double height, the building's own floors 1 and 2;
  * each over it its own, the building's floor {@code n} the model's {@code n - 2}.
  */
-final class Mbfc {
+public final class Mbfc {
 
     private Mbfc() {
     }
@@ -25,15 +28,15 @@ final class Mbfc {
     static final int KEYS = 975_000;
 
     /**
-     * The three where they stand in the bay ({@link com.example.fxsuite.avatar.build.MarinaBay}'s frame, cm): each
+     * The three where they stand in the bay ({@link com.example.fxsuite.bay.land.MarinaBay}'s frame, cm): each
      * where the map has its middle, turned as its sides run there, its plan's north along; their feet on its land.
      * Which way each faces is the map's, and agrees with each one's outline: Tower 1's notch to its north-west, Tower
      * 2's long sides across, Tower 3's step at its south-west.
      */
-    static List<Standing> standing() {
+    public static List<Standing> standing() {
         final double[][] where = {{-58_590, -57_440, 3.7}, {-60_880, -64_900, 16.1}, {-52_350, -69_450, -8.6}};
         final List<OfficeTower> towers = List.of(tower1(), tower2(), tower3());
-        final com.example.fxsuite.avatar.sim.Land land = com.example.fxsuite.avatar.build.MarinaBay.land();
+        final com.example.fxsuite.avatar.sim.Land land = com.example.fxsuite.bay.land.MarinaBay.land();
         final List<Standing> standing = new ArrayList<>();
         for (int k = 0; k < towers.size(); k++) {
             final double[] w = where[k];
@@ -45,7 +48,7 @@ final class Mbfc {
     }
 
     /** The building's floor numbered {@code n} (3 and up) as the model's storey. */
-    static int storey(final int n) {
+    public static int storey(final int n) {
         return n - 2;
     }
 
@@ -57,7 +60,7 @@ final class Mbfc {
      * the west (floors 18 to 33), the low zone's to the east (3 to 17), its east bank standing apart from the rest of
      * the core; a passage across the core south of them; its way in on its south side.
      */
-    static OfficeTower tower1() {
+    public static OfficeTower tower1() {
         final List<double[]> outline = List.of(
                 new double[] {-2550, -2550}, new double[] {1820, -2550}, new double[] {1820, -1740},
                 new double[] {2550, -1420}, new double[] {2550, 2550}, new double[] {-1740, 2550},
@@ -107,7 +110,7 @@ final class Mbfc {
      * mid zone's (22 to 36, four either side), its stairs, service lifts and toilets to the east; toilets under each
      * zone's lobby where that zone does not stop. Twenty-three lifts in three zones. Its way in on its south side.
      */
-    static OfficeTower tower2() {
+    public static OfficeTower tower2() {
         final List<double[]> low = List.of(
                 new double[] {-3160, -2414}, new double[] {2199, -2414}, new double[] {2199, -2119},
                 new double[] {3160, -2119}, new double[] {3160, 1960}, new double[] {2353, 2138},
@@ -175,7 +178,7 @@ final class Mbfc {
      * them (40 to 46), nine cars; the east pair's north half gone over floor 22, so the two lowest zones (5 to 13, 14 to
      * 22) are there, five cars each, either side of one lobby. Thirty-five lifts in five zones. Its way in on its south.
      */
-    static OfficeTower tower3() {
+    public static OfficeTower tower3() {
         final double h = 3012.5;
         final double in = 2832.5;
         final double step = 1592.5;

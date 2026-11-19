@@ -1,5 +1,7 @@
-package com.example.fxsuite.avatar.buildings;
+package com.example.fxsuite.bay.buildings;
 
+import com.example.fxsuite.avatar.buildings.OfficeTower;
+import com.example.fxsuite.avatar.buildings.Placed;
 import com.example.fxsuite.avatar.lifts.HighRiseBank;
 import org.junit.jupiter.api.Test;
 

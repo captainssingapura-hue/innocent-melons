@@ -1,6 +1,6 @@
-package com.example.fxsuite.avatar.worlds;
+package com.example.fxsuite.bay.world;
 
-import com.example.fxsuite.avatar.build.MarinaBay;
+import com.example.fxsuite.bay.land.MarinaBay;
 import com.example.fxsuite.avatar.look.DrawnDemo;
 import com.example.fxsuite.avatar.look.RoadScenery;
 import com.example.fxsuite.avatar.look.Scenery;
@@ -17,6 +17,15 @@ public final class Bay implements DrawnDemo {
     public static final Bay DEMO = new Bay();
 
     private Bay() {
+    }
+
+    /**
+     * The bay told to the engine, by the bay itself, being a project of its own: the engine's own worlds first, then
+     * this demo by its name, to be found and offered. As often as asked; told once.
+     */
+    public static void tell() {
+        com.example.fxsuite.avatar.Game.tellWorlds();
+        com.example.fxsuite.avatar.sim.Demos.register(DEMO);
     }
 
     @Override

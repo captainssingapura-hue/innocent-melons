@@ -1,5 +1,6 @@
-package com.example.fxsuite.avatar.build;
+package com.example.fxsuite.bay.land;
 
+import com.example.fxsuite.avatar.build.TowerMap;
 import com.example.fxsuite.avatar.roads.Decks;
 import com.example.fxsuite.avatar.roads.Mapped;
 import com.example.fxsuite.avatar.roads.Profile;
@@ -25,7 +26,7 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Marina Bay as it lies (its demo, {@link com.example.fxsuite.avatar.worlds.Bay}), the first stage of laying out the bay round the wall towers: its
+ * Marina Bay as it lies (its demo, {@link com.example.fxsuite.bay.world.Bay}), the first stage of laying out the bay round the wall towers: its
  * land, level; its sea, and the bay, its channel and the river's mouth behind the barrage, one water, walled by a steep
  * bank; the larger lakes of its gardens, shallow. In metres from the middle tower, turned so the real towers' long
  * side runs along z, as the wall towers' does. The towers, their hull and its park stand on it as on their own

@@ -1,8 +1,9 @@
-package com.example.fxsuite.avatar.buildings;
+package com.example.fxsuite.bay.world;
 
+import com.example.fxsuite.avatar.buildings.Standing;
 import com.example.fxsuite.avatar.bench.kit.PlayWorld;
 import com.example.fxsuite.avatar.bench.kit.Spot;
-import com.example.fxsuite.avatar.build.MarinaBay;
+import com.example.fxsuite.bay.land.MarinaBay;
 import com.example.fxsuite.avatar.lifts.Built;
 import com.example.fxsuite.avatar.look.RoadScenery;
 import com.example.fxsuite.avatar.look.Scenery;

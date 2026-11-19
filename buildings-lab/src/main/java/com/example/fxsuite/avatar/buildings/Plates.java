@@ -18,7 +18,7 @@ import java.util.List;
  * outline's edges are straight lines, so each piece of it is a four-sided solid, its sides across square, its sides
  * along as the outline's edges run. Each piece is convex, as a solid must be to be drawn and stood on.
  */
-final class Plates {
+public final class Plates {
 
     private Plates() {
     }
@@ -206,7 +206,7 @@ final class Plates {
     }
 
     /** Twice the area {@code outline} goes round: more than nothing anticlockwise (x east, z north). */
-    static double area(final List<double[]> outline) {
+    public static double area(final List<double[]> outline) {
         double sum = 0;
         for (int i = 0; i < outline.size(); i++) {
             final double[] a = outline.get(i);
@@ -217,7 +217,7 @@ final class Plates {
     }
 
     /** How big a floor's pieces are, all told, seen from above: m². */
-    static double area(final List<Solid> pieces, final boolean metres) {
+    public static double area(final List<Solid> pieces, final boolean metres) {
         double sum = 0;
         for (final Solid s : pieces) {
             final List<Point> c = s.corners();
