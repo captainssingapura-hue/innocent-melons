@@ -55,7 +55,8 @@ class CampusTest {
         final long huts = meadow.stream().filter(Campus::hut).count();
         assertEquals(Village.VILLAGE.size(), huts, "the meadow's huts, each a piece");
         assertEquals(0, campus.stream().filter(Campus::hut).count(), "none of them left on the campus");
-        assertEquals(meadow.size() + 1, campus.size(), "an office in each one's place, and its main office, nothing else");
+        assertEquals(meadow.size() + 1 + Department.ALL.size(), campus.size(),
+                "an office in each one's place, its main office and its departments, nothing else");
         assertEquals(1, campus.stream().filter(c -> c.tint() == Campus.MAIN).count(), "its main office, once");
         for (final Office o : Campus.OFFICES) {
             final Course.Piece p = campus.stream().filter(c -> c.tint() == Campus.key(o)).findFirst().orElseThrow();

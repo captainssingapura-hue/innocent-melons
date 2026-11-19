@@ -13,7 +13,8 @@ import java.util.stream.IntStream;
  * The campus, the virtual headquarters, as it starts: laid on the meadow ({@link com.example.fxsuite.avatar.worlds.Meadow}),
  * its land, its river and bridge, its roads, its trees, its church on its hill all as they are; its village's huts its
  * offices ({@link Office}), each where the hut stands, numbered in the village's order, furnished; and east of the
- * green, its door to the well, its main office ({@link MainOffice}), a hut of the greatest luxury.
+ * green, its door to the well, its main office ({@link MainOffice}), a hut of the greatest luxury; and in a ring round
+ * that, its main shared departments ({@link Department}), each in a hut of luxury of its own.
  */
 public final class Campus {
 
@@ -35,10 +36,19 @@ public final class Campus {
         return KEYS + office.number() - 1;
     }
 
-    /** Its offices, told to the drawing: each key drawn as its office, the hut and its furniture; its main office. */
+    /** Department {@code number}'s key: after its main office's, in its order. */
+    static int key(final Department department) {
+        return MAIN + department.number();
+    }
+
+    /**
+     * Its offices, told to the drawing: each key drawn as its office, the hut and its furniture; its main office; its
+     * departments.
+     */
     public static void register() {
         Sites.register(KEYS, KEYS + OFFICES.size(), k -> OFFICES.get(k).solids());
-        Sites.register(MAIN, MAIN + 1, k -> MainOffice.solids());
+        Sites.register(MAIN, MAIN + 1 + Department.ALL.size(),
+                k -> k == 0 ? MainOffice.HUT.solids() : Department.ALL.get(k - 1).hut().solids());
     }
 
     /**
@@ -55,7 +65,10 @@ public final class Campus {
         for (final Office o : OFFICES) {
             pieces.add(Town.building(o.solids(), o.place(), key(o), o.shape(), 1));
         }
-        pieces.add(Town.building(MainOffice.solids(), MainOffice.place(), MAIN, MainOffice.shape(), 1));
+        pieces.add(Town.building(MainOffice.HUT.solids(), MainOffice.place(), MAIN, MainOffice.HUT.shape(), 1));
+        for (final Department d : Department.ALL) {
+            pieces.add(Town.building(d.hut().solids(), d.place(), key(d), d.hut().shape(), 1));
+        }
         return pieces;
     }
 

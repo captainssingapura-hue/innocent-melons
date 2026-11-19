@@ -85,7 +85,10 @@ public final class CampusBench extends Application {
         for (final Office o : Campus.OFFICES) {
             all.addAll(placed(o.solids(), o.place()));
         }
-        all.addAll(placed(MainOffice.solids(), MainOffice.place()));
+        all.addAll(placed(MainOffice.HUT.solids(), MainOffice.place()));
+        for (final Department d : Department.ALL) {
+            all.addAll(placed(d.hut().solids(), d.place()));
+        }
         return new Made(ModelView.Model.of(all));
     }
 
@@ -94,10 +97,18 @@ public final class CampusBench extends Application {
         view.show(m.offices());
         final Place main = MainOffice.place();
         final StringBuilder directory = new StringBuilder(String.format(Locale.ROOT,
-                "The campus on the meadow: its main office and %d offices round the well%n%n"
+                "The campus on the meadow: its main office, %d departments round it, %d offices round the well%n%n"
                         + "%s: %.0f m across, on a stone plinth, at %d, %d m, its door to %s, to the well%n%n",
-                Campus.OFFICES.size(), MainOffice.name(), MainOffice.SIZE.width() / 100, Math.round(main.x() / 100),
-                Math.round(main.z() / 100), compass(main.yaw())));
+                Department.ALL.size(), Campus.OFFICES.size(), MainOffice.name(), MainOffice.SIZE.width() / 100,
+                Math.round(main.x() / 100), Math.round(main.z() / 100), compass(main.yaw())));
+        for (final Department d : Department.ALL) {
+            final Place p = d.place();
+            final LuxuryHut.Finish f = d.hut().finish();
+            directory.append(String.format(Locale.ROOT, "%s: %.1f m across, its walls %s, its roof %s, at %d, %d m%n",
+                    d.name(), d.hut().size().width() / 100, f.walls().title(), f.roof().title(),
+                    Math.round(p.x() / 100), Math.round(p.z() / 100)));
+        }
+        directory.append(String.format(Locale.ROOT, "%n"));
         for (final Office o : Campus.OFFICES) {
             final Place p = o.place();
             directory.append(String.format(Locale.ROOT, "%s: %.1f m across, at %d, %d m, its door to %s%n",
