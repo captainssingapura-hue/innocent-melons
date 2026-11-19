@@ -1,0 +1,465 @@
+package com.example.fxsuite.avatar.sim;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+/**
+ * What the weapons have done to the world: how worn down each piece of the {@link Course} is,
+ * and which are broken. Pure, and never changed in place: each blow gives a new one.
+ *
+ * <ul>
+ *   <li><b>What can break:</b> crates and the targets, the dummies and the drones, and
+ *       the vehicles, the airships and the platforms ({@link Course.Kind#breakable}). Pillars and gates are what the world is built on, and
+ *       stand whatever is thrown at them.</li>
+ *   <li><b>How tough:</b> a dummy takes {@link #DUMMY}, a drone {@link #DRONE}, a platform {@link #PLATFORM}, and an
+ *       airship, armoured as it is, {@link #AIRSHIP}: most of ten seconds of the Gatling gun. A crate's
+ *       toughness goes by its size, from {@link #CRATE} for the smallest up: a small crate falls to
+ *       a short burst, the biggest takes a couple of seconds of the Gatling gun.</li>
+ *   <li><b>A blow</b> takes away what its weapon does ({@link Weapon#blow}): a round, or a stroke
+ *       of the glaive. The one that takes the last of it breaks the piece.</li>
+ *   <li><b>Broken</b> is for good, until the demo starts again: the piece is gone from the world
+ *       ({@link #obstacles}), so rounds fly on past where it stood, and whatever stood on it
+ *       falls.</li>
+ * </ul>
+ *
+ * <p>The weapons deal {@link Blow}s, and the world takes them here, within the step; what came
+ * of each goes out: struck, with what the piece has left ({@link Event.Struck}), and what broke
+ * ({@link Event.Broke}), for the graphics to throw the pieces about and the sound to be heard.
+ */
+public final class Damage {
+
+    /** How tough a dummy is, a drone, a platform, an airship, and the smallest crate. */
+    public static final double DUMMY = 300;
+    public static final double DRONE = 120;
+    public static final double AIRSHIP = 3000;
+    public static final double PLATFORM = 600;
+    /** How tough a bunker is: concrete, most of a minute of the hand-held Gatling gun. */
+    public static final double BUNKER = 2500;
+    /** A building's door, glass in a light frame: as tough as a drone; broken on its own, the building standing. */
+    public static final double DOOR = 120;
+    /** A pane of a building's glass ({@link Assembly}), no frame to it: half a door; a blade's blow, six rifle rounds. */
+    public static final double GLASS = 60;
+    /** A building, broken as a whole: ten bunkers' worth. */
+    public static final double BUILDING = 25_000;
+    /** A unit of a wall: so much for each cubic metre of its box, a brick wall's worth; no less than a crate's. */
+    public static final double WALL_UNIT = 60;
+    /** How tough a land vehicle is, bare as it is. */
+    public static final double CAR = 800;
+    /** How tough a tree is, and a lamp post: a tree twice a car; a lamp post fifteen rifle rounds. */
+    public static final double TREE = 1600;
+    public static final double LAMP = 150;
+    public static final double CRATE = 80;
+    /** A crate's toughness grows by one for each this much of its volume, in cubic units. */
+    public static final double CRATE_VOLUME = 30_000;
+
+    private final List<Course.Piece> pieces;
+    private final double[] toughness;
+    private final double[] health;
+    private final Obstacles obstacles;
+    /** What was in the way as the course was laid out, all of it: to put back what is made whole again. */
+    private final Obstacles whole;
+    /** Who stands on the ground at the start, as the course was laid out. */
+    private final List<Course.Cast> ground;
+
+    private Damage(final List<Course.Piece> pieces, final double[] toughness, final double[] health,
+                   final Obstacles obstacles, final Obstacles whole, final List<Course.Cast> ground) {
+        this.ground = ground;
+        this.pieces = pieces;
+        this.toughness = toughness;
+        this.health = health;
+        this.obstacles = obstacles;
+        this.whole = whole;
+    }
+
+    /** The course unharmed. */
+    public static Damage of(final Course course) {
+        final List<Course.Piece> pieces = course.pieces();
+        final double[] toughness = new double[pieces.size()];
+        for (int i = 0; i < toughness.length; i++) {
+            toughness[i] = toughness(pieces.get(i));
+        }
+        final Obstacles laid = course.obstacles();
+        return new Damage(pieces, toughness, toughness.clone(), laid, laid, course.ground());
+    }
+
+    /** The same, each piece {@code which} picks {@code k} times as tough, and as whole as it was. */
+    public Damage toughened(final java.util.function.IntPredicate which, final double k) {
+        final double[] tougher = toughness.clone();
+        final double[] left = health.clone();
+        for (int i = 0; i < tougher.length; i++) {
+            if (which.test(i) && Double.isFinite(tougher[i])) {
+                tougher[i] *= k;
+                left[i] *= k;
+            }
+        }
+        return new Damage(pieces, tougher, left, obstacles, whole, ground);
+    }
+
+    /** The same, piece {@code piece} taken out of the world, broken without a blow: one waiting to come ({@link Siege}). */
+    public Damage retired(final int piece) {
+        final double[] left = health.clone();
+        left[piece] = 0;
+        return new Damage(pieces, toughness, left, obstacles.without(piece), whole, ground);
+    }
+
+    /** The same, piece {@code piece} {@code now} instead, and whole again, back in the world: an airship come, a hall rebuilt. */
+    public Damage revived(final int piece, final Course.Piece now) {
+        final List<Course.Piece> changed = new ArrayList<>(pieces);
+        changed.set(piece, now);
+        final double[] left = health.clone();
+        left[piece] = toughness[piece];
+        // in the way as it was laid out (what moves, put where it is as the world is stepped), less what is still broken
+        Obstacles standing = whole;
+        for (int i = 0; i < left.length; i++) {
+            if (left[i] <= 0) {
+                standing = standing.without(i);
+            }
+        }
+        return new Damage(List.copyOf(changed), toughness, left, standing, whole, ground);
+    }
+
+    /** The same, piece {@code piece} {@code now} instead, as worn as it was: an airship sent another way. */
+    public Damage rerouted(final int piece, final Course.Piece now) {
+        final List<Course.Piece> changed = new ArrayList<>(pieces);
+        changed.set(piece, now);
+        return new Damage(List.copyOf(changed), toughness, health, obstacles, whole, ground);
+    }
+
+    /**
+     * The same, piece {@code piece}'s volume {@code was} {@code now} instead, as worn as it was: a building with one
+     * of its doors opened or shut, in the way so, and made whole again so.
+     */
+    public Damage reshaped(final int piece, final Volume was, final Volume now) {
+        final List<Course.Piece> changed = new ArrayList<>(pieces);
+        changed.set(piece, pieces.get(piece).reshaped(was, now));
+        return new Damage(List.copyOf(changed), toughness, health, obstacles.reshaped(piece, was, now),
+                whole.reshaped(piece, was, now), ground);
+    }
+
+    /** Who stood on the ground at the start, as the course was laid out: not on a platform. */
+    public List<Course.Cast> ground() {
+        return ground;
+    }
+
+    /** How much a piece can take before it breaks; infinite for what cannot break. */
+    public static double toughness(final Course.Piece piece) {
+        final Block block = piece.block();
+        return switch (piece.kind()) {
+            case DUMMY -> DUMMY;
+            case DRONE -> DRONE;
+            case AIRSHIP -> AIRSHIP;
+            case BUNKER -> BUNKER;
+            case BUILDING -> BUILDING;
+            case WALL_UNIT -> Math.max(CRATE, Math.round(WALL_UNIT * 4 * block.halfWidth() * block.halfDepth()
+                    * (block.top() - block.bottom()) / 1e6));
+            // a land vehicle's body makes it the tougher by its armour
+            case CAR -> piece.body() == null ? CAR : CAR * piece.body().armour();
+            case PLATFORM -> PLATFORM;
+            case TREE -> TREE;
+            case LAMP -> LAMP;
+            case CRATE -> Math.round(CRATE + 4 * block.halfWidth() * block.halfDepth()
+                    * (block.top() - block.bottom()) / CRATE_VOLUME);
+            case FRUIT, FURNITURE -> piece.loose().toughness();
+            case PILLAR, GATE, ROAD, TRACK, WALL, AIRCRAFT, GARDEN -> Double.POSITIVE_INFINITY;
+        };
+    }
+
+    /** The new damage, and what came of the blows: each one struck, and what broke. */
+    public record Taken(Damage damage, List<Event> events) {
+        public Taken {
+            events = List.copyOf(events);
+        }
+    }
+
+    /**
+     * {@code blows} taken, in order: each one on a piece that can break wears it down, and the one
+     * that takes the last of it breaks it. Blows on the ground, on what cannot break, or on what is
+     * already broken change nothing.
+     *
+     * <p>What came of each blow goes out: a {@link Event.Struck} for every one, carrying what the
+     * piece has left after it, and a {@link Event.Broke} after the one that broke it.
+     */
+    public Taken took(final List<Blow> blows) {
+        return took(blows, 0);
+    }
+
+    /** As {@link #took(List)}, {@code seconds} after the start: what moves of itself breaks where it then is. */
+    public Taken took(final List<Blow> blows, final double seconds) {
+        return took(blows, piece -> pieces.get(piece).at(seconds));
+    }
+
+    /**
+     * As {@link #took(List)}, with {@code where} telling where each piece now is: what moves breaks
+     * where it then is, and that is where its pieces fly from.
+     */
+    public Taken took(final List<Blow> blows, final java.util.function.IntFunction<Course.Piece> where) {
+        double[] left = null;
+        Obstacles standing = obstacles;
+        Obstacles wholeNow = whole;
+        List<Course.Piece> changed = null;
+        final List<Event> happened = new ArrayList<>();
+        for (final Blow blow : blows) {
+            final int piece = blow.piece();
+            if (!harms(blow)) {
+                happened.add(Event.Struck.of(blow, piece >= 0 && piece < health.length ? share(piece, health) : 1));
+                continue;
+            }
+            final double[] now = left == null ? health : left;
+            if (now[piece] <= 0) {
+                // broken earlier this step: struck where it stood, and nothing more to break
+                happened.add(Event.Struck.of(blow, 0));
+                continue;
+            }
+            // on a building's door: the door worn, not the building; worn through, the door is gone, the building stands
+            final Interior building = interior((changed == null ? pieces : changed).get(piece));
+            final int door = building == null ? -1 : building.doorAt(blow.at());
+            if (door >= 0) {
+                final Interior struck = building.struck(door, harm(piece, blow) / DOOR);
+                if (changed == null) {
+                    changed = new ArrayList<>(pieces);
+                }
+                changed.set(piece, changed.get(piece).reshaped(building, struck));
+                standing = standing.reshaped(piece, building, struck);
+                wholeNow = wholeNow.reshaped(piece, building, struck);
+                happened.add(Event.Struck.of(blow, share(piece, now)));
+                continue;
+            }
+            // on a pane of a staged building where it is fine: the pane worn in its fine model, which keeps it so
+            final Staged staged = staged((changed == null ? pieces : changed).get(piece));
+            final int pane = staged == null ? -1 : staged.paneAt(blow.at());
+            if (pane >= 0) {
+                final Staged struck = staged.withFine(staged.fine().struck(pane,
+                        harm(piece, blow) / staged.fine().toughness()));
+                if (changed == null) {
+                    changed = new ArrayList<>(pieces);
+                }
+                changed.set(piece, changed.get(piece).reshaped(staged, struck));
+                standing = standing.reshaped(piece, staged, struck);
+                wholeNow = wholeNow.reshaped(piece, staged, struck);
+                happened.add(Event.Struck.of(blow, share(piece, now)));
+                continue;
+            }
+            // on a building's breakable part, a pane of its glass: the pane worn, not the building; worn through, gone
+            final Assembly assembly = assembly((changed == null ? pieces : changed).get(piece));
+            final int part = assembly == null ? -1 : assembly.breakableAt(blow.at());
+            if (part >= 0) {
+                final Assembly struck = assembly.struck(part, harm(piece, blow) / assembly.toughness());
+                if (changed == null) {
+                    changed = new ArrayList<>(pieces);
+                }
+                changed.set(piece, changed.get(piece).reshaped(assembly, struck));
+                standing = standing.reshaped(piece, assembly, struck);
+                wholeNow = wholeNow.reshaped(piece, assembly, struck);
+                happened.add(Event.Struck.of(blow, share(piece, now)));
+                continue;
+            }
+            if (left == null) {
+                left = health.clone();
+            }
+            left[piece] = Math.max(0, left[piece] - harm(piece, blow));
+            happened.add(Event.Struck.of(blow, share(piece, left)));
+            if (left[piece] <= 0) {
+                final Course.Piece what = where.apply(piece);
+                standing = standing.without(piece);
+                happened.add(new Event.Broke(piece, what.kind(), what.block(), blow.at(), blow.by(), what.fruit()));
+            }
+        }
+        if (left == null && changed == null) {
+            return new Taken(this, happened);
+        }
+        return new Taken(new Damage(changed == null ? pieces : List.copyOf(changed), toughness,
+                left == null ? health : left, standing, wholeNow, ground), happened);
+    }
+
+    /** A piece's assembly of parts ({@link Assembly}), if it is a building made so; else null. */
+    private static Assembly assembly(final Course.Piece piece) {
+        for (final Volume v : piece.volumes()) {
+            if (v instanceof Assembly a) {
+                return a;
+            }
+        }
+        return null;
+    }
+
+    /** A piece's inside ({@link Interior}), if it is a building that has one; else null. */
+    private static Interior interior(final Course.Piece piece) {
+        for (final Volume v : piece.volumes()) {
+            if (v instanceof Interior inside) {
+                return inside;
+            }
+        }
+        return null;
+    }
+
+    /** How much harm {@code blow} does piece {@code piece}: what its weapon does, less a body's plating, if it wears one. */
+    private double harm(final int piece, final Blow blow) {
+        final Course.Bodywork body = pieces.get(piece).body();
+        return body == null ? blow.by().blow() : Math.max(0, blow.by().blow() - body.plating());
+    }
+
+    private boolean harms(final Blow blow) {
+        final int piece = blow.piece();
+        return piece >= 0 && piece < health.length && pieces.get(piece).kind().breakable() && blow.by().blow() > 0;
+    }
+
+    /** How much of what it can take piece {@code piece} has in {@code health}: 1 for what cannot break. */
+    private double share(final int piece, final double[] health) {
+        return Double.isInfinite(toughness[piece]) ? 1 : health[piece] / toughness[piece];
+    }
+
+    /** What is still standing, to move among and shoot at: the course, less what is broken. */
+    public Obstacles obstacles() {
+        return obstacles;
+    }
+
+    /** How much piece {@code piece} has left of what it can take: 1 unharmed, 0 broken; always 1 for what cannot break. */
+    public double left(final int piece) {
+        return share(piece, health);
+    }
+
+    /** What piece {@code piece} has left to take, in the weapons' own units; infinite for what cannot break. */
+    public double health(final int piece) {
+        return health[piece];
+    }
+
+    /** Every piece's health, stirred together, to the bit: for checking two worlds are the same. */
+    public long checksum() {
+        long sum = Num.SEED;
+        for (final double h : health) {
+            sum = Num.mix(sum, Double.doubleToLongBits(h));
+        }
+        return sum;
+    }
+
+    public boolean broken(final int piece) {
+        return health[piece] <= 0;
+    }
+
+    /**
+     * The same, building {@code piece} at stage {@code now} ({@link Staged}), as the focus has it: its volume swapped
+     * where it stands, its harm as it was; where everything else is known as it was, its box the same.
+     */
+    public Damage restaged(final int piece, final Staged staged) {
+        final Staged was = staged(pieces.get(piece));
+        if (was == null || was == staged) {
+            return this;
+        }
+        final List<Course.Piece> changed = new ArrayList<>(pieces);
+        changed.set(piece, pieces.get(piece).reshaped(was, staged));
+        return new Damage(List.copyOf(changed), toughness, health, obstacles.reshaped(piece, was, staged),
+                whole.reshaped(piece, was, staged), ground);
+    }
+
+    /** The last pieces asked which of them are staged, and which they are: kept while the same pieces are asked. */
+    private static volatile Object[] stagedOf;
+
+    /** Which buildings are staged ({@link Staged}), by piece, broken or not: those whose fineness the focus picks. */
+    public int[] staged() {
+        final Object[] kept = stagedOf;
+        if (kept != null && kept[0] == pieces) {
+            return (int[]) kept[1];
+        }
+        final int[] staged = java.util.stream.IntStream.range(0, pieces.size())
+                .filter(i -> pieces.get(i).volumes().stream().anyMatch(Staged.class::isInstance)).toArray();
+        stagedOf = new Object[] {pieces, staged};
+        return staged;
+    }
+
+    /**
+     * The staged building {@code at} is in, by piece: within its outline (its coarse shape's, as it stands), between
+     * its foot and its top; -1 if in none. Broken or not.
+     */
+    public int stagedAround(final Vec3 at) {
+        final double up = -at.y();
+        for (final int i : staged()) {
+            final Staged s = staged(pieces.get(i));
+            if (up >= s.low() && up <= s.high() && s.coarse().covers(at.x(), at.z(), 0)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /** Building {@code piece}'s stage, as the focus last had it; {@code null} if it is not staged. */
+    public Staged.Stage stage(final int piece) {
+        final Staged s = staged(pieces.get(piece));
+        return s == null ? null : s.stage();
+    }
+
+    /** A piece's staged volume ({@link Staged}), if it is a building staged; else null. */
+    public static Staged staged(final Course.Piece piece) {
+        for (final Volume v : piece.volumes()) {
+            if (v instanceof Staged s) {
+                return s;
+            }
+        }
+        return null;
+    }
+
+    /** Piece {@code piece} of the course, as it was built: where it starts, if it moves ({@link Course.Piece#at}). */
+    public Course.Piece piece(final int piece) {
+        return pieces.get(piece);
+    }
+
+    /** The pieces that can move and are still standing, by number: the airships left, and the platforms. */
+    public List<Integer> moving() {
+        final List<Integer> moving = new ArrayList<>();
+        for (int i = 0; i < health.length; i++) {
+            if (pieces.get(i).moves() && health[i] > 0) {
+                moving.add(i);
+            }
+        }
+        return moving;
+    }
+
+    /**
+     * The airships that fly of themselves and are still in the sky, by number: the airships left. Not whatever else
+     * goes its own way ({@link Course.Route}): a lift on its timetable flies no raids.
+     */
+    public List<Integer> flying() {
+        return moving().stream().filter(i -> pieces.get(i).flies() && pieces.get(i).kind() == Course.Kind.AIRSHIP)
+                .toList();
+    }
+
+    /** The pieces riding on piece {@code carrier} and still standing, by number: the stall on the barge. */
+    public List<Integer> riding(final int carrier) {
+        return moving().stream().filter(i -> pieces.get(i).carrier() == carrier).toList();
+    }
+
+    /** How many pieces there are, broken or not. */
+    public int size() {
+        return pieces.size();
+    }
+
+    /** How many pieces of {@code kind} there were, and how many of them are broken. */
+    public int count(final Course.Kind kind) {
+        return (int) pieces.stream().filter(p -> p.kind() == kind).count();
+    }
+
+    /** The pieces of {@code kind} still standing. */
+    public List<Course.Piece> standing(final Course.Kind kind) {
+        final List<Course.Piece> standing = new ArrayList<>();
+        for (int i = 0; i < health.length; i++) {
+            if (pieces.get(i).kind() == kind && health[i] > 0) {
+                standing.add(pieces.get(i));
+            }
+        }
+        return standing;
+    }
+
+    public int broken(final Course.Kind kind) {
+        int count = 0;
+        for (int i = 0; i < health.length; i++) {
+            if (pieces.get(i).kind() == kind && health[i] <= 0) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    @Override
+    public String toString() {
+        return "Damage" + Arrays.toString(health);
+    }
+}

@@ -1,0 +1,49 @@
+package com.example.fxsuite.avatar;
+
+import com.example.fxsuite.avatar.bench.AircraftBench;
+import com.example.fxsuite.avatar.bench.BuildingBench;
+import com.example.fxsuite.avatar.bench.EngineBench;
+import com.example.fxsuite.avatar.bench.GunBench;
+import com.example.fxsuite.avatar.bench.ModelBench;
+import com.example.fxsuite.avatar.bench.Render;
+import com.example.fxsuite.avatar.bench.RoadBench;
+import com.example.fxsuite.avatar.bench.SoundBench;
+import com.example.fxsuite.avatar.bench.TerrainBench;
+
+import java.util.Arrays;
+
+/**
+ * Plain entry point. Launching the JavaFX application class directly from the classpath
+ * fails with "JavaFX runtime components are missing", so the jar starts here.
+ *
+ * <p>With no arguments, the demo. {@code --bench} opens the sound bench instead,
+ * {@code --engine} the engine bench, {@code --guns} the gun bench, {@code --models} the vehicle bench, {@code --buildings} the buildings bench, {@code --aircraft} the aircraft bench, {@code --terrain} the terrain bench, {@code --roads} the roads bench, and
+ * {@code --sounds [folder]} writes every sound to WAV files, with no window at all.
+ */
+public final class Main {
+
+    public static void main(final String[] args) throws Exception {
+        final String[] rest = args.length > 0 ? Arrays.copyOfRange(args, 1, args.length) : args;
+        if (args.length > 0 && args[0].equals("--bench")) {
+            javafx.application.Application.launch(SoundBench.class, rest);
+        } else if (args.length > 0 && args[0].equals("--engine")) {
+            javafx.application.Application.launch(EngineBench.class, rest);
+        } else if (args.length > 0 && args[0].equals("--guns")) {
+            javafx.application.Application.launch(GunBench.class, rest);
+        } else if (args.length > 0 && args[0].equals("--models")) {
+            javafx.application.Application.launch(ModelBench.class, rest);
+        } else if (args.length > 0 && args[0].equals("--buildings")) {
+            javafx.application.Application.launch(BuildingBench.class, rest);
+        } else if (args.length > 0 && args[0].equals("--aircraft")) {
+            javafx.application.Application.launch(AircraftBench.class, rest);
+        } else if (args.length > 0 && args[0].equals("--terrain")) {
+            javafx.application.Application.launch(TerrainBench.class, rest);
+        } else if (args.length > 0 && args[0].equals("--roads")) {
+            javafx.application.Application.launch(RoadBench.class, rest);
+        } else if (args.length > 0 && args[0].equals("--sounds")) {
+            Render.main(rest);
+        } else {
+            javafx.application.Application.launch(AvatarDemo.class, args);
+        }
+    }
+}

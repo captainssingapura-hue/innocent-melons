@@ -1,0 +1,158 @@
+package com.example.fxsuite.avatar.sim;
+
+/**
+ * Something that happened, as the simulation reports it: to the avatar, or to the world at its
+ * hands. The moments that cannot be read back from its state afterwards, because a landing has
+ * already zeroed the fall that made it, or a bump the speed it took away. Each output (the
+ * graphics, the sound) listens for the ones it has a use for. Speeds are in world units per
+ * second.
+ */
+public sealed interface Event {
+
+    /** A foot came down, walking or running: the left one, or the right, on the ground or a block. */
+    record Footfall(boolean left, Surface on) implements Event {
+    }
+
+    record Jumped() implements Event {
+    }
+
+    /**
+     * It came down, falling at {@code speed}, onto the ground or a block (a crate, a pillar's
+     * top); out of a flight, or a jump.
+     */
+    record Landed(double speed, boolean fromFlight, Surface on) implements Event {
+    }
+
+    /** It ran, or rose, into something, losing {@code speed} against it. */
+    record Bumped(double speed) implements Event {
+    }
+
+    record TookOff() implements Event {
+    }
+
+    /** A flight ended in mid-air, and it falls. */
+    record FlightCut() implements Event {
+    }
+
+    record PackOn() implements Event {
+    }
+
+    record PackOff() implements Event {
+    }
+
+    /** It went through a gate's opening, at {@code speed}, either way. */
+    record PassedGate(double speed) implements Event {
+    }
+
+    /** A weapon was drawn into the hands, or (for {@link Weapon#NONE}) the hands emptied. */
+    record Drew(Weapon weapon) implements Event {
+    }
+
+    /**
+     * A gun fired a round, {@code by} what: of a pair, the one in the left hand, or the right. It
+     * flew from the muzzle {@code from} to {@code to}, where it struck something, or ran out of range.
+     */
+    record Fired(boolean left, Vec3 from, Vec3 to, Weapon by) implements Event {
+    }
+
+    /**
+     * A weapon struck something: at {@code at}, on a surface facing {@code normal}, the ground or a
+     * block, which is piece {@code piece} of the {@link Course} (-1 for the ground). A round
+     * fired, or the glaive's blade coming through. What came of a {@link Blow}, once the world had
+     * taken it.
+     *
+     * <p>It carries its result: {@code left}, how much the piece has left of what it can take
+     * after this blow, 1 unharmed to 0 broken, and always 1 for what cannot break and for the
+     * ground. A reader that missed the blows before it still knows where the piece stands.
+     */
+    record Struck(Vec3 at, Vec3 normal, Surface on, Weapon by, int piece, double left) implements Event {
+
+        /** Struck, on no piece in particular, and none the worse. */
+        public Struck(final Vec3 at, final Vec3 normal, final Surface on, final Weapon by) {
+            this(at, normal, on, by, -1, 1);
+        }
+
+        /** What came of {@code blow}: the piece it reached has {@code left} after it. */
+        public static Struck of(final Blow blow, final double left) {
+            return new Struck(blow.at(), blow.normal(), blow.on(), blow.by(), blow.piece(), left);
+        }
+    }
+
+    /**
+     * Something was broken: piece {@code piece} of the {@link Course}, a {@code kind} that was
+     * the box {@code block}, its last blow struck at {@code struck} by {@code by}; and if it was a
+     * piece of fruit, which ({@code fruit}; null if not). It is gone from the world for good
+     * ({@link Damage}).
+     */
+    record Broke(int piece, Course.Kind kind, Block block, Vec3 struck, Weapon by, Fruit fruit) implements Event {
+
+        /** Something broken that was no fruit. */
+        public Broke(final int piece, final Course.Kind kind, final Block block, final Vec3 struck, final Weapon by) {
+            this(piece, kind, block, struck, by, null);
+        }
+
+        /** The middle of what broke. */
+        public Vec3 middle() {
+            return new Vec3(block.x(), -(block.bottom() + block.top()) / 2, block.z());
+        }
+    }
+
+    /** The glaive's blade came through: {@link Arms#CLEAVE} or {@link Arms#SWEEP}. */
+    record Swung(int stroke) implements Event {
+    }
+
+    /** The avatar took the controls of platform {@code piece}, standing at its console. */
+    record TookControls(int piece) implements Event {
+    }
+
+    /** The avatar let go of the controls of platform {@code piece}: it let go, or was no longer at them. */
+    record LetGo(int piece) implements Event {
+    }
+
+    /** Platform {@code piece}'s engine was started, at its controls. */
+    record EngineStarted(int piece) implements Event {
+    }
+
+    /** Platform {@code piece}'s engine was cut, at its controls: it drops onto what is under it. */
+    record EngineCut(int piece) implements Event {
+    }
+
+    /** Platform {@code piece}, its engine cut, came down on something {@code speed} fast, its middle at {@code at}. */
+    record Settled(int piece, double speed, Vec3 at) implements Event {
+    }
+
+    /** Person {@code person} was destroyed, there at {@code at} (their feet): their health gone, they blew apart. */
+    record Destroyed(int person, Vec3 at) implements Event {
+    }
+
+    /** Person {@code person} came down hard enough to be hurt, falling {@code speed} fast, there at {@code at}. */
+    record Fell(int person, double speed, Vec3 at) implements Event {
+    }
+
+    /** Person {@code person} was shoved, sent off {@code speed} fast, there at {@code at}. */
+    record Shoved(int person, double speed, Vec3 at) implements Event {
+    }
+
+    /** An airship let go of a bomb, at {@code at}: airship {@code from}, by its piece number. */
+    record Dropped(Vec3 at, int from) implements Event {
+    }
+
+    /** Airship {@code from}'s bomb bay began to open, {@code opening}, or to shut; its doors there at {@code at}. */
+    record Bay(int from, boolean opening, Vec3 at) implements Event {
+    }
+
+    /**
+     * A bomb went off at {@code at}, on the ground or a block. What it harmed comes after, each
+     * piece struck ({@link Struck}, by {@link Weapon#BOMB}) and what broke.
+     */
+    record Exploded(Vec3 at, Surface on) implements Event {
+    }
+
+    /** An airship of the siege ({@link Siege}) came, airship {@code piece}, in at {@code at} on the edge of the world. */
+    record Arrived(int piece, Vec3 at) implements Event {
+    }
+
+    /** The siege is lost: the temple's hall, its middle at ({@code x}, {@code z}), has fallen for good. */
+    record Besieged(double x, double z) implements Event {
+    }
+}
