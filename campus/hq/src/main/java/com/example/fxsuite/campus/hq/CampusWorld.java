@@ -43,7 +43,7 @@ public record CampusWorld() implements PlayWorld {
     @Override
     public void lay(final Course.Layout world) {
         Campus.register();
-        world.start(Village.start()).land(Meadow.land(Campus.HOUSED)).pieces(Campus.pieces())
+        world.start(Village.start()).land(Campus.land()).pieces(Campus.pieces())
                 .rivers(Village.rivers()).ponds(Village.ponds()).ruled(false)
                 .ways(Meadow.roads(Campus.HOUSED).roads().stream().flatMap(r -> r.pavements().stream())
                         .map(p -> (Volume) p).toList());

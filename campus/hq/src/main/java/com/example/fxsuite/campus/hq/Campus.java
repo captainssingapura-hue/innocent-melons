@@ -3,6 +3,7 @@ package com.example.fxsuite.campus.hq;
 import com.example.fxsuite.avatar.build.Sites;
 import com.example.fxsuite.avatar.build.Town;
 import com.example.fxsuite.avatar.sim.Course;
+import com.example.fxsuite.avatar.sim.Land;
 import com.example.fxsuite.avatar.worlds.Meadow;
 
 import java.util.ArrayList;
@@ -27,6 +28,18 @@ public final class Campus {
     static final boolean HOUSED = false;
 
     private Campus() {
+    }
+
+    /**
+     * Its land: the meadow's, bare of its village, as its roads leave it; its quarters' plots laid on it, each in its
+     * own cover ({@link Quarters}), the land's shape as it was. Worked out once, when first wanted.
+     */
+    public static Land land() {
+        return Laid.LAND;
+    }
+
+    private static final class Laid {
+        static final Land LAND = Meadow.land(HOUSED).with(Quarters.layers());
     }
 
     /** Department {@code number}'s key: after its main office's, in its order. */

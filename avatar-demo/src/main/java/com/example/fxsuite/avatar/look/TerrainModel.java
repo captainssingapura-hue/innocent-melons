@@ -85,7 +85,7 @@ public final class TerrainModel {
     /** How many heights' haze a frame works out again and sends to be drawn, at most (or one piece's, if more). */
     static final int BUDGET = 3_000;
     /** How many tints, low to high, and how many shades of the haze, none to all, the land's picture has. */
-    private static final int TINTS = 256;
+    private static final int TINTS = 512;
     private static final int HAZES = 64;
     /** How much each height's tint is moved up or down, at random: the grass mottled. */
     private static final double MOTTLE = 0.025;
@@ -108,13 +108,29 @@ public final class TerrainModel {
 
     /**
      * What covers the ground where a feature lays something on it ({@link Land#cover}), each its colour: bare
-     * earth (a channel's bed and banks), gravel (a country road's top), asphalt (a road's); in the order of
-     * {@link Land.Cover}. Each no darker than the base colour in any channel, so its picture is what it has more.
+     * earth (a channel's bed and banks), gravel (a country road's top), asphalt (a road's); and a place's plots, each
+     * as unlike the others as the meadow's grass: pale paving, blue-green moss, slate chippings, sand, clay, straw,
+     * a bright lawn, brown mulch; in the order of {@link Land.Cover}. Each no darker than the base colour in any
+     * channel, so its picture is what it has more.
      */
     static final Color EARTH = Color.web("#7d6a4e");
     static final Color GRAVEL = Color.web("#8a8578");
     static final Color ASPHALT = Color.web("#5f6566");
-    private static final Color[] COVERED_BY = {EARTH, GRAVEL, ASPHALT};
+    static final Color PAVING = Color.web("#b8b2a4");
+    static final Color MOSS = Color.web("#6a9a90");
+    static final Color SLATE = Color.web("#7a8794");
+    static final Color SAND = Color.web("#cdb98a");
+    static final Color CLAY = Color.web("#b06e55");
+    static final Color STRAW = Color.web("#c8b44e");
+    static final Color LAWN = Color.web("#6fa055");
+    static final Color MULCH = Color.web("#8a6e55");
+    private static final Color[] COVERED_BY = {EARTH, GRAVEL, ASPHALT, PAVING, MOSS, SLATE, SAND, CLAY, STRAW, LAWN,
+        MULCH};
+
+    /** The colour {@code cover} is drawn in, all of it, on the land: for a bench to show a plot as the land would. */
+    public static Color colour(final Land.Cover cover) {
+        return COVERED_BY[cover.ordinal()];
+    }
     /** How many of the picture's columns each cover is: the last cover first, then the one before, the grass after them all. */
     static final int COVERED = 16;
 
