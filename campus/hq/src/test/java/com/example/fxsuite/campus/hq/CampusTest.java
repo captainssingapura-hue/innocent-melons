@@ -29,8 +29,8 @@ class CampusTest {
         final List<Course.Piece> campus = Campus.pieces();
         assertEquals(Village.VILLAGE.size(), housed.stream().filter(CampusTest::hut).count(), "the meadow's huts");
         assertEquals(0, campus.stream().filter(CampusTest::hut).count(), "none of them on the campus");
-        assertEquals(housed.size() - Village.VILLAGE.size() + 1 + Department.ALL.size(), campus.size(),
-                "all else of the meadow, its main office and its departments, nothing more");
+        assertEquals(housed.size() - Village.VILLAGE.size() + 1 + Department.ALL.size() + LabHut.ALL.size(), campus.size(),
+                "all else of the meadow, its main office, its departments and its labs' libraries, nothing more");
         assertEquals(1, campus.stream().filter(c -> c.tint() == Village.KEYS + Village.CHURCH).count(), "its church");
         assertEquals(1, campus.stream().filter(c -> c.tint() == Campus.MAIN).count(), "its main office, once");
     }

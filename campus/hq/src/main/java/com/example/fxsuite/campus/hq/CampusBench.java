@@ -87,11 +87,17 @@ public final class CampusBench extends Application {
         workshop.close();
     }
 
-    /** On the workshop's worker: its main office and its departments drawn where they stand, as one model. */
+    /**
+     * On the workshop's worker: its main office, its departments and its labs' libraries drawn where they stand, as
+     * one model.
+     */
     private Made make(final Asked a) {
         final List<Solid> all = new ArrayList<>(placed(MainOffice.HUT.solids(), MainOffice.place()));
         for (final Department d : Department.ALL) {
             all.addAll(placed(d.hut().solids(), d.place()));
+        }
+        for (final LabHut lab : LabHut.ALL) {
+            all.addAll(placed(lab.hut().solids(), lab.place()));
         }
         return new Made(ModelView.Model.of(all), ModelView.Model.of(plots()));
     }
@@ -146,6 +152,13 @@ public final class CampusBench extends Application {
             directory.append(String.format(Locale.ROOT, "%s: %.1f m across, its walls %s, its roof %s, at %d, %d m%n",
                     d.name(), d.hut().size().width() / 100, f.walls().title(), f.roof().title(),
                     Math.round(p.x() / 100), Math.round(p.z() / 100)));
+        }
+        directory.append(String.format(Locale.ROOT, "%n"));
+        for (final LabHut lab : LabHut.ALL) {
+            final Place p = lab.place();
+            directory.append(String.format(Locale.ROOT, "%s, in %s (%s): %.1f m across, at %d, %d m, its door to %s%n",
+                    lab.name(), lab.quarter(), lab.library(), lab.hut().size().width() / 100,
+                    Math.round(p.x() / 100), Math.round(p.z() / 100), compass(p.yaw())));
         }
         bus.publish(new Bus.Figures(directory.toString().strip()));
         bus.publish(new Bus.Problems(""));

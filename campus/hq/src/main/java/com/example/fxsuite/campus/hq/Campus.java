@@ -24,6 +24,9 @@ public final class Campus {
     /** The key its main office is drawn by; its departments' after it, in their order. */
     public static final int MAIN = KEYS + 1_000;
 
+    /** The first key its labs' libraries are drawn by ({@link LabHut}), in their order. */
+    public static final int LABS = MAIN + 100;
+
     /** Its base: the meadow bare of its village's houses. */
     static final boolean HOUSED = false;
 
@@ -47,18 +50,29 @@ public final class Campus {
         return MAIN + department.number();
     }
 
-    /** Its buildings, told to the drawing: its main office's key drawn as it is, each department's as its own is. */
+    /**
+     * Its buildings, told to the drawing: its main office's key drawn as it is, each department's as its own is, each
+     * lab's library's as its own is.
+     */
     public static void register() {
         Sites.register(MAIN, MAIN + 1 + Department.ALL.size(),
                 k -> k == 0 ? MainOffice.HUT.solids() : Department.ALL.get(k - 1).hut().solids());
+        Sites.register(LABS, LABS + LabHut.ALL.size(), k -> LabHut.ALL.get(k).hut().solids());
     }
 
-    /** What stands on it: the meadow's pieces, bare of its village's houses; its main office; its departments. */
+    /**
+     * What stands on it: the meadow's pieces, bare of its village's houses; its main office; its departments; its labs'
+     * libraries.
+     */
     public static List<Course.Piece> pieces() {
         final List<Course.Piece> pieces = new ArrayList<>(Meadow.pieces(HOUSED));
         pieces.add(Town.building(MainOffice.HUT.solids(), MainOffice.place(), MAIN, MainOffice.HUT.shape(), 1));
         for (final Department d : Department.ALL) {
             pieces.add(Town.building(d.hut().solids(), d.place(), key(d), d.hut().shape(), 1));
+        }
+        for (int k = 0; k < LabHut.ALL.size(); k++) {
+            final LabHut lab = LabHut.ALL.get(k);
+            pieces.add(Town.building(lab.hut().solids(), lab.place(), LABS + k, lab.hut().shape(), 1));
         }
         return pieces;
     }

@@ -49,6 +49,20 @@ public final class ModelView {
             drawn.setMouseTransparent(true);
             return new Model(drawn);
         }
+
+        /**
+         * {@code drawn}, made afresh as {@link #of(Node)} is, but to be taken hold of: pressed on, what it is made of
+         * is picked, for the view's grip ({@link ModelView#grip}) to take; whatever of it is not to be, made mouse
+         * transparent by whoever made it.
+         */
+        public static Model touchable(final Node drawn) {
+            return new Model(drawn);
+        }
+    }
+
+    /** {@code grip} given what is pressed on in a touchable model, to take hold of and move ({@link Grip}). */
+    public void grip(final Grip grip) {
+        orbit.grip(grip);
     }
 
     private final Orbit orbit;
