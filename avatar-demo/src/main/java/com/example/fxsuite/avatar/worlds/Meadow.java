@@ -134,12 +134,20 @@ public final class Meadow implements DrawnDemo {
         return Roadworks.design(raw, Mapped.plans(Village.roads(), (way, kind) -> kinds.get(kind), raw, null));
     }
 
+    /**
+     * What stands in it: the village and all round it ({@link Village#pieces}), and its bridge as its road builds it.
+     * For a world laid on the meadow to keep, or leave out, as it will.
+     */
+    public static List<Course.Piece> pieces() {
+        final List<Course.Piece> pieces = new ArrayList<>(Village.pieces(land()));
+        pieces.addAll(Decks.pieces(roads(), DECK_KEYS, true));
+        return pieces;
+    }
+
     @Override
     public void lay(final Course.Layout world) {
         final Roadworks works = roads();
-        final List<Course.Piece> pieces = new ArrayList<>(Village.pieces(land()));
-        pieces.addAll(Decks.pieces(works, DECK_KEYS, true));
-        world.start(Village.start()).land(land()).pieces(pieces).rivers(Village.rivers()).ponds(Village.ponds())
+        world.start(Village.start()).land(land()).pieces(pieces()).rivers(Village.rivers()).ponds(Village.ponds())
                 .ways(works.roads().stream().flatMap(r -> r.pavements().stream()).map(p -> (Volume) p).toList())
                 .ruled(false);
     }
