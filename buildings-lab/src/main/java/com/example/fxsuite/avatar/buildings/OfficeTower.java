@@ -50,23 +50,23 @@ public record OfficeTower(String name, List<double[]> outline, List<Double> leve
                           List<Setback> setbacks) {
 
     /** What a storey is: its lobby, an office floor, a floor of plant, of parking (louvred, not glazed). */
-    static final String LOBBY = "lobby";
-    static final String OFFICE = "office";
-    static final String PLANT = "plant";
-    static final String PARKING = "car park";
+    public static final String LOBBY = "lobby";
+    public static final String OFFICE = "office";
+    public static final String PLANT = "plant";
+    public static final String PARKING = "car park";
     /** A terrace's railing, so high. */
     static final double RAILING = 110;
 
     /** From storey {@code from} up, an outline stepped in from the one under it. */
-    record Setback(int from, List<double[]> outline) {
+    public record Setback(int from, List<double[]> outline) {
 
-        Setback {
+        public Setback {
             outline = outline.stream().map(double[]::clone).toList();
         }
     }
 
     /** One that never steps in: the same outline all the way up. */
-    OfficeTower(final String name, final List<double[]> outline, final List<Double> levels, final List<String> uses,
+    public OfficeTower(final String name, final List<double[]> outline, final List<Double> levels, final List<String> uses,
                 final List<double[]> service, final List<Placed> banks, final double crown, final int front) {
         this(name, outline, levels, uses, service, banks, crown, front, List.of());
     }
@@ -118,7 +118,7 @@ public record OfficeTower(String name, List<double[]> outline, List<Double> leve
     }
 
     /** Storey {@code f}'s outline: the lobby's, or the last it stepped in to under it; the roof's its top storey's. */
-    List<double[]> outline(final int f) {
+    public List<double[]> outline(final int f) {
         final int storey = Math.min(f, storeys() - 1);
         List<double[]> at = outline;
         for (final Setback s : setbacks) {
@@ -199,7 +199,7 @@ public record OfficeTower(String name, List<double[]> outline, List<Double> leve
     }
 
     /** A bank of {@code cars} cars serving the lobby and floors {@code from} to {@code to}, at {@code speed}. */
-    static HighRiseBank bank(final List<Double> levels, final int from, final int to, final int cars,
+    public static HighRiseBank bank(final List<Double> levels, final int from, final int to, final int cars,
                              final double speed) {
         return bank(levels, from, to, cars, speed, 200, 170, 260, 100);
     }
@@ -208,7 +208,7 @@ public record OfficeTower(String name, List<double[]> outline, List<Double> leve
      * As {@link #bank(List, int, int, int, double)}, its cars {@code wide} across and {@code deep} along outside,
      * {@code high} inside, their doorways {@code doorway} wide; held open three and a half seconds at a stop.
      */
-    static HighRiseBank bank(final List<Double> levels, final int from, final int to, final int cars,
+    public static HighRiseBank bank(final List<Double> levels, final int from, final int to, final int cars,
                              final double speed, final double wide, final double deep, final double high,
                              final double doorway) {
         return new HighRiseBank(0, 0, levels, from, to, cars, new Profile(speed, 100, 150), wide, deep, high, doorway,
@@ -369,14 +369,14 @@ public record OfficeTower(String name, List<double[]> outline, List<Double> leve
     }
 
     /** Its banks' landings' doors, all of them, standing shut: its lifts not at work. */
-    List<Solid> landingsShut() {
+    public List<Solid> landingsShut() {
         final List<Solid> solids = new ArrayList<>();
         banks.forEach(b -> solids.addAll(b.landingsShut()));
         return solids;
     }
 
     /** Its storeys by their floors' heights, the lobby's first, and its roof's: its cells, as staged. */
-    double[] cells() {
+    public double[] cells() {
         return levels.stream().mapToDouble(Double::doubleValue).toArray();
     }
 
@@ -398,7 +398,7 @@ public record OfficeTower(String name, List<double[]> outline, List<Double> leve
      * All of it up to storey {@code upTo}, the floor over that left off so it is looked into from over it (all of it,
      * roof and crown, if that is its last or more); glass if asked.
      */
-    List<Solid> solids(final int upTo, final boolean glass) {
+    public List<Solid> solids(final int upTo, final boolean glass) {
         final List<Solid> solids = new ArrayList<>();
         final int last = Math.min(upTo, storeys() - 1);
         final List<Solid> lid = last < storeys() - 1 ? floor(last + 1) : List.of();
@@ -416,12 +416,12 @@ public record OfficeTower(String name, List<double[]> outline, List<Double> leve
     }
 
     /** How big its floor at storey {@code f} is, m², its holes left out. */
-    double area(final int f) {
+    public double area(final int f) {
         return Plates.area(floor(f, outline(f)), true);
     }
 
     /** What it comes to, read out. */
-    String figures() {
+    public String figures() {
         final StringBuilder out = new StringBuilder(String.format(Locale.ROOT,
                 "%s: %d storeys, its roof %.1f m up, its crown %.1f m over it; a typical floor %.0f m² (gross, the"
                         + " core's shafts left out)",
@@ -440,7 +440,7 @@ public record OfficeTower(String name, List<double[]> outline, List<Double> leve
      * It as a scene: drawn up to the floor over storey {@code upTo}, glass if asked; played whole, its glass pane by
      * pane apart from its frame, to be broken into.
      */
-    Built built(final int upTo, final boolean glass) {
+    public Built built(final int upTo, final boolean glass) {
         final List<Solid> drawn = solids(upTo, glass);
         final List<Solid> whole = solids(storeys(), false);
         final List<List<Solid>> panes = solids(storeys(), true).stream().filter(s -> s.material() == Material.GLASS)

@@ -59,15 +59,21 @@ class TerrainModelTest {
         assertEquals(World.GRASS, TerrainModel.tint(0));
         final int covers = Land.Cover.values().length;
         assertEquals(World.GRASS, TerrainModel.colour((int) TerrainModel.column(new double[covers], 0)));
-        // and each cover, all of it: its own colour, no less than the base in any channel either
-        final Color[] colours = {TerrainModel.EARTH, TerrainModel.GRAVEL, TerrainModel.ASPHALT};
+        // and each cover, all of it: its own colour, no less than the base in any channel either, no two alike
+        assertEquals(TerrainModel.EARTH, TerrainModel.colour(Land.Cover.EARTH));
+        assertEquals(TerrainModel.GRAVEL, TerrainModel.colour(Land.Cover.GRAVEL));
+        assertEquals(TerrainModel.ASPHALT, TerrainModel.colour(Land.Cover.ASPHALT));
+        final java.util.Set<Color> seen = new java.util.HashSet<>();
         for (final Land.Cover cover : Land.Cover.values()) {
             final double[] all = new double[covers];
             all[cover.ordinal()] = 1;
-            assertEquals(colours[cover.ordinal()], TerrainModel.colour((int) TerrainModel.column(all, 0.7)), cover.name());
+            final Color colour = TerrainModel.colour(cover);
+            assertEquals(colour, TerrainModel.colour((int) TerrainModel.column(all, 0.7)), cover.name());
             for (int c = 0; c < 3; c++) {
-                assertTrue(channel(colours[cover.ordinal()], c) >= channel(TerrainModel.BASE, c));
+                assertTrue(channel(colour, c) >= channel(TerrainModel.BASE, c), cover.name());
             }
+            assertTrue(seen.add(colour), cover.name() + ": its own colour");
+            assertTrue(!colour.equals(TerrainModel.tint(0.5)), cover.name() + ": not the grass's");
         }
         // a road over bare earth: the road's
         final double[] both = new double[covers];

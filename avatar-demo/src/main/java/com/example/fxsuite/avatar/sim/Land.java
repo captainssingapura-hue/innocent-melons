@@ -45,9 +45,10 @@ public final class Land {
 
     /**
      * What covers the ground, where a feature lays something on it rather than grass: bare earth (a channel's bed
-     * and banks), gravel (a country road's top), asphalt (a road's).
+     * and banks), gravel (a country road's top), asphalt (a road's); and ground laid out for a place, as a plot of it
+     * is (a campus's quarters, say): paving, moss, slate chippings, sand, clay, straw, lawn, mulch.
      */
-    public enum Cover { EARTH, GRAVEL, ASPHALT }
+    public enum Cover { EARTH, GRAVEL, ASPHALT, PAVING, MOSS, SLATE, SAND, CLAY, STRAW, LAWN, MULCH }
 
     /** A stretch of a pavement laid on it: its middle from (ax, az) to (bx, bz), so wide either side of it at each end. */
     public record Band(double ax, double az, double bx, double bz, double ha, double hb) {

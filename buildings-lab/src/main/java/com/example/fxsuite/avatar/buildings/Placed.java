@@ -20,16 +20,16 @@ import java.util.List;
  * @param z    along, where its middle is
  * @param yaw  how it is turned, degrees, a whole number of quarter turns
  */
-record Placed(HighRiseBank bank, double x, double z, double yaw) {
+public record Placed(HighRiseBank bank, double x, double z, double yaw) {
 
-    Placed {
+    public Placed {
         if (Math.abs(yaw / 90 - Math.round(yaw / 90)) > 1e-9) {
             throw new IllegalArgumentException("a bank turned a whole number of quarter turns, not " + yaw);
         }
     }
 
     /** Where ({@code across}, {@code along}) in the bank's frame is in the building's: across, along. */
-    double[] at(final double across, final double along) {
+    public double[] at(final double across, final double along) {
         final double r = Math.toRadians(yaw);
         // turned as the game turns a thing: its right (cos, -sin), its ahead (sin, cos)
         final double c = Math.cos(r);
@@ -38,12 +38,12 @@ record Placed(HighRiseBank bank, double x, double z, double yaw) {
     }
 
     /** Its shafts' walls, {@code slab} the floors' thickness, in the building. */
-    List<Solid> shafts(final double slab) {
+    public List<Solid> shafts(final double slab) {
         return bank.shafts(slab).stream().map(this::placed).toList();
     }
 
     /** Its landings' doors standing shut, in the building: its lifts not at work. */
-    List<Solid> landingsShut() {
+    public List<Solid> landingsShut() {
         return bank.landingsShut().stream().map(this::placed).toList();
     }
 
@@ -55,7 +55,7 @@ record Placed(HighRiseBank bank, double x, double z, double yaw) {
     }
 
     /** Its moving parts, drawn by the keys given, each going its way in the building, turned with it. */
-    List<Mover> movers(final int car, final int carDoor, final int landingDoor) {
+    public List<Mover> movers(final int car, final int carDoor, final int landingDoor) {
         return bank.movers(car, carDoor, landingDoor).stream().map(m -> {
             final Course.Route was = m.route();
             final Course.Route turned = seconds -> {
@@ -68,7 +68,7 @@ record Placed(HighRiseBank bank, double x, double z, double yaw) {
     }
 
     /** The hole it cuts in each floor it goes through, in the building: least and most across, least and most along. */
-    double[] hole() {
+    public double[] hole() {
         final double[] h = bank.hole();
         final double[] a = at(h[0], h[2]);
         final double[] b = at(h[1], h[3]);
@@ -76,12 +76,12 @@ record Placed(HighRiseBank bank, double x, double z, double yaw) {
     }
 
     /** How deep it is, back to front: the room it takes across a core when it faces across. */
-    double depth() {
+    public double depth() {
         return bank.deep() + 2 * HighRiseBank.GAP + 2 * HighRiseBank.SHAFT_WALL;
     }
 
     /** How long it is, side to side: the room it takes along a core when it faces across. */
-    double length() {
+    public double length() {
         return bank.cars() * bank.pitch() + HighRiseBank.SHAFT_WALL;
     }
 }

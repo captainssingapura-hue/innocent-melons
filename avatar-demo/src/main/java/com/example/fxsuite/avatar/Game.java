@@ -138,8 +138,8 @@ public final class Game {
 
     /**
      * The worlds designed outside the simulation told of it, once: the town's buildings, how big, where the guns on top
-     * of them stand; the village; the wall towers; Marina Bay, a demo of its own, by its name. Before any demo is looked
-     * up by name or offered: so the launcher asks for it first.
+     * of them stand; the village; the wall towers. Before any demo is looked up by name or offered: so the launcher
+     * asks for it first. A world that is a project of its own (Marina Bay) tells it of itself, after this.
      */
     public static synchronized void tellWorlds() {
         if (told) {
@@ -151,7 +151,6 @@ public final class Game {
         com.example.fxsuite.avatar.build.Town.tell();
         com.example.fxsuite.avatar.sim.Demos.register(com.example.fxsuite.avatar.worlds.Meadow.DEMO);
         com.example.fxsuite.avatar.build.TowerMap.tell();
-        com.example.fxsuite.avatar.sim.Demos.register(com.example.fxsuite.avatar.worlds.Bay.DEMO);
     }
 
     private static final double FIELD_OF_VIEW = 48;

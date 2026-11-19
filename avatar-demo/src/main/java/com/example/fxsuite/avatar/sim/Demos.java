@@ -104,7 +104,7 @@ public enum Demos implements Demo {
         world.builtIn(this);
     }
 
-    /** Demos defined elsewhere, by name, in the order told: Marina Bay. */
+    /** Demos defined elsewhere, by name, in the order told: the meadow village; any world that tells of itself (Marina Bay). */
     private static final Map<String, Demo> REGISTERED = new LinkedHashMap<>();
 
     /** Tells the demos of one more, defined elsewhere, known by its name: offered to play if it says so, and found by it. */

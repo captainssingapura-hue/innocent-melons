@@ -92,7 +92,8 @@ public final class TowerMap {
 
     /**
      * The towers, each one piece; the hull on their roofs, one; the pavilion on its deck and the melon stall under it:
-     * all that stands here but the trees round it, to stand on any ground ({@link MarinaBay}).
+     * all that stands here but the trees round it, to stand on any ground: the bay's, which stands them where the real
+     * resort's towers are.
      */
     public static List<Course.Piece> buildings() {
         final List<Course.Piece> pieces = new ArrayList<>();

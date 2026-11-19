@@ -276,6 +276,16 @@ public final class Village {
      * </ul>
      */
     public static RoadMap roads() {
+        return roads(true);
+    }
+
+    /**
+     * The meadow's roads ({@link #roads()}), {@code housed} as its village is; or, not, the meadow laid bare of its
+     * village's houses as a base for another world: no lane to the church, but the village road, sealed as it is, going
+     * on from the bridge as the bridge heads, round west of the well, and up the lane's line to the churchyard's edge;
+     * one road from the highway over the bridge up to the church.
+     */
+    public static RoadMap roads(final boolean housed) {
         final RoadMap.Node exit = new RoadMap.Node("exit", offWestbound(EXIT, 0));
         final RoadMap.Node entry = new RoadMap.Node("entry", offWestbound(ENTRY, 0));
         final RoadMap.Node junction = new RoadMap.Node("junction", offWestbound(JUNCTION, JUNCTION_OUT));
@@ -304,17 +314,25 @@ public final class Village {
         final Vec2 middle = new Vec2(WELL.x(), riverAt(WELL.x()));
         final Vec2 south = new Vec2(middle.x() - across.x() * SPAN, middle.z() - across.z() * SPAN);
         final Vec2 north = new Vec2(middle.x() + across.x() * SPAN, middle.z() + across.z() * SPAN);
-        final Vec2 square = new Vec2(WELL.x(), WELL.z() - SQUARE);
         final double toSouth = -Alignment.bending(south, new Vec2(-across.x(), -across.z()), junction.at());
-        final double toSquare = Alignment.bending(north, across, square);
-        ways.add(new RoadMap.Way("village road", List.of(
+        final List<RoadMap.Vertex> vertices = new ArrayList<>(List.of(
                 new RoadMap.Vertex(junction.at(), Double.NaN, junction.name()),
                 new RoadMap.Vertex(south, DECK, null),
-                new RoadMap.Vertex(north, DECK, null),
-                new RoadMap.Vertex(square)), List.of(
+                new RoadMap.Vertex(north, DECK, null)));
+        final List<RoadMap.Segment> segments = new ArrayList<>(List.of(
                 new RoadMap.Segment(VILLAGE_ROAD.name(), toSouth, false),
-                new RoadMap.Segment(VILLAGE_ROAD.name(), 0, true),
-                new RoadMap.Segment(VILLAGE_ROAD.name(), toSquare, false)), false));
+                new RoadMap.Segment(VILLAGE_ROAD.name(), 0, true)));
+        if (housed) {
+            // round up to the square
+            vertices.add(new RoadMap.Vertex(square()));
+            segments.add(new RoadMap.Segment(VILLAGE_ROAD.name(), Alignment.bending(north, across, square()), false));
+        } else {
+            // on from the bridge as it heads, round west of the well, then up to the church in long gentle bends
+            final RoadMap.Way onward = smooth("village road", VILLAGE_ROAD.name(), onward(north, across), List.of());
+            vertices.addAll(onward.vertices().subList(1, onward.vertices().size()));
+            segments.addAll(onward.segments());
+        }
+        ways.add(new RoadMap.Way("village road", vertices, segments, false));
         // the entry: from the junction round, then easing back onto the westbound carriageway
         final List<Vec2> in = new ArrayList<>();
         in.add(junction.at());
@@ -323,8 +341,49 @@ public final class Village {
         }
         in.add(entry.at());
         ways.add(smooth("entry", SLIP.name(), in, List.of(junction, entry)));
-        ways.add(smooth("church lane", LANE.name(), churchLane(), List.of()));
+        if (housed) {
+            ways.add(smooth("church lane", LANE.name(), churchLane(true), List.of()));
+        }
         return new RoadMap(List.of(CARRIAGEWAY, SLIP, VILLAGE_ROAD, LANE), List.of(exit, entry, junction), ways);
+    }
+
+    /** How far the sealed road winds out either side of the way straight up to the church, at each of its bends. */
+    private static final double[] SEALED_WINDING = {0, 1_500, -1_200, 0};
+
+    /**
+     * The village road's way on, the meadow bare of its houses: from the bridge's north end ({@code north}), heading as
+     * the bridge does ({@code across}), to where the lane would start, and from there up toward the church's hill in
+     * three long bends, winding gently, to the churchyard's edge where the lane ends: a road's bends, as gentle as a
+     * village road must turn and as long as its transitions need, not a lane's.
+     */
+    private static Through onward(final Vec2 north, final Vec2 across) {
+        final Vec2 hill = Terrains.CHURCH_HILL;
+        final double dx = hill.x() - WELL.x();
+        final double dz = hill.z() - WELL.z();
+        final double away = Math.hypot(dx, dz);
+        final double ux = dx / away;
+        final double uz = dz / away;
+        final Vec2 start = new Vec2(WELL.x() + ux * LANE_FROM, WELL.z() + uz * LANE_FROM);
+        final Vec2 end = new Vec2(hill.x() - ux * (Terrains.CHURCHYARD - 300), hill.z() - uz * (Terrains.CHURCHYARD - 300));
+        final List<Vec2> points = new ArrayList<>(List.of(north));
+        for (int k = 0; k < SEALED_WINDING.length; k++) {
+            final double t = (double) k / (SEALED_WINDING.length - 1);
+            points.add(new Vec2(start.x() + (end.x() - start.x()) * t - uz * SEALED_WINDING[k],
+                    start.z() + (end.z() - start.z()) * t + ux * SEALED_WINDING[k]));
+        }
+        // heading as the bridge does where it leaves it; elsewhere from the point before to the one after
+        final List<Vec2> headings = new ArrayList<>(List.of(across));
+        for (int k = 1; k < points.size(); k++) {
+            final Vec2 before = points.get(k - 1);
+            final Vec2 after = points.get(Math.min(points.size() - 1, k + 1));
+            headings.add(unit(after.x() - before.x(), after.z() - before.z()));
+        }
+        return new Through(points, headings);
+    }
+
+    /** Where the village road ends: at the village's square, before the well. */
+    static Vec2 square() {
+        return new Vec2(WELL.x(), WELL.z() - SQUARE);
     }
 
     /**
@@ -407,9 +466,11 @@ public final class Village {
 
     /**
      * The church lane's vertices: from the village's edge, out past its houses toward the church's hill, winding
-     * one way and the other up to the churchyard's edge. It starts where none of the houses is near it.
+     * one way and the other up to the churchyard's edge. It starts where none of the houses is near it; or, not
+     * {@code housed}, the meadow bare of them, as far out as it starts with none there: for the village road to run on
+     * up ({@link #roads(boolean)}).
      */
-    private static Through churchLane() {
+    private static Through churchLane(final boolean housed) {
         final Vec2 hill = Terrains.CHURCH_HILL;
         final double dx = hill.x() - WELL.x();
         final double dz = hill.z() - WELL.z();
@@ -417,7 +478,8 @@ public final class Village {
         final double ux = dx / away;
         final double uz = dz / away;
         double from = LANE_FROM;
-        while (from < away / 2 && clearOfHouses(WELL.x() + ux * from, WELL.z() + uz * from) < LANE.width() / 2 + 600) {
+        while (housed && from < away / 2
+                && clearOfHouses(WELL.x() + ux * from, WELL.z() + uz * from) < LANE.width() / 2 + 600) {
             from += 500;
         }
         final Vec2 start = new Vec2(WELL.x() + ux * from, WELL.z() + uz * from);
@@ -510,6 +572,17 @@ public final class Village {
         return Meadow.LINES.get(name);
     }
 
+    /** Road {@code name}'s line, as {@link #line(String)}, the meadow {@code housed} as its village is or bare of it. */
+    public static List<Vec2> line(final String name, final boolean housed) {
+        return housed ? line(name) : Bare.LINES.get(name);
+    }
+
+    /** The meadow bare of its village's houses ({@link #roads(boolean)}): its roads, and their lines. */
+    private static final class Bare {
+        static final RoadMap MAP = roads(false);
+        static final java.util.Map<String, List<Vec2>> LINES = Meadow.lines(MAP);
+    }
+
     /** How wide road {@code name} is, edge to edge, as its kind is described. */
     public static double wide(final String name) {
         final RoadMap map = Meadow.MAP;
@@ -577,8 +650,16 @@ public final class Village {
      * standing on {@code land}, the meadow's ground as its roads leave it. Its bridge is its road's, built with it.
      */
     public static List<Course.Piece> pieces(final Land land) {
+        return pieces(land, true);
+    }
+
+    /**
+     * As {@link #pieces(Land)}, its houses among them if {@code housed}; else all else but them, the meadow bare of its
+     * village ({@link #roads(boolean)}): its trees where they stand, none of them where its road now runs on.
+     */
+    public static List<Course.Piece> pieces(final Land land, final boolean housed) {
         final List<Course.Piece> pieces = new ArrayList<>();
-        for (int k = 0; k < VILLAGE.size(); k++) {
+        for (int k = 0; housed && k < VILLAGE.size(); k++) {
             final House house = VILLAGE.get(k);
             pieces.add(Town.building(solids(k), house.place(), KEYS + k, EarthHouse.of(house.size()).shape(), 1));
         }
