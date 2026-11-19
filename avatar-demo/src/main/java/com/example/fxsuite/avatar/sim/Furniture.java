@@ -1,0 +1,117 @@
+package com.example.fxsuite.avatar.sim;
+
+/**
+ * What a piece of furniture is ({@link Course.Kind#FURNITURE}): a loose thing ({@link Loose}) to
+ * stand things on, push about, and break. How it looks is the graphics' to say.
+ *
+ * @param title     what it is called
+ * @param length    how long it is, across its own frame
+ * @param width     how deep
+ * @param height    how tall
+ * @param toughness how much it takes ({@link Weapon#blow})
+ * @param give      how readily it is pushed, 0 to 1
+ * @param landing   how fast it can come down and land whole
+ * @param seat      how far back of its middle whoever sits on it sits
+ */
+public enum Furniture implements Loose {
+
+    /** A table of planks on a pair of pallets: twenty rifle rounds, or two strokes of the glaive; heavy to push. */
+    TABLE("table", 240, 100, 70, 200, 0.45, 1600, 0),
+    /** A wooden stool to sit on: four rifle rounds; light. */
+    STOOL("stool", 32, 32, 45, 40, 0.9, 1400, 0),
+    /** A little scooter, its front along its frame, solid as far as its seat: fifteen rifle rounds; heavy-ish. */
+    SCOOTER("scooter", 34, 100, 57, 150, 0.6, 1200, 8),
+    /** A scrum board on legs, its cards stuck on its front: eight rifle rounds; light, for its size. */
+    BOARD("scrum board", 220, 50, 180, 80, 0.8, 1300, 0),
+    /** A bar's counter, its bottles and glasses on it and its back shelf with it: twenty-five rifle rounds; very heavy to push. */
+    BAR("bar", 240, 70, 110, 250, 0.3, 1500, 0),
+    /** A tall stool at a bar, a round seat on one leg: four rifle rounds; light. */
+    BAR_STOOL("bar stool", 36, 36, 75, 40, 0.9, 1400, 0),
+    /** A park bench, its slats as high as a seat, its back over that: twelve rifle rounds; heavy-ish. */
+    BENCH("park bench", 180, 55, 45, 120, 0.5, 1500, 0),
+    /** A litter bin on its post: six rifle rounds; light. */
+    BIN("litter bin", 45, 45, 90, 60, 0.8, 1400, 0),
+    /** A stone planter, a shrub in it: thirty rifle rounds; very heavy to push. */
+    PLANTER("planter", 110, 110, 60, 300, 0.2, 1600, 0);
+
+    private final String title;
+    private final double length;
+    private final double width;
+    private final double height;
+    private final double toughness;
+    private final double give;
+    private final double landing;
+    private final double seat;
+
+    Furniture(final String title, final double length, final double width, final double height,
+              final double toughness, final double give, final double landing, final double seat) {
+        this.seat = seat;
+        this.title = title;
+        this.length = length;
+        this.width = width;
+        this.height = height;
+        this.toughness = toughness;
+        this.give = give;
+        this.landing = landing;
+    }
+
+    @Override
+    public String title() {
+        return title;
+    }
+
+    @Override
+    public double length() {
+        return length;
+    }
+
+    @Override
+    public double width() {
+        return width;
+    }
+
+    @Override
+    public double height() {
+        return height;
+    }
+
+    @Override
+    public double toughness() {
+        return toughness;
+    }
+
+    @Override
+    public double give() {
+        return give;
+    }
+
+    /**
+     * How heavy: the table of planks and pallets sixty kilograms, a stool four, the little scooter
+     * ninety, the board twenty-five; the bar's counter a hundred and twenty, a bar stool six; a park bench
+     * forty, a litter bin twelve, a stone planter two hundred and fifty.
+     */
+    @Override
+    public double mass() {
+        return switch (this) {
+            case TABLE -> 60;
+            case STOOL -> 4;
+            case SCOOTER -> 90;
+            case BOARD -> 25;
+            case BAR -> 120;
+            case BAR_STOOL -> 6;
+            case BENCH -> 40;
+            case BIN -> 12;
+            case PLANTER -> 250;
+        };
+    }
+
+    @Override
+    public double landing() {
+        return landing;
+    }
+
+    /** How far back of its middle whoever sits on it sits, along its frame. */
+    public double seat() {
+        return seat;
+    }
+}

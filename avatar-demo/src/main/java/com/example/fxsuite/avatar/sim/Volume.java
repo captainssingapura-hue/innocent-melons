@@ -1,0 +1,162 @@
+package com.example.fxsuite.avatar.sim;
+
+/**
+ * Something solid in the world shaped more closely than a box ({@link Block}): an outline stood up
+ * straight ({@link Prism}); one laid on its side and drawn along, a passage through it if it has one
+ * ({@link Extrusion}); the part two of those share ({@link Crossing}). What is in the way of a body,
+ * or a round, as it is.
+ *
+ * <p>A body meets it as an upright cylinder, as it meets a block: across the ground, a circle; up
+ * and down, from its feet to its head. So what each says is about a circle, or a stroke, at some
+ * heights: what it covers, how high a top of it is under it, how low an underside over it, and how
+ * far it must move to clear what of it lies between its feet and its head. With a passage through
+ * it, it may have more than one top under a circle (the passage's floor, its own top over the
+ * passage) and more than one underside over it (the passage's soffit, its own bottom): so each is
+ * asked for, no higher (or no lower) than a height.
+ */
+public sealed interface Volume permits Prism, Extrusion, Crossing, Lean, Interior, Pavement, Assembly, Staged, Obstacles.Gone {
+
+    /** What it takes up seen from above: a box square to the world, round all of it. */
+    record Bounds(double minX, double maxX, double minZ, double maxZ) {
+
+        /** The box round {@code points}. */
+        static Bounds of(final java.util.List<Vec2> points) {
+            double minX = Double.POSITIVE_INFINITY;
+            double maxX = Double.NEGATIVE_INFINITY;
+            double minZ = Double.POSITIVE_INFINITY;
+            double maxZ = Double.NEGATIVE_INFINITY;
+            for (final Vec2 p : points) {
+                minX = Math.min(minX, p.x());
+                maxX = Math.max(maxX, p.x());
+                minZ = Math.min(minZ, p.z());
+                maxZ = Math.max(maxZ, p.z());
+            }
+            return new Bounds(minX, maxX, minZ, maxZ);
+        }
+
+        /** The box round it and {@code other}. */
+        Bounds and(final Bounds other) {
+            return new Bounds(Math.min(minX, other.minX), Math.max(maxX, other.maxX), Math.min(minZ, other.minZ),
+                    Math.max(maxZ, other.maxZ));
+        }
+    }
+
+    /** Its box, seen from above. */
+    Bounds bounds();
+
+    /** How low and how high any of it is. */
+    double low();
+
+    double high();
+
+    /** Whether a circle at ({@code x}, {@code z}) overlaps it, seen from above. */
+    boolean covers(double x, double z, double radius);
+
+    /**
+     * How high its highest top no higher than {@code below} is, anywhere under a circle at
+     * ({@code x}, {@code z}); minus infinity if there is none.
+     */
+    double topAt(double x, double z, double radius, double below);
+
+    /**
+     * How low its lowest underside no lower than {@code above} is, anywhere over a circle at
+     * ({@code x}, {@code z}); infinity if there is none.
+     */
+    double undersideAt(double x, double z, double radius, double above);
+
+    /**
+     * Whether, where a circle at ({@code x}, {@code z}) would stand on it at {@code top}, it rises more than a step
+     * from under the circle to as far again out: too steep to stand on, as a ramp that steep is not, so nothing creeps
+     * up it a step at a time.
+     */
+    default boolean steep(final double x, final double z, final double radius, final double top) {
+        return topAt(x, z, 2 * radius) - top > Body.STEP;
+    }
+
+    /** How high its highest top is anywhere under a circle at ({@code x}, {@code z}); minus infinity if none. */
+    default double topAt(final double x, final double z, final double radius) {
+        return topAt(x, z, radius, Double.POSITIVE_INFINITY);
+    }
+
+    /** How low its lowest underside is anywhere over a circle at ({@code x}, {@code z}); infinity if none. */
+    default double undersideAt(final double x, final double z, final double radius) {
+        return undersideAt(x, z, radius, Double.NEGATIVE_INFINITY);
+    }
+
+    /**
+     * How far, across the ground, a circle at ({@code x}, {@code z}) must move to clear what of it
+     * lies between {@code feet} and {@code head}; {@code null} if it already does.
+     */
+    Vec2 push(double x, double z, double radius, double feet, double head);
+
+    /** As {@link #push(double, double, double, double, double)}, for a stroke from a to b. */
+    Vec2 push(double ax, double az, double bx, double bz, double radius, double feet, double head);
+
+    /** Where a ray from {@code from} along {@code direction} (a unit vector) first meets it, within {@code reach}; {@code null} if it misses. */
+    Hit ray(Vec3 from, Vec3 direction, double reach);
+
+    /**
+     * How far along a ray from {@code from} along {@code direction} it is within {@code volume}'s box (its bounds from
+     * above, from its lowest to its highest, a centimetre more all round), within {@code reach}: where it goes in and
+     * where it comes out; {@code null} if it does not come within it. Nothing of it is met outside that.
+     */
+    static double[] within(final Volume volume, final Vec3 from, final Vec3 direction, final double reach) {
+        final Bounds b = volume.bounds();
+        final double[] at = {from.x(), from.z(), -from.y()};
+        final double[] go = {direction.x(), direction.z(), -direction.y()};
+        final double[] lo = {b.minX() - 1, b.minZ() - 1, volume.low() - 1};
+        final double[] hi = {b.maxX() + 1, b.maxZ() + 1, volume.high() + 1};
+        double enter = 0;
+        double exit = reach;
+        for (int axis = 0; axis < 3; axis++) {
+            if (Math.abs(go[axis]) < 1e-12) {
+                if (at[axis] < lo[axis] || at[axis] > hi[axis]) {
+                    return null;
+                }
+                continue;
+            }
+            final double t1 = (lo[axis] - at[axis]) / go[axis];
+            final double t2 = (hi[axis] - at[axis]) / go[axis];
+            enter = Math.max(enter, Math.min(t1, t2));
+            exit = Math.min(exit, Math.max(t1, t2));
+        }
+        return enter > exit ? null : new double[] {enter, exit};
+    }
+
+    /** Whether it and {@code block} take up any of the same space: what a platform needs clear to move into. */
+    boolean overlaps(Block block);
+
+    /**
+     * {@code shape}, given in a building's own frame (its x across, to the right; its z along,
+     * ahead; heights up), {@code scale} times as big about its origin, and put where the building
+     * stands, {@code at}, turned with it; raised as high as {@code at} is (a pavilion on a roof).
+     */
+    static Volume placed(final Volume shape, final Place at, final double scale) {
+        final Vec3 right = Num.right(at.yaw());
+        final Vec3 ahead = Num.heading(at.yaw());
+        final double up = at.height();
+        return switch (shape) {
+            case Prism p -> new Prism(p.outline().stream().map(v -> new Vec2(
+                    at.x() + (right.x() * v.x() + ahead.x() * v.z()) * scale,
+                    at.z() + (right.z() * v.x() + ahead.z() * v.z()) * scale)).toList(),
+                    p.holes().stream().map(h -> h.stream().map(v -> new Vec2(
+                            at.x() + (right.x() * v.x() + ahead.x() * v.z()) * scale,
+                            at.z() + (right.z() * v.x() + ahead.z() * v.z()) * scale)).toList()).toList(),
+                    p.bottom() * scale + up, p.top() * scale + up);
+            case Extrusion e -> new Extrusion(at.x() + (right.x() * e.x() + ahead.x() * e.z()) * scale,
+                    at.z() + (right.z() * e.x() + ahead.z() * e.z()) * scale, at.yaw() + e.yaw(), e.half() * scale,
+                    scaled(e.profile(), scale, up), e.holes().stream().map(h -> scaled(h, scale, up)).toList());
+            case Crossing c -> new Crossing(c.parts().stream().map(p -> (Extrusion) placed(p, at, scale)).toList());
+            case Lean l -> l.within(at, scale);
+            case Interior i -> throw new IllegalArgumentException("a building's interior is placed as it is made");
+            case Pavement p -> throw new IllegalArgumentException("a pavement lies where its road is laid");
+            case Assembly a -> a.placed(at, scale);
+            case Staged s -> s.placed(at, scale);
+            case Obstacles.Gone g -> throw new IllegalArgumentException("what is gone is placed nowhere");
+        };
+    }
+
+    private static java.util.List<Vec2> scaled(final java.util.List<Vec2> points, final double scale, final double up) {
+        return points.stream().map(p -> new Vec2(p.x() * scale, p.z() * scale + up)).toList();
+    }
+}

@@ -1,0 +1,828 @@
+package com.example.fxsuite.avatar.sim;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+/**
+ * A vehicle flown from on board: piece {@code piece} of the course, what kind of craft it is
+ * ({@link Course.Craft}: a platform's deck, open; an airship, closed), where it now is, how fast it
+ * is going in its own terms ({@code ahead} along its heading, {@code aside} to its right,
+ * {@code climb} up), whether the avatar has its controls, and whether its {@code engine} is
+ * running. Pure state, stepped with the rest of the world ({@link Play}).
+ *
+ * <ul>
+ *   <li><b>The controls</b> are taken at its station ({@link Course.Craft#station}), within
+ *       {@link #REACH} of it ({@link Action#TAKE}): on a platform, standing on the deck behind the
+ *       console; at an airship, under the hatch in the gondola's floor, after which the avatar is inside and out of
+ *       sight. They are let go the same way, or, on a platform, by no longer standing there. At a
+ *       platform's controls the key that takes off or lands ({@link Action#FLY}) starts the engine
+ *       or cuts it; an airship's is never cut.</li>
+ *   <li><b>Its engine running</b>, the keys that move the avatar fly it instead: W and S ahead and
+ *       back, A and D sideways (if it can go sideways), the mouse turns it (as fast as it will
+ *       turn), Space climbs and Ctrl descends. Shift held goes carefully. It eases up to speed and
+ *       back to a stop, and keeps between how low and how high it goes, inside the world; as it
+ *       handles ({@link Course.Handling}). Let go, it eases to a stop and hangs where it is.</li>
+ *   <li><b>It stops short</b> of whatever is in its way: the room it needs ({@link Course.Craft#room})
+ *       may not go into anything solid. Where the whole move would, it tries turning only, then
+ *       going across only, then climbing only; and if none will do, it stays where it is.
+ *       Something that has come into it (an airship going by) does not hold it: from there, any
+ *       move goes.</li>
+ *   <li><b>Its engine cut</b>, it cannot be flown: it drops as everything does
+ *       ({@link Body#GRAVITY}) until it settles on whatever is under it and rests there. Resting on
+ *       something that moves, it is docked: it goes where that goes ({@link #carried}). Started
+ *       again, it lifts off from there.</li>
+ * </ul>
+ */
+public record Lift(int piece, Course.Craft craft, Place place, double ahead, double aside, double climb,
+                   boolean held, boolean engine, int bombs, double ready, double steer, double tilt, double roll,
+                   int bumped, double tipped, double turning) {
+
+    /** Not turning of itself: as all but an aircraft, whose turning builds up and dies away ({@link #turning}), are. */
+    public Lift(final int piece, final Course.Craft craft, final Place place, final double ahead, final double aside,
+                final double climb, final boolean held, final boolean engine, final int bombs, final double ready,
+                final double steer, final double tilt, final double roll, final int bumped, final double tipped) {
+        this(piece, craft, place, ahead, aside, climb, held, engine, bombs, ready, steer, tilt, roll, bumped, tipped, 0);
+    }
+
+    /** Upright: not tipping, as all but a sidecar outfit going round too hard are. */
+    public Lift(final int piece, final Course.Craft craft, final Place place, final double ahead, final double aside,
+                final double climb, final boolean held, final boolean engine, final int bombs, final double ready,
+                final double steer, final double tilt, final double roll, final int bumped) {
+        this(piece, craft, place, ahead, aside, climb, held, engine, bombs, ready, steer, tilt, roll, bumped, 0);
+    }
+
+    /** One with no roll: level from side to side, as all but a land vehicle on a cross-slope are. */
+    public Lift(final int piece, final Course.Craft craft, final Place place, final double ahead, final double aside,
+                final double climb, final boolean held, final boolean engine, final int bombs, final double ready,
+                final double steer, final double tilt) {
+        this(piece, craft, place, ahead, aside, climb, held, engine, bombs, ready, steer, tilt, 0);
+    }
+
+    /** One that ran into nothing on its last step ({@code bumped} -1). */
+    public Lift(final int piece, final Course.Craft craft, final Place place, final double ahead, final double aside,
+                final double climb, final boolean held, final boolean engine, final int bombs, final double ready,
+                final double steer, final double tilt, final double roll) {
+        this(piece, craft, place, ahead, aside, climb, held, engine, bombs, ready, steer, tilt, roll, -1);
+    }
+
+    /** The same, having run into piece {@code what} ({@link #bumped}); -1 nothing, -2 the avatar. */
+    public Lift bumped(final int what) {
+        return new Lift(piece, craft, place, ahead, aside, climb, held, engine, bombs, ready, steer, tilt, roll, what, tipped, turning);
+    }
+
+    /**
+     * The same, going {@code nowAhead} the way it heads and {@code nowAside} to its right: set
+     * going so by a collision ({@link Play}). A land vehicle rolls on ahead, and scrubs off going
+     * sideways on its tyres.
+     */
+    public Lift going(final double nowAhead, final double nowAside) {
+        return new Lift(piece, craft, place, nowAhead, nowAside, climb, held, engine, bombs, ready, steer, tilt, roll,
+                bumped, tipped, turning);
+    }
+
+    /**
+     * The same, standing: going nowhere, steering nowhere, turning not at all, having run into nothing. What a
+     * vehicle no one drives is ({@link Play}): it goes as a vehicle only while it is driven. Where it is, which way it
+     * faces and how it leans, as they were.
+     */
+    public Lift standing() {
+        if (ahead == 0 && aside == 0 && climb == 0 && steer == 0 && bumped == -1 && turning == 0) {
+            return this;
+        }
+        return new Lift(piece, craft, place, 0, 0, 0, held, engine, bombs, ready, 0, tilt, roll, -1, tipped, 0);
+    }
+
+    /** Over on its side: a sidecar outfit, past its limit for long enough ({@link Outfit#TIPS}). */
+    public boolean over() {
+        return tipped >= Outfit.TIPS;
+    }
+
+    /** The same, {@code seconds} past its limit so far (0: within it). */
+    private Lift tipping(final double seconds) {
+        return new Lift(piece, craft, place, ahead, aside, climb, held, engine, bombs, ready, steer, tilt, roll, bumped,
+                seconds);
+    }
+
+    /** Set back on its wheels, still: an outfit that went over, righted. */
+    public Lift righted() {
+        return new Lift(piece, craft, place, 0, 0, 0, held, engine, bombs, ready, 0, tilt, roll, -1, 0);
+    }
+
+    /**
+     * How far it is heeled over, in degrees, as it is drawn: a sidecar outfit nearing its limit, a
+     * wheel lifting, up to {@link #HEEL} at its limit; over on its side, {@link #ON_ITS_SIDE}. As a
+     * two-wheeler's lean is reckoned: positive with its right side down. Turning toward the sidecar
+     * it heels away from it, the sidecar's wheel lifting; away from it, toward it, its own back wheel
+     * lifting. 0 for anything else.
+     */
+    public double heel() {
+        if (!(craft instanceof Course.Chassis chassis) || chassis.sidecar() == null) {
+            return 0;
+        }
+        final double side = chassis.sidecar().side().sign();
+        if (over()) {
+            return -side * ON_ITS_SIDE;
+        }
+        final Outfit outfit = Outfit.of(chassis);
+        final double share = outfit.share(Outfit.table(chassis), ahead, steer);
+        if (share <= Outfit.LIFTS) {
+            return 0;
+        }
+        final double lifted = HEEL * Math.min(1, (share - Outfit.LIFTS) / (1 - Outfit.LIFTS));
+        return outfit.towardSidecar(steer) ? -side * lifted : side * lifted;
+    }
+
+    /** How far a sidecar outfit heels at most with a wheel lifting; and over on its side. */
+    public static final double HEEL = 9;
+    public static final double ON_ITS_SIDE = 88;
+
+    /** Its velocity across the ground: ahead the way it heads, and aside to its right. */
+    public Vec3 across() {
+        return Num.heading(place.yaw()).multiply(ahead).add(Num.right(place.yaw()).multiply(aside));
+    }
+
+    /** How fast a platform flies, at full, across the ground; and climbs. */
+    public static final double SPEED = Course.PLATFORM_HANDLING.speed();
+    public static final double CLIMB = Course.PLATFORM_HANDLING.climb();
+    /** Going carefully is slower, by this. */
+    public static final double CAREFUL = 0.35;
+    /** How briskly it gets up to speed, and stops. */
+    public static final double GRIP = 2.5;
+    /** How near its station the avatar must be to take the controls. */
+    public static final double REACH = 110;
+    /**
+     * A two-wheeler leans this far at most; three quarters of that going round this many times as
+     * hard as gravity pulls.
+     */
+    public static final double MOST_LEAN = 45;
+    /** A land vehicle rolls this far at most, on a cross-slope. */
+    public static final double MOST_ROLL = 35;
+    /** Shoved sideways, a land vehicle's tyres scrub that off this hard, units a second, a second: a g and a half. */
+    public static final double SCRUB = 1500;
+    /** How thick a platform's deck is: how far below where it is its underside is. */
+    public static final double THICK = 40;
+
+    /** Seconds between one bomb and the next, the trigger held. */
+    public static final double RACK = 0.4;
+    /** Seconds to load each bomb back into the bay, moored. */
+    public static final double RELOAD = 1;
+
+    /** Going as given, its bomb bay (if it has one) full. */
+    public Lift(final int piece, final Course.Craft craft, final Place place, final double ahead, final double aside,
+                final double climb, final boolean held, final boolean engine) {
+        this(piece, craft, place, ahead, aside, climb, held, engine, craft.bombs(), 0, 0, 0);
+    }
+
+    /** A craft, still, its engine running, no one at its controls. */
+    public Lift(final int piece, final Course.Craft craft, final Place place) {
+        this(piece, craft, place, 0, 0, 0, false, true);
+    }
+
+    /** Going as given, its engine running. */
+    public Lift(final int piece, final Course.Craft craft, final Place place, final double ahead, final double aside,
+                final double climb, final boolean held) {
+        this(piece, craft, place, ahead, aside, climb, held, true);
+    }
+
+    /** The crafts among {@code damage}'s pieces (the platforms, an airship to be flown), each where it was built, still. */
+    public static List<Lift> of(final Damage damage) {
+        final List<Lift> lifts = new ArrayList<>();
+        for (int piece = 0; piece < damage.size(); piece++) {
+            final Course.Piece what = damage.piece(piece);
+            if (what.kind() == Course.Kind.PLATFORM) {
+                lifts.add(new Lift(piece, Course.Deck.of(what.shape()), what.place()));
+            } else if (what.kind() == Course.Kind.AIRSHIP && what.moves() && !what.flies()) {
+                lifts.add(new Lift(piece, Course.SHIP, what.place()));
+            } else if (what.kind() == Course.Kind.CAR) {
+                lifts.add(new Lift(piece, Course.Chassis.of(what.shape()), what.place()));
+            } else if (what.kind() == Course.Kind.AIRCRAFT) {
+                // on its wheels, its engine off until it is started
+                lifts.add(new Lift(piece, Course.Aircraft.of(what.shape()), what.place(), 0, 0, 0, false, false));
+            }
+        }
+        return lifts;
+    }
+
+    /** What it rests on, or would: piece {@code piece} (-1 for the ground or the avatar), whose top is {@code top} high. */
+    public record Support(int piece, double top) {
+    }
+
+    /** Its deck, if it is a platform; null if not. */
+    public Course.Deck deck() {
+        return craft instanceof Course.Deck d ? d : null;
+    }
+
+    /** The same, its controls taken or let go. */
+    public Lift held(final boolean taken) {
+        return new Lift(piece, craft, place, ahead, aside, climb, taken, engine, bombs, ready, steer, tilt, roll, -1, tipped, turning);
+    }
+
+    /** The same, its engine started or cut. */
+    public Lift engine(final boolean running) {
+        return new Lift(piece, craft, place, ahead, aside, climb, held, running, bombs, ready, steer, tilt, roll, -1, tipped, turning);
+    }
+
+    /** The same, carried by what it rests on as that moved from {@code from} to {@code to}: docked. */
+    public Lift carried(final Place from, final Place to) {
+        final Vec3 at = from.carry(new Vec3(place.x(), -place.height(), place.z()), to);
+        return new Lift(piece, craft, new Place(at.x(), at.z(), -at.y(), Num.wrap(place.yaw() + to.yaw() - from.yaw())),
+                ahead, aside, climb, held, engine, bombs, ready, steer, tilt, roll, -1, tipped, turning);
+    }
+
+    /** How fast it is going, all told: across the ground and up or down. */
+    public double speed() {
+        return Math.sqrt(ahead * ahead + aside * aside + climb * climb);
+    }
+
+    /** How fast it is going, and which way, in the world's terms. */
+    public Vec3 velocity() {
+        return Num.heading(place.yaw()).multiply(ahead).add(Num.right(place.yaw()).multiply(aside)).add(0, -climb, 0);
+    }
+
+    /** Down at its moorings: its engine running, as low as it goes, and still. */
+    public boolean moored() {
+        return engine && place.height() <= craft.handling().low() + 0.5 && speed() < 1;
+    }
+
+    /**
+     * Its bomb bay, {@code seconds} on: one bomb gone if {@code drop} asks for one and there is one
+     * ready ({@link #RACK} after the last), aloft; or, moored, one more loaded back in, a bomb each
+     * {@link #RELOAD}, until it is full. Unchanged if it has no bay.
+     */
+    public Lift loaded(final double seconds, final boolean drop) {
+        if (craft.bombs() == 0) {
+            return this;
+        }
+        final double wait = Math.max(0, ready - seconds);
+        final int now;
+        final double next;
+        if (moored()) {
+            final boolean loads = bombs < craft.bombs() && wait == 0;
+            now = loads ? bombs + 1 : bombs;
+            next = loads ? RELOAD : wait;
+        } else {
+            final boolean drops = drop && bombs > 0 && wait == 0;
+            now = drops ? bombs - 1 : bombs;
+            next = drops ? RACK : wait;
+        }
+        return new Lift(piece, craft, place, ahead, aside, climb, held, engine, now, next, steer, tilt, roll, -1, tipped, turning);
+    }
+
+    /** Where {@code spot} of its frame (across, along, up from where it is) is, in the world. */
+    public Vec3 at(final Course.Section spot) {
+        return new Vec3(place.x(), -(place.height() + spot.up()), place.z())
+                .add(Num.right(place.yaw()).multiply(spot.across()))
+                .add(Num.heading(place.yaw()).multiply(spot.along()));
+    }
+
+    /** Where whoever takes it stands: on a platform, behind its console; at an airship, at the hatch in its floor. */
+    public Vec3 pilot() {
+        return at(craft.station());
+    }
+
+    /**
+     * Whether {@code body}, among {@code world}, can reach its controls: standing on its deck
+     * within reach of the console, for a platform; standing under its hatch, for a closed craft; and
+     * for a land vehicle, either at its seat or on the ground beside the driver's door.
+     */
+    public boolean reaches(final Body body, final Obstacles world) {
+        if (!body.grounded()) {
+            return false;
+        }
+        final Vec3 at = body.position();
+        final Vec3 station = pilot();
+        if (craft instanceof Course.Aircraft) {
+            // from the ground beside its door
+            final Vec3 door = at(craft.door());
+            return Math.hypot(at.x() - door.x(), at.z() - door.z()) <= REACH * 1.2
+                    && Math.abs(at.y() - door.y()) <= KERB;
+        }
+        if (craft.closed()) {
+            // under its hatch, the hatch within reach overhead
+            final double overhead = at.y() - station.y();
+            return Math.hypot(at.x() - station.x(), at.z() - station.z()) <= REACH * 1.5
+                    && overhead >= Body.TALL && overhead <= Body.TALL + 80;
+        }
+        if (craft instanceof Course.Chassis) {
+            // from the ground beside the driver's door
+            final Vec3 door = at(craft.door());
+            if (Math.hypot(at.x() - door.x(), at.z() - door.z()) <= REACH * 1.2 && Math.abs(at.y() - door.y()) <= KERB) {
+                return true;
+            }
+        }
+        if (world.under(at.x(), at.z(), Body.FOOTING, body.height()) != piece) {
+            return false;
+        }
+        return Math.hypot(at.x() - station.x(), at.z() - station.z()) <= REACH;
+    }
+
+    /** How far below where it is its underside is: what it rests on is that far down. */
+    double below() {
+        final Course.Section footing = craft.footing();
+        return footing.halfUp() - footing.up();
+    }
+
+    /**
+     * The highest thing under it where it is, among {@code world} and {@code also} (the avatar,
+     * say), but for itself and what rides on it ({@code aboard}): what it rests on, or would
+     * settle on, falling. The ground if nothing else.
+     */
+    public Support support(final Obstacles world, final Collection<Integer> aboard, final List<Block> also) {
+        final double underside = place.height() - below();
+        final Course.Section footing = craft.footing();
+        final Block below = new Course.Section(footing.across(), footing.along(),
+                (underside + 0.5 - 1) / 2 - place.height(), footing.halfAcross(), footing.halfAlong(),
+                (underside + 0.5 + 1) / 2).placed(place);
+        Support best = new Support(-1, 0);
+        for (int i = 0; i < world.blocks().size(); i++) {
+            final int other = world.pieces().get(i);
+            final Block block = world.blocks().get(i);
+            if (other != piece && !aboard.contains(other) && block.top() > best.top()
+                    && block.top() <= underside + 0.5 && below.overlaps(block)) {
+                best = new Support(other, block.top());
+            }
+        }
+        for (final Block block : also) {
+            if (block.top() > best.top() && block.top() <= underside + 0.5 && below.overlaps(block)) {
+                best = new Support(-1, block.top());
+            }
+        }
+        // what is shaped more closely: its highest top under the footing, felt for a metre or less apart over it
+        for (final int i : world.volumesNear(below.x(), below.z(), Math.hypot(below.halfWidth(), below.halfDepth()))) {
+            final int other = world.volumePieces().get(i);
+            final Volume volume = world.volumes().get(i);
+            if (other == piece || aboard.contains(other) || volume.low() > underside + 0.5 || !volume.overlaps(below)) {
+                continue;
+            }
+            final double top = highest(volume, below, underside + 0.5);
+            if (top > best.top()) {
+                best = new Support(other, top);
+            }
+        }
+        return best;
+    }
+
+    /** The highest top of {@code volume} no higher than {@code limit} anywhere under {@code footprint}, felt for at points over it. */
+    private static double highest(final Volume volume, final Block footprint, final double limit) {
+        final Vec3 right = Num.right(footprint.yaw());
+        final Vec3 ahead = Num.heading(footprint.yaw());
+        final int across = (int) Math.ceil(2 * footprint.halfWidth() / 100) + 1;
+        final int along = (int) Math.ceil(2 * footprint.halfDepth() / 100) + 1;
+        double best = Double.NEGATIVE_INFINITY;
+        for (int a = 0; a < across; a++) {
+            for (int b = 0; b < along; b++) {
+                final double u = -footprint.halfWidth() + 2 * footprint.halfWidth() * a / Math.max(1, across - 1);
+                final double v = -footprint.halfDepth() + 2 * footprint.halfDepth() * b / Math.max(1, along - 1);
+                final double x = footprint.x() + right.x() * u + ahead.x() * v;
+                final double z = footprint.z() + right.z() * u + ahead.z() * v;
+                best = Math.max(best, volume.topAt(x, z, 50, limit));
+            }
+        }
+        return best;
+    }
+
+    /** Whether it rests on {@code under}, its engine cut and its underside on it. */
+    public boolean resting(final Support under) {
+        return !engine && on(under);
+    }
+
+    /**
+     * Whether its underside is on {@code under}, whatever its engine is doing: what a vehicle no one drives is carried
+     * by, if it moves, as anything standing on it is ({@link Play}).
+     */
+    public boolean on(final Support under) {
+        return Math.abs(place.height() - below() - under.top()) < 0.5;
+    }
+
+    /**
+     * {@code seconds} on, among {@code world}, its own blocks in it or not, and those of what rides
+     * on it, {@code aboard}; with {@code also} (the avatar, if not aboard) solid too. Its engine
+     * running, flown by {@code controls} if held, and only easing to a stop if not; cut, falling
+     * onto what is under it, or resting there.
+     */
+    public Lift step(final Controls controls, final double seconds, final Obstacles world,
+                     final Collection<Integer> aboard, final List<Block> also) {
+        if (craft instanceof Course.Aircraft aircraft) {
+            return flown(aircraft, controls, seconds, world, aboard, also);
+        }
+        if (craft instanceof Course.Chassis chassis) {
+            if (chassis.sidecar() == null) {
+                return drive(chassis, controls, seconds, world, aboard, also);
+            }
+            // a sidecar outfit over on its side lies where it is, still, until righted
+            if (over()) {
+                return new Lift(piece, craft, place, 0, 0, 0, held, engine, bombs, ready, 0, tilt, roll, -1, tipped);
+            }
+            // driven as any land vehicle is; then, as it goes round, held against its table: past its
+            // limit, tipping, and over once past it for long enough
+            final Lift driven = drive(chassis, controls, seconds, world, aboard, also);
+            final double share = Outfit.of(chassis).share(Outfit.table(chassis), driven.ahead(), driven.steer());
+            return driven.tipping(share > 1 ? tipped + seconds : 0);
+        }
+        return engine ? fly(controls, seconds, world, aboard) : fall(seconds, world, aboard, also);
+    }
+
+    /** As {@link #step(Controls, double, Obstacles, Collection, List)}, with nothing else solid. */
+    public Lift step(final Controls controls, final double seconds, final Obstacles world,
+                     final Collection<Integer> aboard) {
+        return step(controls, seconds, world, aboard, List.of());
+    }
+
+    /** How much higher than its wheels stand a land vehicle drives up onto: a kerb, a street, a ramp's foot. */
+    public static final double KERB = 60;
+    /** How far below its wheels the ground may fall away and it still keeps to it, rather than leaving it. */
+    public static final double SNAP = 25;
+    /** At this speed, a sidecar outfit's bars turn half as far as at a crawl, before its table has its say. */
+    public static final double STEER_FADE = 1800;
+    /** The handbrake, how much harder than the brakes it stops it. */
+    public static final double HANDBRAKE = 1.5;
+    /** Going up faster than this, units a second, a land vehicle is launched off the top of a slope. */
+    public static final double LAUNCH = 300;
+
+    /**
+     * A land vehicle, {@code seconds} on: steered, sped up, braked or rolling, turned about its back
+     * wheels as its front wheels are turned, as racing games have it; then set on the ground under its
+     * wheels there, tipped up or down as that slopes, or falling if it has driven off an edge. It
+     * stops dead against anything higher than a kerb, or against {@code also}.
+     */
+    private Lift drive(final Course.Chassis chassis, final Controls controls, final double seconds,
+                       final Obstacles world, final Collection<Integer> aboard, final List<Block> also) {
+        final Course.Drive drive = chassis.drive();
+        // the front wheels: turned as asked, as far and as fast as its speed lets them ({@link Steering})
+        final double asked = held ? Num.clamp(controls.sideways(), -1, 1) : 0;
+        final double nowSteer;
+        if (chassis.sidecar() != null) {
+            // a sidecar outfit's bars, gently, the more so the faster it goes, by its table: toward the
+            // way asked, or, let go, the way they are turned
+            double most = drive.steer() / (1 + Math.abs(ahead) / STEER_FADE);
+            double rate = drive.steerRate();
+            final Outfit outfit = Outfit.of(chassis);
+            final List<Outfit.Row> table = Outfit.table(chassis);
+            final double way = asked != 0 ? asked : steer;
+            if (way != 0) {
+                most = outfit.lock(table, ahead, way, most);
+                rate = outfit.rate(table, ahead, way, rate);
+            }
+            final double wanted = asked * most;
+            // and let back faster than they are turned in, to catch a lifting chair
+            final boolean backing = Math.abs(wanted) < Math.abs(steer) || wanted * steer < 0;
+            final double turning = rate * (backing ? Outfit.BACK_OFF : 1) * seconds;
+            nowSteer = steer + Num.clamp(wanted - steer, -turning, turning);
+        } else {
+            nowSteer = Steering.turned(chassis, steer, asked, ahead, seconds);
+        }
+        // the pedals: ahead speeds it up (braking first, going back), back brakes then reverses
+        final double pedal = held ? Num.clamp(controls.forward(), -1, 1) : 0;
+        final double top = held && !controls.run() ? drive.top() * CAREFUL : drive.top();
+        final double v;
+        if (held && controls.lift() > 0) {
+            v = toward(ahead, 0, drive.brake() * HANDBRAKE * seconds);
+        } else if (pedal > 0) {
+            v = ahead < 0 ? toward(ahead, 0, drive.brake() * seconds)
+                    : ahead > top ? toward(ahead, top, drive.drag() * seconds)
+                    : Math.min(top, ahead + drive.accelAt(ahead) * pedal * seconds);
+        } else if (pedal < 0) {
+            v = ahead > 0 ? toward(ahead, 0, drive.brake() * seconds)
+                    : Math.max(-drive.reverse(), ahead + drive.accel() * pedal * seconds);
+        } else {
+            v = toward(ahead, 0, drive.drag() * seconds);
+        }
+        // shoved sideways, by a collision: its tyres scrub that off, hard
+        final double slid = toward(aside, 0, SCRUB * seconds);
+        // turned about its back wheels, and moved along the way it heads half way through the turn
+        final double turn = Math.toDegrees(v * seconds / chassis.wheelbase() * Math.tan(Math.toRadians(nowSteer)));
+        final double yaw = Num.wrap(place.yaw() + turn);
+        final Vec3 rear = Num.heading(place.yaw()).multiply(chassis.rear());
+        final Vec3 newRear = Num.heading(yaw).multiply(chassis.rear());
+        final Vec3 going = Num.heading(Num.wrap(place.yaw() + turn / 2)).multiply(v * seconds)
+                .add(Num.right(Num.wrap(place.yaw() + turn / 2)).multiply((aside + slid) / 2 * seconds));
+        final double x = world.land().insideX(place.x() + rear.x() + going.x() - newRear.x());
+        final double z = world.land().insideZ(place.z() + rear.z() + going.z() - newRear.z());
+        // what else there is: not itself, nor what rides on it
+        Obstacles others = world.without(piece);
+        for (final int riding : aboard) {
+            others = others.without(riding);
+        }
+        final Settled moved = settle(chassis, new Place(x, z, place.height(), yaw), v, slid, nowSteer, seconds, others);
+        final int hit = moved.lift().blocker(chassis, others, also, moved.aloft());
+        if (hit == -1) {
+            return moved.lift();
+        }
+        // in the way: it stops dead where it was, its wheels as they were turned, having run into
+        // what it did; what gives, a collision shoves, and slows it as it does ({@link Play})
+        return settle(chassis, place, 0, 0, nowSteer, seconds, others).lift().bumped(hit);
+    }
+
+    /**
+     * How far it leans into its turn, if it is a two-wheeler, in degrees, to the right: as a rider
+     * leans one to balance the pull across it going round (atan of it over the world's own g), never past
+     * {@link #MOST_LEAN}; upright going straight, or stopped. Only how it is shown: to the world it
+     * stands as ever. Not a two-wheeler, 0.
+     */
+    public double lean() {
+        if (!(craft instanceof Course.Chassis chassis) || !chassis.leans()) {
+            return 0;
+        }
+        // how hard it is going round: its speed, times how fast it turns
+        final double round = ahead * ahead / chassis.wheelbase() * Math.tan(Math.toRadians(steer));
+        return Num.clamp(Math.toDegrees(Math.atan(round / Steering.G)), -MOST_LEAN, MOST_LEAN);
+    }
+
+    /** {@code value} brought toward {@code target} by no more than {@code by}. */
+    private static double toward(final double value, final double target, final double by) {
+        return value + Num.clamp(target - value, -by, by);
+    }
+
+    /** A land vehicle set where it is to be, and whether it is off the ground there ({@code aloft}). */
+    private record Settled(Lift lift, boolean aloft) {
+    }
+
+    /**
+     * This vehicle at {@code at}, going {@code v} with its wheels turned {@code nowSteer}: set on the
+     * ground under its wheels among {@code others}, as high as the ground under its middle and tipped
+     * as it slopes from front to back, if it is on it or comes down onto it; falling if the ground
+     * has fallen away under it.
+     */
+    private Settled settle(final Course.Chassis chassis, final Place at, final double v, final double sliding,
+                           final double nowSteer, final double seconds, final Obstacles others) {
+        // the ground under the wheels of each axle, no higher than a kerb above where they are: each
+        // where it is along it, as it is tipped, so that up a steep slope its front wheels find it too
+        final double underside = place.height() - chassis.ride();
+        final double lean = Math.tan(Math.toRadians(tilt));
+        final double reach = underside + KERB;
+        final List<Double> axles = chassis.axles();
+        final double[] ground = new double[axles.size()];
+        // and each side's wheels' own: the ground under the left wheels and the right, all told, so
+        // that on a cross-slope, a banked turn, it rolls as it slopes, its middle half way between
+        double left = 0;
+        double right = 0;
+        for (int k = 0; k < axles.size(); k++) {
+            final double[] sides = new double[2];
+            for (int s = 0; s < 2; s++) {
+                final double side = s == 0 ? -1 : 1;
+                final Vec3 wheel = new Vec3(at.x(), 0, at.z())
+                        .add(Num.right(at.yaw()).multiply(side * chassis.wheelOut()))
+                        .add(Num.heading(at.yaw()).multiply(axles.get(k)));
+                sides[s] = others.floor(wheel.x(), wheel.z(), chassis.wheelWidth() / 2, reach + lean * axles.get(k));
+            }
+            ground[k] = (sides[0] + sides[1]) / 2;
+            left += sides[0];
+            right += sides[1];
+        }
+        final double rolled = chassis.wheelOut() > 0
+                ? Num.clamp(Math.toDegrees(Math.atan2((left - right) / axles.size(), 2 * chassis.wheelOut())),
+                        -MOST_ROLL, MOST_ROLL)
+                : 0;
+        final double sideways = Math.tan(Math.toRadians(rolled));
+        double back = 0;
+        for (int k = 1; k < ground.length; k++) {
+            back += ground[k];
+        }
+        back /= ground.length - 1;
+        // going up a slope fast, past its top the nose keeps the line it was climbing along until
+        // the back wheels leave it too: it is launched off a ramp's head, rather than tipping over it
+        final double line = back + Math.tan(Math.toRadians(tilt)) * chassis.wheelbase();
+        final double front = climb > LAUNCH && ground[0] < line ? line : ground[0];
+        // under the middle: between the front wheels and the back
+        double middle = back + (front - back) * (0 - chassis.rear()) / chassis.wheelbase();
+        final double slope = Math.toDegrees(Math.atan2(front - back, chassis.wheelbase()));
+        // and never lower than lets its underside clear the ground under all of it: over a ramp's crest
+        // between its wheels, it rests on its belly, high-centred, rather than sinking into it
+        final double rise = Math.tan(Math.toRadians(slope));
+        final double clearance = chassis.ride() - Course.Chassis.BED;
+        final double half = chassis.half();
+        final int rows = (int) Math.ceil(chassis.length() / 100) + 1;
+        for (int r = 0; r < rows; r++) {
+            final double along = -chassis.length() / 2 + chassis.length() * r / (rows - 1);
+            for (final double across : new double[] {-half, 0, half}) {
+                final Vec3 under = new Vec3(at.x(), 0, at.z()).add(Num.right(at.yaw()).multiply(across))
+                        .add(Num.heading(at.yaw()).multiply(along));
+                final double floor = others.floor(under.x(), under.z(), 1, reach + lean * along - sideways * across);
+                middle = Math.max(middle, floor - rise * along + sideways * across - clearance);
+            }
+        }
+        final double target = middle + chassis.ride();
+        // on its wheels, it keeps to the ground going down too, unless it is going up off it
+        final boolean grounded = climb <= 0 && place.height() - target <= SNAP;
+        if (target >= place.height() || grounded) {
+            // on its wheels, going up or down as the ground does; how fast it goes up is what carries
+            // it on up, off a ramp's head
+            final double rising = seconds > 0 ? Math.max(0, (target - place.height()) / seconds) : 0;
+            return new Settled(new Lift(piece, craft, new Place(at.x(), at.z(), target, at.yaw()), v, sliding, rising, held,
+                    true, bombs, ready, nowSteer, slope, rolled), false);
+        }
+        // off an edge, or a ramp's head: falling, as everything does, until it comes down onto the ground
+        final double falling = climb - Body.GRAVITY * seconds;
+        final double height = place.height() + (climb + falling) / 2 * seconds;
+        if (height <= target) {
+            return new Settled(new Lift(piece, craft, new Place(at.x(), at.z(), target, at.yaw()), v, sliding, 0, held, true,
+                    bombs, ready, nowSteer, slope, rolled), false);
+        }
+        return new Settled(new Lift(piece, craft, new Place(at.x(), at.z(), height, at.yaw()), v, sliding, falling, held,
+                true, bombs, ready, nowSteer, tilt, roll), true);
+    }
+
+    /**
+     * What a land vehicle here is in the way of, if anything: which piece among {@code others}, -2
+     * for something among {@code also} (the avatar), -1 nothing. In its way is anything standing
+     * more than a kerb higher than the ground it stands on, at any point under it, and lower than
+     * the top of whoever rides it. Looked for at points a metre or less apart all over it, the
+     * ground under each going up or down as it is tipped: a ramp it is on is never in its way; a
+     * ramp's side, standing high beside it, is.
+     */
+    private int blocker(final Course.Chassis chassis, final Obstacles others, final List<Block> also,
+                        final boolean aloft) {
+        final double middle = place.height() - chassis.ride();
+        // on its wheels, the ground under it slopes as it is tipped; in the air, it is level under it
+        final double rise = aloft ? 0 : Math.tan(Math.toRadians(tilt));
+        final double sideways = aloft ? 0 : Math.tan(Math.toRadians(roll));
+        final double over = place.height() + Body.TALL + 30;
+        final double half = chassis.half();
+        final int rows = (int) Math.ceil(chassis.length() / 100) + 1;
+        final Vec3 ahead = Num.heading(place.yaw());
+        final Vec3 right = Num.right(place.yaw());
+        for (int r = 0; r < rows; r++) {
+            final double along = -chassis.length() / 2 + chassis.length() * r / (rows - 1);
+            for (final double across : new double[] {-half, 0, half}) {
+                // the ground under it there, as it is tipped and rolled
+                final double ground = middle + rise * along - sideways * across;
+                final double x = place.x() + ahead.x() * along + right.x() * across;
+                final double z = place.z() + ahead.z() * along + right.z() * across;
+                final int there = standsIn(others.blocks(), x, z, ground, over);
+                if (there >= 0) {
+                    return others.pieces().get(there);
+                }
+                // what is shaped more closely, solid there between a kerb over the ground and its top
+                for (final int i : others.volumesNear(x, z, 1)) {
+                    if (others.volumes().get(i).push(x, z, 1, ground + KERB, over) != null) {
+                        return others.volumePieces().get(i);
+                    }
+                }
+                if (standsIn(also, x, z, ground, over) >= 0) {
+                    return -2;
+                }
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Which of {@code blocks}, by its place among them, stands at ({@code x}, {@code z}) more than a
+     * kerb over {@code ground}, and lower than {@code over}; -1 none.
+     */
+    private static int standsIn(final List<Block> blocks, final double x, final double z, final double ground,
+                                final double over) {
+        for (int i = 0; i < blocks.size(); i++) {
+            final Block block = blocks.get(i);
+            if (block.bottom() < over && block.covers(x, z, 0) && block.topAt(x, z, 0) > ground + KERB) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private Lift fall(final double seconds, final Obstacles world, final Collection<Integer> aboard,
+                      final List<Block> also) {
+        final Support under = support(world, aboard, also);
+        final double dropping = climb - Body.GRAVITY * seconds;
+        final double height = place.height() + (climb + dropping) / 2 * seconds;
+        if (height - below() <= under.top()) {
+            // settled: on it, and still
+            return new Lift(piece, craft, new Place(place.x(), place.z(), under.top() + below(), place.yaw()), 0, 0,
+                    0, held, false, bombs, ready, steer, tilt);
+        }
+        return new Lift(piece, craft, new Place(place.x(), place.z(), height, place.yaw()), 0, 0, dropping, held, false, bombs, ready, steer, tilt);
+    }
+
+    private Lift fly(final Controls controls, final double seconds, final Obstacles world,
+                     final Collection<Integer> aboard) {
+        final Course.Handling handles = craft.handling();
+        final double pace = held ? (controls.run() ? 1 : CAREFUL) : 0;
+        final double nowAhead = ease(ahead, Num.clamp(controls.forward(), -1, 1) * handles.speed() * pace, seconds);
+        final double nowAside = ease(aside,
+                Num.clamp(controls.sideways(), -1, 1) * handles.speed() * handles.sideways() * pace, seconds);
+        final double nowClimb = ease(climb, Num.clamp(controls.lift(), -1, 1) * handles.climb() * (held ? 1 : 0),
+                seconds);
+        // turned as asked, as fast as it will turn
+        final double turn = handles.turn() > 0
+                ? Num.clamp(controls.turn(), -handles.turn() * seconds, handles.turn() * seconds) : controls.turn();
+        final double yaw = held ? Num.wrap(place.yaw() + turn) : place.yaw();
+        // the average speeds over the step, along the way it heads at the end of it
+        final double a = (ahead + nowAhead) / 2 * seconds;
+        final double b = (aside + nowAside) / 2 * seconds;
+        final double up = (climb + nowClimb) / 2 * seconds;
+        final Vec3 across = Num.heading(yaw).multiply(a).add(Num.right(yaw).multiply(b));
+        final double x = world.land().insideX(place.x() + across.x());
+        final double z = world.land().insideZ(place.z() + across.z());
+        final double height = Num.clamp(place.height() + up, handles.low(), handles.high());
+        final double climbing = height == handles.low() || height == handles.high() ? 0 : nowClimb;
+        // the whole move if it is clear; else turning only, going across only, climbing only; else none
+        final boolean stuck = !clear(place, world, aboard);
+        final Place[] tries = {
+                new Place(x, z, height, yaw),
+                new Place(place.x(), place.z(), place.height(), yaw),
+                new Place(x, z, place.height(), place.yaw()),
+                new Place(place.x(), place.z(), height, place.yaw()),
+        };
+        for (int k = 0; k < tries.length; k++) {
+            if (stuck || clear(tries[k], world, aboard)) {
+                final boolean goesAcross = k == 0 || k == 2;
+                final boolean goesUp = k == 0 || k == 3;
+                return new Lift(piece, craft, tries[k], goesAcross ? nowAhead : 0, goesAcross ? nowAside : 0,
+                        goesUp ? climbing : 0, held, true, bombs, ready, steer, tilt);
+            }
+        }
+        return new Lift(piece, craft, place, 0, 0, 0, held, true, bombs, ready, steer, tilt);
+    }
+
+    /**
+     * Whether at {@code at} the room it needs is clear of everything solid in {@code world} but
+     * itself and what rides on it, {@code aboard}: that goes where it goes.
+     */
+    public boolean clear(final Place at, final Obstacles world, final Collection<Integer> aboard) {
+        final List<Course.Section> room = craft instanceof Course.Aircraft aircraft ? aircraft.shape().parts()
+                : List.of(craft.room());
+        for (final Course.Section part : room) {
+            if (!clear(part.placed(at), world, aboard)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** Whether {@code room} is clear of everything solid in {@code world} but itself and {@code aboard}. */
+    private boolean clear(final Block room, final Obstacles world, final Collection<Integer> aboard) {
+        for (int i = 0; i < world.blocks().size(); i++) {
+            final int other = world.pieces().get(i);
+            if (other != piece && !aboard.contains(other) && room.overlaps(world.blocks().get(i))) {
+                return false;
+            }
+        }
+        // and of what is shaped more closely: a tower's curve, a pyramid's slope, a wall
+        for (final int i : world.volumesNear(room.x(), room.z(), Math.hypot(room.halfWidth(), room.halfDepth()))) {
+            final int other = world.volumePieces().get(i);
+            if (other != piece && !aboard.contains(other) && world.volumes().get(i).overlaps(room)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * An aircraft, {@code seconds} on, as it flies ({@link Flight}): flown by {@code controls} if
+     * held, hovering where it is if not, and dropping with its engine cut; on its wheels on whatever
+     * is under it. Its pitch is kept as {@link #tilt}, its bank as {@link #roll}, how far its rotors are
+     * tilted forward as {@link #steer}, and how fast it turns as {@link #turning}. A and D turn it, Q and E
+     * slide it aside; the mouse is not its (it looks round). It stops short of whatever is in its way as a
+     * platform does: the whole move if it is clear, else turning only, going across only, climbing
+     * only, else none; going no further the way it is stopped.
+     */
+    private Lift flown(final Course.Aircraft aircraft, final Controls controls, final double seconds,
+                       final Obstacles world, final Collection<Integer> aboard, final List<Block> also) {
+        final Flight flight = aircraft.flight();
+        final double floor = support(world, aboard, also).top() + below();
+        final Flight.State was = new Flight.State(place.height(), place.yaw(), ahead, aside, climb, tilt, roll, steer,
+                0, place.height() <= floor + 0.5 && climb <= 0, turning);
+        final Flight.Input input = held
+                // its keys: A and D turn it, Q and E slide it aside; the mouse is not its
+                ? new Flight.Input(controls.forward(), controls.strafe(), controls.lift(), controls.sideways(),
+                controls.run() ? 1 : CAREFUL, true, engine)
+                : Flight.Input.none(engine);
+        final Flight.State now = flight.step(was, input, seconds, floor);
+        // across the ground, as it went over the step, along the way it heads at the end of it
+        final double a = (was.ahead() * Math.cos(Math.toRadians(now.yaw() - was.yaw()))
+                + was.aside() * Math.sin(Math.toRadians(now.yaw() - was.yaw())) + now.ahead()) / 2 * seconds;
+        final double b = (was.aside() * Math.cos(Math.toRadians(now.yaw() - was.yaw()))
+                - was.ahead() * Math.sin(Math.toRadians(now.yaw() - was.yaw())) + now.aside()) / 2 * seconds;
+        final Vec3 across = Num.heading(now.yaw()).multiply(a).add(Num.right(now.yaw()).multiply(b));
+        final double x = world.land().insideX(place.x() + across.x());
+        final double z = world.land().insideZ(place.z() + across.z());
+        final double high = aircraft.handling().high();
+        final double height = Math.min(now.height(), high);
+        final double rising = height >= high ? Math.min(0, now.climb()) : now.climb();
+        final boolean stuck = !clear(place, world, aboard);
+        final Place[] tries = {
+                new Place(x, z, height, now.yaw()),
+                new Place(place.x(), place.z(), place.height(), now.yaw()),
+                new Place(x, z, place.height(), place.yaw()),
+                new Place(place.x(), place.z(), height, place.yaw()),
+        };
+        for (int k = 0; k < tries.length; k++) {
+            if (stuck || clear(tries[k], world, aboard)) {
+                final boolean goesAcross = k == 0 || k == 2;
+                final boolean goesUp = k == 0 || k == 3;
+                return new Lift(piece, craft, tries[k], goesAcross ? now.ahead() : 0, goesAcross ? now.aside() : 0,
+                        goesUp ? rising : 0, held, engine, bombs, ready, now.nacelle(), now.pitch(), now.roll(), -1, 0, now.turning());
+            }
+        }
+        return new Lift(piece, craft, place, 0, 0, 0, held, engine, bombs, ready, now.nacelle(), now.pitch(),
+                now.roll(), -1, 0);
+    }
+
+    /** Eased toward {@code wanted}; let go, at a crawl, it stops rather than creeping on for ever. */
+    private static double ease(final double speed, final double wanted, final double seconds) {
+        final double now = Num.ease(speed, wanted, GRIP, seconds);
+        return wanted == 0 && Math.abs(now) < 1 ? 0 : now;
+    }
+}

@@ -1,0 +1,580 @@
+package com.example.fxsuite.avatar.roads;
+
+import com.example.fxsuite.avatar.sim.Land;
+import com.example.fxsuite.avatar.sim.Vec2;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Several roads laid on the same ground, in order, each designed against the ground as those before it left it
+ * ({@link Roadway}). Their prepared grounds together, by two rules:
+ *
+ * <ul>
+ *   <li><b>no intrusion</b>: no road's prepared ground changes ground an earlier road occupies, across its strips
+ *       where the ground carries it ({@link Roadway#occupies}); there, the earlier stands;</li>
+ *   <li><b>meeting slopes</b>: elsewhere each road's slopes are worked out against the ground as those before it
+ *       left it, so where two meet the lower is taken in a cutting and the higher on a bank.</li>
+ * </ul>
+ *
+ * <p>Where a later road's slope would have changed an earlier's ground at its edge, and was kept from it, the ground
+ * steps there: too steep for a slope, it needs a retaining wall ({@link Wall}), reported where and how high.
+ */
+public final class Roadworks {
+
+    /**
+     * A road to lay: its name, its line, its kind across, what carries it where that is given, what it must clear; how
+     * much it tilts into its bends (rise over run across; none, nothing); where it is pinned so high; where along it it
+     * is of another kind ({@link Roadway.Part}).
+     */
+    public record Plan(String name, List<Vec2> line, Section section, List<Roadway.Given> given,
+                       List<Roadway.Clearance> clearances, double tilt, List<Roadway.Pin> pins,
+                       List<Roadway.Part> parts) {
+
+        /** One of one kind all along it. */
+        public Plan(final String name, final List<Vec2> line, final Section section, final List<Roadway.Given> given,
+                    final List<Roadway.Clearance> clearances, final double tilt, final List<Roadway.Pin> pins) {
+            this(name, line, section, given, clearances, tilt, pins, List.of());
+        }
+
+        /** One not tilted into its bends. */
+        public Plan(final String name, final List<Vec2> line, final Section section, final List<Roadway.Given> given,
+                    final List<Roadway.Clearance> clearances) {
+            this(name, line, section, given, clearances, 0);
+        }
+
+        /** One pinned nowhere but at its ends. */
+        public Plan(final String name, final List<Vec2> line, final Section section, final List<Roadway.Given> given,
+                    final List<Roadway.Clearance> clearances, final double tilt) {
+            this(name, line, section, given, clearances, tilt, List.of());
+        }
+    }
+
+    /**
+     * Where the ground between two roads steps too much for a slope: along {@code road}'s edge on its {@code side},
+     * from {@code from} to {@code to} along it, where {@code against}'s slope was kept off it; {@code highest} the
+     * most it steps, how high a wall it needs.
+     */
+    public record Wall(int road, int side, int against, double from, double to, double highest) {
+    }
+
+    /** The least step in the ground worth a wall. */
+    static final double STEP = 30;
+    /** The shortest run of such a step worth a wall: a spot of it, where two roads' slopes meet, is not. */
+    static final double SHORTEST = 400;
+
+    private final Profile raw;
+    private final List<Roadway> roads;
+    private final List<Wall> walls;
+    private final List<String> problems;
+    /** Its roads filed by where they reach: what is asked at a point asked only of those near it. */
+    private final RoadIndex index;
+
+    private Roadworks(final Profile raw, final List<Roadway> roads, final RoadIndex index) {
+        this.raw = raw;
+        this.roads = List.copyOf(roads);
+        this.index = index;
+        this.walls = walls();
+        final List<String> found = new ArrayList<>();
+        for (final Roadway r : roads) {
+            found.addAll(r.problems());
+        }
+        for (final Wall w : walls) {
+            found.add(String.format(java.util.Locale.ROOT,
+                    "\"%s\": a wall up to %.1f m high wanted on its %s, %.0f–%.0f m along, against \"%s\"",
+                    roads.get(w.road()).name(), w.highest() / 100, w.side() < 0 ? "left" : "right", w.from() / 100,
+                    w.to() / 100, roads.get(w.against()).name()));
+        }
+        this.problems = List.copyOf(found);
+    }
+
+    /**
+     * {@code plans} laid on {@code raw} in order, each designed against the ground as those before it left it where
+     * they occupy it (their pavements' tops where they are paved), and as it was elsewhere: it follows an earlier road
+     * it meets, joining it at its surface, never the slopes and ditches an earlier road would have dug where it is
+     * itself to be.
+     */
+    public static Roadworks design(final Profile raw, final List<Plan> plans) {
+        final List<Roadway> laid = new ArrayList<>();
+        final RoadIndex index = new RoadIndex();
+        for (final Plan p : plans) {
+            final Roadworks before = new Roadworks(raw, laid, index, false);
+            final Profile profile = (x, z, below) -> {
+                if (!before.occupied(x, z)) {
+                    return raw.height(x, z, below);
+                }
+                // on an earlier road: its pavement's top where it is paved, so a road joining it joins it at its surface;
+                // but under it, on the ground, where it is high over the ground on a structure
+                final double top = before.pavement(x, z);
+                final double under = before.ground().at(x, z).height();
+                return Double.isNaN(top) || top - under > PASS ? under : top;
+            };
+            laid.add(gored(Roadway.design(p.name(), p.line(), p.section(), profile, p.given(), p.clearances(),
+                    p.tilt(), p.pins(), p.parts()), before));
+            index.add(laid.size() - 1, laid.getLast());
+        }
+        return new Roadworks(raw, laid, index);
+    }
+
+    /** How high over the ground an earlier road may be, on a structure, for a later road to join it there, not pass under it. */
+    static final double PASS = 250;
+    /** How near two pavements' tops are for them to be at one level: the one drawn once, the other's left out. */
+    static final double LEVEL = 100;
+
+    /** How wide a gore is paved, at most: past that, its nose, and the grass between. */
+    static final double NOSE = 200;
+    /** How finely the gap to another road's pavement is felt for; how far a gore runs onto it. */
+    static final double PROBE = 10;
+    static final double OVERLAP = 10;
+
+    /**
+     * {@code road}, given its gores where it leaves or joins a road laid before it ({@code before}): from each of its ends
+     * that lies on an earlier road's pavement, point by point away from it, while the gap from its pavement's edge to the
+     * earlier's is no wider than {@link #NOSE}, that gap paved, either side; past that, the nose, and nothing more.
+     */
+    static Roadway gored(final Roadway road, final Roadworks before) {
+        if (before.roads.isEmpty()) {
+            return road;
+        }
+        final int n = road.size();
+        final double[] left = new double[n];
+        final double[] right = new double[n];
+        boolean any = false;
+        for (final boolean fromStart : new boolean[] {true, false}) {
+            final int first = fromStart ? 0 : n - 1;
+            if (!joins(road, first, before)) {
+                continue;
+            }
+            for (int i = first; i >= 0 && i < n; i += fromStart ? 1 : -1) {
+                boolean near = false;
+                for (final int side : new int[] {-1, 1}) {
+                    final double gap = gap(road, i, side, before);
+                    if (Double.isNaN(gap)) {
+                        continue;
+                    }
+                    near = true;
+                    if (gap > 0) {
+                        final double[] widths = side < 0 ? left : right;
+                        widths[i] = Math.max(widths[i], gap + OVERLAP);
+                        any = true;
+                    }
+                }
+                if (!near) {
+                    break;
+                }
+            }
+        }
+        return any ? road.withGores(left, right) : road;
+    }
+
+    /** Whether {@code road}'s pavement at its {@code i}th point lies, anywhere across it, on an earlier road's. */
+    private static boolean joins(final Roadway road, final int i, final Roadworks before) {
+        final Section s = road.section(i);
+        for (double a = -s.pavedEdge(-1); a <= s.pavedEdge(1); a += 50) {
+            final Vec2 p = road.at(i, a);
+            if (before.pavedBefore(before.roads.size(), p.x(), p.z())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** How far from {@code road}'s pavement's edge at its {@code i}th point, to {@code side}, an earlier road's pavement is; not a number past {@link #NOSE}. */
+    private static double gap(final Roadway road, final int i, final int side, final Roadworks before) {
+        final double edge = road.section(i).pavedEdge(side);
+        for (double d = 0; d <= NOSE; d += PROBE) {
+            final Vec2 p = road.at(i, side * (edge + d));
+            if (before.pavedBefore(before.roads.size(), p.x(), p.z())) {
+                return d;
+            }
+        }
+        return Double.NaN;
+    }
+
+    /** Whether any of its roads occupies (x, z). */
+    private boolean occupied(final double x, final double z) {
+        return occupiedBefore(roads.size(), x, z);
+    }
+
+    /** As far as the roads laid so far: no walls looked for. */
+    private Roadworks(final Profile raw, final List<Roadway> roads, final RoadIndex index, final boolean looked) {
+        this.raw = raw;
+        this.roads = List.copyOf(roads);
+        this.index = index;
+        this.walls = List.of();
+        this.problems = List.of();
+    }
+
+    /**
+     * Two carriageways of a divided road, of one-way kind {@code section}, along {@code centre}: each its line at its
+     * inner edge, its half of the median between it and the centre; the first going along {@code centre}, the second
+     * back along it, each with its paved strips away from the centre. Named {@code name} and the way each goes.
+     */
+    public static List<Plan> carriageways(final String name, final List<Vec2> centre, final Section section,
+                                          final List<Roadway.Given> given, final List<Roadway.Clearance> clearances) {
+        final int side = section.pavedSide();
+        if (side == 0) {
+            throw new IllegalArgumentException("\"" + section.name() + "\" is not one way: paved on both sides, or neither");
+        }
+        // its line as far from the centre as its half of the median is wide, on the side its pavement is
+        final double half = section.edge(-side);
+        final List<Vec2> one = offset(centre, side * half);
+        final List<Vec2> other = offset(centre, -side * half).reversed();
+        final double length = length(centre);
+        final List<Roadway.Given> back = given.stream()
+                .map(g -> new Roadway.Given(length - g.to(), length - g.from(), g.carrier())).toList();
+        final List<Roadway.Clearance> clearBack = clearances.stream()
+                .map(c -> new Roadway.Clearance(length - c.to(), length - c.from(), c.over())).toList();
+        return List.of(new Plan(name + " one way", one, section, given, clearances),
+                new Plan(name + " the other way", other, section, back, clearBack));
+    }
+
+    /** {@code line} moved {@code by} to its right (to its left, less than nothing), square to it at each point. */
+    public static List<Vec2> offset(final List<Vec2> line, final double by) {
+        final double[] each = new double[line.size()];
+        java.util.Arrays.fill(each, by);
+        return offset(line, each);
+    }
+
+    /** {@code line} moved {@code by[i]} to its right at its {@code i}th point, left if less than nothing. */
+    public static List<Vec2> offset(final List<Vec2> line, final double[] by) {
+        final List<Vec2> moved = new ArrayList<>();
+        for (int i = 0; i < line.size(); i++) {
+            final Vec2 a = line.get(Math.max(i - 1, 0));
+            final Vec2 b = line.get(Math.min(i + 1, line.size() - 1));
+            final double dx = b.x() - a.x();
+            final double dz = b.z() - a.z();
+            final double len = Math.hypot(dx, dz);
+            moved.add(new Vec2(line.get(i).x() + dz / len * by[i], line.get(i).z() - dx / len * by[i]));
+        }
+        return moved;
+    }
+
+    private static double length(final List<Vec2> line) {
+        double length = 0;
+        for (int i = 1; i < line.size(); i++) {
+            length += Math.hypot(line.get(i).x() - line.get(i - 1).x(), line.get(i).z() - line.get(i - 1).z());
+        }
+        return length;
+    }
+
+    public List<Roadway> roads() {
+        return roads;
+    }
+
+    /** What was there before them all. */
+    public Profile raw() {
+        return raw;
+    }
+
+    /** Where walls are wanted. */
+    public List<Wall> wanted() {
+        return walls;
+    }
+
+    /** What is wrong with them: each road's own, and the walls wanted. */
+    public List<String> problems() {
+        return problems;
+    }
+
+    /** The ground as they all leave it. */
+    public Ground ground() {
+        return (x, z) -> at(x, z, roads.size());
+    }
+
+    /** The box round its roads and as far as they reach, and some: min x, max x, min z, max z. */
+    public double[] bounds(final double margin) {
+        double x0 = Double.POSITIVE_INFINITY;
+        double x1 = Double.NEGATIVE_INFINITY;
+        double z0 = Double.POSITIVE_INFINITY;
+        double z1 = Double.NEGATIVE_INFINITY;
+        for (final Roadway road : roads) {
+            for (int i = 0; i < road.size(); i++) {
+                final Vec2 p = road.point(i);
+                x0 = Math.min(x0, p.x() - road.reach() - margin);
+                x1 = Math.max(x1, p.x() + road.reach() + margin);
+                z0 = Math.min(z0, p.z() - road.reach() - margin);
+                z1 = Math.max(z1, p.z() + road.reach() + margin);
+            }
+        }
+        return new double[] {x0, x1, z0, z1};
+    }
+
+    /** Where a road laid before the {@code k}th has its pavement, at (x, z): what the {@code k}th is not drawn over. */
+    public boolean pavedBefore(final int k, final double x, final double z) {
+        for (final int m : index.near(x, z)) {
+            if (m >= k || m >= roads.size()) {
+                break;
+            }
+            if (!Double.isNaN(roads.get(m).surface(x, z))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Whether a road laid before the {@code k}th has its pavement at (x, z) at about {@code level} ({@link #LEVEL}): a
+     * pavement there at another level, over it or under it, not; any, if {@code level} is not a number.
+     */
+    public boolean pavedBefore(final int k, final double x, final double z, final double level) {
+        if (Double.isNaN(level)) {
+            return pavedBefore(k, x, z);
+        }
+        for (final int m : index.near(x, z)) {
+            if (m >= k || m >= roads.size()) {
+                break;
+            }
+            final double top = roads.get(m).surface(x, z);
+            if (!Double.isNaN(top) && Math.abs(top - level) <= LEVEL) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** The pavement's top at (x, z) where a road's pavement lies on the ground (or on a structure already there); else not a number. */
+    public double pavement(final double x, final double z) {
+        for (final int m : index.near(x, z)) {
+            if (m >= roads.size()) {
+                break;
+            }
+            final Roadway road = roads.get(m);
+            if (road.occupies(x, z)) {
+                return road.surface(x, z);
+            }
+        }
+        return Double.NaN;
+    }
+
+    /**
+     * They as a feature of the land ({@link Land.Layer}), laid over level ground at 0: the ground as they leave it; and,
+     * under a road's pavement where the ground carries it, the pavement's top, {@code sink} lower: what is stood and
+     * driven on, until the pavement is a surface of its own. The ground's covers as theirs: bare earth, gravel; the
+     * pavement as asphalt, or gravel where its top is. Under a structure, the ground: the structure stands on it.
+     * {@code sink} not a number: the pavement not in the land, a thing of its own ({@link Roadway#pavement}), the land
+     * under it its formation.
+     */
+    public Land.Layer land(final double sink) {
+        final Ground ground = ground();
+        final double[] box = bounds(0);
+        double lowest = 0;
+        double highest = 0;
+        for (int i = 0; i <= 40; i++) {
+            for (int j = 0; j <= 40; j++) {
+                final double h = raw.height(box[0] + (box[1] - box[0]) * i / 40, box[2] + (box[3] - box[2]) * j / 40);
+                lowest = Math.min(lowest, h);
+                highest = Math.max(highest, h);
+            }
+        }
+        for (final Roadway road : roads) {
+            for (int i = 0; i < road.size(); i++) {
+                lowest = Math.min(lowest, road.level(i) - 2_000);
+                highest = Math.max(highest, road.level(i) + 500);
+            }
+        }
+        final double deepest = -lowest;
+        final double tallest = highest;
+        final List<Land.Band> bands = bands();
+        return new PavedLayer() {
+            @Override
+            public List<Land.Band> bands() {
+                return bands;
+            }
+
+            @Override
+            public double shape(final double x, final double z, final double under) {
+                final double top = Double.isNaN(sink) ? Double.NaN : pavement(x, z);
+                return Double.isNaN(top) ? ground.at(x, z).height() : top - sink;
+            }
+
+            @Override
+            public boolean touches(final double minX, final double minZ, final double maxX, final double maxZ) {
+                return true;
+            }
+
+            @Override
+            public double deepest() {
+                return deepest;
+            }
+
+            @Override
+            public double tallest() {
+                return tallest;
+            }
+
+            @Override
+            public double cover(final Land.Cover cover, final double x, final double z) {
+                for (final int m : index.near(x, z)) {
+                    final Roadway road = roads.get(m);
+                    if (road.occupies(x, z) && !Double.isNaN(road.surface(x, z))) {
+                        final Roadway.Near near = road.nearest(x, z);
+                        final Course.Stuff top =
+                                road.section(near.segment()).at(near.across()).strip().courses().getFirst().stuff();
+                        final Land.Cover is = top == Course.Stuff.GRAVEL ? Land.Cover.GRAVEL : Land.Cover.ASPHALT;
+                        return is == cover ? 1 : 0;
+                    }
+                }
+                final Cover prepared = ground.at(x, z).cover();
+                if (prepared == Cover.EARTH) {
+                    return cover == Land.Cover.EARTH ? 1 : 0;
+                }
+                if (prepared == Cover.GRAVEL) {
+                    return cover == Land.Cover.GRAVEL ? 1 : 0;
+                }
+                return 0;
+            }
+        };
+    }
+
+    /** A feature of the land that also says where its pavements run. */
+    private interface PavedLayer extends Land.Layer, Land.Paved {
+    }
+
+    /** How many of a road's points apart its pavement is told the land: 10 m, at 2 m apart. */
+    static final int BAND_EVERY = 5;
+
+    /**
+     * Where its roads' pavements run, coarsely, where the ground or a structure already there carries them: each stretch
+     * of so many points its pavement's middle, so wide either side, its gores and all. So the land drawn coarsely can be
+     * drawn out of their way.
+     */
+    public List<Land.Band> bands() {
+        final List<Land.Band> bands = new ArrayList<>();
+        for (final Roadway road : roads) {
+            final int end = road.size() - 1;
+            for (int from = 0; from < end; from += BAND_EVERY) {
+                final int to = Math.min(end, from + BAND_EVERY);
+                boolean grounded = true;
+                for (int j = from; j < to; j++) {
+                    grounded &= road.carrier(j) == Carrier.GROUND || road.carrier(j) == Carrier.ON;
+                }
+                if (!grounded) {
+                    continue;
+                }
+                final Section a = road.section(from);
+                final Section b = road.section(to);
+                final Vec2 pa = road.at(from, (a.pavedEdge(1) - a.pavedEdge(-1)) / 2);
+                final Vec2 pb = road.at(to, (b.pavedEdge(1) - b.pavedEdge(-1)) / 2);
+                bands.add(new Land.Band(pa.x(), pa.z(), pb.x(), pb.z(), (a.pavedEdge(-1) + a.pavedEdge(1)) / 2,
+                        (b.pavedEdge(-1) + b.pavedEdge(1)) / 2));
+            }
+        }
+        return bands;
+    }
+
+    /** The box round {@code road} as far as it reaches: min x, max x, min z, max z. */
+    private static double[] box(final Roadway road) {
+        double x0 = Double.POSITIVE_INFINITY;
+        double x1 = Double.NEGATIVE_INFINITY;
+        double z0 = Double.POSITIVE_INFINITY;
+        double z1 = Double.NEGATIVE_INFINITY;
+        for (int i = 0; i < road.size(); i++) {
+            final Vec2 p = road.point(i);
+            x0 = Math.min(x0, p.x());
+            x1 = Math.max(x1, p.x());
+            z0 = Math.min(z0, p.z());
+            z1 = Math.max(z1, p.z());
+        }
+        final double r = road.reach();
+        return new double[] {x0 - r, x1 + r, z0 - r, z1 + r};
+    }
+
+    /** The ground at (x, z) as the first {@code count} roads leave it. */
+    private Prepared at(final double x, final double z, final int count) {
+        Prepared p = new Prepared(raw.height(x, z), null);
+        for (final int k : index.near(x, z)) {
+            if (k >= count || k >= roads.size()) {
+                break;
+            }
+            if (occupiedBefore(k, x, z)) {
+                continue;
+            }
+            final Prepared q = roads.get(k).prepared(x, z, p.height());
+            if (q.touched()) {
+                p = q;
+            }
+        }
+        return p;
+    }
+
+    private boolean occupiedBefore(final int k, final double x, final double z) {
+        for (final int m : index.near(x, z)) {
+            if (m >= k || m >= roads.size()) {
+                break;
+            }
+            if (roads.get(m).occupies(x, z)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * How low and how high wall {@code w} goes at its road's {@code i}th point: from the lower of the ground as kept
+     * at the road's edge and as the later road would have had it there, to the higher.
+     */
+    public double[] span(final Wall w, final int i) {
+        final Roadway road = roads.get(w.road());
+        final Vec2 p = road.at(i, w.side() * (road.section(i).edge(w.side()) - 1));
+        final double kept = ground().at(p.x(), p.z()).height();
+        final double wanted = roads.get(w.against()).prepared(p.x(), p.z(), kept).height();
+        return new double[] {Math.min(kept, wanted), Math.max(kept, wanted)};
+    }
+
+    /**
+     * Along each road's edges where the ground carries it, just inside them: how far each later road's prepared
+     * ground would have had it, against how it is. Where that differs by more than {@link #STEP}, a wall.
+     */
+    private List<Wall> walls() {
+        final List<Wall> found = new ArrayList<>();
+        final Ground all = ground();
+        // only those that come near each other: the box round each, as far as it reaches
+        final double[][] boxes = new double[roads.size()][];
+        for (int m = 0; m < roads.size(); m++) {
+            boxes[m] = box(roads.get(m));
+        }
+        for (int m = 0; m < roads.size(); m++) {
+            final Roadway road = roads.get(m);
+            for (int k = m + 1; k < roads.size(); k++) {
+                if (boxes[k][0] > boxes[m][1] || boxes[k][1] < boxes[m][0] || boxes[k][2] > boxes[m][3]
+                        || boxes[k][3] < boxes[m][2]) {
+                    continue;
+                }
+                final Roadway later = roads.get(k);
+                for (final int side : new int[] {-1, 1}) {
+                    int from = -1;
+                    double highest = 0;
+                    for (int i = 0; i <= road.size(); i++) {
+                        double step = 0;
+                        if (i < road.size() && road.grounded(Math.min(i, road.size() - 2))) {
+                            final double inside = side * (road.section(i).edge(side) - 1);
+                            final Vec2 p = road.at(i, inside);
+                            // only where the later reaches; and where its own strips or its pavement lie, it overlaps this one: a
+                            // junction, not a slope
+                            if (later.nearest(p.x(), p.z()) != null && !later.occupies(p.x(), p.z())
+                                    && Double.isNaN(later.surface(p.x(), p.z()))) {
+                                final double kept = all.at(p.x(), p.z()).height();
+                                final Prepared wanted = later.prepared(p.x(), p.z(), kept);
+                                step = wanted.touched() ? Math.abs(wanted.height() - kept) : 0;
+                            }
+                        }
+                        if (step > STEP) {
+                            if (from < 0) {
+                                from = i;
+                                highest = 0;
+                            }
+                            highest = Math.max(highest, step);
+                        } else if (from >= 0) {
+                            if (road.along(i - 1) - road.along(from) >= SHORTEST) {
+                                found.add(new Wall(m, side, k, road.along(from), road.along(i - 1), highest));
+                            }
+                            from = -1;
+                        }
+                    }
+                }
+            }
+        }
+        return List.copyOf(found);
+    }
+}
