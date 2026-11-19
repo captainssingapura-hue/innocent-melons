@@ -15,6 +15,7 @@
     </description>
 
     <modules>
+        <module>emblem</module>
         <module>hq</module>
     </modules>
 </project>
