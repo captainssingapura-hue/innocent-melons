@@ -132,6 +132,42 @@ final class Muscles {
         return ALL.stream().filter(m -> m.name().equals(name)).findFirst().orElseThrow();
     }
 
+    /** How long a piston's barrel is, as a share of how far apart its ends are at rest; how thick, of the muscle. */
+    static final double BARREL = 0.55;
+    static final double BORE = 0.5;
+
+    /**
+     * Every muscle on both sides read as a robot's piston: a barrel fixed at its origin, along the line to its
+     * insertion, as long as a share of that line at rest; a rod sliding out of it to the insertion, out of sight in it
+     * as the ends come together; an eye at each end. Its muscle's own ends, so it works as the muscle would.
+     */
+    static Map<Part, List<Surface>> pistons(final Rig rig, final Rig rest) {
+        final Map<Part, List<Surface>> by = new EnumMap<>(Part.class);
+        final double s = rig.proportions().scale();
+        final double b = rig.proportions().build();
+        for (final Muscle m : ALL) {
+            for (final int side : new int[] {1, -1}) {
+                final Part part = side > 0 || m.part().side() == 0 ? m.part() : m.part().other();
+                final V3 o = m.origin().apply(rig, side);
+                final V3 i = m.insertion().apply(rig, side);
+                final double apart = i.minus(o).length();
+                final V3 dir = i.minus(o).unit();
+                final double was = m.insertion().apply(rest, side).minus(m.origin().apply(rest, side)).length();
+                final double barrel = Math.min(BARREL * was, 0.9 * apart);
+                final double bore = Math.max(0.9, m.radius() * BORE) * s * b;
+                final String name = (side > 0 ? "right " : "left ") + m.name();
+                final List<Surface> list = by.computeIfAbsent(part, x -> new ArrayList<>());
+                list.add(Shapes.capsule(name + " barrel", Paint.BARREL, o, o.plus(dir.times(barrel)),
+                        new double[] {bore, bore}, 1, 0.15, 14));
+                list.add(Shapes.capsule(name + " rod", Paint.ROD, o.plus(dir.times(0.6 * barrel)), i,
+                        new double[] {0.45 * bore, 0.45 * bore}, 1, 0.3, 10));
+                list.add(Shapes.ellipsoid(name + " eye", Paint.HOUSING, o, 0.8 * bore, 0.8 * bore, 0.8 * bore, 10, 6));
+                list.add(Shapes.ellipsoid(name + " eye", Paint.HOUSING, i, 0.6 * bore, 0.6 * bore, 0.6 * bore, 10, 6));
+            }
+        }
+        return by;
+    }
+
     /** Every muscle on both sides, drawn: its belly and its tendons, each with the part it goes with. */
     static Map<Part, List<Surface>> drawn(final Rig rig, final Rig rest) {
         final Map<Part, List<Surface>> by = new EnumMap<>(Part.class);

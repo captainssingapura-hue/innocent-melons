@@ -123,6 +123,27 @@ final class Shapes {
         return new Surface(name, paint, rings, top, bottom, true);
     }
 
+    /**
+     * A flat bar from {@code a} to {@code b}, {@code wide} across the way {@code up} says (as near it as square to the
+     * bar goes) and {@code thick} the other way: flat-faced, a machined part's.
+     */
+    static Surface bar(final String name, final Paint paint, final V3 a, final V3 b, final V3 up, final double wide,
+                       final double thick) {
+        final V3 u = b.minus(a).unit();
+        V3 side = u.cross(up);
+        if (side.length() < 1e-6) {
+            side = u.cross(Math.abs(u.x()) < 0.9 ? V3.X : V3.Z);
+        }
+        side = side.unit().times(thick / 2);
+        final V3 high = side.cross(u).unit().times(wide / 2);
+        final List<List<V3>> rings = new ArrayList<>();
+        for (final V3 end : new V3[] {a, b}) {
+            rings.add(List.of(end.minus(high).minus(side), end.minus(high).plus(side), end.plus(high).plus(side),
+                    end.plus(high).minus(side)));
+        }
+        return new Surface(name, paint, rings, a, b, false);
+    }
+
     /** A box round {@code c}, so wide across, so high, so deep: flat-faced. */
     static Surface box(final String name, final Paint paint, final V3 c, final double w, final double h,
                        final double d) {

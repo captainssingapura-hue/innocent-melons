@@ -16,6 +16,12 @@ public final class Body {
     /** What of it is shown. */
     public enum Layer { SKIN, BONES, MUSCLES, MARKS }
 
+    /**
+     * What it is drawn as, on the same skeleton, moving the same: a human, skin, bones and muscles; or a robot, its
+     * shell, its frame and its pistons, the same shapes read as a machine.
+     */
+    public enum Look { HUMAN, ROBOT }
+
     /** A piece of it: what part it goes with (none for a mark), what layer it is of, its surface. */
     public record Piece(Part part, Layer layer, Surface surface) {
     }
@@ -23,13 +29,26 @@ public final class Body {
     private final Rig rig;
     private final Rig rest;
     private final V3 kept;
+    private final Look look;
+    private final RobotDesign design;
 
     public Body(final Proportions proportions, final Pose pose) {
-        this(proportions, pose, null);
+        this(proportions, pose, null, Look.HUMAN);
     }
 
-    /** {@code proportions} holding {@code pose}, its centre of gravity kept over {@code kept} (x, z), if it is. */
-    public Body(final Proportions proportions, final Pose pose, final V3 kept) {
+    /**
+     * {@code proportions} holding {@code pose}, drawn as {@code look}, its centre of gravity kept over {@code kept}
+     * (x, z), if it is.
+     */
+    public Body(final Proportions proportions, final Pose pose, final V3 kept, final Look look) {
+        this(proportions, pose, kept, look, RobotDesign.DEFAULT);
+    }
+
+    /** As {@link #Body(Proportions, Pose, V3, Look)}, a robot's own parts as {@code design} has them. */
+    public Body(final Proportions proportions, final Pose pose, final V3 kept, final Look look,
+                final RobotDesign design) {
+        this.look = look;
+        this.design = design;
         rig = new Rig(proportions, pose);
         rest = new Rig(proportions, Pose.REST);
         this.kept = kept;
@@ -48,16 +67,19 @@ public final class Body {
     public List<Piece> pieces(final Set<Layer> shown) {
         final List<Piece> all = new ArrayList<>();
         if (shown.contains(Layer.BONES)) {
-            Bones.drawn(rig).forEach((p, l) -> l.forEach(s -> all.add(new Piece(p, Layer.BONES, s))));
+            Bones.drawn(rig, look == Look.ROBOT, design)
+                    .forEach((p, l) -> l.forEach(s -> all.add(new Piece(p, Layer.BONES, s))));
         }
         if (shown.contains(Layer.MUSCLES)) {
-            Muscles.drawn(rig, rest).forEach((p, l) -> l.forEach(s -> all.add(new Piece(p, Layer.MUSCLES, s))));
+            (look == Look.ROBOT ? Muscles.pistons(rig, rest) : Muscles.drawn(rig, rest))
+                    .forEach((p, l) -> l.forEach(s -> all.add(new Piece(p, Layer.MUSCLES, s))));
         }
         if (shown.contains(Layer.MARKS)) {
             marks().forEach(s -> all.add(new Piece(null, Layer.MARKS, s)));
         }
         if (shown.contains(Layer.SKIN)) {
-            Skin.drawn(rig, bulges()).forEach((p, l) -> l.forEach(s -> all.add(new Piece(p, Layer.SKIN, s))));
+            Skin.drawn(rig, bulges(), look == Look.ROBOT, design)
+                    .forEach((p, l) -> l.forEach(s -> all.add(new Piece(p, Layer.SKIN, s))));
         }
         return all;
     }

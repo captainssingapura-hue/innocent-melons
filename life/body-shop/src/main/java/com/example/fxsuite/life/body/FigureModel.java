@@ -36,7 +36,8 @@ public final class FigureModel {
      * {@code pieces} drawn, standing at the scene's origin facing south; the skin seen through, if {@code through};
      * {@code chosen}'s skin warmer, if any part is.
      */
-    public static Group of(final List<Body.Piece> pieces, final boolean through, final Part chosen) {
+    public static Group of(final List<Body.Piece> pieces, final boolean through, final Part chosen,
+                           final Palette palette) {
         record Key(Part part, Body.Layer layer, Paint paint) {
         }
         final Map<Key, TriangleMesh> meshes = new LinkedHashMap<>();
@@ -53,7 +54,8 @@ public final class FigureModel {
         meshes.forEach((key, mesh) -> {
             final MeshView view = new MeshView(mesh);
             final boolean isSkin = key.layer() == Body.Layer.SKIN;
-            view.setMaterial(matte(isSkin && key.part() == chosen && chosen != null ? CHOSEN : key.paint().colour(),
+            final boolean warm = isSkin && key.part() == chosen && chosen != null;
+            view.setMaterial(material(warm ? CHOSEN : palette.colour(key.paint()), key.paint().finish(),
                     isSkin && through ? 1 - SEEN_THROUGH : 1));
             view.setCullFace(CullFace.BACK);
             final boolean centre = key.paint() == Paint.MARK_MASS || key.paint() == Paint.MARK_TARGET;
@@ -93,9 +95,38 @@ public final class FigureModel {
     }
 
     private static void add(final TriangleMesh mesh, final Surface s) {
+        add(mesh, s, FigureModel::scene);
+    }
+
+    /**
+     * {@code surfaces} drawn as they are mapped by {@code map} (which, with whatever transform the drawing is given,
+     * must turn the body's frame inside out once, as the scene's frame does): one mesh a colour, each its finish.
+     */
+    public static Group meshes(final List<Surface> surfaces, final Palette palette,
+                               final java.util.function.Function<V3, javafx.geometry.Point3D> map) {
+        final Map<Paint, TriangleMesh> byPaint = new java.util.EnumMap<>(Paint.class);
+        for (final Surface s : surfaces) {
+            add(byPaint.computeIfAbsent(s.paint(), p -> {
+                final TriangleMesh m = new TriangleMesh();
+                m.getTexCoords().addAll(0, 0);
+                return m;
+            }), s, map);
+        }
+        final Group drawn = new Group();
+        byPaint.forEach((paint, mesh) -> {
+            final MeshView view = new MeshView(mesh);
+            view.setMaterial(material(palette.colour(paint), paint.finish(), 1));
+            view.setCullFace(CullFace.BACK);
+            drawn.getChildren().add(view);
+        });
+        return drawn;
+    }
+
+    private static void add(final TriangleMesh mesh, final Surface s,
+                            final java.util.function.Function<V3, javafx.geometry.Point3D> map) {
         final int base = mesh.getPoints().size() / 3;
         for (final V3 v : s.points()) {
-            final javafx.geometry.Point3D at = scene(v);
+            final javafx.geometry.Point3D at = map.apply(v);
             mesh.getPoints().addAll((float) at.getX(), (float) at.getY(), (float) at.getZ());
         }
         final List<int[]> triangles = s.triangles();
@@ -110,9 +141,29 @@ public final class FigureModel {
         }
     }
 
-    static PhongMaterial matte(final String colour, final double opacity) {
-        final PhongMaterial m = new PhongMaterial(Color.web(colour, opacity));
-        m.setSpecularColor(Color.web("#3a3a3a"));
+    /**
+     * {@code colour}, so far opaque, taking the light as {@code finish} says: flat, with a soft sheen, as polished metal
+     * (a bright, tight highlight; JavaFX reflects nothing round it), or lit from within.
+     */
+    static PhongMaterial material(final String colour, final Paint.Finish finish, final double opacity) {
+        final Color c = Color.web(colour, opacity);
+        final PhongMaterial m = new PhongMaterial(c);
+        switch (finish) {
+            case MATTE -> m.setSpecularColor(Color.web("#3a3a3a"));
+            case GLOSS -> {
+                m.setSpecularColor(Color.web("#8c8c8c"));
+                m.setSpecularPower(28);
+            }
+            case METAL -> {
+                m.setSpecularColor(Color.web("#f4f6f8"));
+                m.setSpecularPower(72);
+            }
+            case GLOW -> {
+                final javafx.scene.image.WritableImage lit = new javafx.scene.image.WritableImage(1, 1);
+                lit.getPixelWriter().setColor(0, 0, c);
+                m.setSelfIlluminationMap(lit);
+            }
+        }
         return m;
     }
 }

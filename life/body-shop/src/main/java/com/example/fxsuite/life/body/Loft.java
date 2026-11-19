@@ -68,6 +68,12 @@ final class Loft {
      * end rings, where it is drawn in to a point, its two ends.
      */
     static Surface of(final String name, final Paint paint, final int along, final int round, final Skin skin) {
+        return of(name, paint, along, round, skin, true);
+    }
+
+    /** As {@link #of(String, Paint, int, int, Skin)}, seen smooth or, if not {@code smooth}, in flat panels round. */
+    static Surface of(final String name, final Paint paint, final int along, final int round, final Skin skin,
+                      final boolean smooth) {
         final List<List<V3>> rings = new ArrayList<>(along);
         for (int i = 1; i < along - 1; i++) {
             final double t = (double) i / (along - 1);
@@ -77,6 +83,6 @@ final class Loft {
             }
             rings.add(ring);
         }
-        return new Surface(name, paint, rings, skin.at(0, 0), skin.at(1, 0), true);
+        return new Surface(name, paint, rings, skin.at(0, 0), skin.at(1, 0), smooth);
     }
 }

@@ -19,10 +19,32 @@ final class Bones {
 
     /** Every part's bones, posed as {@code rig} is. */
     static Map<Part, List<Surface>> drawn(final Rig rig) {
+        return drawn(rig, false);
+    }
+
+    /**
+     * Every part's bones, posed as {@code rig} is: a human's, or, for a robot, its frame: the same bones in polished
+     * metal, and a housing round each joint.
+     */
+    static Map<Part, List<Surface>> drawn(final Rig rig, final boolean robot) {
+        return drawn(rig, robot, RobotDesign.DEFAULT);
+    }
+
+    /** As {@link #drawn(Rig, boolean)}, a robot's spine, chest, neck and head as {@code design} has them. */
+    static Map<Part, List<Surface>> drawn(final Rig rig, final boolean robot, final RobotDesign design) {
         final Map<Part, List<Surface>> by = new EnumMap<>(Part.class);
         for (final Part p : Part.values()) {
             final List<Surface> placed = new ArrayList<>();
-            for (final Surface s : local(p, rig.twist(p.side()))) {
+            final List<Surface> local = new ArrayList<>(robot && RobotFrame.designed(p)
+                    ? RobotFrame.part(p, design, Paint.FRAME) : local(p, rig.twist(p.side())));
+            if (robot && !RobotFrame.designed(p)) {
+                local.replaceAll(s -> new Surface(s.name(), Paint.FRAME, s.rings(), s.start(), s.end(), s.smooth()));
+                final double r = HOUSING.getOrDefault(p.name().replace("RIGHT_", "").replace("LEFT_", ""), 0.0);
+                if (r > 0) {
+                    local.add(Shapes.ellipsoid(p.said() + " housing", Paint.HOUSING, V3.ZERO, r, r, r, 16, 10));
+                }
+            }
+            for (final Surface s : local) {
                 placed.add(s.moved(v -> rig.place(p, v)));
             }
             by.put(p, placed);
@@ -32,10 +54,15 @@ final class Bones {
             final V3 at = Muscles.kneecap(rig, side);
             final double s = rig.proportions().scale();
             by.get(side > 0 ? Part.RIGHT_THIGH : Part.LEFT_THIGH).add(
-                    Shapes.ellipsoid("kneecap", Paint.PATELLA, at, 2.3 * s, 2.5 * s, 1.15 * s, 14, 8));
+                    Shapes.ellipsoid("kneecap", robot ? Paint.HOUSING : Paint.PATELLA, at, 2.3 * s, 2.5 * s, 1.15 * s,
+                            14, 8));
         }
         return by;
     }
+
+    /** How big a robot's housing is round each joint, by the part it turns: none for the pelvis, the girdles, the toes. */
+    static final java.util.Map<String, Double> HOUSING = java.util.Map.of("ABDOMEN", 3.6, "CHEST", 3.6, "NECK", 2.6,
+            "HEAD", 2.4, "UPPER_ARM", 3.4, "FOREARM", 2.6, "HAND", 1.8, "THIGH", 3.6, "SHIN", 3.0, "FOOT", 2.4);
 
     private static Surface ball(final String n, final V3 c, final double r) {
         return Shapes.ellipsoid(n, Paint.BONE, c, r, r, r, 14, 8);

@@ -195,6 +195,55 @@ class BodyTest {
     }
 
     @Test
+    void aRobotIsTheSameBodyMovingTheSameReadAsAMachine() {
+        for (final Pose.Named n : List.of(Pose.PRESETS.get(0), Pose.PRESETS.get(7))) {
+            final Body robot = new Body(P, n.pose(), null, Body.Look.ROBOT);
+            final List<Body.Piece> pieces = robot.pieces(EnumSet.allOf(Body.Layer.class));
+            for (final Body.Piece piece : pieces) {
+                assertTrue(piece.surface().volume() > 0, n.name() + ", " + piece.surface().name() + ": facing outward");
+            }
+            assertTrue(pieces.stream().noneMatch(p -> p.surface().paint() == Paint.SKIN), "no skin, a shell");
+            assertTrue(pieces.stream().anyMatch(p -> p.surface().paint() == Paint.VISOR), "a visor");
+            assertTrue(pieces.stream().filter(p -> p.layer() == Body.Layer.SKIN && p.part() == Part.CHEST)
+                    .noneMatch(p -> p.surface().smooth()), "its shell in flat panels");
+            assertTrue(pieces.stream().filter(p -> p.layer() == Body.Layer.BONES)
+                    .allMatch(p -> Paint.ROBOT.contains(p.surface().paint())), "a frame, no bone");
+            assertTrue(pieces.stream().anyMatch(p -> p.surface().name().startsWith("spine: waist vertebra")),
+                    "its spine its own, machined");
+            assertTrue(pieces.stream().anyMatch(p -> p.surface().name().equals("head: helmet")), "its head covered");
+        }
+    }
+
+    @Test
+    void aPistonsRodSlidesIntoItsBarrelAsItsMuscleShortens() {
+        final Pose bent = Pose.REST.with(Part.RIGHT_FOREARM, Dof.ELBOW, 120);
+        final Surface barrelStraight = piston(Pose.REST, "right biceps barrel");
+        final Surface barrelBent = piston(bent, "right biceps barrel");
+        final Surface rodStraight = piston(Pose.REST, "right biceps rod");
+        final Surface rodBent = piston(bent, "right biceps rod");
+        assertEquals(length(barrelStraight), length(barrelBent), 0.01, "its barrel the same");
+        assertTrue(length(rodBent) < length(rodStraight) - 3, "its rod drawn in");
+    }
+
+    private static Surface piston(final Pose pose, final String name) {
+        final Body robot = new Body(P, pose, null, Body.Look.ROBOT);
+        return robot.pieces(EnumSet.of(Body.Layer.MUSCLES)).stream().map(Body.Piece::surface)
+                .filter(s -> s.name().equals(name)).findFirst().orElseThrow();
+    }
+
+    private static double length(final Surface s) {
+        return s.end().minus(s.start()).length();
+    }
+
+    @Test
+    void itsColoursAreItsOwnButWhereChanged() {
+        final Palette p = Palette.DEFAULT.with(Paint.SHELL, "#ff8800");
+        assertEquals("#ff8800", p.colour(Paint.SHELL));
+        assertEquals(Paint.PANEL.colour(), p.colour(Paint.PANEL));
+        assertEquals(Paint.SHELL.colour(), Palette.DEFAULT.colour(Paint.SHELL));
+    }
+
+    @Test
     void aMuscleSwellsAsItShortens() {
         final Pose bent = Pose.REST.with(Part.RIGHT_FOREARM, Dof.ELBOW, 120);
         final Body body = new Body(P, bent);
