@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example.fxsuite</groupId>
+    <artifactId>innocent-melons</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <description>
+        The world engine, everything in it worked out, nothing stored: the avatar demo (the simulation, its drawing and
+        its sound, the game and its benches), and the labs built on it, lifts and buildings. Built together, in order.
+    </description>
+
+    <modules>
+        <module>avatar-demo</module>
+        <module>lifts-lab</module>
+        <module>buildings-lab</module>
+    </modules>
+</project>

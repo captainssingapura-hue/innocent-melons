@@ -15,3 +15,19 @@ buildNumber.properties
 .project
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
+
+# Local-only notes / scratch
+.local/
+docs/
+
+# Java runtime crash reports, written where a crashed JVM was started
+hs_err_pid*.log
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+Thumbs.db
+.DS_Store
