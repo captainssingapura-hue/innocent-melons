@@ -2,13 +2,9 @@ package com.example.fxsuite.campus.hq;
 
 import com.example.fxsuite.avatar.build.EarthHouse;
 import com.example.fxsuite.avatar.build.Material;
-import com.example.fxsuite.avatar.build.Point;
-import com.example.fxsuite.avatar.build.Role;
 import com.example.fxsuite.avatar.build.Solid;
 import com.example.fxsuite.avatar.build.Village;
 import com.example.fxsuite.avatar.sim.Place;
-import com.example.fxsuite.avatar.sim.Prism;
-import com.example.fxsuite.avatar.sim.Vec2;
 import com.example.fxsuite.avatar.sim.Volume;
 
 import java.util.ArrayList;
@@ -28,8 +24,8 @@ public record Office(int number, int village) {
     static final double DESK_WIDE = 120;
     static final double DESK_DEEP = 60;
     static final double DESK_HIGH = 75;
-    static final double TOP = 4;
-    static final double LEG = 6;
+    static final double TOP = Furniture.TOP;
+    static final double LEG = Furniture.LEG;
     /** Its chair: its seat so square and so high, its back so high; so far from the desk's edge. */
     static final double CHAIR = 45;
     static final double SEAT = 45;
@@ -86,50 +82,19 @@ public record Office(int number, int village) {
 
     /** Its desk and chair, of timber: the desk's top on four legs; the chair's seat on four legs, its back behind it. */
     public List<Solid> furniture() {
-        final List<Solid> f = new ArrayList<>();
-        final double back = deskBack();
-        final double front = back + DESK_DEEP;
-        final double w = DESK_WIDE / 2;
-        f.add(box("desk, top", -w, w, back, front, DESK_HIGH - TOP, DESK_HIGH));
-        for (final double x : new double[] {-w, w - LEG}) {
-            for (final double y : new double[] {back, front - LEG}) {
-                f.add(box("desk, leg", x, x + LEG, y, y + LEG, FLOOR, DESK_HIGH - TOP));
-            }
-        }
-        final double c = CHAIR / 2;
-        final double at = chairAt();
-        f.add(box("chair, seat", -c, c, at - c, at + c, SEAT - TOP, SEAT));
-        for (final double x : new double[] {-c, c - LEG / 2}) {
-            for (final double y : new double[] {at - c, at + c - LEG / 2}) {
-                f.add(box("chair, leg", x, x + LEG / 2, y, y + LEG / 2, FLOOR, SEAT - TOP));
-            }
-        }
+        final List<Solid> f = new ArrayList<>(Furniture.table("desk", Material.TIMBER, Material.TIMBER, 0,
+                deskBack() + DESK_DEEP / 2, DESK_WIDE, DESK_DEEP, DESK_HIGH, FLOOR));
         // its back toward the door: who sits faces the desk, and the back wall beyond it
-        f.add(box("chair, back", -c, c, at + c - LEG / 2, at + c, SEAT, CHAIR_BACK));
+        f.addAll(Furniture.chair("chair", Material.TIMBER, 0, chairAt(), Furniture.Facing.BACK, CHAIR, SEAT, CHAIR_BACK,
+                FLOOR));
         return f;
     }
 
     /** What it is made of to the simulation: the hut's walls and roof, and its desk and chair in the way. */
     public List<Volume> shape() {
         final List<Volume> shape = new ArrayList<>(EarthHouse.of(hut().size()).shape());
-        shape.add(rectangle(DESK_WIDE / 2, deskBack(), deskBack() + DESK_DEEP, DESK_HIGH));
-        shape.add(rectangle(CHAIR / 2, chairAt() - CHAIR / 2, chairAt() + CHAIR / 2, SEAT));
+        shape.add(Furniture.footprint(0, deskBack() + DESK_DEEP / 2, DESK_WIDE, DESK_DEEP, FLOOR, DESK_HIGH));
+        shape.add(Furniture.footprint(0, chairAt(), CHAIR, CHAIR, FLOOR, SEAT));
         return shape;
-    }
-
-    /** A box in the way, {@code half} either side of its middle across, from {@code y0} to {@code y1} along, from its floor to {@code top}. */
-    private static Prism rectangle(final double half, final double y0, final double y1, final double top) {
-        return new Prism(List.of(new Vec2(-half, y0), new Vec2(half, y0), new Vec2(half, y1), new Vec2(-half, y1)),
-                FLOOR, top);
-    }
-
-    /** A box of timber, square to the hut, its corners in the order a solid's are: across, along, up. */
-    private static Solid box(final String name, final double x0, final double x1, final double y0, final double y1,
-                             final double z0, final double z1) {
-        final List<Point> corners = new ArrayList<>(8);
-        for (int k = 0; k < 8; k++) {
-            corners.add(new Point((k & 1) == 0 ? x0 : x1, (k & 2) == 0 ? y0 : y1, (k & 4) == 0 ? z0 : z1));
-        }
-        return new Solid(name, Role.DRESSING, Material.TIMBER, corners);
     }
 }

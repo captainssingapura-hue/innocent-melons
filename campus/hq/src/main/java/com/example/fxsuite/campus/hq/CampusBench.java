@@ -24,8 +24,9 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * The campus's bench: its offices ({@link Campus#OFFICES}) where they stand round the well, as they are built and
- * furnished; still, a model to look at through the bench kit's model view; its offices listed in its figures, each by
+ * The campus's bench: its main office ({@link MainOffice}) and its offices ({@link Campus#OFFICES}) where they stand
+ * round the well, as they are built and furnished; still, a model to look at through the bench kit's model view; its
+ * main office and its offices listed in its figures, each by
  * its number, how big, where, which way its door faces. Played, the campus laid on the whole meadow
  * ({@link CampusWorld}): what moves is seen there, not here. Put together of the bench kit's parts.
  *
@@ -61,10 +62,13 @@ public final class CampusBench extends Application {
         side.setPadding(new Insets(8));
         shell.side(new Label("The campus"), side, 420);
         shell.middle(view.node());
+        // the green between the huts and the main office, east of the well
         final Vec3 well = Village.WELL;
-        view.ground(well.x(), 0, well.z(), 16_000);
-        view.lookAt(well.x(), 200, well.z());
-        view.from("campus", 200, 28, 95);
+        final double middle = (well.x() + MainOffice.EAST) / 2;
+        view.ground(middle, 0, well.z(), 24_000);
+        view.lookAt(middle, 300, well.z());
+        // from over the huts, the main office at the head of the green beyond them, its porch to the camera
+        view.from("campus", 75, 40, 170);
         view.zoom(300, 60_000);
         bus.publish(new Asked());
         shell.show(stage, 1440, 900);
@@ -81,14 +85,19 @@ public final class CampusBench extends Application {
         for (final Office o : Campus.OFFICES) {
             all.addAll(placed(o.solids(), o.place()));
         }
+        all.addAll(placed(MainOffice.solids(), MainOffice.place()));
         return new Made(ModelView.Model.of(all));
     }
 
     /** On the screen's thread: the offices shown, their directory read out; played at once if asked. */
     private void show(final Made m) {
         view.show(m.offices());
+        final Place main = MainOffice.place();
         final StringBuilder directory = new StringBuilder(String.format(Locale.ROOT,
-                "The campus on the meadow: %d offices round the well%n%n", Campus.OFFICES.size()));
+                "The campus on the meadow: its main office and %d offices round the well%n%n"
+                        + "%s: %.0f m across, on a stone plinth, at %d, %d m, its door to %s, to the well%n%n",
+                Campus.OFFICES.size(), MainOffice.name(), MainOffice.SIZE.width() / 100, Math.round(main.x() / 100),
+                Math.round(main.z() / 100), compass(main.yaw())));
         for (final Office o : Campus.OFFICES) {
             final Place p = o.place();
             directory.append(String.format(Locale.ROOT, "%s: %.1f m across, at %d, %d m, its door to %s%n",
