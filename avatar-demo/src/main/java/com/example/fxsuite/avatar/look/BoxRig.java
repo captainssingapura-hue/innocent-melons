@@ -36,7 +36,7 @@ import java.util.List;
  *     └ neck ─ head                      turns and tips at the neck
  * </pre>
  */
-public final class BoxRig {
+public final class BoxRig implements Figure {
 
     /** The height of the joint the whole body tips about. */
     static final double MIDDLE = 105;
@@ -105,8 +105,14 @@ public final class BoxRig {
         root.getTransforms().addAll(at, turn);
     }
 
+    @Override
     public Node node() {
         return root;
+    }
+
+    @Override
+    public Vec3 eyes(final Body where, final Pose pose) {
+        return eye(where, pose);
     }
 
     /** Where its eyes are in its head: its visor's middle, how far up from the neck and how far out in front. */
@@ -140,6 +146,7 @@ public final class BoxRig {
      * at the bottom of the view, however its body is tipped flying, diving or running, as a
      * shooter's are. (The rest of it is not drawn: {@link #fromItsEyes}.)
      */
+    @Override
     public void showFromEyes(final Avatar avatar, final Pose pose, final Vec3 eye, final double yaw) {
         // the arms placed from the middle of its head, not its visor: as far ahead of the view as a shooter's are
         final Point3D eyes = new Rotate(yaw, Rotate.Y_AXIS).transform(new Point3D(0, -(NECK + EYE_UP + SOLE), 0));
@@ -169,6 +176,7 @@ public final class BoxRig {
      * Seen from its own eyes ({@code true}): only its arms and what they hold drawn, the rest of it
      * (its head first of all) out of the way of the view; or ({@code false}) whole.
      */
+    @Override
     public void fromItsEyes(final boolean eyes) {
         fromEyes = eyes;
         beyondView.forEach(part -> part.setVisible(!eyes));
@@ -178,11 +186,13 @@ public final class BoxRig {
     }
 
     /** What the weapons throw off into the world (spent casings), to add to the scene beside the rig. */
+    @Override
     public Node effects() {
         return arsenal.effects();
     }
 
     /** Puts the figure where the avatar is, holding the pose, with the jet-pack on its back or not. */
+    @Override
     public void show(final Avatar avatar, final Pose pose) {
         final Body where = avatar.body();
         at.setX(where.position().x());

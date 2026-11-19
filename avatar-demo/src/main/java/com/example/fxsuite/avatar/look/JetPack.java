@@ -29,7 +29,7 @@ import javafx.scene.transform.Translate;
  * <p>In the figure's frame: it faces +z, so the pack hangs behind the torso, toward -z, with up
  * as -y.
  */
-final class JetPack {
+public final class JetPack {
 
     /** Across the back, the engines' centres, and how far behind the body they sit. */
     private static final double ENGINE_X = 17;
@@ -56,7 +56,7 @@ final class JetPack {
     private final Group flames = new Group();
     private final Scale flameLength = new Scale(1, 1, 1);
 
-    JetPack() {
+    public JetPack() {
         final PhongMaterial casing = BoxRig.matte("#5b6470");
         final PhongMaterial dark = BoxRig.matte("#2a2e35");
         final PhongMaterial strap = BoxRig.matte("#3b3f46");
@@ -94,12 +94,12 @@ final class JetPack {
         root.setVisible(false);
     }
 
-    Node node() {
+    public Node node() {
         return root;
     }
 
     /** Shows or hides the pack; sets the wings to the avatar's sweep; lights the engines as hard as they fire. */
-    void show(final Avatar avatar) {
+    public void show(final Avatar avatar) {
         final boolean worn = avatar.wearingPack();
         final double thrust = avatar.thrust();
         final double time = avatar.body().time();

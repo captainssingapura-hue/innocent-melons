@@ -1,5 +1,6 @@
 package com.example.fxsuite.avatar;
 
+import com.example.fxsuite.avatar.look.Figures;
 import com.example.fxsuite.avatar.sim.Demo;
 import com.example.fxsuite.avatar.sim.Demos;
 import com.example.fxsuite.avatar.sim.Recording;
@@ -128,6 +129,18 @@ public final class AvatarDemo extends Application {
         final Label hint = new Label("Choose a demo  ·  in a demo, Tab comes back here");
         hint.setStyle("-fx-text-fill: #aab4bf; -fx-font-size: 14px;");
         final VBox list = new VBox(14, title, hint);
+        // the avatar, if there is more than the courier to choose from: offered by a library run beside the game
+        if (Figures.names().size() > 1) {
+            final Label as = new Label("Avatar");
+            as.setStyle("-fx-text-fill: #aab4bf; -fx-font-size: 14px;");
+            final javafx.scene.control.ChoiceBox<String> figure = new javafx.scene.control.ChoiceBox<>();
+            figure.getItems().setAll(Figures.names());
+            figure.setValue(Figures.chosen());
+            figure.valueProperty().addListener((o, was, is) -> Figures.choose(is));
+            final javafx.scene.layout.HBox row = new javafx.scene.layout.HBox(10, as, figure);
+            row.setAlignment(Pos.CENTER);
+            list.getChildren().add(row);
+        }
         list.setAlignment(Pos.CENTER);
         list.setPadding(new Insets(40));
         final Demo[] demos = Demos.playable().toArray(Demo[]::new);

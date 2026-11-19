@@ -4,7 +4,8 @@ import com.example.fxsuite.avatar.audio.Speakers;
 import com.example.fxsuite.avatar.hear.Hearing;
 import com.example.fxsuite.avatar.look.Bombs;
 import com.example.fxsuite.avatar.look.DrawnDemo;
-import com.example.fxsuite.avatar.look.BoxRig;
+import com.example.fxsuite.avatar.look.Figure;
+import com.example.fxsuite.avatar.look.Figures;
 import com.example.fxsuite.avatar.look.Gait;
 import com.example.fxsuite.avatar.look.Sight;
 import com.example.fxsuite.avatar.look.Guns;
@@ -159,7 +160,8 @@ public final class Game {
     private static final double CIRCLE = 100;
 
     private final Set<KeyCode> held = EnumSet.noneOf(KeyCode.class);
-    private final BoxRig rig = new BoxRig();
+    /** The avatar as it is drawn: the figure chosen ({@link Figures}), the courier unless another is. */
+    private final Figure rig = Figures.make();
     /** Which demo this is, and its world. */
     private final Demo demo;
     /** How its siege is set, if it is one ({@link Siege}). */
@@ -1620,7 +1622,7 @@ public final class Game {
             return new View(eye, yaw, look);
         }
         if (lift == null) {
-            return new View(BoxRig.eye(body, pose), body.yaw(), look);
+            return new View(rig.eyes(body, pose), body.yaw(), look);
         }
         final Block block = shownAt.get(lift.piece());
         if (block == null) {

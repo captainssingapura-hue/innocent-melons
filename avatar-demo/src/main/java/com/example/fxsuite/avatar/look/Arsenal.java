@@ -28,7 +28,7 @@ import javafx.scene.transform.Translate;
  * the hand at {@link #HAND}, and +z is the forearm's front, which is up when it is folded
  * forward.
  */
-final class Arsenal {
+public final class Arsenal {
 
     /** Where the hand is, down the forearm from the elbow. */
     static final double HAND = 32;
@@ -79,7 +79,7 @@ final class Arsenal {
     private double lastRight = Double.POSITIVE_INFINITY;
     private int rounds;
 
-    Arsenal() {
+    public Arsenal() {
         final PhongMaterial steel = shiny("#2b2e33");
         final PhongMaterial wood = BoxRig.matte("#8a4b25");
         final PhongMaterial flash = BoxRig.glow("#fff3b0");
@@ -105,21 +105,21 @@ final class Arsenal {
     }
 
     /** What hangs from the left hand, and the right: added to the arms by the rig. */
-    Node leftHand() {
+    public Node leftHand() {
         return leftHand;
     }
 
-    Node rightHand() {
+    public Node rightHand() {
         return rightHand;
     }
 
     /** The casings, in the world's frame: added to the scene beside the rig, not on it. */
-    Node effects() {
+    public Node effects() {
         return effects;
     }
 
     /** Shows what is held, as the pose holds it; flashes each muzzle that fired; throws out the casings. */
-    void show(final Avatar avatar, final Pose pose) {
+    public void show(final Avatar avatar, final Pose pose) {
         final Arms arms = avatar.arms();
         show(arms.held());
         grip.setAngle(pose.grip());

@@ -38,7 +38,7 @@ public record Pose(double lean, double bank, double lift,
     }
 
     /** The same pose, the body upright: not leaned, banked or lifted; its limbs and head as they are. */
-    Pose upright() {
+    public Pose upright() {
         return new Pose(0, 0, 0, leftArm, rightArm, leftSpread, rightSpread, leftElbow, rightElbow,
                 leftLeg, rightLeg, legSpread, headYaw, headPitch, grip, leftTwist, rightTwist);
     }
