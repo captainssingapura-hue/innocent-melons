@@ -25,6 +25,10 @@ public enum Paint {
     HOUSING("Joint housings", "#3a3f46", Finish.METAL),
     BARREL("Piston barrels", "#2f8f9d", Finish.METAL),
     ROD("Piston rods", "#e2e6e9", Finish.METAL),
+    GUN("Gun", "#2b2e33", Finish.METAL),
+    GUN_FITTINGS("Gun fittings", "#4a4f57", Finish.METAL),
+    AMMUNITION("Ammunition box", "#4b5320", Finish.MATTE),
+    STRAP("Strap", "#3b2f25", Finish.MATTE),
     MARK_MASS("Centre of mass", "#e24b4a", Finish.MATTE),
     MARK_SUPPORT("Support", "#ba7517", Finish.MATTE),
     MARK_FALLING("Falling", "#a32d2d", Finish.MATTE),
@@ -37,6 +41,8 @@ public enum Paint {
     public static final List<Paint> HUMAN = List.of(SKIN, BONE, RADIUS, MUSCLE_FRONT, MUSCLE_BACK, MUSCLE_DEEP);
     /** The colours a robot is drawn in, that may be changed. */
     public static final List<Paint> ROBOT = List.of(SHELL, PANEL, JOINT_RING, VISOR, FRAME, HOUSING, BARREL, ROD);
+    /** The colours what it carries is drawn in: its gun and the strap it hangs from. */
+    public static final List<Paint> GEAR = List.of(GUN, GUN_FITTINGS, AMMUNITION, STRAP);
 
     private final String label;
     private final String colour;

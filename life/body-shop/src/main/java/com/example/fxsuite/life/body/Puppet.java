@@ -113,6 +113,11 @@ public final class Puppet {
         }
     }
 
+    /** {@code surfaces}, in the body's frame where it stands, drawn into the scene's: what it carries, as it is now. */
+    public Group drawn(final List<Surface> surfaces) {
+        return FigureModel.meshes(surfaces, palette, v -> new Point3D(signs.x() * v.x(), signs.y() * v.y(), signs.z() * v.z()));
+    }
+
     /** {@code a} set to a frame at {@code at}, turned {@code turn}, in the body's frame, put into the scene's. */
     public void place(final Affine a, final V3 at, final Rot turn) {
         a.setToTransform(signs.x() * turn.xx(), signs.x() * turn.xy(), signs.x() * turn.xz(), signs.x() * at.x(),

@@ -86,15 +86,64 @@ class GaitTest {
         final GatlingHold hold = new GatlingHold(BODY);
         Pose arms = GatlingHold.ready(Pose.REST);
         for (double c = 0; c < 1; c += 0.1) {
-            for (final double aim : new double[] {-20, 0, 25}) {
+            for (final double aim : new double[] {-10, 0, 25}) {
                 final Pose p = GatlingHold.arms(Gait.at(c, 140, 0, true), arms);
                 final GatlingHold.Held h = hold.hold(p, aim);
                 arms = h.pose();
                 final Rig r = new Rig(BODY, h.pose());
-                final V3 grip = h.gun().place(new V3(0, GatlingHold.HAND, 0));
-                final V3 lever = h.gun().place(GatlingHold.LEVER);
-                assertEquals(0, r.held(Part.RIGHT_HAND, GatlingHold.PALM).minus(grip).length(), 1.5, "right hand");
-                assertEquals(0, r.held(Part.LEFT_HAND, GatlingHold.PALM).minus(lever).length(), 1.5, "left hand");
+                final V3 rear = h.gun().place(GatlingHold.REAR_GRIP);
+                // the left palm on the side handle, wherever along it
+                final V3 d = r.held(Part.LEFT_HAND, GatlingHold.PALM).minus(h.gun().origin());
+                final double along = d.dot(h.gun().ahead());
+                final double off = Math.hypot(d.dot(h.gun().right()) - GatlingHold.CARRY_GRIP.x(),
+                        d.dot(h.gun().up()) - GatlingHold.CARRY_GRIP.y());
+                assertEquals(0, r.held(Part.RIGHT_HAND, GatlingHold.PALM).minus(rear).length(), 1.5,
+                        "right hand at " + c + ", aim " + aim);
+                assertTrue(off < 2.5 && along > GatlingHold.CARRY_FROM && along < GatlingHold.CARRY_TO,
+                        "left hand at " + c + ", aim " + aim + ": " + off + " off, " + along + " along");
+            }
+        }
+    }
+
+    @Test
+    void theGunBesideTheRightHipSquareToTheTorso() {
+        final GatlingHold.Held h = new GatlingHold(BODY).hold(GatlingHold.ready(Pose.REST), 0);
+        final Rig r = new Rig(BODY, h.pose());
+        final V3 bears = h.gun().place(h.sling().bears());
+        final V3 hip = r.frame(Part.RIGHT_THIGH).at();
+        assertTrue(bears.x() > hip.x() + 5 && Math.abs(bears.y() - hip.y()) < 10 && Math.abs(bears.z() - hip.z()) < 10,
+                "its side against the outside of the right hip: " + bears + ", the hip " + hip);
+        // hung from over where it bears: its swivel straight above
+        final V3 swivel = h.gun().place(h.sling().swivel());
+        assertEquals(bears.z(), swivel.z(), 0.5, "its swivel over where it bears");
+        // square to the torso: along the gun, nothing of the way up the torso
+        final V3 torso = r.place(Part.CHEST, new V3(0, 20, 0)).minus(r.frame(Part.PELVIS).at()).unit();
+        assertEquals(0, h.gun().ahead().dot(torso), 0.05, "square to the torso");
+        // the left arm near straight, from the shoulder down to the side handle
+        assertTrue(r.pose().get(Part.LEFT_FOREARM, Dof.ELBOW) < 35,
+                "the left arm near straight: " + r.pose().get(Part.LEFT_FOREARM, Dof.ELBOW));
+    }
+
+    @Test
+    void theStrapAndTheHipCarryTheGunTheHandsOnlySteadyIt() {
+        final GatlingHold hold = new GatlingHold(BODY);
+        Pose arms = GatlingHold.ready(Pose.REST);
+        for (final double speed : new double[] {0, 140}) {
+            for (double c = 0; c < 1; c += 0.125) {
+                for (final double aim : new double[] {-10, 0, 25}) {
+                    final GatlingHold.Held h = hold.hold(GatlingHold.arms(Gait.at(c, speed, 0, true), arms), aim);
+                    arms = h.pose();
+                    final GunStatics.Solved s = GunStatics.solve(BODY, h);
+                    final String at = " at " + speed + " cm/s, " + c + " of a stride, aim " + aim;
+                    // the hip pushing it out against the strap's pull in toward the middle
+                    assertTrue(s.hip().x() > 50, "the hip pushing it out" + at + ": " + s.hip());
+                    assertTrue(s.strap() > 100, "the strap carrying it" + at + ": " + s.strap());
+                    assertTrue(!s.sliding(), "not sliding on the hip" + at);
+                    // standing, under 2 kg-force each; walking, the pelvis tipping the gun as it goes, under 4
+                    final double most = (speed > 0 ? 4 : 2) * GunStatics.G;
+                    assertTrue(s.right().length() < most && s.left().length() < most,
+                            "the hands holding little" + at + ": " + s.right() + ", " + s.left());
+                }
             }
         }
     }

@@ -3,8 +3,6 @@ package com.example.fxsuite.life.body;
 import com.example.fxsuite.avatar.bench.kit.Bus;
 import com.example.fxsuite.avatar.bench.kit.ModelView;
 import com.example.fxsuite.avatar.bench.kit.Shell;
-import com.example.fxsuite.avatar.look.Arsenal;
-import com.example.fxsuite.avatar.sim.Weapon;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
@@ -31,7 +29,8 @@ import java.util.Locale;
  * has it ({@link Gait}, {@link Walker}). The ground goes back under it as far as its feet carry it, so a foot down
  * stands still on the grid; a foot that slides is a gait to put right. At any speed, from standing to a sprint, or
  * round a tour of them all and back; slowed, or stopped at any point of its stride. A human, or a robot exposed or
- * shelled, moving the same. With the Gatling gun in its hands, aimed up or down, the only weapon it holds for now.
+ * shelled, moving the same. With the Gatling gun slung from its strap ({@link GatlingHold}), aimed up or down, the
+ * only weapon it holds for now.
  *
  * <p>{@code -Dmotion.look} (exposed, shelled, human), {@code -Dmotion.speed} (cm/s), {@code -Dmotion.tour=true},
  * {@code -Dmotion.gatling=true}, {@code -Dmotion.aim} (degrees), {@code -Dmotion.slow} (a share of real time) what it
@@ -62,11 +61,14 @@ public final class MotionBench extends Application {
     private final Proportions proportions = Proportions.PAPERS;
     private final Walker walker = new Walker(proportions);
     private final GatlingHold hold = new GatlingHold(proportions);
-    private final Arsenal arsenal = new Arsenal();
 
     private final Group shown = new Group();
     private final Translate lifted = new Translate();
     private final Group gun = new Group();
+    private final Group strap = new Group();
+    private final Group loads = new Group();
+    /** How long an arrow is drawn for a newton, cm. */
+    private static final double ARROW = 0.12;
     private final Affine gunAt = new Affine();
     private Puppet puppet;
     private Pose arms = GatlingHold.ready(Pose.REST);
@@ -81,6 +83,9 @@ public final class MotionBench extends Application {
     private final CheckBox gatling = new CheckBox("The Gatling gun in its hands");
     private final Slider aim = new Slider(-30, 30, 0);
     private final CheckBox treadmill = new CheckBox("The ground going back under it");
+    private final CheckBox forces = new CheckBox("The forces on the gun, as arrows");
+    private GunStatics.Solved statics;
+    private double balance;
 
     private boolean playing = true;
     private boolean setting;
@@ -101,6 +106,8 @@ public final class MotionBench extends Application {
         gatling.setSelected(Boolean.getBoolean("motion.gatling"));
         gatling.selectedProperty().addListener((o, was, is) -> {
             gun.setVisible(is);
+            strap.setVisible(is);
+            loads.setVisible(is && forces.isSelected());
             arms = GatlingHold.ready(Pose.REST);
             if (!playing) {
                 still();
@@ -152,7 +159,7 @@ public final class MotionBench extends Application {
                 + " to move it, scroll to come nearer.");
         hint.setWrapText(true);
         final VBox side = new VBox(10, new Label("Drawn as"), look, new Label("How fast"), paces, tour, knobs,
-                new FlowPane(10, 6, play), gatling, treadmill, hint);
+                new FlowPane(10, 6, play), gatling, forces, treadmill, hint);
         side.setPadding(new Insets(8));
         final ScrollPane scroll = new ScrollPane(side);
         scroll.setFitToWidth(true);
@@ -166,10 +173,13 @@ public final class MotionBench extends Application {
                 Double.parseDouble(System.getProperty("motion.pitch", "8")),
                 Double.parseDouble(System.getProperty("motion.distance", "4")));
 
-        arsenal.show(Weapon.GATLING);
-        gun.getChildren().add(arsenal.rightHand());
+        gun.getChildren().add(FigureModel.meshes(GatlingHold.model(GatlingHold.Sling.DEFAULT), Palette.DEFAULT,
+                v -> new javafx.geometry.Point3D(v.x(), v.y(), v.z())));
         gun.getTransforms().add(gunAt);
         gun.setVisible(gatling.isSelected());
+        strap.setVisible(gatling.isSelected());
+        forces.setSelected(!Boolean.getBoolean("motion.noforces"));
+        forces.selectedProperty().addListener((o, was, is) -> loads.setVisible(is && gatling.isSelected()));
         shown.getTransforms().add(lifted);
         dress();
         view.show(ModelView.Model.moving(shown));
@@ -200,7 +210,7 @@ public final class MotionBench extends Application {
     /** Drawn afresh as chosen. */
     private void dress() {
         puppet = new Puppet(look.getValue(), proportions, RobotDesign.DEFAULT, Palette.DEFAULT, new V3(-1, -1, -1));
-        shown.getChildren().setAll(puppet.node(), gun);
+        shown.getChildren().setAll(puppet.node(), gun, strap, loads);
         draw(walker.rig(), 0);
     }
 
@@ -261,7 +271,16 @@ public final class MotionBench extends Application {
             arms = h.pose();
             shownRig = new Rig(proportions, h.pose());
             final GatlingHold.Frame f = h.gun();
-            puppet.place(gunAt, f.origin(), f.right(), f.ahead(), f.up());
+            puppet.place(gunAt, f.origin(), f.right(), f.up(), f.ahead());
+            strap.getChildren().setAll(puppet.drawn(h.strap()));
+            statics = GunStatics.solve(proportions, h);
+            loads.getChildren().setAll(puppet.drawn(arrows(statics)));
+            loads.setVisible(forces.isSelected());
+            balance = GunStatics.balance(shownRig, statics);
+        } else {
+            statics = null;
+            loads.getChildren().clear();
+            balance = shownRig.margin();
         }
         puppet.show(shownRig);
         lifted.setY(-(flying + SOLE));
@@ -275,17 +294,42 @@ public final class MotionBench extends Application {
         speedSaid.setText(String.format(Locale.ROOT, "%.2f m/s, %s", v / 100, how));
     }
 
+    /** Each force on the gun as an arrow from where it acts, as long as it is strong, coloured as what it is. */
+    private static List<Surface> arrows(final GunStatics.Solved s) {
+        final List<Surface> drawn = new java.util.ArrayList<>();
+        for (final GunStatics.Force f : s.forces()) {
+            final V3 to = f.at().plus(f.force().times(ARROW));
+            if (f.force().length() * ARROW < 0.5) {
+                continue;
+            }
+            final Paint paint = f.name().startsWith("weight") ? Paint.MARK_MASS
+                    : f.name().startsWith("strap") ? Paint.MARK_SUPPORT
+                    : f.name().startsWith("hip") ? Paint.MARK_TARGET : Paint.MARK_FALLING;
+            drawn.add(Shapes.capsule(f.name(), paint, f.at(), to, new double[] {0.9, 0.9}, 1, 0.5, 8));
+            drawn.add(Shapes.ellipsoid(f.name() + " head", paint, to, 1.8, 1.8, 1.8, 8, 5));
+        }
+        return drawn;
+    }
+
     private void figures() {
         final double v = speed.getValue();
         final double cadence = v < 1 ? 0 : walker.cadence(v);
         final int down = walker.down();
+        String gunSaid = "";
+        if (statics != null) {
+            gunSaid = String.format(Locale.ROOT, "%nThe gun, %.1f kg: the strap pulling %.0f N, the hip pushing %.0f N%s%n"
+                            + "the right hand holding %.1f kg-force, the left %.1f%n",
+                    statics.mass(), statics.strap(), statics.hip().length(), statics.sliding() ? ", sliding" : "",
+                    statics.right().length() / GunStatics.G, statics.left().length() / GunStatics.G);
+        }
         bus.publish(new Bus.Figures(String.format(Locale.ROOT,
                 "%s at %.2f m/s%n%.0f steps a minute, a stride %.2f m (its feet carrying it %.2f m of it)%n"
                         + "each foot down %.0f%% of a stride, in the air %.0f%%%n"
-                        + "at %.2f of its stride, %s%n%.0f frames a second",
+                        + "at %.2f of its stride, %s%n%s"
+                        + "its centre of mass %.1f cm inside its feet%s%n%.0f frames a second",
                 look.getValue().label(), v / 100, cadence * 120, cadence > 0 ? v / cadence / 100 : 0,
                 walker.stride(v) / 100, Gait.stance(v) * 100, Gait.flight(v) * 100, walker.cycle(),
                 down > 0 ? "its right foot down" : down < 0 ? "its left foot down" : "both feet off the ground",
-                fps)));
+                gunSaid, balance, statics != null ? ", with the gun" : "", fps)));
     }
 }

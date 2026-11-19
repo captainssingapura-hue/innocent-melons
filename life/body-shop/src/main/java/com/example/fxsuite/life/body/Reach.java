@@ -13,7 +13,7 @@ public final class Reach {
     public record Way(Part part, Dof dof, double easy, double cost) {
     }
 
-    static final int STEPS = 6;
+    static final int STEPS = 8;
     static final double NUDGE = 0.5;
 
     private Reach() {
