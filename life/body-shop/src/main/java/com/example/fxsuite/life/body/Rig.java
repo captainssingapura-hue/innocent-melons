@@ -80,7 +80,7 @@ public final class Rig {
             final boolean left = p.side() < 0;
             final Rot own = left ? turned(p).mirrored() : turned(p);
             if (p.parent() == null) {
-                free.put(p, new Frame(V3.ZERO, own, scale(p), false));
+                free.put(p, new Frame(pose.root(), own, scale(p), false));
             } else {
                 final Frame up = free.get(p.parent());
                 free.put(p, new Frame(up.place(joint(p)), up.turn().then(own), scale(p), left));

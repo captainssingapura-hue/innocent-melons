@@ -13,7 +13,8 @@ import java.util.Map;
 
 /**
  * A body drawn: its pieces ({@link Body.Piece}) as meshes, one for each part's layer's colour, each knowing the part
- * it is of ({@code userData}), to be taken hold of by; a mark knows none, and is not picked. A smooth surface shaded
+ * it is of ({@code userData}), to be taken hold of by; a mark knows none, and is not picked, but those of the centre
+ * of gravity and where it is kept, which are, to move where it is kept. A smooth surface shaded
  * round, a flat-faced one face by face. Its skin drawn last, so that, seen through, what is under it shows.
  *
  * <p>In the scene's frame, as the engine's world is drawn: up is {@code -y}; a body facing south, toward who looks at it
@@ -55,12 +56,21 @@ public final class FigureModel {
             view.setMaterial(matte(isSkin && key.part() == chosen && chosen != null ? CHOSEN : key.paint().colour(),
                     isSkin && through ? 1 - SEEN_THROUGH : 1));
             view.setCullFace(CullFace.BACK);
-            view.setUserData(key.part());
-            view.setMouseTransparent(key.part() == null);
+            final boolean centre = key.paint() == Paint.MARK_MASS || key.paint() == Paint.MARK_TARGET;
+            view.setUserData(key.part() != null ? key.part() : centre ? CENTRE : null);
+            view.setMouseTransparent(key.part() == null && !centre);
             (isSkin ? skin : drawn).getChildren().add(view);
         });
         drawn.getChildren().add(skin);
         return drawn;
+    }
+
+    /** What a drawn mark of its centre of gravity is known by, to be taken hold of by. */
+    static final String CENTRE = "centre of gravity";
+
+    /** Whether {@code picked} is a mark of the centre of gravity, or of where it is kept. */
+    public static boolean isCentre(final javafx.scene.Node picked) {
+        return picked != null && CENTRE.equals(picked.getUserData());
     }
 
     /** The part {@code picked} (a node of a drawn body) is of; none if it is of none. */

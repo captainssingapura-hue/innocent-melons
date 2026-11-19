@@ -145,6 +145,44 @@ class BodyTest {
     }
 
     @Test
+    void keptItsCentreOfGravityStaysPutItsFeetToo() {
+        final Rig rest = new Rig(P, Pose.REST);
+        final V3 over = new V3(rest.centreOfMass().x(), 0, rest.centreOfMass().z());
+        // an arm raised ahead: on its own, its centre of gravity goes forward; kept, the body shifts back
+        final Pose raised = Pose.REST.with(Part.RIGHT_UPPER_ARM, Dof.RAISE_FORWARD, 90)
+                .with(Part.LEFT_UPPER_ARM, Dof.RAISE_FORWARD, 90);
+        final V3 loose = new Rig(P, raised).centreOfMass();
+        assertTrue(loose.z() - over.z() > 1.5, "unkept, its centre of gravity forward");
+        final Pose kept = Balance.keep(P, Pose.REST, raised, over, java.util.Set.of());
+        final Rig r = new Rig(P, kept);
+        assertEquals(over.x(), r.centreOfMass().x(), 0.3, "kept across");
+        assertEquals(over.z(), r.centreOfMass().z(), 0.3, "kept ahead");
+        assertTrue(kept.root().z() < -0.5, "its pelvis shifted back");
+        assertEquals(90, kept.get(Part.RIGHT_UPPER_ARM, Dof.RAISE_FORWARD), E, "the arms as they were raised");
+        for (int k = 0; k < 10; k++) {
+            final V3 was = rest.contacts().get(k);
+            final V3 is = r.contacts().get(k);
+            assertEquals(0, is.minus(was).length(), 0.5, "its feet where they stood, point " + k);
+        }
+        // moved apart from all else: kept 6 cm to its right, its weight onto its right foot
+        final V3 right = over.plus(new V3(6, 0, 0));
+        final Rig shifted = new Rig(P, Balance.keep(P, Pose.REST, Pose.REST, right, java.util.Set.of()));
+        assertEquals(right.x(), shifted.centreOfMass().x(), 0.3, "shifted to its right");
+        assertEquals(0, shifted.contacts().get(0).minus(rest.contacts().get(0)).length(), 0.5, "its right heel put");
+        assertEquals(0, shifted.contacts().get(5).minus(rest.contacts().get(5)).length(), 0.5, "its left heel put");
+    }
+
+    @Test
+    void aLegMovedByHandIsNotHeldToTheGround() {
+        final Pose lifted = Pose.REST.with(Part.LEFT_THIGH, Dof.HIP_FORWARD, 60).with(Part.LEFT_SHIN, Dof.KNEE, 90);
+        final Rig rest = new Rig(P, Pose.REST);
+        final V3 over = new V3(rest.centreOfMass().x(), 0, rest.centreOfMass().z());
+        final Pose kept = Balance.keep(P, Pose.REST, lifted, over, java.util.Set.of(Part.LEFT_THIGH));
+        assertEquals(60, kept.get(Part.LEFT_THIGH, Dof.HIP_FORWARD), E, "the lifted leg as it was lifted");
+        assertEquals(90, kept.get(Part.LEFT_SHIN, Dof.KNEE), E);
+    }
+
+    @Test
     void everyPieceIsAClosedSkinFacingOutward() {
         for (final Pose.Named n : List.of(Pose.PRESETS.get(0), Pose.PRESETS.get(7))) {
             final Body body = new Body(P, n.pose());

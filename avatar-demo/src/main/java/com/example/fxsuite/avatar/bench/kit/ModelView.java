@@ -100,6 +100,35 @@ public final class ModelView {
         shown.getChildren().setAll(models.stream().map(m -> m.drawn).toList());
     }
 
+    /**
+     * Level ground seen through, in place of grass: a grid of lines only, {@code size} cm square, its middle at
+     * ({@code x}, {@code z}), at {@code y} up; a line every {@code step} cm, every {@code every}th darker and broader.
+     * What stands on it is seen from below as from above.
+     */
+    public void grid(final double x, final double y, final double z, final double size, final double step,
+                     final int every) {
+        final PhongMaterial fine = new PhongMaterial(Color.web("#8c949b"));
+        final PhongMaterial bold = new PhongMaterial(Color.web("#4d555c"));
+        final Group lines = new Group();
+        final int n = (int) Math.round(size / step / 2);
+        for (int k = -n; k <= n; k++) {
+            final boolean major = k % every == 0;
+            final double wide = major ? 0.6 : 0.25;
+            final Box across = new Box(2 * n * step, 0.1, wide);
+            across.setTranslateX(x);
+            across.setTranslateZ(z + k * step);
+            final Box along = new Box(wide, 0.1, 2 * n * step);
+            along.setTranslateX(x + k * step);
+            along.setTranslateZ(z);
+            for (final Box line : new Box[] {across, along}) {
+                line.setTranslateY(-y);
+                line.setMaterial(major ? bold : fine);
+                lines.getChildren().add(line);
+            }
+        }
+        ground.getChildren().setAll(lines);
+    }
+
     /** Level ground, grass, {@code size} cm square, its middle at ({@code x}, {@code z}), its top at {@code y} up. */
     public void ground(final double x, final double y, final double z, final double size) {
         final Box grass = new Box(size, 2, size);

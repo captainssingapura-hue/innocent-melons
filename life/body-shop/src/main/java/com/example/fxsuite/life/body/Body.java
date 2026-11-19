@@ -22,10 +22,17 @@ public final class Body {
 
     private final Rig rig;
     private final Rig rest;
+    private final V3 kept;
 
     public Body(final Proportions proportions, final Pose pose) {
+        this(proportions, pose, null);
+    }
+
+    /** {@code proportions} holding {@code pose}, its centre of gravity kept over {@code kept} (x, z), if it is. */
+    public Body(final Proportions proportions, final Pose pose, final V3 kept) {
         rig = new Rig(proportions, pose);
         rest = new Rig(proportions, Pose.REST);
+        this.kept = kept;
     }
 
     public Rig rig() {
@@ -60,7 +67,8 @@ public final class Body {
 
     /**
      * Its balance, marked: its centre of mass, a ball; the point under it on the ground, red if it falls outside the
-     * area its feet hold it up over; that area's outline on the ground; each point of its feet touching the ground.
+     * area its feet hold it up over; that area's outline on the ground; each point of its feet touching the ground;
+     * where its centre of gravity is kept, a disc on the ground, if it is.
      */
     List<Surface> marks() {
         final List<Surface> marks = new ArrayList<>();
@@ -80,6 +88,10 @@ public final class Body {
             }
             marks.add(Shapes.capsule("support", Paint.MARK_SUPPORT, new V3(a[0], MARK_OVER, a[1]),
                     new V3(b[0], MARK_OVER, b[1]), 0.35, 1, 6));
+        }
+        if (kept != null) {
+            marks.add(Shapes.ellipsoid("kept over", Paint.MARK_TARGET, new V3(kept.x(), MARK_OVER, kept.z()), 4.5, 0.3,
+                    4.5, 24, 4));
         }
         for (final V3 t : rig.touching()) {
             marks.add(Shapes.ellipsoid("touching", Paint.MARK_SUPPORT, new V3(t.x(), MARK_OVER, t.z()), 0.9, 0.5, 0.9,

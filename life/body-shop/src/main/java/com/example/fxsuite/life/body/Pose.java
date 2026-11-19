@@ -7,14 +7,27 @@ import java.util.Map;
 
 /**
  * How a body holds itself, still: every part's joint turned so far each way it turns ({@link Part#dofs}), each no
- * further than it may ({@link Dof}). Made afresh for every change, never changed.
+ * further than it may ({@link Dof}); and where its pelvis is, its root, from where it stands at rest (only ever
+ * moved to keep its balance). Made afresh for every change, never changed.
  */
 public final class Pose {
 
     private final Map<Part, double[]> angles;
+    private final V3 root;
 
-    private Pose(final Map<Part, double[]> angles) {
+    private Pose(final Map<Part, double[]> angles, final V3 root) {
         this.angles = angles;
+        this.root = root;
+    }
+
+    /** Where its pelvis is, cm, from where it stands at rest: to its right, up, ahead. */
+    public V3 root() {
+        return root;
+    }
+
+    /** This pose, its pelvis {@code root} from where it stands at rest. */
+    public Pose rooted(final V3 root) {
+        return new Pose(angles, root);
     }
 
     /** Standing at rest: arms a little out from the sides, elbows a little bent, palms in. */
@@ -25,7 +38,7 @@ public final class Pose {
         for (final Part p : Part.values()) {
             a.put(p, p.dofs().stream().mapToDouble(Dof::rest).toArray());
         }
-        return new Pose(a);
+        return new Pose(a, V3.ZERO);
     }
 
     /** How far {@code part} is turned {@code dof}'s way; at rest, if it does not turn that way. */
@@ -44,21 +57,21 @@ public final class Pose {
         final double[] mine = angles.get(part).clone();
         mine[k] = dof.clamp(v);
         a.put(part, mine);
-        return new Pose(a);
+        return new Pose(a, root);
     }
 
     /** This pose with {@code part} held as the same part on the other side is, in a mirror. */
     public Pose mirroredTo(final Part part) {
         final Map<Part, double[]> a = new EnumMap<>(angles);
         a.put(part, angles.get(part.other()).clone());
-        return new Pose(a);
+        return new Pose(a, root);
     }
 
     /** This pose with {@code part} back at rest. */
     public Pose rested(final Part part) {
         final Map<Part, double[]> a = new EnumMap<>(angles);
         a.put(part, part.dofs().stream().mapToDouble(Dof::rest).toArray());
-        return new Pose(a);
+        return new Pose(a, root);
     }
 
     /**
@@ -131,12 +144,12 @@ public final class Pose {
 
     @Override
     public boolean equals(final Object o) {
-        return o instanceof Pose p && Part.values().length == p.angles.size()
+        return o instanceof Pose p && root.equals(p.root) && Part.values().length == p.angles.size()
                 && java.util.Arrays.stream(Part.values()).allMatch(k -> Arrays.equals(angles.get(k), p.angles.get(k)));
     }
 
     @Override
     public int hashCode() {
-        return Arrays.stream(Part.values()).mapToInt(k -> Arrays.hashCode(angles.get(k))).sum();
+        return root.hashCode() + Arrays.stream(Part.values()).mapToInt(k -> Arrays.hashCode(angles.get(k))).sum();
     }
 }
