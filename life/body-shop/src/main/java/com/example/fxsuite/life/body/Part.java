@@ -13,7 +13,7 @@ import java.util.List;
  */
 public enum Part {
 
-    PELVIS(null, 0, new V3(0, 0, 0), 14.2, new V3(0, 3, 0), List.of(Dof.TILT)),
+    PELVIS(null, 0, new V3(0, 0, 0), 14.2, new V3(0, 3, 0), List.of(Dof.TILT, Dof.PELVIS_LIST, Dof.PELVIS_TURN)),
     ABDOMEN(PELVIS, 0, new V3(0, 12, 0), 13.9, new V3(0, 7, 0), spine()),
     CHEST(ABDOMEN, 0, new V3(0, 14, 0), 21.6, new V3(0, 12, 0), spine()),
     NECK(CHEST, 0, new V3(0, 26, -0.5), 1.2, new V3(0, 4.5, 0), neck()),

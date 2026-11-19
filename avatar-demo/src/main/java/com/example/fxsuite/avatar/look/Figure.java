@@ -30,4 +30,9 @@ public interface Figure {
 
     /** Where its eyes are in the world, standing at {@code where} holding {@code pose}. */
     Vec3 eyes(Body where, Pose pose);
+
+    /** Whether it can hold {@code weapon}: drawn, one it cannot is not taken up. Any, unless it says. */
+    default boolean holds(final com.example.fxsuite.avatar.sim.Weapon weapon) {
+        return true;
+    }
 }

@@ -791,16 +791,16 @@ public final class Game {
                 pressed.clear();
             } else if (next <= script.length()) {
                 // while a script plays, it alone drives the world: its inputs for this very step
-                controls = script.controls(next);
+                controls = holdable(script.controls(next));
                 scriptHeld = script.held(next);
                 script.pressed(next).forEach(key -> view(KeyCode.valueOf(key)));
                 chase = chase.turned(0, script.tilt(next));
                 pressed.clear();
             } else {
                 scriptHeld = Set.of();
-                controls = Keys.controls(names(held), i == 0 ? pressed : List.of(), turn, clicking,
+                controls = holdable(Keys.controls(names(held), i == 0 ? pressed : List.of(), turn, clicking,
                         // aimed up or down as far as the view is tilted from rest, so level as it walks
-                        chase.pitch() - restPitch(), bombing || bombOnce);
+                        chase.pitch() - restPitch(), bombing || bombOnce));
                 bombOnce = false;
                 // what was pressed since the last step, all at the first step that comes
                 pressed.clear();
@@ -1458,6 +1458,16 @@ public final class Game {
     /** Whether a key is held, at the keyboard or by the script: for what only the camera takes notice of. */
     private double axis(final KeyCode code) {
         return held.contains(code) || scriptHeld.contains(code.name()) ? 1 : 0;
+    }
+
+    /** {@code controls} without drawing a weapon the figure cannot hold: a robot takes up the Gatling gun only. */
+    private Controls holdable(final Controls controls) {
+        final List<com.example.fxsuite.avatar.sim.Action> kept = controls.actions().stream()
+                .filter(a -> !(a instanceof com.example.fxsuite.avatar.sim.Action.Draw d) || rig.holds(d.weapon()))
+                .toList();
+        return kept.size() == controls.actions().size() ? controls
+                : new Controls(controls.forward(), controls.sideways(), controls.turn(), controls.lift(), controls.run(),
+                        controls.trigger(), controls.aim(), kept, controls.bomb(), controls.strafe());
     }
 
     private static Set<String> names(final Set<KeyCode> codes) {

@@ -8,6 +8,8 @@ package com.example.fxsuite.life.body;
 public enum Dof {
 
     TILT("Pelvis tilt", -10, 45, 0, false),
+    PELVIS_LIST("Pelvis drop", -12, 12, 0, false),
+    PELVIS_TURN("Pelvis turn", -20, 20, 0, true),
     SPINE_BEND("Bend forward", -12.5, 30, 0, false),
     SPINE_SIDE("Bend sideways", -15, 15, 0, false),
     SPINE_TWIST("Twist", -22.5, 22.5, 0, true),

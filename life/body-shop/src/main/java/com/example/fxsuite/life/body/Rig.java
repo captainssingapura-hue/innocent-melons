@@ -135,7 +135,8 @@ public final class Rig {
     private Rot turned(final Part p) {
         final List<Dof> d = p.dofs();
         return switch (p) {
-            case PELVIS -> Rot.aboutX(a(p, Dof.TILT));
+            case PELVIS -> Rot.aboutY(-a(p, Dof.PELVIS_TURN)).then(Rot.aboutX(a(p, Dof.TILT)))
+                    .then(Rot.aboutZ(a(p, Dof.PELVIS_LIST)));
             case ABDOMEN, CHEST -> Rot.aboutY(-a(p, Dof.SPINE_TWIST)).then(Rot.aboutX(a(p, Dof.SPINE_BEND)))
                     .then(Rot.aboutZ(a(p, Dof.SPINE_SIDE)));
             case NECK, HEAD -> Rot.aboutY(-a(p, Dof.NECK_TURN)).then(Rot.aboutX(a(p, Dof.NECK_BEND)))

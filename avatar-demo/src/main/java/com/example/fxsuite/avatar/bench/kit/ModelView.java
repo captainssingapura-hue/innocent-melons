@@ -58,6 +58,15 @@ public final class ModelView {
         public static Model touchable(final Node drawn) {
             return new Model(drawn);
         }
+
+        /**
+         * {@code drawn}, which its maker goes on moving, frame by frame, as a motion bench plays a figure moving on the
+         * spot: the one kind of model that does not stand still, looked at, never picked.
+         */
+        public static Model moving(final Node drawn) {
+            drawn.setMouseTransparent(true);
+            return new Model(drawn);
+        }
     }
 
     /** {@code grip} given what is pressed on in a touchable model, to take hold of and move ({@link Grip}). */
@@ -127,6 +136,15 @@ public final class ModelView {
             }
         }
         ground.getChildren().setAll(lines);
+    }
+
+    /**
+     * The ground moved so far across, under what is shown: a treadmill's, for a bench whose figure walks on the spot
+     * ({@link Model#moving}).
+     */
+    public void groundAt(final double x, final double z) {
+        ground.setTranslateX(x);
+        ground.setTranslateZ(z);
     }
 
     /** Level ground, grass, {@code size} cm square, its middle at ({@code x}, {@code z}), its top at {@code y} up. */

@@ -31,7 +31,7 @@ import javafx.scene.transform.Translate;
 public final class Arsenal {
 
     /** Where the hand is, down the forearm from the elbow. */
-    static final double HAND = 32;
+    public static final double HAND = 32;
     /**
      * How far in from the middle of its arm each rifle sits: as far as the side of the body, so
      * its stock is held between the upper arm and the body.
@@ -44,6 +44,11 @@ public final class Arsenal {
      */
     static final double GUN_IN = 22;
     static final double[] LEVER = {-44, HAND + 2, 14};
+
+    /** Where the Gatling gun's lever is, in the forearm's frame: for a figure that holds it its own way. */
+    public static double[] lever() {
+        return LEVER.clone();
+    }
     /** How fast the barrels are drawn turning at full speed, in degrees a second: fast, but not so fast they seem to stand still. */
     private static final double BARRELS_TURN = 1500;
     /** How long a muzzle flash shows, in seconds: a frame or two. */
@@ -152,7 +157,8 @@ public final class Arsenal {
         }
     }
 
-    private void show(final Weapon held) {
+    /** Only {@code held} shown, as it is drawn standing still: for a figure that holds it its own way. */
+    public void show(final Weapon held) {
         leftRifle.setVisible(held == Weapon.RIFLES);
         rightRifle.setVisible(held == Weapon.RIFLES);
         glaive.setVisible(held == Weapon.GLAIVE);

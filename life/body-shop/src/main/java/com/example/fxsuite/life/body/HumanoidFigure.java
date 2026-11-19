@@ -5,58 +5,34 @@ import com.example.fxsuite.avatar.look.Figure;
 import com.example.fxsuite.avatar.look.JetPack;
 import com.example.fxsuite.avatar.sim.Avatar;
 import com.example.fxsuite.avatar.sim.Vec3;
+import com.example.fxsuite.avatar.sim.Weapon;
 
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
-import javafx.scene.transform.Affine;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
 
-import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * The body shop's humanoid as the avatar: a robot, exposed or shelled, or a human, drawn as the game's avatar in
- * place of the courier ({@link Figure}). Its parts drawn once, each rigid in its own frame, and put where its
- * skeleton has them every frame, the avatar's pose ({@link com.example.fxsuite.avatar.look.Pose}) read onto its
- * joints: its legs swung, its knees bending as a leg swings back, its feet kept level; its arms swung and spread,
- * its elbows bent; its head turned and tipped; tipped, banked and raised whole as the courier is. An exposed robot's
- * pistons drawn afresh as it moves. Its jet-pack on its back, what its hands hold at its forearms, as the courier
- * carries them. Not yet as quick to draw as the courier: the pistons each frame.
+ * place of the courier ({@link Figure}), as a puppet ({@link Puppet}), the avatar's pose
+ * ({@link com.example.fxsuite.avatar.look.Pose}) read onto its joints: its legs swung, its knees bending as a leg swings
+ * back, its feet kept level; its arms swung and spread, its elbows bent; its head turned and tipped; tipped, banked and
+ * raised whole as the courier is. Its jet-pack on its back, what its hands hold at its forearms, as the courier
+ * carries them. Of the weapons, the Gatling gun only. Not yet as quick to draw as the courier: the pistons each frame.
  */
 public final class HumanoidFigure implements Figure {
-
-    /** What it is drawn as. */
-    public enum Kind {
-        EXPOSED("Robot, exposed"), SHELLED("Robot, shelled"), HUMAN("Human");
-
-        private final String label;
-
-        Kind(final String label) {
-            this.label = label;
-        }
-
-        public String label() {
-            return label;
-        }
-    }
 
     /** How far its soles stand clear of the ground; its arms drawn up and ahead seen from its eyes, as the courier's. */
     static final double SOLE = 0.5;
     static final double IN_VIEW_UP = 30;
     static final double IN_VIEW_AHEAD = 30;
-    /** How far its forearms are turned at rest, palm in, as a pose holds them. */
-    static final double TWIST = 85;
 
-    private final Kind kind;
+    private final Puppet puppet;
     private final Proportions proportions = Proportions.PAPERS;
-    private final RobotDesign design = RobotDesign.DEFAULT;
-    private final Palette palette = Palette.DEFAULT;
-    private final Rig rest;
     private final double middle;
 
     private final Group root = new Group();
@@ -66,86 +42,44 @@ public final class HumanoidFigure implements Figure {
     private final Translate raise = new Translate();
     private final Rotate bank;
     private final Rotate lean;
-    private final Map<Part, Group> parts = new EnumMap<>(Part.class);
-    private final Map<Part, Affine> placed = new EnumMap<>(Part.class);
-    private final Group pistons = new Group();
     private final JetPack pack = new JetPack();
     private final Arsenal arsenal = new Arsenal();
     private boolean fromEyes;
     private Rig last;
 
-    public HumanoidFigure(final Kind kind) {
-        this.kind = kind;
-        rest = new Rig(proportions, Pose.REST);
+    public HumanoidFigure(final Puppet.Kind kind) {
+        puppet = new Puppet(kind, proportions, RobotDesign.DEFAULT, Palette.DEFAULT, new V3(1, -1, 1));
+        final Rig rest = new Rig(proportions, Pose.REST);
         middle = rest.lift();
         bank = new Rotate(0, 0, -middle, 0, Rotate.Z_AXIS);
         lean = new Rotate(0, 0, -middle, 0, Rotate.X_AXIS);
-        final Group body = new Group();
+        final Group body = new Group(puppet.node());
         body.getTransforms().addAll(inView, raise, bank, lean);
-        for (final Part p : Part.values()) {
-            final List<Surface> baked = new ArrayList<>();
-            for (final Surface s : local(p)) {
-                baked.add(s.moved(v -> bake(p, v)));
-            }
-            // drawn in the part's own frame, as the body's turned into the scene's: its frame put where it is each
-            // frame, upside down as the scene is
-            final Group g = FigureModel.meshes(baked, palette, v -> new Point3D(v.x(), v.y(), v.z()));
-            final Affine a = new Affine();
-            g.getTransforms().add(a);
-            parts.put(p, g);
-            placed.put(p, a);
-            body.getChildren().add(g);
-        }
         // what its hands hold, at its forearms, from the elbow down as the courier's forearm has them
         for (final Part fore : List.of(Part.RIGHT_FOREARM, Part.LEFT_FOREARM)) {
             final Group hold = new Group(fore == Part.RIGHT_FOREARM ? arsenal.rightHand() : arsenal.leftHand());
             hold.getTransforms().add(new Scale(1, -1, 1));
-            parts.get(fore).getChildren().add(hold);
+            puppet.part(fore).getChildren().add(hold);
         }
         // its jet-pack on its back, on its chest, as the courier wears one from its feet up
         final double chest = rest.frame(Part.CHEST).at().y();
         final Group carry = new Group(pack.node());
         carry.getTransforms().addAll(new Scale(1, -1, 1), new Translate(0, chest, 7));
-        parts.get(Part.CHEST).getChildren().add(carry);
-        body.getChildren().add(pistons);
+        puppet.part(Part.CHEST).getChildren().add(carry);
         root.getChildren().add(body);
         root.getTransforms().addAll(at, turn);
     }
 
     /** Every kind, offered as the avatar's figure to the game ({@link com.example.fxsuite.avatar.look.Figures}). */
     public static void offer() {
-        for (final Kind k : Kind.values()) {
+        for (final Puppet.Kind k : Puppet.Kind.values()) {
             com.example.fxsuite.avatar.look.Figures.offer(k.label(), () -> new HumanoidFigure(k));
         }
     }
 
-    /** {@code p}'s pieces in its own frame, as on the right side, as its kind draws it. */
-    private List<Surface> local(final Part p) {
-        return switch (kind) {
-            case HUMAN -> Skin.shapes(p, Muscles.Bulge.REST, TWIST, Skin.HUMAN);
-            case SHELLED -> Skin.shell(p, TWIST, design);
-            case EXPOSED -> {
-                if (RobotFrame.designed(p)) {
-                    yield RobotFrame.part(p, design, Paint.FRAME);
-                }
-                final List<Surface> frame = new ArrayList<>();
-                for (final Surface s : Bones.local(p, TWIST)) {
-                    frame.add(new Surface(s.name(), Paint.FRAME, s.rings(), s.start(), s.end(), s.smooth()));
-                }
-                final double r = Bones.HOUSING.getOrDefault(p.name().replace("RIGHT_", "").replace("LEFT_", ""), 0.0);
-                if (r > 0) {
-                    frame.add(Shapes.ellipsoid(p.said() + " housing", Paint.HOUSING, V3.ZERO, r, r, r, 16, 10));
-                }
-                yield frame;
-            }
-        };
-    }
-
-    /** {@code v}, in {@code p}'s frame as on the right side, made to the body's size and to its side. */
-    private V3 bake(final Part p, final V3 v) {
-        final V3 s = rest.frame(p).scale();
-        final double x = v.x() * s.x();
-        return new V3(p.side() < 0 ? -x : x, v.y() * s.y(), v.z() * s.z());
+    @Override
+    public boolean holds(final Weapon weapon) {
+        return weapon == Weapon.GATLING;
     }
 
     @Override
@@ -184,8 +118,10 @@ public final class HumanoidFigure implements Figure {
     @Override
     public void fromItsEyes(final boolean eyes) {
         fromEyes = eyes;
-        parts.forEach((p, g) -> g.setVisible(!eyes || arm(p)));
-        pistons.setVisible(!eyes);
+        for (final Part p : Part.values()) {
+            puppet.part(p).setVisible(!eyes || arm(p));
+        }
+        puppet.pistons(!eyes);
         inView.setY(eyes ? -IN_VIEW_UP : 0);
         inView.setZ(eyes ? IN_VIEW_AHEAD : 0);
     }
@@ -209,19 +145,7 @@ public final class HumanoidFigure implements Figure {
     /** Holds {@code pose}: every part where its skeleton has it, the body tipped and raised; its pack and its hands. */
     private void posed(final Avatar avatar, final com.example.fxsuite.avatar.look.Pose pose) {
         last = new Rig(proportions, read(pose));
-        for (final Part p : Part.values()) {
-            final Rig.Frame f = last.frame(p);
-            final Rot r = f.turn();
-            final V3 o = f.at();
-            // the part's frame, then the body's turned into the scene's, up its down
-            placed.get(p).setToTransform(r.xx(), r.xy(), r.xz(), o.x(), -r.yx(), -r.yy(), -r.yz(), -o.y(), r.zx(),
-                    r.zy(), r.zz(), o.z());
-        }
-        if (kind == Kind.EXPOSED && !fromEyes) {
-            final List<Surface> drawn = new ArrayList<>();
-            Muscles.pistons(last, rest).values().forEach(drawn::addAll);
-            pistons.getChildren().setAll(FigureModel.meshes(drawn, palette, v -> new Point3D(v.x(), -v.y(), v.z())));
-        }
+        puppet.show(last);
         raise.setY(-(pose.lift() + SOLE));
         lean.setAngle(-pose.lean());
         bank.setAngle(pose.bank());
