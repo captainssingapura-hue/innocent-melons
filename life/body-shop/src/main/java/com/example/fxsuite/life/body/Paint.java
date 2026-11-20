@@ -6,8 +6,8 @@ import java.util.List;
  * What a piece of a body is coloured as, and how it takes the light: a human's skin, bones (its radius and its
  * kneecaps apart, as the interactive model shows them) and muscles at the front, at the back and deep; a robot's
  * shell, its panel bands, its joint rings and its visor, its frame and the housings at its joints, its pistons'
- * barrels and rods; and the marks of its balance. Each its own colour by default, the courier's for a robot's, any
- * of them changed by a palette ({@link Palette}).
+ * barrels and rods; a skeleton's bone as it is, its teeth and its cartilage; and the marks of its balance. Each its
+ * own colour by default, the courier's for a robot's, any of them changed by a palette ({@link Palette}).
  */
 public enum Paint {
     SKIN("Skin", "#d3d1c7", Finish.MATTE),
@@ -41,6 +41,9 @@ public enum Paint {
     HELMET("Helmet", "#d0d4d8", Finish.GLOSS),
     SOLE("Sole", "#f7f7f5", Finish.MATTE),
     CARD("Card", "#ffffff", Finish.GLOSS),
+    IVORY("Bone, as it is", "#e6dcc6", Finish.MATTE),
+    TEETH("Teeth", "#f3efe3", Finish.GLOSS),
+    CARTILAGE("Cartilage", "#c9d6d2", Finish.GLOSS),
     MARK_MASS("Centre of mass", "#e24b4a", Finish.MATTE),
     MARK_SUPPORT("Support", "#ba7517", Finish.MATTE),
     MARK_FALLING("Falling", "#a32d2d", Finish.MATTE),

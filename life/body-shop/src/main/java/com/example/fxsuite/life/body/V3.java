@@ -1,10 +1,12 @@
 package com.example.fxsuite.life.body;
 
+import hue.captains.singapura.tao.ontology.Scalar;
+
 /**
  * A point or a direction in a body's own frame, in centimetres: {@code x} to its right, {@code y} up, {@code z} ahead,
  * the way it faces. Its feet on the ground at {@code y} 0, between them its origin.
  */
-public record V3(double x, double y, double z) {
+public record V3(double x, double y, double z) implements Scalar {
 
     public static final V3 ZERO = new V3(0, 0, 0);
     public static final V3 X = new V3(1, 0, 0);

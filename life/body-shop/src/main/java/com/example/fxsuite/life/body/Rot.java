@@ -1,11 +1,14 @@
 package com.example.fxsuite.life.body;
 
+import hue.captains.singapura.tao.ontology.Scalar;
+
 /**
  * A turn in a body's frame ({@link V3}): a rotation, as the matrix that does it, row by row. Turns about the three
  * ways by so many degrees, each by the right-hand rule: about {@code x} (right) a positive turn tips up toward ahead;
  * about {@code y} (up), ahead toward the right; about {@code z} (ahead), up toward the left.
  */
-public record Rot(double xx, double xy, double xz, double yx, double yy, double yz, double zx, double zy, double zz) {
+public record Rot(double xx, double xy, double xz, double yx, double yy, double yz, double zx, double zy, double zz)
+        implements Scalar {
 
     public static final Rot NONE = new Rot(1, 0, 0, 0, 1, 0, 0, 0, 1);
 
