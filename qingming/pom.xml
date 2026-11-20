@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example.fxsuite.qingming</groupId>
+    <artifactId>qingming</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <description>
+        Along the River During the Qingming Festival (清明上河图), a world of its own: the reach of the Bian River from
+        the Rainbow Bridge to the city gate, as Zhang Zeduan's scroll draws it, its plan read from the scroll and sized
+        from what scholars publish, played on the engine. A project apart, nested here as the bay is, until it moves out
+        whole: its modules released together at one version, the engine's libraries pinned at the version they are
+        built on.
+    </description>
+
+    <properties>
+        <maven.compiler.release>25</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- the engine's release the world is built on: the one place it is said -->
+        <engine.version>0.1.0-SNAPSHOT</engine.version>
+    </properties>
+
+    <modules>
+        <module>qm-land</module>
+        <module>qm-world</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- the engine -->
+            <dependency>
+                <groupId>com.example.fxsuite</groupId>
+                <artifactId>fxsuite-avatar-demo</artifactId>
+                <version>${engine.version}</version>
+            </dependency>
+            <!-- its own modules, at its own version -->
+            <dependency>
+                <groupId>com.example.fxsuite.qingming</groupId>
+                <artifactId>qm-land</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>5.11.3</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.13.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.5.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>3.6.0</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>

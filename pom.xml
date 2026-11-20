@@ -20,5 +20,6 @@
         <module>buildings-lab</module>
         <module>campus</module>
         <module>marina-bay</module>
+        <module>qingming</module>
     </modules>
 </project>
