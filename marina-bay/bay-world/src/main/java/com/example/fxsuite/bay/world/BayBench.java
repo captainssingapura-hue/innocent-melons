@@ -1,8 +1,6 @@
 package com.example.fxsuite.bay.world;
 
-import com.example.fxsuite.bay.buildings.Mbfc;
-import com.example.fxsuite.bay.buildings.Orq;
-import com.example.fxsuite.bay.buildings.AsiaSquare;
+import com.example.fxsuite.bay.buildings.Refined;
 import com.example.fxsuite.avatar.buildings.OfficeTower;
 import com.example.fxsuite.avatar.buildings.Standing;
 import com.example.fxsuite.avatar.bench.kit.Bus;
@@ -35,9 +33,8 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * The bay's buildings bench: one of the bay's office towers ({@link Mbfc#standing}, {@link Orq#standing},
- * {@link AsiaSquare#standing}) at a time, where it stands in the bay, turned as it is, as it is built: still, a model to
- * look at from before its front, its lifts standing shut as they are when played; cut away over any of its storeys to
+ * The bay's buildings bench: one of the bay's refined towers ({@link Refined}), offices or homes, at a time, where it
+ * stands in the bay, turned as it is, as it is built: still, a model to look at from before its front, its lifts standing shut as they are when played; cut away over any of its storeys to
  * be looked into, its glass shown or not, the others shown round it or not; its figures read out. Played, the one shown
  * alone, whole, a world made of it on the fly ({@link SceneWorld}) as the tower bench plays its own: on level ground,
  * its lifts at work, its glass to be broken, the avatar starting before its way in; what moves is seen there, not here.
@@ -58,8 +55,7 @@ public final class BayBench extends Application {
     private final Spinner<Integer> upTo = new Spinner<>(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 0, 0));
     private final CheckBox glass = new CheckBox("Its glass");
     private final CheckBox others = new CheckBox("The others round it");
-    private final List<Standing> towers = java.util.stream.Stream.of(Mbfc.standing(), Orq.standing(),
-            AsiaSquare.standing()).flatMap(List::stream).toList();
+    private final List<Standing> towers = Refined.standing();
     /** The tower shown, built whole, to be played; none until it is built. */
     private Built played;
     private final Player player = new Player(() -> played == null ? null : new SceneWorld(played), List.of());

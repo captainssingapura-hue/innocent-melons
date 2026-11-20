@@ -1,10 +1,8 @@
 package com.example.fxsuite.bay.buildings;
 
 import com.example.fxsuite.avatar.buildings.OfficeTower;
-import com.example.fxsuite.avatar.buildings.Standing;
 import com.example.fxsuite.avatar.buildings.Placed;
 import com.example.fxsuite.avatar.lifts.HighRiseBank;
-import com.example.fxsuite.avatar.sim.Place;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,28 +20,6 @@ import java.util.List;
 public final class AsiaSquare {
 
     private AsiaSquare() {
-    }
-
-    /** The first key the pair is drawn by in the bay, each taking {@link Standing#KEYS} from it in turn. */
-    static final int KEYS = 1_000_000;
-
-    /**
-     * The pair where they stand in the bay ({@link com.example.fxsuite.bay.land.MarinaBay}'s frame, cm): each where
-     * the map has its middle, turned as its sides run there. The map draws both the same, 64.6 by 56.5 m, its long sides
-     * at 106°; Tower 1's plan's long sides along them, Tower 2's, nearly square, its longer sides along them. Which end
-     * of each is its plan's top, the plans do not say: a guess.
-     */
-    public static List<Standing> standing() {
-        final double[][] where = {{-85_590, -78_710, -74.2}, {-88_680, -89_810, 15.9}};
-        final List<OfficeTower> towers = List.of(tower1(), tower2());
-        final com.example.fxsuite.avatar.sim.Land land = com.example.fxsuite.bay.land.MarinaBay.land();
-        final List<Standing> standing = new ArrayList<>();
-        for (int k = 0; k < towers.size(); k++) {
-            final double[] w = where[k];
-            standing.add(new Standing(towers.get(k), new Place(w[0], w[1], land.height(w[0], w[1]), w[2]),
-                    KEYS + k * Standing.KEYS));
-        }
-        return standing;
     }
 
     /**

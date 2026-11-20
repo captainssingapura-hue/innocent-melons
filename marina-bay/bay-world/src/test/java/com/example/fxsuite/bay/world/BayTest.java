@@ -1,5 +1,7 @@
 package com.example.fxsuite.bay.world;
 
+import com.example.fxsuite.avatar.buildings.Standing;
+import com.example.fxsuite.bay.buildings.Refined;
 import com.example.fxsuite.bay.land.MarinaBay;
 import com.example.fxsuite.avatar.build.TowerMap;
 import com.example.fxsuite.avatar.sim.Course;
@@ -13,7 +15,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Marina Bay as a demo: its land as it lies, the towers, their hull and its park standing on it, the motorcycles
- * parked, its bridges built; its pavements stood on; each motorcycle to ride.
+ * parked, its bridges built; its pavements stood on; each motorcycle to ride; its refined towers standing in it, each
+ * where it stands.
  */
 class BayTest {
 
@@ -28,6 +31,20 @@ class BayTest {
         assertEquals(MarinaBay.START, course.start());
         assertEquals(TowerMap.people().size(), course.ground().size());
         assertTrue(course.ponds().size() > 5);
+    }
+
+    @Test
+    void eachOfItsRefinedTowersStandingInItWhereItStandsDrawnByItsOwnKeys() {
+        Demos.register(Bay.DEMO);
+        final Course course = new Course(Bay.DEMO);
+        assertEquals(Refined.TOWERS.size(), Bay.towers().size());
+        for (final Standing t : Bay.towers()) {
+            assertEquals(1, course.pieces().stream().filter(p -> p.tint() == t.key()).count(),
+                    t.tower().name() + ", drawn by its key");
+            assertTrue(course.pieces().stream().anyMatch(p -> p.tint() == t.key()
+                    && Math.hypot(p.place().x() - t.at().x(), p.place().z() - t.at().z()) < 1),
+                    t.tower().name() + ", where it stands");
+        }
     }
 
     @Test

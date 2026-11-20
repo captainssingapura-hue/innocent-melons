@@ -1,10 +1,8 @@
 package com.example.fxsuite.bay.buildings;
 
 import com.example.fxsuite.avatar.buildings.OfficeTower;
-import com.example.fxsuite.avatar.buildings.Standing;
 import com.example.fxsuite.avatar.buildings.Placed;
 import com.example.fxsuite.avatar.lifts.HighRiseBank;
-import com.example.fxsuite.avatar.sim.Place;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,28 +19,6 @@ import java.util.List;
 public final class Orq {
 
     private Orq() {
-    }
-
-    /** The first key the pair is drawn by in the bay, each taking {@link Standing#KEYS} from it in turn. */
-    static final int KEYS = 990_000;
-
-    /**
-     * The pair where they stand in the bay ({@link com.example.fxsuite.bay.land.MarinaBay}'s frame, cm): each where
-     * the map has its middle, turned as its sides run there, its feet on its land. The North Tower's plan's north to its
-     * north-west face, where the map draws the jogs its plan has at that face's corners; the South Tower's long sides
-     * along the longer pair of the map's, its outline drawn small there.
-     */
-    public static List<Standing> standing() {
-        final double[][] where = {{-85_040, -49_850, -48.3}, {-87_950, -57_550, -74.3}};
-        final List<OfficeTower> towers = List.of(north(), south());
-        final com.example.fxsuite.avatar.sim.Land land = com.example.fxsuite.bay.land.MarinaBay.land();
-        final List<Standing> standing = new ArrayList<>();
-        for (int k = 0; k < towers.size(); k++) {
-            final double[] w = where[k];
-            standing.add(new Standing(towers.get(k), new Place(w[0], w[1], land.height(w[0], w[1]), w[2]),
-                    KEYS + k * Standing.KEYS));
-        }
-        return standing;
     }
 
     /**
