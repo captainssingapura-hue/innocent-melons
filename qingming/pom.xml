@@ -38,6 +38,12 @@
                 <artifactId>fxsuite-avatar-demo</artifactId>
                 <version>${engine.version}</version>
             </dependency>
+            <!-- how the Chinese build: the Song's bridge and shophouse -->
+            <dependency>
+                <groupId>com.example.fxsuite</groupId>
+                <artifactId>fxsuite-building-chinese</artifactId>
+                <version>${engine.version}</version>
+            </dependency>
             <!-- its own modules, at its own version -->
             <dependency>
                 <groupId>com.example.fxsuite.qingming</groupId>
