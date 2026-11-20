@@ -55,6 +55,20 @@ public final class Puppet {
 
     public Puppet(final Kind kind, final Proportions proportions, final RobotDesign design, final Palette palette,
                   final V3 signs) {
+        this(kind, proportions, design, palette, signs, null);
+    }
+
+    /**
+     * A human drawn as {@code drawn} has each part, in the part's own frame as on the right side (dressed, say), in
+     * {@code palette}'s colours.
+     */
+    public Puppet(final java.util.function.Function<Part, List<Surface>> drawn, final Proportions proportions,
+                  final Palette palette, final V3 signs) {
+        this(Kind.HUMAN, proportions, RobotDesign.DEFAULT, palette, signs, drawn);
+    }
+
+    private Puppet(final Kind kind, final Proportions proportions, final RobotDesign design, final Palette palette,
+                   final V3 signs, final java.util.function.Function<Part, List<Surface>> drawn) {
         this.kind = kind;
         this.proportions = proportions;
         this.design = design;
@@ -63,7 +77,7 @@ public final class Puppet {
         rest = new Rig(proportions, Pose.REST);
         for (final Part p : Part.values()) {
             final List<Surface> baked = new ArrayList<>();
-            for (final Surface s : local(p)) {
+            for (final Surface s : drawn != null ? drawn.apply(p) : local(p)) {
                 baked.add(s.moved(v -> bake(p, v)));
             }
             // drawn in the part's own frame; its frame put where it is each frame, into the scene's

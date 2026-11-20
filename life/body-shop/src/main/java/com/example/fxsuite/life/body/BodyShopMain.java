@@ -6,10 +6,11 @@ import java.util.Arrays;
 
 /**
  * The body shop's jar, run: its bench ({@link BodyShopBench}); with {@code parts}, the robot parts bench
- * ({@link RobotPartsBench}); with {@code motion}, the motion bench ({@link MotionBench}); with {@code play}, the
- * game, its humanoids offered as the avatar ({@link HumanoidFigure}) beside the courier, the exposed robot chosen
- * unless {@code -Davatar.figure} says otherwise; anything after {@code play} given to the game. Started from a class
- * that is not JavaFX's, so the jar runs with JavaFX on its class path.
+ * ({@link RobotPartsBench}); with {@code motion}, the motion bench ({@link MotionBench}); with {@code wardrobe}, the
+ * wardrobe ({@link WardrobeBench}); with {@code play}, the game, its humanoids offered as the avatar
+ * ({@link HumanoidFigure}) beside the courier, the exposed robot chosen unless {@code -Davatar.figure} says otherwise;
+ * anything after {@code play} given to the game. Started from a class that is not JavaFX's, so the jar runs with
+ * JavaFX on its class path.
  */
 public final class BodyShopMain {
 
@@ -28,6 +29,7 @@ public final class BodyShopMain {
             }
             case "parts" -> javafx.application.Application.launch(RobotPartsBench.class, args);
             case "motion" -> javafx.application.Application.launch(MotionBench.class, args);
+            case "wardrobe" -> javafx.application.Application.launch(WardrobeBench.class, args);
             default -> javafx.application.Application.launch(BodyShopBench.class, args);
         }
     }

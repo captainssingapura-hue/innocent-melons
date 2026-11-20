@@ -30,6 +30,11 @@ public enum Paint {
     AMMUNITION("Ammunition box", "#4b5320", Finish.MATTE),
     STRAP("Strap", "#3b2f25", Finish.MATTE),
     FLASH("Muzzle flash", "#fff3b0", Finish.GLOW),
+    ROBE("Robe", "#8a5a2b", Finish.MATTE),
+    KASAYA("Kasaya", "#7a2a1c", Finish.MATTE),
+    TRIM("Collar and hems", "#2a2420", Finish.MATTE),
+    LEGGINGS("Leggings", "#e8e4da", Finish.MATTE),
+    CLOTH_SHOES("Cloth shoes", "#262321", Finish.MATTE),
     MARK_MASS("Centre of mass", "#e24b4a", Finish.MATTE),
     MARK_SUPPORT("Support", "#ba7517", Finish.MATTE),
     MARK_FALLING("Falling", "#a32d2d", Finish.MATTE),
@@ -44,6 +49,8 @@ public enum Paint {
     public static final List<Paint> ROBOT = List.of(SHELL, PANEL, JOINT_RING, VISOR, FRAME, HOUSING, BARREL, ROD);
     /** The colours what it carries is drawn in: its gun and the strap it hangs from. */
     public static final List<Paint> GEAR = List.of(GUN, GUN_FITTINGS, AMMUNITION, STRAP);
+    /** The colours a monk is dressed in, and its skin. */
+    public static final List<Paint> MONK = List.of(SKIN, ROBE, KASAYA, TRIM, LEGGINGS, CLOTH_SHOES);
 
     private final String label;
     private final String colour;
