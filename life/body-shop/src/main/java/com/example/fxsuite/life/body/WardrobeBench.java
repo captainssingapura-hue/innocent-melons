@@ -67,7 +67,19 @@ public final class WardrobeBench extends Application {
             Map.entry("Panties.rise", new Range("Rise, share of the hips", 0.3, 1)),
             Map.entry("Undershirt.ease", new Range("How loose, cm", 0.1, 2)),
             Map.entry("Bra.band", new Range("Band, cm", 1, 8)),
-            Map.entry("Bra.cups", new Range("Cups, cm out", 0.5, 6)));
+            Map.entry("Bra.cups", new Range("Cups, cm out", 0.5, 6)),
+            Map.entry("Jacket.ease", new Range("How loose, cm", 0.5, 5)),
+            Map.entry("Jacket.hem", new Range("Below the hips, cm", -5, 25)),
+            Map.entry("Hoodie.ease", new Range("How loose, cm", 0.5, 4)),
+            Map.entry("Jersey.ease", new Range("How loose, cm", 0.3, 3)),
+            Map.entry("Trousers.ease", new Range("How loose, cm", 0.5, 4)),
+            Map.entry("Trousers.length", new Range("Down the shin, share", 0.3, 1)),
+            Map.entry("Shorts.ease", new Range("How loose, cm", 0.5, 4)),
+            Map.entry("Shorts.length", new Range("Down the thigh, share", 0.1, 1)),
+            Map.entry("Socks.height", new Range("Up the shin, share", 0.05, 1)),
+            Map.entry("Apron.length", new Range("Down from the waist, cm", 15, 90)),
+            Map.entry("ShortHair.thick", new Range("How deep, cm", 0.2, 4)),
+            Map.entry("LongHair.length", new Range("Below the head, cm", 2, 50)));
 
 
     private final Bus bus = new Bus();
@@ -87,6 +99,8 @@ public final class WardrobeBench extends Application {
     private final Slider at = new Slider(0, 1, 0);
     private final Slider[] shape = new Slider[6];
     private final ChoiceBox<Outfit> outfits = new ChoiceBox<>();
+    private final ChoiceBox<Person> people = new ChoiceBox<>();
+    private ColorPicker skinPicker;
     private final TreeView<Object> catalogue = new TreeView<>();
     private final ListView<Wear> worn = new ListView<>();
     private final VBox settings = new VBox(6);
@@ -101,6 +115,10 @@ public final class WardrobeBench extends Application {
 
     @Override
     public void start(final Stage stage) {
+        final String who = System.getProperty("wardrobe.person");
+        if (who != null) {
+            People.all().stream().filter(p -> p.name().equalsIgnoreCase(who)).findFirst().ifPresent(p -> person = p);
+        }
         final String asked = System.getProperty("wardrobe.outfit");
         if (asked != null) {
             Outfit.ALL.stream().filter(o -> o.name().equalsIgnoreCase(asked)).findFirst()
@@ -153,6 +171,7 @@ public final class WardrobeBench extends Application {
             body.add(value, 2, k);
         }
         final ColorPicker skin = new ColorPicker(Color.web(person.skin()));
+        skinPicker = skin;
         skin.setOnAction(e -> {
             person = person.withSkin(hex(skin.getValue()));
             dress();
@@ -176,6 +195,34 @@ public final class WardrobeBench extends Application {
             person = person.with(is);
             showWorn(-1);
             dress();
+        });
+
+        // anyone of the world as it is: their body, their skin, what they wear
+        people.getItems().setAll(People.all());
+        people.setConverter(new javafx.util.StringConverter<>() {
+            @Override
+            public String toString(final Person p) {
+                return p == null ? "" : p.name();
+            }
+
+            @Override
+            public Person fromString(final String s) {
+                return null;
+            }
+        });
+        people.valueProperty().addListener((o, was, is) -> {
+            if (is == null) {
+                return;
+            }
+            person = is;
+            final Proportions p = is.body();
+            final double[] v = {p.stature(), p.build(), p.legs(), p.arms(), p.shoulders(), p.hips()};
+            for (int k = 0; k < 6; k++) {
+                shape[k].setValue(v[k]);
+            }
+            skinPicker.setValue(Color.web(is.skin()));
+            showWorn(-1);
+            reshape();
         });
 
         // the catalogue, its kinds as a tree; what is worn, inner first; the settings of the one chosen
@@ -220,7 +267,8 @@ public final class WardrobeBench extends Application {
                 + " on, over what is under it. Drag to turn the view, right-drag to move it, scroll to come nearer.");
         hint.setWrapText(true);
         final VBox side = new VBox(10, new Label("How fast"), paces, motion, new FlowPane(10, 6, play),
-                new Label("The body"), body, papers, new Label("To start from"), outfits,
+                new Label("Someone of the world"), people, new Label("The body"), body, papers,
+                new Label("Wearing, to start from"), outfits,
                 new Label("What may be worn"), catalogue, on, new Label("Worn, from the skin out"), worn,
                 new FlowPane(6, 6, off, inward, outward), settings, hint);
         side.setPadding(new Insets(8));
@@ -429,6 +477,10 @@ public final class WardrobeBench extends Application {
             case "trim" -> "Collar and cuffs";
             case "wideSleeves" -> "Wide sleeves";
             case "waistband" -> "Waistband";
+            case "sole" -> "Soles";
+            case "card" -> "Card";
+            case "cord" -> "Cord";
+            case "bib" -> "With a bib";
             case "longSleeves" -> "Long sleeves";
             default -> c.getName();
         };

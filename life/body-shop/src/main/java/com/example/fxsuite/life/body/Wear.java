@@ -4,18 +4,13 @@ import java.util.Map;
 
 /**
  * Something worn, declared: what it is, how it is cut and in what colours; nothing of whom it is on. Of a kind, in a
- * family of kinds, each kind its own numbers to set:
- * <ul>
- *   <li>{@link Clothing}: {@link Underwear} ({@link ForMen}: {@link Briefs}, {@link BoxerBriefs}, {@link Undershirt};
- *       {@link ForWomen}: {@link Bra}, {@link Panties}), {@link Robes} ({@link Robe}), {@link Tops} ({@link Shirt}), {@link Legwear}
- *       ({@link Leggings});</li>
- *   <li>{@link Footwear}: {@link Shoes}, {@link Boots};</li>
- *   <li>{@link Accessory}: {@link Sash}, {@link Belt}.</li>
- * </ul>
+ * family of kinds, each kind its own numbers to set: {@link Clothing} (its {@link Underwear}, for men and for women;
+ * {@link Robes}; {@link Tops}; {@link Legwear}), {@link Footwear}, {@link Accessory} and {@link Hair}. The families are
+ * the tree the wardrobe bench shows, read from the kinds themselves.
  * Put on a body ({@link Dressed}), it is made to that body: fitted to its contour, laid on what is under it, or hung
  * from it; moving with it. Any on any body; someone wears a few, inner first ({@link Outfit}).
  */
-public sealed interface Wear permits Wear.Clothing, Wear.Footwear, Wear.Accessory {
+public sealed interface Wear permits Wear.Clothing, Wear.Footwear, Wear.Accessory, Wear.Hair {
 
     /** What it is called. */
     String name();
@@ -41,19 +36,23 @@ public sealed interface Wear permits Wear.Clothing, Wear.Footwear, Wear.Accessor
     }
 
     /** What is worn on the upper body. */
-    sealed interface Tops extends Clothing permits Shirt {
+    sealed interface Tops extends Clothing permits Shirt, Jacket, Hoodie, Jersey {
     }
 
     /** What is worn on the legs. */
-    sealed interface Legwear extends Clothing permits Leggings {
+    sealed interface Legwear extends Clothing permits Leggings, Trousers, Shorts, Socks {
+    }
+
+    /** Hair, worn as clothes are: cut and coloured, on any head. */
+    sealed interface Hair extends Wear permits ShortHair, LongHair, Bun {
     }
 
     /** What is worn on the feet. */
-    sealed interface Footwear extends Wear permits Shoes, Boots {
+    sealed interface Footwear extends Wear permits Shoes, Boots, Trainers {
     }
 
     /** What is worn over the clothes: laid on whatever is under it. */
-    sealed interface Accessory extends Wear permits Sash, Belt {
+    sealed interface Accessory extends Wear permits Sash, Belt, Apron, Cap, Helmet, Badge {
     }
 
     /**
@@ -234,6 +233,195 @@ public sealed interface Wear permits Wear.Clothing, Wear.Footwear, Wear.Accessor
         }
     }
 
+    /**
+     * A jacket: from below the hips up round the neck, fitted to the body's contour, loose; its sleeves to the wrist.
+     *
+     * @param colour its cloth
+     * @param ease   how loose, cm
+     * @param hem    how far below the hip joints it comes, cm
+     */
+    record Jacket(String colour, double ease, double hem) implements Tops {
+
+        @Override
+        public String name() {
+            return "Jacket";
+        }
+    }
+
+    /**
+     * A hoodie: from the hips up round the neck, fitted to the body's contour, its sleeves to the wrist; its hood
+     * lying down at the back of the neck; a pocket across its front.
+     *
+     * @param colour its cloth
+     * @param ease   how loose, cm
+     */
+    record Hoodie(String colour, double ease) implements Tops {
+
+        @Override
+        public String name() {
+            return "Hoodie";
+        }
+    }
+
+    /**
+     * A sports jersey: as a short-sleeved shirt, its collar in {@code trim}.
+     *
+     * @param colour its cloth
+     * @param trim   its collar
+     * @param ease   how loose, cm
+     */
+    record Jersey(String colour, String trim, double ease) implements Tops {
+
+        @Override
+        public String name() {
+            return "Jersey";
+        }
+    }
+
+    /**
+     * Trousers: from the waist round the hips, down each leg to {@code length} of the way to the ankle, fitted to the
+     * body's contour above the knee and hanging straight below it.
+     *
+     * @param colour their cloth
+     * @param ease   how loose, cm
+     * @param length how far down the leg, as a share of it, to the ankle
+     */
+    record Trousers(String colour, double ease, double length) implements Legwear {
+
+        @Override
+        public String name() {
+            return "Trousers";
+        }
+    }
+
+    /**
+     * Shorts: from the waist round the hips, down each thigh {@code length} of the way to the knee.
+     *
+     * @param colour their cloth
+     * @param ease   how loose, cm
+     * @param length how far down the thigh, as a share of it
+     */
+    record Shorts(String colour, double ease, double length) implements Legwear {
+
+        @Override
+        public String name() {
+            return "Shorts";
+        }
+    }
+
+    /**
+     * Socks: on the feet and up the shins {@code height} of the way to the knee.
+     *
+     * @param colour their knit
+     * @param height how far up the shin, as a share of it
+     */
+    record Socks(String colour, double height) implements Legwear {
+
+        @Override
+        public String name() {
+            return "Socks";
+        }
+    }
+
+    /**
+     * Trainers: close on the feet, on soles of their own colour.
+     *
+     * @param colour their uppers
+     * @param sole   their soles
+     */
+    record Trainers(String colour, String sole) implements Footwear {
+
+        @Override
+        public String name() {
+            return "Trainers";
+        }
+    }
+
+    /**
+     * An apron: tied round the waist, hanging before the legs {@code length} down; with a bib up the chest, if
+     * {@code bib}.
+     *
+     * @param colour its cloth
+     * @param length how far down from the waist, cm
+     * @param bib    whether it has a bib up the chest
+     */
+    record Apron(String colour, double length, boolean bib) implements Accessory {
+
+        @Override
+        public String name() {
+            return "Apron";
+        }
+    }
+
+    /** A cap: its crown on the top of the head, its peak out over the brow. */
+    record Cap(String colour) implements Accessory {
+
+        @Override
+        public String name() {
+            return "Cap";
+        }
+    }
+
+    /** A helmet: a hard shell over the head, down to the ears. */
+    record Helmet(String colour) implements Accessory {
+
+        @Override
+        public String name() {
+            return "Helmet";
+        }
+    }
+
+    /**
+     * A badge on a lanyard: a card at the chest, on a cord round the neck.
+     *
+     * @param card its card
+     * @param cord its cord
+     */
+    record Badge(String card, String cord) implements Accessory {
+
+        @Override
+        public String name() {
+            return "Badge";
+        }
+    }
+
+    /**
+     * Short hair: over the top and back of the head, down to its hairline, {@code thick} deep.
+     *
+     * @param colour its colour
+     * @param thick  how deep, cm
+     */
+    record ShortHair(String colour, double thick) implements Hair {
+
+        @Override
+        public String name() {
+            return "Short hair";
+        }
+    }
+
+    /**
+     * Long hair: as short hair, and falling down the back of the head and the neck {@code length} below it.
+     *
+     * @param colour its colour
+     * @param length how far it falls below the head, cm
+     */
+    record LongHair(String colour, double length) implements Hair {
+
+        @Override
+        public String name() {
+            return "Long hair";
+        }
+    }
+
+    /** Hair drawn up into a bun at the back of the head. */
+    record Bun(String colour) implements Hair {
+
+        @Override
+        public String name() {
+            return "Bun";
+        }
+    }
+
     /** Each kind, as it is first put on. */
     Map<Class<? extends Wear>, Wear> FIRST = Map.ofEntries(
             Map.entry(Briefs.class, new Briefs("#f2efe9", "#3a3f46", 0.65)),
@@ -243,11 +431,25 @@ public sealed interface Wear permits Wear.Clothing, Wear.Footwear, Wear.Accessor
             Map.entry(Panties.class, new Panties("#e9d7d2", "#d6bfb8", 0.6)),
             Map.entry(Robe.class, new Robe("#8a5a2b", "#2a2420", 1.5, 11, 0.35, true)),
             Map.entry(Shirt.class, new Shirt("#e9e4d8", 0.8, true)),
+            Map.entry(Jacket.class, new Jacket("#3a3f45", 2.2, 8)),
+            Map.entry(Hoodie.class, new Hoodie("#4a5d7a", 1.8)),
+            Map.entry(Jersey.class, new Jersey("#c0392b", "#f1f0ea", 1)),
             Map.entry(Leggings.class, new Leggings("#e8e4da")),
+            Map.entry(Trousers.class, new Trousers("#2e3440", 1.4, 0.95)),
+            Map.entry(Shorts.class, new Shorts("#d8cfb8", 1.4, 0.45)),
+            Map.entry(Socks.class, new Socks("#f1f0ea", 0.35)),
             Map.entry(Shoes.class, new Shoes("#262321")),
             Map.entry(Boots.class, new Boots("#3b2a1f", 0.45)),
+            Map.entry(Trainers.class, new Trainers("#e9e4d8", "#f7f7f5")),
             Map.entry(Sash.class, new Sash("#7a2a1c", 13)),
-            Map.entry(Belt.class, new Belt("#3b2a1f", 4)));
+            Map.entry(Belt.class, new Belt("#3b2a1f", 4)),
+            Map.entry(Apron.class, new Apron("#e8e4da", 45, false)),
+            Map.entry(Cap.class, new Cap("#c8102e")),
+            Map.entry(Helmet.class, new Helmet("#d0d4d8")),
+            Map.entry(Badge.class, new Badge("#ffffff", "#c8102e")),
+            Map.entry(ShortHair.class, new ShortHair("#2a1d14", 1)),
+            Map.entry(LongHair.class, new LongHair("#6b4a2b", 18)),
+            Map.entry(Bun.class, new Bun("#1c1c1c")));
 
     /** {@code kind} as it is first put on. */
     static Wear first(final Class<? extends Wear> kind) {

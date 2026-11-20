@@ -118,9 +118,18 @@ public final class Garment {
 
     /** The upper part of a robe on the body {@code env} outlines, {@code ease} out from its contour, coloured {@code paint}. */
     public static Garment robe(final Envelope env, final double ease, final Paint paint) {
+        return robe(env, ease, paint, 6);
+    }
+
+    /**
+     * The upper part of a robe, or a shirt or a jacket, on the body {@code env} outlines, {@code ease} out from its
+     * contour, coloured {@code paint}; its body from {@code bottom} up from the hip joints (cm, less than nothing below
+     * them) to the neck.
+     */
+    public static Garment robe(final Envelope env, final double ease, final Paint paint, final double bottom) {
         final Rig rest = env.rest();
         final List<Piece> pieces = new ArrayList<>();
-        pieces.add(body(env, rest, ease, paint));
+        pieces.add(body(env, rest, ease, paint, bottom));
         for (final int side : new int[] {1, -1}) {
             pieces.add(sleeve(env, rest, side, ease, paint));
         }
@@ -140,7 +149,7 @@ public final class Garment {
      * sides by {@code cut}, cm, low at the crotch before and behind.
      */
     public static Garment pants(final Envelope env, final double ease, final double rise, final double down,
-                                final double cut,
+                                final double cut, final boolean straight,
                                 final Paint paint) {
         final Rig rest = env.rest();
         final List<Piece> pieces = new ArrayList<>();
@@ -185,7 +194,7 @@ public final class Garment {
                 hipBound(new V3(0, top + 1, zs[HIP_RINGS - 1]), right, left)));
         if (down > 0) {
             for (final int side : new int[] {1, -1}) {
-                pieces.add(leg(env, rest, side, ease, down, paint));
+                pieces.addAll(leg(env, rest, side, ease, down, straight, paint));
             }
         }
         return new Garment(rest, pieces);
@@ -199,55 +208,94 @@ public final class Garment {
         return new Bound(p, new Part[] {Part.PELVIS, thigh}, new double[] {1 - toThigh, toThigh});
     }
 
-    /** A pair of pants' leg on side {@code side}: down the thigh from below the crotch, {@code down} of the way to the knee. */
-    private static Piece leg(final Envelope env, final Rig rest, final int side, final double ease, final double down,
-                             final Paint paint) {
+    /**
+     * A pair of pants' leg on side {@code side}, fitted to the leg's contour: down the thigh from below the crotch,
+     * {@code down} of the way to the knee; past one, on down the shin that much more of the way to the ankle, hanging
+     * straight from the knee if {@code straight}. Each ring moving with the part it is round, blended across the knee.
+     */
+    private static List<Piece> leg(final Envelope env, final Rig rest, final int side, final double ease,
+                                   final double down, final boolean straight, final Paint paint) {
         final Part thigh = side > 0 ? Part.RIGHT_THIGH : Part.LEFT_THIGH;
+        final Part shin = side > 0 ? Part.RIGHT_SHIN : Part.LEFT_SHIN;
         final V3 hip = rest.frame(thigh).at();
-        final V3 knee = rest.frame(side > 0 ? Part.RIGHT_SHIN : Part.LEFT_SHIN).at();
-        final V3 u = knee.minus(hip).unit();
-        final double length = knee.minus(hip).length();
+        final V3 knee = rest.frame(shin).at();
+        final V3 ankle = rest.frame(side > 0 ? Part.RIGHT_FOOT : Part.LEFT_FOOT).at();
+        final List<Piece> pieces = new ArrayList<>();
+        final double[] kneeRing = new double[SLEEVE_ROUND];
+        pieces.add(limb(env, side > 0 ? "right thigh" : "left thigh", hip, knee, 0.1, Math.min(down, 1), thigh, shin,
+                Part.PELVIS, ease, false, kneeRing, paint));
+        if (down > 1) {
+            pieces.add(limb(env, side > 0 ? "right shin" : "left shin", knee, ankle, 0, Math.min(down - 1, 1), shin,
+                    thigh, thigh, ease, straight, kneeRing, paint));
+        }
+        return pieces;
+    }
+
+    /**
+     * A tube of cloth round a limb from {@code from} to {@code to} of the way along it from {@code top} to
+     * {@code bottom}, fitted to the skin of {@code part} with {@code ease}; its rings moving with {@code part}, its
+     * first a little with {@code above}, its last a little with {@code next}. Hanging straight, if {@code straight}:
+     * none of it narrower than {@code wide} (round the bottom of the limb above), else what it measures is left there.
+     */
+    private static Piece limb(final Envelope env, final String name, final V3 top, final V3 bottom, final double from,
+                              final double to, final Part part, final Part next, final Part above, final double ease,
+                              final boolean straight, final double[] wide, final Paint paint) {
+        final V3 u = bottom.minus(top).unit();
+        final double length = bottom.minus(top).length();
         final V3 a = u.cross(V3.Z).unit();
         final V3 b = a.cross(u).unit();
-        final double from = 0.1;
         final double[][] r = new double[LEG_RINGS][SLEEVE_ROUND];
         final V3[] middles = new V3[LEG_RINGS];
         for (int i = 0; i < LEG_RINGS; i++) {
-            final double s = from + (down - from) * i / (LEG_RINGS - 1);
-            middles[i] = hip.plus(u.times(length * s));
+            final double s = from + (to - from) * i / (LEG_RINGS - 1);
+            middles[i] = top.plus(u.times(length * s));
             for (int j = 0; j < SLEEVE_ROUND; j++) {
                 final double phi = 2 * Math.PI * j / SLEEVE_ROUND;
-                r[i][j] = env.out(middles[i], a.times(Math.cos(phi)).plus(b.times(Math.sin(phi))), EnumSet.of(thigh),
+                r[i][j] = env.out(middles[i], a.times(Math.cos(phi)).plus(b.times(Math.sin(phi))), EnumSet.of(part),
                         v -> true);
             }
         }
         fill(r);
         bridge(r, 2, 1);
+        if (straight) {
+            for (final double[] ring : r) {
+                for (int j = 0; j < ring.length; j++) {
+                    ring[j] = Math.max(ring[j], wide[j] * 0.9);
+                }
+            }
+        } else {
+            System.arraycopy(r[LEG_RINGS - 1], 0, wide, 0, SLEEVE_ROUND);
+        }
         final List<List<Bound>> rings = new ArrayList<>();
         for (int i = 0; i < LEG_RINGS; i++) {
-            final double toThigh = i == 0 ? 0.7 : 1;
+            final double s = (double) i / (LEG_RINGS - 1);
+            // a little with the part above at its top, and with the one below at its bottom
+            final double up = i == 0 ? 0.3 : 0;
+            final double low = 0.4 * smooth(0.8, 1, s) * (to >= 0.99 ? 1 : 0);
             final List<Bound> ring = new ArrayList<>();
             for (int j = 0; j < SLEEVE_ROUND; j++) {
                 final double phi = 2 * Math.PI * j / SLEEVE_ROUND;
                 final V3 way = a.times(Math.cos(phi)).plus(b.times(Math.sin(phi)));
-                ring.add(new Bound(middles[i].plus(way.times(r[i][j] + ease)), new Part[] {Part.PELVIS, thigh},
-                        new double[] {1 - toThigh, toThigh}));
+                ring.add(new Bound(middles[i].plus(way.times(r[i][j] + ease)), new Part[] {part, above, next},
+                        new double[] {1 - up - low, up, low}));
             }
             rings.add(ring);
         }
-        return new Piece((side > 0 ? "right" : "left") + " leg", paint, rings,
-                new Bound(middles[0].minus(u.times(2)), new Part[] {thigh}, new double[] {1}),
-                new Bound(middles[LEG_RINGS - 1].plus(u.times(1)), new Part[] {thigh}, new double[] {1}));
+        return new Piece(name, paint, rings,
+                new Bound(middles[0].minus(u.times(2)), new Part[] {part}, new double[] {1}),
+                new Bound(middles[LEG_RINGS - 1].plus(u.times(1)), new Part[] {part}, new double[] {1}));
     }
 
     /** The robe's body: from the waist up round the trunk and over the shoulders to round the neck. */
-    private static Piece body(final Envelope env, final Rig rest, final double ease, final Paint paint) {
-        final double waist = rest.place(Part.PELVIS, new V3(0, 6, 0)).y();
+    private static Piece body(final Envelope env, final Rig rest, final double ease, final Paint paint,
+                              final double bottom) {
+        final double waist = rest.place(Part.PELVIS, new V3(0, bottom, 0)).y();
         final double neck = rest.frame(Part.NECK).at().y() + 1.5;
         final V3 rightShoulder = rest.frame(Part.RIGHT_UPPER_ARM).at();
         final V3 leftShoulder = rest.frame(Part.LEFT_UPPER_ARM).at();
         final double armpit = rightShoulder.y() - 3;
         final Set<Part> trunk = EnumSet.of(Part.PELVIS, Part.ABDOMEN, Part.CHEST, Part.NECK, Part.RIGHT_GIRDLE,
+                Part.RIGHT_THIGH, Part.LEFT_THIGH,
                 Part.LEFT_GIRDLE);
         // the arms only over the tops of the shoulders, not hanging at the sides
         final Set<Part> arms = EnumSet.of(Part.RIGHT_UPPER_ARM, Part.LEFT_UPPER_ARM);
