@@ -5,10 +5,10 @@ import com.example.fxsuite.life.body.V3;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 /**
- * How a vertebra is drawn, from the axis down, in the body's frame, each part as big as its level has it ({@link
- * Level}): its body, a short oval column, waisted; its pedicles and laminae round its canal; its spinous process back
- * and down, split at its tip in the neck, a broad hatchet low in the back; its transverse processes out, in the neck
- * holed for its arteries, in the chest back to the ribs; its articular processes above and below.
+ * How a vertebra is drawn, from the axis down, in the body's frame, each part as big as its level has it
+ * ({@link Level}): its body, a short oval column, waisted; its pedicles and laminae round its canal; its spinous
+ * process back and down, split at its tip in the neck, a broad hatchet low in the back; its transverse processes out,
+ * in the neck holed for its arteries, in the chest back to the ribs; its articular processes above and below.
  */
 public record Vertebrae() implements StatelessFunctionalObject {
 

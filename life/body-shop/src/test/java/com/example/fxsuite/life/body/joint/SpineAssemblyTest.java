@@ -31,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class SpineAssemblyTest {
 
     private final List<Complex> joints = SpineJoints.INSTANCE.joints();
+    private final Scope spine = Group.SPINE.with();
     private final Rig rest = new Rig(Proportions.DRAWN, Pose.REST, false);
 
     @Test
@@ -67,7 +68,7 @@ class SpineAssemblyTest {
         assertEquals(25, Math.toDegrees(Math.acos(up.y())), 1e-4, "five discs, five degrees each");
         assertTrue(up.z() > 0, "bent forward");
         // held by L1 where it went, the sacrum comes back to where it stood
-        final Assembly.Assembled held = Assembly.INSTANCE.build(joints, new BoneAt(L1.INSTANCE, Side.MIDDLE), l1, bent);
+        final Assembly.Assembled held = Assembly.INSTANCE.build(spine, new BoneAt(L1.INSTANCE, Side.MIDDLE), l1, bent);
         final Place sacrum = held.places().get(new BoneAt(Sacrum.INSTANCE, Side.MIDDLE));
         assertEquals(0, sacrum.at().length(), 1e-9);
         assertEquals(0, turned(sacrum), 1e-4);
@@ -83,7 +84,7 @@ class SpineAssemblyTest {
 
     /** Put together from {@code root}, it where it is drawn at rest. */
     private Assembly.Assembled from(final Bone root, final Posture posture) {
-        return Assembly.INSTANCE.build(joints, new BoneAt(root, Side.MIDDLE),
+        return Assembly.INSTANCE.build(spine, new BoneAt(root, Side.MIDDLE),
                 new Place(rest.frame(root.part()).at(), com.example.fxsuite.life.body.Rot.NONE), posture);
     }
 

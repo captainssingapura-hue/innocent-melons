@@ -4,6 +4,10 @@ import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Sketch;
 import com.example.fxsuite.life.body.bone.Bone;
 import com.example.fxsuite.life.body.bone.Region;
+import com.example.fxsuite.life.body.joint.Place;
+import com.example.fxsuite.life.body.joint.Point;
+
+import java.util.function.Supplier;
 
 import static com.example.fxsuite.life.body.Sketch.v;
 
@@ -14,6 +18,31 @@ import static com.example.fxsuite.life.body.Sketch.v;
 public record Femur() implements Bone {
 
     public static final Femur INSTANCE = new Femur();
+
+    /** Where it meets its neighbours, as on the right, each a frame in the frame it is drawn in. */
+    public enum Points implements Point<Femur> {
+        HEAD("its head, in the acetabulum", () -> LegContacts.INSTANCE.hip()),
+        KNEE("its condyles, on the tibia", () -> LegContacts.INSTANCE.knee()),
+        GROOVE("its groove, under the kneecap", () -> LegContacts.INSTANCE.patellar());
+
+        private final String said;
+        private final Supplier<Place> frame;
+
+        Points(final String said, final Supplier<Place> frame) {
+            this.said = said;
+            this.frame = frame;
+        }
+
+        @Override
+        public String said() {
+            return said;
+        }
+
+        @Override
+        public Place frame() {
+            return frame.get();
+        }
+    }
 
     @Override
     public String name() {

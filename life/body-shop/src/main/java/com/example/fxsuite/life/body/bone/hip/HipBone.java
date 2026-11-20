@@ -5,6 +5,10 @@ import com.example.fxsuite.life.body.Sketch;
 import com.example.fxsuite.life.body.V3;
 import com.example.fxsuite.life.body.bone.Bone;
 import com.example.fxsuite.life.body.bone.Region;
+import com.example.fxsuite.life.body.joint.Place;
+import com.example.fxsuite.life.body.joint.Point;
+
+import java.util.function.Supplier;
 
 import static com.example.fxsuite.life.body.Sketch.v;
 
@@ -23,6 +27,31 @@ public record HipBone() implements Bone {
     /** The hip joint, the head of the femur's middle; and the way the acetabulum faces, out, down and forward. */
     public static final V3 JOINT = v(8.5, 0, 0);
     public static final V3 FACES = v(0.75, -0.45, 0.5).unit();
+
+    /** Where it meets its neighbours, as on the right. */
+    public enum Points implements Point<HipBone> {
+        SACRUM("on the sacrum", () -> PelvisContacts.INSTANCE.sacroiliac()),
+        SYMPHYSIS("on its fellow, in front", () -> PelvisContacts.INSTANCE.symphysis()),
+        ACETABULUM("round the head of the femur", () -> PelvisContacts.INSTANCE.hip());
+
+        private final String said;
+        private final Supplier<Place> frame;
+
+        Points(final String said, final Supplier<Place> frame) {
+            this.said = said;
+            this.frame = frame;
+        }
+
+        @Override
+        public String said() {
+            return said;
+        }
+
+        @Override
+        public Place frame() {
+            return frame.get();
+        }
+    }
 
     @Override
     public String name() {

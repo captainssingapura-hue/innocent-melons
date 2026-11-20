@@ -23,7 +23,7 @@ public record BoneView() implements StatelessFunctionalObject {
     /** {@code mesh}, coloured {@code paint}, standing on the ground, the middle of its box over the origin. */
     public Group node(final Mesher.Mesh mesh, final Paint paint) {
         final double[] mid = middle(mesh.points());
-        return drawn(mesh, paint, new double[] {mid[0], mid[3], mid[2]});
+        return drawn(mesh, paint, new double[] {mid[0], mid[3], mid[2]}, false);
     }
 
     /**
@@ -31,25 +31,38 @@ public record BoneView() implements StatelessFunctionalObject {
      * {@code p} at {@code -p} in the scene, so its bone's place {@code (R, t)} is the scene's {@code (R, -t)}.
      */
     public Group inItsFrame(final Mesher.Mesh mesh, final Paint paint) {
-        return drawn(mesh, paint, new double[] {0, 0, 0});
+        return drawn(mesh, paint, new double[] {0, 0, 0}, false);
     }
 
-    private Group drawn(final Mesher.Mesh mesh, final Paint paint, final double[] from) {
+    /** As {@link #inItsFrame}, but the bone's mirror across the middle: a bone on the left drawn as on the right. */
+    public Group mirrored(final Mesher.Mesh mesh, final Paint paint) {
+        return drawn(mesh, paint, new double[] {0, 0, 0}, true);
+    }
+
+    private Group drawn(final Mesher.Mesh mesh, final Paint paint, final double[] from, final boolean mirrored) {
         final float[] p = mesh.points().clone();
-        // into the scene's frame, turned and turned over: a mirror, so the triangles go round the other way
+        // into the scene's frame, turned and turned over: a mirror, so the triangles go round the other way; and
+        // mirrored again for a bone on the left, which turns them back
         for (int i = 0; i < p.length; i += 3) {
-            p[i] = (float) -(p[i] - from[0]);
+            p[i] = (float) ((mirrored ? 1 : -1) * (p[i] - from[0]));
             p[i + 1] = (float) -(p[i + 1] - from[1]);
             p[i + 2] = (float) -(p[i + 2] - from[2]);
         }
-        final int[] t = mesh.triangles();
+        final int[] t = mesh.triangles().clone();
+        if (!mirrored) {
+            for (int i = 0; i < t.length; i += 3) {
+                final int b = t[i + 1];
+                t[i + 1] = t[i + 2];
+                t[i + 2] = b;
+            }
+        }
         final TriangleMesh m = new TriangleMesh(VertexFormat.POINT_NORMAL_TEXCOORD);
         m.getPoints().setAll(p);
         m.getNormals().setAll(normals(p, t));
         m.getTexCoords().addAll(0, 0);
         final int[] faces = new int[t.length * 3];
         for (int i = 0; i < t.length; i += 3) {
-            final int[] corner = {t[i], t[i + 2], t[i + 1]};
+            final int[] corner = {t[i], t[i + 1], t[i + 2]};
             for (int k = 0; k < 3; k++) {
                 faces[3 * (i + k)] = corner[k];
                 faces[3 * (i + k) + 1] = corner[k];
@@ -86,14 +99,13 @@ public record BoneView() implements StatelessFunctionalObject {
         return p.length == 0 ? new double[6] : b;
     }
 
-    /** Every point's normal, in the scene: its triangles' as they go round there, by their size, facing out. */
+    /** Every point's normal, in the scene: its triangles', {@code t} as they go round there, by size, facing out. */
     private float[] normals(final float[] p, final int[] t) {
         final float[] n = new float[p.length];
         for (int i = 0; i < t.length; i += 3) {
-            // as the scene has them, turned the other way round
             final int a = 3 * t[i];
-            final int b = 3 * t[i + 2];
-            final int c = 3 * t[i + 1];
+            final int b = 3 * t[i + 1];
+            final int c = 3 * t[i + 2];
             final float ux = p[b] - p[a];
             final float uy = p[b + 1] - p[a + 1];
             final float uz = p[b + 2] - p[a + 2];

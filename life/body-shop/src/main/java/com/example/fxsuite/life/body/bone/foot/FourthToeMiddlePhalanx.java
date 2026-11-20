@@ -4,6 +4,10 @@ import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Sketch;
 import com.example.fxsuite.life.body.bone.Bone;
 import com.example.fxsuite.life.body.bone.Region;
+import com.example.fxsuite.life.body.joint.Place;
+import com.example.fxsuite.life.body.joint.Point;
+
+import java.util.function.Supplier;
 
 /**
  * The middle phalanx of the fourth toe, in the toes' frame, from the joint they turn at.
@@ -11,6 +15,30 @@ import com.example.fxsuite.life.body.bone.Region;
 public record FourthToeMiddlePhalanx() implements Bone {
 
     public static final FourthToeMiddlePhalanx INSTANCE = new FourthToeMiddlePhalanx();
+
+    /** Where it meets its neighbours, as on the right, each a frame in the frame it is drawn in. */
+    public enum Points implements Point<FourthToeMiddlePhalanx> {
+        BASE("its base, on the bone before it", () -> FootContacts.INSTANCE.interphalangeal(Toe.FOURTH, 1)),
+        HEAD("its head, under the bone after it", () -> FootContacts.INSTANCE.interphalangeal(Toe.FOURTH, 2));
+
+        private final String said;
+        private final Supplier<Place> frame;
+
+        Points(final String said, final Supplier<Place> frame) {
+            this.said = said;
+            this.frame = frame;
+        }
+
+        @Override
+        public String said() {
+            return said;
+        }
+
+        @Override
+        public Place frame() {
+            return frame.get();
+        }
+    }
 
     @Override
     public String name() {

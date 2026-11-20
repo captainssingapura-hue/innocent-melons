@@ -3,6 +3,7 @@ package com.example.fxsuite.life.body.joint;
 import com.example.fxsuite.life.body.bone.Bone;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * A joint of one articulation, the joint the body has and the articulation both: two vertebrae on their disc, a hip. It
@@ -29,7 +30,7 @@ public interface Simple<A extends Bone, B extends Bone> extends Joint<A, B>, Com
     }
 
     @Override
-    default Drive drive(final Movement m) {
-        return new Drive(this, m);
+    default Map<Movement, Double> turns(final Joint<?, ?> joint, final Map<Movement, Double> moved) {
+        return joint == this ? moved : Map.of();
     }
 }

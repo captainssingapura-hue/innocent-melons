@@ -4,6 +4,10 @@ import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Sketch;
 import com.example.fxsuite.life.body.bone.Bone;
 import com.example.fxsuite.life.body.bone.Region;
+import com.example.fxsuite.life.body.joint.Place;
+import com.example.fxsuite.life.body.joint.Point;
+
+import java.util.function.Supplier;
 
 import static com.example.fxsuite.life.body.Sketch.v;
 
@@ -13,6 +17,36 @@ import static com.example.fxsuite.life.body.Sketch.v;
 public record Navicular() implements Bone {
 
     public static final Navicular INSTANCE = new Navicular();
+
+    /** Where it meets its neighbours, as on the right, each a frame in the frame it is drawn in. */
+    public enum Points implements Point<Navicular> {
+        TALUS("its back, on the talus's head",
+                () -> FootContacts.INSTANCE.between(FootContacts.TALUS_HEAD, FootContacts.NAVICULAR)),
+        MEDIAL("its front, on the medial cuneiform",
+                () -> FootContacts.INSTANCE.between(FootContacts.NAVICULAR, FootContacts.MEDIAL)),
+        INTERMEDIATE("its front, on the intermediate cuneiform",
+                () -> FootContacts.INSTANCE.between(FootContacts.NAVICULAR, FootContacts.INTERMEDIATE)),
+        LATERAL("its front, on the lateral cuneiform",
+                () -> FootContacts.INSTANCE.between(FootContacts.NAVICULAR, FootContacts.LATERAL));
+
+        private final String said;
+        private final Supplier<Place> frame;
+
+        Points(final String said, final Supplier<Place> frame) {
+            this.said = said;
+            this.frame = frame;
+        }
+
+        @Override
+        public String said() {
+            return said;
+        }
+
+        @Override
+        public Place frame() {
+            return frame.get();
+        }
+    }
 
     @Override
     public String name() {

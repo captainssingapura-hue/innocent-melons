@@ -4,6 +4,10 @@ import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Sketch;
 import com.example.fxsuite.life.body.bone.Bone;
 import com.example.fxsuite.life.body.bone.Region;
+import com.example.fxsuite.life.body.joint.Place;
+import com.example.fxsuite.life.body.joint.Point;
+
+import java.util.function.Supplier;
 
 import static com.example.fxsuite.life.body.Sketch.v;
 
@@ -13,6 +17,33 @@ import static com.example.fxsuite.life.body.Sketch.v;
 public record Cuboid() implements Bone {
 
     public static final Cuboid INSTANCE = new Cuboid();
+
+    /** Where it meets its neighbours, as on the right, each a frame in the frame it is drawn in. */
+    public enum Points implements Point<Cuboid> {
+        CALCANEUS("its back, on the heel bone", () -> FootContacts.INSTANCE.calcaneocuboid()),
+        LATERAL("its inner side, on the lateral cuneiform",
+                () -> FootContacts.INSTANCE.between(FootContacts.LATERAL, FootContacts.CUBOID)),
+        FOURTH("its front, under the fourth metatarsal", () -> FootContacts.INSTANCE.tarsometatarsal(Toe.FOURTH)),
+        FIFTH("its front, under the fifth metatarsal", () -> FootContacts.INSTANCE.tarsometatarsal(Toe.LITTLE));
+
+        private final String said;
+        private final Supplier<Place> frame;
+
+        Points(final String said, final Supplier<Place> frame) {
+            this.said = said;
+            this.frame = frame;
+        }
+
+        @Override
+        public String said() {
+            return said;
+        }
+
+        @Override
+        public Place frame() {
+            return frame.get();
+        }
+    }
 
     @Override
     public String name() {

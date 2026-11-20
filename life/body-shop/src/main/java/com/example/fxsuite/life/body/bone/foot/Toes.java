@@ -34,16 +34,9 @@ public record Toes() implements StatelessFunctionalObject {
 
     /** {@code toe}'s phalanx {@code q} (from its root), in the toes' frame: on from its metatarsal's head. */
     public void phalanx(final Sketch s, final Toe toe, final int q) {
-        final V3 head = toe.head().minus(JOINT);
-        double z = head.z() + toe.headR() + 0.12;
-        for (int k = 0; k < q; k++) {
-            z += toe.length(k) + 0.12;
-        }
-        final double len = toe.length(q);
-        // the toes droop a little toward their tips
-        final double y0 = head.y() + 0.05 - 0.12 * (z - head.z());
-        final V3 a = v(head.x() + 0.03 * z, y0, z);
-        final V3 b = v(head.x() + 0.03 * (z + len), y0 - 0.12 * len, z + len);
+        final V3[] ends = ends(toe, q);
+        final V3 a = ends[0];
+        final V3 b = ends[1];
         final double r = toe.phalanxR() * (1 - 0.15 * q);
         s.blend(0.4);
         s.egg(a.plus(v(0, 0, r * 0.5)), r * 1.1, r * 0.95, r * 0.6);
@@ -53,5 +46,22 @@ public record Toes() implements StatelessFunctionalObject {
         } else {
             s.egg(b.minus(v(0, 0, r * 0.4)), r * 0.9, r * 0.75, r * 0.5);
         }
+    }
+
+    /** Where {@code toe}'s phalanx {@code q} begins and ends, in the toes' frame, the toes drooping a little. */
+    public V3[] ends(final Toe toe, final int q) {
+        final V3 head = toe.head().minus(JOINT);
+        double z = head.z() + toe.headR() + 0.12;
+        for (int k = 0; k < q; k++) {
+            z += toe.length(k) + 0.12;
+        }
+        final double len = toe.length(q);
+        final double y0 = head.y() + 0.05 - 0.12 * (z - head.z());
+        return new V3[] {v(head.x() + 0.03 * z, y0, z), v(head.x() + 0.03 * (z + len), y0 - 0.12 * len, z + len)};
+    }
+
+    /** The joint between {@code toe}'s phalanges {@code q - 1} and {@code q}, in the toes' frame: midway. */
+    public V3 interphalangeal(final Toe toe, final int q) {
+        return ends(toe, q - 1)[1].plus(ends(toe, q)[0]).times(0.5);
     }
 }

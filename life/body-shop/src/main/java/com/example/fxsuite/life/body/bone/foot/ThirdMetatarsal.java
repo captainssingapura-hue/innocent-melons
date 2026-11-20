@@ -4,6 +4,10 @@ import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Sketch;
 import com.example.fxsuite.life.body.bone.Bone;
 import com.example.fxsuite.life.body.bone.Region;
+import com.example.fxsuite.life.body.joint.Place;
+import com.example.fxsuite.life.body.joint.Point;
+
+import java.util.function.Supplier;
 
 /**
  * The third metatarsal, in the foot's frame: from its base in the arch to its head the foot stands on.
@@ -11,6 +15,32 @@ import com.example.fxsuite.life.body.bone.Region;
 public record ThirdMetatarsal() implements Bone {
 
     public static final ThirdMetatarsal INSTANCE = new ThirdMetatarsal();
+
+    /** Where it meets its neighbours, as on the right, each a frame in the frame it is drawn in. */
+    public enum Points implements Point<ThirdMetatarsal> {
+        BASE("its base, on its tarsal", () -> FootContacts.INSTANCE.tarsometatarsal(Toe.THIRD)),
+        HEAD("its head, under its toe", () -> FootContacts.INSTANCE.metatarsophalangeal(Toe.THIRD)),
+        PREVIOUS("its base, beside the one in", () -> FootContacts.INSTANCE.intermetatarsal(Toe.SECOND)),
+        NEXT("its base, beside the one out", () -> FootContacts.INSTANCE.intermetatarsal(Toe.THIRD));
+
+        private final String said;
+        private final Supplier<Place> frame;
+
+        Points(final String said, final Supplier<Place> frame) {
+            this.said = said;
+            this.frame = frame;
+        }
+
+        @Override
+        public String said() {
+            return said;
+        }
+
+        @Override
+        public Place frame() {
+            return frame.get();
+        }
+    }
 
     @Override
     public String name() {

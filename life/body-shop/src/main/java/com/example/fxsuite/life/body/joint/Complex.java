@@ -3,11 +3,13 @@ package com.example.fxsuite.life.body.joint;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * A joint as the body has it, what moves as one: its articulations ({@link Joint}), each between two bones, and the
- * ways it moves, each driving a way one of them turns. A simple joint one articulation and its own ways ({@link
- * Simple}); a complex one, as the elbow, several.
+ * ways it moves; and, moved so far each way, how far each of its articulations turns: one as it is moved, another
+ * following it, as the kneecap rides with the knee. A simple joint is one articulation moving its own ways
+ * ({@link Simple}); a complex one, as the knee, several.
  */
 public interface Complex extends StatelessFunctionalObject {
 
@@ -23,10 +25,6 @@ public interface Complex extends StatelessFunctionalObject {
     /** How far it may move {@code m}. */
     Range range(Movement m);
 
-    /** Which of its articulations moving {@code m} turns, and which way: none, if it follows another. */
-    Drive drive(Movement m);
-
-    /** An articulation, and the way it turns. */
-    record Drive(Joint<?, ?> joint, Movement movement) {
-    }
+    /** How far its articulation {@code joint} turns each way, the joint moved {@code moved}. */
+    Map<Movement, Double> turns(Joint<?, ?> joint, Map<Movement, Double> moved);
 }

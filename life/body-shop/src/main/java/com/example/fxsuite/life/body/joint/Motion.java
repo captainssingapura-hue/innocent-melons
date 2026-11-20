@@ -8,9 +8,11 @@ import java.util.Map;
 
 /**
  * How a joint may move, by its kind, each way it turns within its range: not at all (a suture, a tooth in its socket);
- * one way, as a hinge or a pivot; or, as two vertebrae on the disc between them, a little every way.
+ * one way, as a hinge or a pivot; two ways, as a knuckle; or every way, a little, as two vertebrae on the disc between
+ * them, or far, as a hip in its socket.
  */
-public sealed interface Motion extends Scalar permits Motion.Fixed, Motion.Hinge, Motion.Pivot, Motion.Disc {
+public sealed interface Motion extends Scalar
+        permits Motion.Fixed, Motion.Hinge, Motion.Pivot, Motion.Condyloid, Motion.Disc, Motion.Ball {
 
     /** The ways it turns. */
     List<Movement> movements();
@@ -68,6 +70,38 @@ public sealed interface Motion extends Scalar permits Motion.Fixed, Motion.Hinge
         @Override
         public Range range(final Movement m) {
             return m == Movement.TWIST ? twist : Range.NONE;
+        }
+    }
+
+    /** Flexing and bending to the side, not twisting: as a toe on its metatarsal. */
+    record Condyloid(Range flexion, Range side) implements Motion {
+
+        @Override
+        public List<Movement> movements() {
+            return List.of(Movement.FLEXION, Movement.SIDE_BEND);
+        }
+
+        @Override
+        public Range range(final Movement m) {
+            return m == Movement.FLEXION ? flexion : m == Movement.SIDE_BEND ? side : Range.NONE;
+        }
+    }
+
+    /** Far every way, a ball in its socket: flexing, out to the side (abducting), turning about itself. */
+    record Ball(Range flexion, Range abduction, Range rotation) implements Motion {
+
+        @Override
+        public List<Movement> movements() {
+            return List.of(Movement.FLEXION, Movement.SIDE_BEND, Movement.TWIST);
+        }
+
+        @Override
+        public Range range(final Movement m) {
+            return switch (m) {
+                case FLEXION -> flexion;
+                case SIDE_BEND -> abduction;
+                case TWIST -> rotation;
+            };
         }
     }
 

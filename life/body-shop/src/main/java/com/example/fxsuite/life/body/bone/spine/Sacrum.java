@@ -7,6 +7,9 @@ import com.example.fxsuite.life.body.joint.Place;
 import com.example.fxsuite.life.body.joint.Point;
 import com.example.fxsuite.life.body.bone.Bone;
 import com.example.fxsuite.life.body.bone.Region;
+import com.example.fxsuite.life.body.bone.hip.PelvisContacts;
+
+import java.util.function.Supplier;
 
 import static com.example.fxsuite.life.body.Sketch.v;
 
@@ -44,15 +47,19 @@ public record Sacrum() implements Bone {
         return 0.15;
     }
 
-    /** Where it meets its neighbours: the fifth lumbar on the disc above it, the coccyx at its apex. */
+    /** Where it meets its neighbours: the fifth lumbar on the disc above it, the coccyx at its apex, each ilium. */
     public enum Points implements Point<Sacrum> {
-        ABOVE("on the disc under the fifth lumbar"),
-        BELOW("its apex, on the coccyx");
+        ABOVE("on the disc under the fifth lumbar",
+                () -> Discs.INSTANCE.inPart(Discs.INSTANCE.below(Level.L5), Part.PELVIS)),
+        BELOW("its apex, on the coccyx", () -> Discs.INSTANCE.inPart(Discs.INSTANCE.sacrococcygeal(), Part.PELVIS)),
+        ILIUM("its wing, on the ilium, as on the right", () -> PelvisContacts.INSTANCE.sacroiliac());
 
         private final String said;
+        private final Supplier<Place> frame;
 
-        Points(final String said) {
+        Points(final String said, final Supplier<Place> frame) {
             this.said = said;
+            this.frame = frame;
         }
 
         @Override
@@ -62,8 +69,7 @@ public record Sacrum() implements Bone {
 
         @Override
         public Place frame() {
-            final Discs d = Discs.INSTANCE;
-            return d.inPart(this == ABOVE ? d.below(Level.L5) : d.sacrococcygeal(), Part.PELVIS);
+            return frame.get();
         }
     }
 

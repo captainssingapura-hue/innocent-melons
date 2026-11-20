@@ -4,6 +4,10 @@ import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Sketch;
 import com.example.fxsuite.life.body.bone.Bone;
 import com.example.fxsuite.life.body.bone.Region;
+import com.example.fxsuite.life.body.joint.Place;
+import com.example.fxsuite.life.body.joint.Point;
+
+import java.util.function.Supplier;
 
 /**
  * The distal phalanx of the little toe, in the toes' frame, from the joint they turn at.
@@ -11,6 +15,29 @@ import com.example.fxsuite.life.body.bone.Region;
 public record LittleToeDistalPhalanx() implements Bone {
 
     public static final LittleToeDistalPhalanx INSTANCE = new LittleToeDistalPhalanx();
+
+    /** Where it meets its neighbours, as on the right, each a frame in the frame it is drawn in. */
+    public enum Points implements Point<LittleToeDistalPhalanx> {
+        BASE("its base, on the bone before it", () -> FootContacts.INSTANCE.interphalangeal(Toe.LITTLE, 2));
+
+        private final String said;
+        private final Supplier<Place> frame;
+
+        Points(final String said, final Supplier<Place> frame) {
+            this.said = said;
+            this.frame = frame;
+        }
+
+        @Override
+        public String said() {
+            return said;
+        }
+
+        @Override
+        public Place frame() {
+            return frame.get();
+        }
+    }
 
     @Override
     public String name() {
