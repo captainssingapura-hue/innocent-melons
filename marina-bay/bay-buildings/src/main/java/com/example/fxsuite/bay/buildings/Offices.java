@@ -96,6 +96,69 @@ final class Offices {
                 setbacks);
     }
 
+    /**
+     * As {@link #tower}, its core slim, for a floor too small or too narrow for the other: each zone's two banks
+     * facing each other along, across one lift lobby, the zones side by side across; one block of stairs, service
+     * lift and risers at its east end, up to the roof. So its core is as deep as one lobby and its banks, and no more.
+     */
+    static OfficeTower slim(final String name, final Mapped mapped, final List<Double> levels, final double height,
+                            final Map<Integer, String> said, final List<Zone> zones, final double across,
+                            final double along, final List<OfficeTower.Setback> setbacks) {
+        final int top = levels.size() - 1;
+        final List<String> uses = new ArrayList<>(List.of(OfficeTower.LOBBY));
+        for (int n = 2; n <= top; n++) {
+            uses.add(said.getOrDefault(n, OfficeTower.OFFICE));
+        }
+        final List<Placed> shapes = zones.stream().map(z -> new Placed(bank(levels, 1, 1, (z.cars() + 1) / 2, 400),
+                0, 0, 0)).toList();
+        final double depth = shapes.getFirst().depth();
+        double wide = Homes.SERVICE;
+        for (final Placed p : shapes) {
+            wide += p.length();
+        }
+        final List<Placed> banks = new ArrayList<>();
+        double west = across - wide / 2;
+        for (int k = 0; k < zones.size(); k++) {
+            final Zone z = zones.get(k);
+            final double middle = west + shapes.get(k).length() / 2;
+            final int from = Homes.storey(z.from());
+            final int to = Homes.storey(z.to());
+            final int one = (z.cars() + 1) / 2;
+            banks.add(new Placed(bank(levels, from, to, one, z.speed()), middle,
+                    along - Homes.LIFT_LOBBY / 2 - depth / 2, 0));
+            banks.add(new Placed(bank(levels, from, to, z.cars() - one, z.speed()), middle,
+                    along + Homes.LIFT_LOBBY / 2 + depth / 2, 180));
+            west += shapes.get(k).length();
+        }
+        final List<double[]> service = List.of(new double[] {west, west + Homes.SERVICE,
+            along - Homes.LIFT_LOBBY / 2 - depth, along + Homes.LIFT_LOBBY / 2 + depth});
+        return new OfficeTower(name, mapped.outline(), levels, uses, service, banks, height - levels.getLast(), 0,
+                setbacks);
+    }
+
+    /** What a hotel's floors of rooms are. */
+    static final String HOTEL = "hotel rooms";
+
+    /** The first storey of {@code levels} at or over {@code height}: where a tower steps in at that height. */
+    static int over(final List<Double> levels, final double height) {
+        int storey = 1;
+        while (levels.get(storey) < height) {
+            storey++;
+        }
+        return storey;
+    }
+
+    /** What each floor is, as {@code fromToUse} says it in threes: from a floor, to a floor, that use. */
+    static Map<Integer, String> uses(final Object... fromToUse) {
+        final Map<Integer, String> uses = new java.util.HashMap<>();
+        for (int k = 0; k < fromToUse.length; k += 3) {
+            for (int n = (Integer) fromToUse[k]; n <= (Integer) fromToUse[k + 1]; n++) {
+                uses.put(n, (String) fromToUse[k + 2]);
+            }
+        }
+        return uses;
+    }
+
     /** A bank of {@code cars} office cars, as the financial centre's are, serving the lobby and floors {@code from} on. */
     private static HighRiseBank bank(final List<Double> levels, final int from, final int to, final int cars,
                                      final double speed) {
