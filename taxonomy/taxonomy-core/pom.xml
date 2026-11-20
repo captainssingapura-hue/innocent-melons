@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.example.fxsuite</groupId>
+        <artifactId>fxsuite-taxonomy</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>fxsuite-taxonomy-core</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        How a taxonomy is written and read: a node a stateless record, its parent its type's argument and its level a
+        type; its meaning in markdown beside its tree; the tree read once from its leaves, everything wrong with it
+        found at once; a question of a node answered by its lineage.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>
