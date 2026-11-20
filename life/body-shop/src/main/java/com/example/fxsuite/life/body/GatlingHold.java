@@ -214,6 +214,12 @@ public final class GatlingHold {
         return p;
     }
 
+    /** Whether {@code piece} of the gun turns with its barrels: the barrels, the spindle and the clamps. */
+    public static boolean turns(final Surface piece) {
+        return piece.name().startsWith("barrel") || piece.name().startsWith("spindle")
+                || piece.name().startsWith("clamp");
+    }
+
     /**
      * The gun, in its own frame: its receiver, the motor on its back, a butt plate; six barrels round a spindle, held
      * by three clamps; the D handle on its right, the side handle out on its left, ahead; the ammunition box

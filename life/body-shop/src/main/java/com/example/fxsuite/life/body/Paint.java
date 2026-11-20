@@ -29,6 +29,7 @@ public enum Paint {
     GUN_FITTINGS("Gun fittings", "#4a4f57", Finish.METAL),
     AMMUNITION("Ammunition box", "#4b5320", Finish.MATTE),
     STRAP("Strap", "#3b2f25", Finish.MATTE),
+    FLASH("Muzzle flash", "#fff3b0", Finish.GLOW),
     MARK_MASS("Centre of mass", "#e24b4a", Finish.MATTE),
     MARK_SUPPORT("Support", "#ba7517", Finish.MATTE),
     MARK_FALLING("Falling", "#a32d2d", Finish.MATTE),

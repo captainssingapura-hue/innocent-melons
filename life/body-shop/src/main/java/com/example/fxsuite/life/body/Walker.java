@@ -74,14 +74,16 @@ public final class Walker {
      * something in both hands, if {@code holding}.
      */
     public void step(final double seconds, final double speed, final boolean holding) {
-        time += seconds;
+        time += Math.abs(seconds);
         final double f = speed < 1 ? 0 : cadence(speed);
-        c = (c + f * seconds) % 1;
+        // backward, if the seconds are: walking back, its stride run the other way
+        c += f * seconds;
+        c -= Math.floor(c);
         final Rig before = rig;
         final int was = down;
         rig = new Rig(proportions, Gait.at(c, speed, time, holding));
         down = down(c, speed);
-        if (down != 0 && down == was) {
+        if (down != 0 && down == was && seconds > 0) {
             ahead += carried(before, rig, down);
         } else {
             ahead += speed * seconds;

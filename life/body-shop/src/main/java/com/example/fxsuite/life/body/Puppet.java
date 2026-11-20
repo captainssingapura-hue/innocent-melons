@@ -113,6 +113,11 @@ public final class Puppet {
         }
     }
 
+    /** {@code v} as it is, for what is drawn in a frame of its own and put into the scene by a transform. */
+    public static Point3D point(final V3 v) {
+        return new Point3D(v.x(), v.y(), v.z());
+    }
+
     /** {@code surfaces}, in the body's frame where it stands, drawn into the scene's: what it carries, as it is now. */
     public Group drawn(final List<Surface> surfaces) {
         return FigureModel.meshes(surfaces, palette, v -> new Point3D(signs.x() * v.x(), signs.y() * v.y(), signs.z() * v.z()));
