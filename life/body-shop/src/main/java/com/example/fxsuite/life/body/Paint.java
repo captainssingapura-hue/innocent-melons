@@ -49,8 +49,6 @@ public enum Paint {
     public static final List<Paint> ROBOT = List.of(SHELL, PANEL, JOINT_RING, VISOR, FRAME, HOUSING, BARREL, ROD);
     /** The colours what it carries is drawn in: its gun and the strap it hangs from. */
     public static final List<Paint> GEAR = List.of(GUN, GUN_FITTINGS, AMMUNITION, STRAP);
-    /** The colours a monk is dressed in, and its skin. */
-    public static final List<Paint> MONK = List.of(SKIN, ROBE, KASAYA, TRIM, LEGGINGS, CLOTH_SHOES);
 
     private final String label;
     private final String colour;

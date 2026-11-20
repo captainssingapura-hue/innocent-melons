@@ -90,7 +90,11 @@ public final class Garment {
 
     /** The upper part of a robe on {@code proportions}, {@code ease} out from the body's contour, coloured {@code paint}. */
     public static Garment robe(final Proportions proportions, final double ease, final Paint paint) {
-        final Envelope env = new Envelope(proportions);
+        return robe(new Envelope(proportions), ease, paint);
+    }
+
+    /** The upper part of a robe on the body {@code env} outlines, {@code ease} out from its contour, coloured {@code paint}. */
+    public static Garment robe(final Envelope env, final double ease, final Paint paint) {
         final Rig rest = env.rest();
         final List<Piece> pieces = new ArrayList<>();
         pieces.add(body(env, rest, ease, paint));

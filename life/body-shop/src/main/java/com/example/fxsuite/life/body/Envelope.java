@@ -71,6 +71,23 @@ public final class Envelope {
         return far;
     }
 
+    /**
+     * How thick the skin of {@code parts} is round {@code at}, square to {@code along}: as far out as it reaches any
+     * way round, cm; nothing if it is not round it.
+     */
+    public double thickness(final V3 at, final V3 along, final Set<Part> parts) {
+        final V3 u = along.unit();
+        final V3 a = u.cross(Math.abs(u.z()) < 0.9 ? V3.Z : V3.X).unit();
+        final V3 b = a.cross(u).unit();
+        double most = 0;
+        for (int k = 0; k < 16; k++) {
+            final double phi = 2 * Math.PI * k / 16;
+            final double d = out(at, a.times(Math.cos(phi)).plus(b.times(Math.sin(phi))), parts, v -> true);
+            most = Math.max(most, d);
+        }
+        return most;
+    }
+
     /** Whether the line from {@code o} along {@code d} passes through the box from {@code lo} to {@code hi}. */
     private static boolean crosses(final V3 o, final V3 d, final V3 lo, final V3 hi) {
         double near = 0;

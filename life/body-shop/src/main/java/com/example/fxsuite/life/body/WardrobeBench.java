@@ -8,7 +8,9 @@ import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
@@ -21,70 +23,59 @@ import javafx.scene.paint.Color;
 import javafx.scene.transform.Translate;
 import javafx.stage.Stage;
 
-import java.util.ArrayList;
+import java.lang.reflect.RecordComponent;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
- * The wardrobe bench: people dressed, side by side, standing or walking on the spot over and over, to see their
- * clothes as they move: what is fitted moving with its part, what hangs clearing the legs. For now the temple's monks
- * ({@link Monk}). How loose their robes are, how high their hems and how far their skirts flare, on sliders; each
- * monk's colours on pickers. Slowed, or stopped at any point of the stride.
+ * The wardrobe bench: the one base character ({@link Person}), its body made as its proportions say, any clothes put
+ * on it ({@link Wear}) and seen as it stands or walks on the spot, over and over: what is close on a part moving with
+ * it, what is fitted bending over the joints, what hangs clearing the legs. Its body's numbers and its skin on sliders
+ * and a picker; an outfit to start from; each piece on or off, every number and colour of it on a slider, a tick or a
+ * picker. Slowed, or stopped at any point of the stride.
  *
- * <p>{@code -Dwardrobe.speed} (cm/s), {@code -Dwardrobe.at} (0 to 1, stopped there), {@code -Dwardrobe.yaw},
- * {@code -Dwardrobe.pitch}, {@code -Dwardrobe.distance} (m) what it shows first; {@code -Dbench.snapshot=out.png} saves
- * the window after {@code -Dbench.settle} ms and exits.
+ * <p>{@code -Dwardrobe.outfit} (an outfit's name), {@code -Dwardrobe.speed} (cm/s), {@code -Dwardrobe.at} (0 to 1,
+ * stopped there), {@code -Dwardrobe.yaw}, {@code -Dwardrobe.pitch}, {@code -Dwardrobe.distance} (m) what it shows
+ * first; {@code -Dbench.snapshot=out.png} saves the window after {@code -Dbench.settle} ms and exits.
  */
 public final class WardrobeBench extends Application {
 
-    /** How far apart they stand, cm; how far the grid repeats. */
-    private static final double APART = 75;
     private static final double REPEATS = 50;
     private static final double SOLE = 0.5;
+
+    /** Each number of a piece of clothing: what it is called, and how far it may go. */
+    private record Range(String label, double min, double max) {
+    }
+
+    private static final Map<String, Range> RANGES = Map.of(
+            "Robe.ease", new Range("How loose, cm", 0.5, 5),
+            "Robe.hem", new Range("Hem over the ground, cm", 2, 60),
+            "Robe.flare", new Range("Skirt flaring", 0, 1.5),
+            "Sash.wide", new Range("How wide, cm", 5, 30));
+
+    /** Each kind of piece, as it is first put on. */
+    private static final List<Wear> PIECES = List.of(new Wear.Robe("#8a5a2b", "#2a2420", 1.5, 11, 0.35, true),
+            new Wear.Sash("#7a2a1c", 13), new Wear.Leggings("#e8e4da"), new Wear.Shoes("#262321"));
 
     private final Bus bus = new Bus();
     private final Shell shell = new Shell("Innocent Melons: the wardrobe", bus);
     private final ModelView view = new ModelView();
 
-    /** One dressed: who, drawn how, walking how, and what hangs off them. */
-    private final class Dressed {
-        Monk monk;
-        Puppet puppet;
-        final Walker walker;
-        final Group shown = new Group();
-        final Group hanging = new Group();
-        final Translate lifted = new Translate();
+    private Person person = Person.BASE;
+    private Dressed dressed;
+    private Puppet puppet;
+    private Walker walker;
+    private final Group shown = new Group();
+    private final Group hanging = new Group();
+    private final Translate lifted = new Translate();
 
-        Dressed(final Monk monk, final double x) {
-            this.monk = monk;
-            walker = new Walker(monk.proportions());
-            shown.getTransforms().addAll(new Translate(x, 0, 0), lifted);
-            dress();
-        }
-
-        void dress() {
-            puppet = new Puppet(monk::drawn, monk.proportions(), monk.palette(), new V3(-1, -1, -1));
-            shown.getChildren().setAll(puppet.node(), hanging);
-            draw();
-        }
-
-        void draw() {
-            final Rig rig = walker.rig();
-            puppet.show(rig);
-            hanging.getChildren().setAll(puppet.drawn(monk.hanging(rig)));
-            lifted.setY(-(walker.flying(speed.getValue()) + SOLE));
-        }
-    }
-
-    private final List<Dressed> people = new ArrayList<>();
     private final Slider speed = new Slider(0, 250, 90);
     private final Slider slow = new Slider(0.05, 1, 1);
     private final Slider at = new Slider(0, 1, 0);
-    private final Slider ease = new Slider(0.5, 5, 1.5);
-    private final Slider hem = new Slider(3, 40, 11);
-    private final Slider flare = new Slider(0, 1.5, 0.35);
-    private final ChoiceBox<String> whose = new ChoiceBox<>();
-    private final VBox colours = new VBox(4);
+    private final Slider[] shape = new Slider[6];
+    private final ChoiceBox<Outfit> outfits = new ChoiceBox<>();
+    private final VBox pieces = new VBox(8);
     private final Button play = new Button("Pause");
     private boolean playing = true;
     private boolean setting;
@@ -94,22 +85,14 @@ public final class WardrobeBench extends Application {
 
     @Override
     public void start(final Stage stage) {
-        final List<Monk> monks = Monk.TEMPLE;
-        for (int k = 0; k < monks.size(); k++) {
-            people.add(new Dressed(monks.get(k), (k - (monks.size() - 1) / 2.0) * APART));
+        final String asked = System.getProperty("wardrobe.outfit");
+        if (asked != null) {
+            Outfit.ALL.stream().filter(o -> o.name().equalsIgnoreCase(asked)).findFirst()
+                    .ifPresent(o -> person = person.with(o));
         }
         speed.setValue(Double.parseDouble(System.getProperty("wardrobe.speed", "90")));
-        for (final Slider s : List.of(speed, slow, at, ease, hem, flare)) {
+        for (final Slider s : List.of(speed, slow, at)) {
             s.setPrefWidth(200);
-        }
-        ease.valueChangingProperty().addListener((o, was, is) -> {
-            if (!is) {
-                refit();
-            }
-        });
-        ease.setOnMouseReleased(e -> refit());
-        for (final Slider s : List.of(hem, flare)) {
-            s.valueProperty().addListener((o, was, is) -> refit(false));
         }
         at.valueProperty().addListener((o, was, is) -> {
             if (!setting) {
@@ -124,40 +107,81 @@ public final class WardrobeBench extends Application {
             b.setOnAction(e -> speed.setValue((Double) p[1]));
             paces.getChildren().add(b);
         }
-        final GridPane knobs = new GridPane();
-        knobs.setHgap(8);
-        knobs.setVgap(6);
+        final GridPane motion = new GridPane();
+        motion.setHgap(8);
+        motion.setVgap(6);
         int row = 0;
         for (final Object[] k : new Object[][] {{"Speed, cm/s", speed}, {"Time, share of real", slow},
-            {"Point of the stride", at}, {"Robe, how loose, cm", ease}, {"Hem over the ground, cm", hem},
-            {"Skirt flaring", flare}}) {
-            knobs.add(new Label((String) k[0]), 0, row);
-            knobs.add((Slider) k[1], 1, row++);
+            {"Point of the stride", at}}) {
+            motion.add(new Label((String) k[0]), 0, row);
+            motion.add((Slider) k[1], 1, row++);
         }
-        whose.getItems().setAll(monks.stream().map(Monk::name).toList());
-        whose.setValue(monks.getFirst().name());
-        whose.valueProperty().addListener((o, was, is) -> showColours());
-        final Label hint = new Label("Fitted cloth moves with its part; the skirt hangs level and clears the legs as"
-                + " they swing. Drag to turn the view, right-drag to move it, scroll to come nearer.");
+
+        // the body: the same numbers the body bench has, applied as a slider is let go
+        final GridPane body = new GridPane();
+        body.setHgap(8);
+        body.setVgap(4);
+        final String[] names = {"Stature, cm", "Build", "Hip joints up", "Arms long", "Shoulders apart", "Hips apart"};
+        final double[][] ranges = {{140, 210}, {0.7, 1.6}, {0.45, 0.62}, {0.36, 0.52}, {0.17, 0.27}, {0.07, 0.14}};
+        final Proportions p0 = person.body();
+        final double[] now = {p0.stature(), p0.build(), p0.legs(), p0.arms(), p0.shoulders(), p0.hips()};
+        for (int k = 0; k < 6; k++) {
+            shape[k] = new Slider(ranges[k][0], ranges[k][1], now[k]);
+            shape[k].setPrefWidth(180);
+            final Label value = new Label(String.format(Locale.ROOT, "%.2f", now[k]));
+            final Slider s = shape[k];
+            s.valueProperty().addListener((o, was, is) -> value.setText(String.format(Locale.ROOT, "%.2f", is)));
+            s.setOnMouseReleased(e -> reshape());
+            body.add(new Label(names[k]), 0, k);
+            body.add(s, 1, k);
+            body.add(value, 2, k);
+        }
+        final ColorPicker skin = new ColorPicker(Color.web(person.skin()));
+        skin.setOnAction(e -> {
+            person = person.withSkin(hex(skin.getValue()));
+            dress();
+        });
+        body.add(new Label("Skin"), 0, 6);
+        body.add(skin, 1, 6);
+        final Button papers = new Button("The papers' body");
+        papers.setOnAction(e -> {
+            final Proportions p = Proportions.PAPERS;
+            final double[] v = {p.stature(), p.build(), p.legs(), p.arms(), p.shoulders(), p.hips()};
+            for (int k = 0; k < 6; k++) {
+                shape[k].setValue(v[k]);
+            }
+            reshape();
+        });
+
+        outfits.getItems().setAll(Outfit.ALL);
+        outfits.setValue(Outfit.ALL.stream().filter(o -> o.name().equals(person.outfit().name())).findFirst()
+                .orElse(Outfit.BARE));
+        outfits.valueProperty().addListener((o, was, is) -> {
+            person = person.with(is);
+            showPieces();
+            dress();
+        });
+        final Label hint = new Label("Any piece on any body: each is made to the body it is put on. Drag to turn the"
+                + " view, right-drag to move it, scroll to come nearer.");
         hint.setWrapText(true);
-        final VBox side = new VBox(10, new Label("How fast"), paces, knobs, new FlowPane(10, 6, play),
-                new Label("Colours of"), whose, colours, hint);
+        final VBox side = new VBox(10, new Label("How fast"), paces, motion, new FlowPane(10, 6, play),
+                new Label("The body"), body, papers, new Label("Wearing, to start from"), outfits, pieces, hint);
         side.setPadding(new Insets(8));
         final ScrollPane scroll = new ScrollPane(side);
         scroll.setFitToWidth(true);
         shell.bar(List.of());
-        shell.side(new Label("The wardrobe"), scroll, 400);
+        shell.side(new Label("The wardrobe"), scroll, 440);
         shell.middle(view.node());
         view.grid(0, 0, 0, 1_200, 10, 5);
         view.zoom(60, 2_500);
         view.lookAt(0, 95, 0);
         view.from("wardrobe", Double.parseDouble(System.getProperty("wardrobe.yaw", "25")),
                 Double.parseDouble(System.getProperty("wardrobe.pitch", "6")),
-                Double.parseDouble(System.getProperty("wardrobe.distance", "5")));
-        final Group all = new Group();
-        people.forEach(d -> all.getChildren().add(d.shown));
-        view.show(ModelView.Model.moving(all));
-        showColours();
+                Double.parseDouble(System.getProperty("wardrobe.distance", "3.5")));
+        shown.getTransforms().add(lifted);
+        view.show(ModelView.Model.moving(shown));
+        showPieces();
+        reshape();
         final String stopped = System.getProperty("wardrobe.at");
         if (stopped != null) {
             setting = true;
@@ -175,78 +199,164 @@ public final class WardrobeBench extends Application {
         shell.show(stage, 1440, 920);
     }
 
+    /** Its body made afresh as the sliders say; dressed afresh. */
+    private void reshape() {
+        try {
+            person = person.with(new Proportions(shape[0].getValue(), shape[1].getValue(), shape[2].getValue(),
+                    shape[3].getValue(), shape[4].getValue(), shape[5].getValue()));
+        } catch (final IllegalArgumentException e) {
+            bus.publish(new Bus.Problems(e.getMessage()));
+            return;
+        }
+        walker = new Walker(person.body());
+        dress();
+    }
+
+    /** Dressed afresh as it is. */
+    private void dress() {
+        dressed = new Dressed(person);
+        puppet = new Puppet(dressed::drawn, person.body(), dressed.palette(), new V3(-1, -1, -1));
+        shown.getChildren().setAll(puppet.node(), hanging);
+        draw();
+    }
+
+    private void draw() {
+        if (walker == null) {
+            return;
+        }
+        final Rig rig = walker.rig();
+        puppet.show(rig);
+        hanging.getChildren().setAll(puppet.drawn(dressed.hanging(rig)));
+        lifted.setY(-(walker.flying(speed.getValue()) + SOLE));
+    }
+
     private void playing(final boolean on) {
         playing = on;
         play.setText(on ? "Pause" : "Play");
         last = -1;
     }
 
-    /** Each robe made afresh as loose as asked; if {@code fitted}, what is fitted too, else what hangs only. */
-    private void refit(final boolean fitted) {
-        for (final Dressed d : people) {
-            d.monk = d.monk.with(ease.getValue(), hem.getValue(), flare.getValue());
-            if (fitted) {
-                d.dress();
-            } else {
-                d.draw();
-            }
-        }
-    }
-
-    private void refit() {
-        refit(true);
-    }
-
     private void still() {
-        for (final Dressed d : people) {
-            d.walker.at(at.getValue(), speed.getValue(), false);
-            d.draw();
-        }
+        walker.at(at.getValue(), speed.getValue(), false);
+        draw();
     }
 
-    private void frame(final long now) {
-        if (last >= 0 && playing) {
-            final double real = Math.min(0.05, (now - last) / 1e9);
+    private void frame(final long t) {
+        if (last >= 0 && playing && walker != null) {
+            final double real = Math.min(0.05, (t - last) / 1e9);
             fps = fps == 0 ? 1 / Math.max(real, 1e-3) : fps * 0.95 + 0.05 / Math.max(real, 1e-3);
-            final double seconds = real * slow.getValue();
-            for (final Dressed d : people) {
-                d.walker.step(seconds, speed.getValue(), false);
-                d.draw();
-            }
+            walker.step(real * slow.getValue(), speed.getValue(), false);
+            draw();
             setting = true;
-            at.setValue(people.get(1).walker.cycle());
+            at.setValue(walker.cycle());
             setting = false;
-            view.groundAt(0, people.get(1).walker.ahead() % REPEATS);
+            view.groundAt(0, walker.ahead() % REPEATS);
         }
-        last = now;
+        last = t;
         if (++frames % 15 == 0) {
-            bus.publish(new Bus.Figures(String.format(Locale.ROOT, "%s%n%.2f m/s%n%.0f frames a second",
-                    String.join(", ", people.stream().map(d -> String.format(Locale.ROOT, "%s %.2f m",
-                            d.monk.name().toLowerCase(Locale.ROOT), d.monk.proportions().stature() / 100)).toList()),
-                    speed.getValue() / 100, fps)));
+            bus.publish(new Bus.Figures(String.format(Locale.ROOT, "%s, wearing %s%n%s%n%.2f m/s%n%.0f frames a second",
+                    person.name(), person.outfit().wear().isEmpty() ? "nothing"
+                            : String.join(", ", person.outfit().wear().stream().map(Wear::name).toList())
+                                    .toLowerCase(Locale.ROOT),
+                    person.body().said(), speed.getValue() / 100, fps)));
         }
     }
 
-    /** A picker for each of the chosen monk's colours. */
-    private void showColours() {
-        colours.getChildren().clear();
-        final Dressed d = people.stream().filter(p -> p.monk.name().equals(whose.getValue())).findFirst()
-                .orElse(people.getFirst());
+    /** Each kind of piece: a tick to put it on or take it off; on, every number and colour of it to change. */
+    private void showPieces() {
+        pieces.getChildren().clear();
+        for (final Wear kind : PIECES) {
+            final Class<? extends Wear> type = kind.getClass();
+            final Wear on = person.outfit().piece(type).orElse(null);
+            final CheckBox wearing = new CheckBox(kind.name());
+            wearing.setSelected(on != null);
+            wearing.selectedProperty().addListener((o, was, is) -> {
+                person = person.with(person.outfit().with(type, kind, is));
+                showPieces();
+                dress();
+            });
+            pieces.getChildren().add(wearing);
+            if (on != null) {
+                pieces.getChildren().add(knobs(on));
+            }
+        }
+    }
+
+    /** A slider, tick or picker for every number, yes-or-no and colour of {@code piece}, each changing it alone. */
+    private Node knobs(final Wear piece) {
         final GridPane grid = new GridPane();
         grid.setHgap(8);
         grid.setVgap(4);
+        grid.setPadding(new Insets(0, 0, 0, 20));
         int row = 0;
-        for (final Paint p : Paint.MONK) {
-            final ColorPicker picker = new ColorPicker(Color.web(d.monk.palette().colour(p)));
-            picker.setOnAction(e -> {
-                final Color c = picker.getValue();
-                d.monk = d.monk.with(d.monk.palette().with(p, String.format(Locale.ROOT, "#%02x%02x%02x",
-                        Math.round(c.getRed() * 255), Math.round(c.getGreen() * 255), Math.round(c.getBlue() * 255))));
-                d.dress();
-            });
-            grid.add(new Label(p.label()), 0, row);
-            grid.add(picker, 1, row++);
+        for (final RecordComponent c : piece.getClass().getRecordComponents()) {
+            final Object now = get(piece, c);
+            final String label = label(piece, c);
+            if (c.getType() == String.class) {
+                final ColorPicker picker = new ColorPicker(Color.web((String) now));
+                picker.setOnAction(e -> set(piece, c, hex(picker.getValue())));
+                grid.add(new Label(label), 0, row);
+                grid.add(picker, 1, row++);
+            } else if (c.getType() == boolean.class) {
+                final CheckBox tick = new CheckBox(label);
+                tick.setSelected((Boolean) now);
+                tick.selectedProperty().addListener((o, was, is) -> set(piece, c, is));
+                grid.add(tick, 0, row++, 2, 1);
+            } else {
+                final Range r = RANGES.getOrDefault(piece.getClass().getSimpleName() + "." + c.getName(),
+                        new Range(label, 0, 2 * ((Number) now).doubleValue() + 1));
+                final Slider s = new Slider(r.min(), r.max(), ((Number) now).doubleValue());
+                s.setPrefWidth(180);
+                s.setOnMouseReleased(e -> set(piece, c, s.getValue()));
+                grid.add(new Label(r.label()), 0, row);
+                grid.add(s, 1, row++);
+            }
         }
-        colours.getChildren().add(grid);
+        return grid;
+    }
+
+    private static String label(final Wear piece, final RecordComponent c) {
+        final Range r = RANGES.get(piece.getClass().getSimpleName() + "." + c.getName());
+        if (r != null) {
+            return r.label();
+        }
+        return switch (c.getName()) {
+            case "colour" -> "Colour";
+            case "trim" -> "Collar and cuffs";
+            case "wideSleeves" -> "Wide sleeves";
+            default -> c.getName();
+        };
+    }
+
+    private static Object get(final Object r, final RecordComponent c) {
+        try {
+            return c.getAccessor().invoke(r);
+        } catch (final ReflectiveOperationException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /** {@code piece} with {@code c} set to {@code v}, all else as it was, worn in its place. */
+    private void set(final Wear piece, final RecordComponent c, final Object v) {
+        final RecordComponent[] all = piece.getClass().getRecordComponents();
+        final Object[] args = new Object[all.length];
+        final Class<?>[] types = new Class<?>[all.length];
+        for (int k = 0; k < all.length; k++) {
+            args[k] = all[k].getName().equals(c.getName()) ? v : get(piece, all[k]);
+            types[k] = all[k].getType();
+        }
+        try {
+            final Wear next = (Wear) piece.getClass().getDeclaredConstructor(types).newInstance(args);
+            person = person.with(person.outfit().with(piece.getClass(), next, true));
+        } catch (final ReflectiveOperationException e) {
+            return;
+        }
+        showPieces();
+        dress();
+    }
+
+    private static String hex(final Color c) {
+        return String.format(Locale.ROOT, "#%02x%02x%02x", Math.round(c.getRed() * 255), Math.round(c.getGreen() * 255),
+                Math.round(c.getBlue() * 255));
     }
 }
