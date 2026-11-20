@@ -12,6 +12,7 @@ import com.example.fxsuite.avatar.bench.kit.Shell;
 import com.example.fxsuite.avatar.bench.kit.Workshop;
 import com.example.fxsuite.avatar.build.Solid;
 import com.example.fxsuite.avatar.lifts.Built;
+import com.example.fxsuite.avatar.lifts.SceneWorld;
 import com.example.fxsuite.avatar.sim.Place;
 
 import javafx.application.Application;
@@ -37,9 +38,10 @@ import java.util.Locale;
  * The bay's buildings bench: one of the bay's office towers ({@link Mbfc#standing}, {@link Orq#standing},
  * {@link AsiaSquare#standing}) at a time, where it stands in the bay, turned as it is, as it is built: still, a model to
  * look at from before its front, its lifts standing shut as they are when played; cut away over any of its storeys to
- * be looked into, its glass shown or not, the others shown round it or not; its figures read out. Played, the whole bay
- * laid with every tower standing in it ({@link BayWorld}), the avatar starting before the way in of the one shown: what
- * moves is seen there, not here. Put together of the bench kit's parts, as the tower bench is.
+ * be looked into, its glass shown or not, the others shown round it or not; its figures read out. Played, the one shown
+ * alone, whole, a world made of it on the fly ({@link SceneWorld}) as the tower bench plays its own: on level ground,
+ * its lifts at work, its glass to be broken, the avatar starting before its way in; what moves is seen there, not here.
+ * Put together of the bench kit's parts, as the tower bench is.
  *
  * <p>{@code -Dbay.tower=3} which tower is shown (1, the first, if none); {@code -Dbay.upto=12} the storey it is cut away
  * over (0 the lobby; none, all of it); {@code -Dbay.glass=false} its glass left off; {@code -Dbay.others=true} the
@@ -58,22 +60,23 @@ public final class BayBench extends Application {
     private final CheckBox others = new CheckBox("The others round it");
     private final List<Standing> towers = java.util.stream.Stream.of(Mbfc.standing(), Orq.standing(),
             AsiaSquare.standing()).flatMap(List::stream).toList();
-    private List<Built> built;
-    private final Player player = new Player(this::world, List.of());
+    /** The tower shown, built whole, to be played; none until it is built. */
+    private Built played;
+    private final Player player = new Player(() -> played == null ? null : new SceneWorld(played), List.of());
     private boolean playWhenShown = Boolean.getBoolean("bench.play");
     /** Which tower the view was last framed on, so it is framed afresh only when another is shown. */
     private int framedOn = -1;
-    /** Each tower built whole, once, for the bay played; on the workshop's worker only. */
-    private List<Built> whole;
-    /** Each tower whole drawn where it stands, made when first wanted; on the workshop's worker only. */
-    private ModelView.Model[] drawnWhole;
+    /** Each tower built whole, the first time it is wanted; on the workshop's worker only. */
+    private final Built[] whole = new Built[towers.size()];
+    /** Each tower whole drawn where it stands, the first time it is wanted; on the workshop's worker only. */
+    private final ModelView.Model[] drawnWhole = new ModelView.Model[towers.size()];
 
     /** What is asked: which tower, the storey it is cut away over, whether its glass is shown, whether the others are. */
     private record Asked(int tower, int upTo, boolean glass, boolean others) {
     }
 
-    /** What the workshop made: each tower as built, whole, to play; what is drawn of what was asked; it as built so. */
-    private record Made(List<Built> built, List<ModelView.Model> models, Asked asked, Built shown) {
+    /** What the workshop made: the tower shown built whole, to play; what is drawn of what was asked; it as built so. */
+    private record Made(Built played, List<ModelView.Model> models, Asked asked, Built shown) {
     }
 
     private final Workshop<Asked, Made> workshop = new Workshop<>("bay", bus, Asked.class, this::make);
@@ -108,7 +111,7 @@ public final class BayBench extends Application {
         grid.add(others, 1, 3);
         final VBox looking = new VBox(10, grid);
         looking.setPadding(new Insets(8));
-        final VBox playing = new VBox(10, new Label("Played, the bay starting before the tower shown"),
+        final VBox playing = new VBox(10, new Label("Played, the tower shown alone, whole, on level ground"),
                 player.panel());
         playing.setPadding(new Insets(8));
         final TabPane tabs = new TabPane(new Tab("Look", looking), new Tab("Play", playing));
@@ -144,24 +147,15 @@ public final class BayBench extends Application {
         bus.publish(new Asked(tower(), storey == null ? 0 : storey, glass.isSelected(), others.isSelected()));
     }
 
-    /** The bay with every tower, to play, starting before the one shown; none until they are built. */
-    private BayWorld world() {
-        return built == null ? null : new BayWorld(towers, built, tower());
-    }
-
     /**
-     * On the workshop's worker: every tower built whole, once, for the bay played; the one asked for built as asked,
-     * drawn where it stands; the others round it drawn whole if asked, each the first time it is.
+     * On the workshop's worker: the one asked for built whole, to play, and as asked, drawn where it stands; the others
+     * round it drawn whole if asked. Each tower built whole and drawn the first time it is wanted, and kept.
      */
     private Made make(final Asked a) {
-        if (whole == null) {
-            whole = towers.stream().map(Standing::built).toList();
-            drawnWhole = new ModelView.Model[towers.size()];
-        }
         final Standing t = towers.get(a.tower());
         final OfficeTower tower = t.tower();
         final boolean all = a.upTo() >= tower.storeys() - 1 && a.glass();
-        final Built b = all ? whole.get(a.tower()) : tower.built(a.upTo(), a.glass());
+        final Built b = all ? whole(a.tower()) : tower.built(a.upTo(), a.glass());
         final List<ModelView.Model> drawn = new ArrayList<>();
         drawn.add(all ? drawnWhole(a.tower()) : ModelView.Model.of(t.placed(still(tower, b, a.upTo()))));
         if (a.others()) {
@@ -171,14 +165,22 @@ public final class BayBench extends Application {
                 }
             }
         }
-        return new Made(whole, drawn, a, b);
+        return new Made(whole(a.tower()), drawn, a, b);
+    }
+
+    /** Tower {@code k} built whole, its glass to break: built the first time it is wanted. */
+    private Built whole(final int k) {
+        if (whole[k] == null) {
+            whole[k] = towers.get(k).built();
+        }
+        return whole[k];
     }
 
     /** Tower {@code k} whole, drawn where it stands, its landings' doors shut: made the first time it is wanted. */
     private ModelView.Model drawnWhole(final int k) {
         if (drawnWhole[k] == null) {
             final Standing t = towers.get(k);
-            drawnWhole[k] = ModelView.Model.of(t.placed(still(t.tower(), whole.get(k), t.tower().storeys())));
+            drawnWhole[k] = ModelView.Model.of(t.placed(still(t.tower(), whole(k), t.tower().storeys())));
         }
         return drawnWhole[k];
     }
@@ -200,7 +202,7 @@ public final class BayBench extends Application {
      * ground at its foot, when another tower is shown; played if asked.
      */
     private void show(final Made m) {
-        built = m.built();
+        played = m.played();
         view.show(m.models());
         final int k = m.asked().tower();
         bus.publish(new Bus.Figures(figures(k, m.shown())));
