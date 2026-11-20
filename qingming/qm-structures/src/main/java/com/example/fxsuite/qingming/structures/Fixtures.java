@@ -3,7 +3,9 @@ package com.example.fxsuite.qingming.structures;
 import com.example.fxsuite.avatar.sim.Course;
 import com.example.fxsuite.building.Atlas;
 import com.example.fxsuite.building.chinese.FestiveGate;
+import com.example.fxsuite.building.chinese.SongCityWall;
 import com.example.fxsuite.building.chinese.SongFestiveGate;
+import com.example.fxsuite.building.chinese.SongGateTower;
 import com.example.fxsuite.building.chinese.SongShopHouse;
 import com.example.fxsuite.building.chinese.SongStall;
 import com.example.fxsuite.building.chinese.SongTeaHouse;
@@ -11,6 +13,8 @@ import com.example.fxsuite.building.chinese.SongWarehouse;
 import com.example.fxsuite.building.chinese.SongWineHouse;
 import com.example.fxsuite.building.chinese.SongWovenArch;
 import com.example.fxsuite.building.chinese.WovenArch;
+import com.example.fxsuite.building.spec.CityWallSpec;
+import com.example.fxsuite.building.spec.GateTowerSpec;
 import com.example.fxsuite.building.spec.HallSpec;
 import com.example.fxsuite.building.spec.Roofing;
 import com.example.fxsuite.building.spec.ShopHouseSpec;
@@ -42,6 +46,10 @@ import java.util.List;
  * bank east of the bridge, facing the towpath and the river.
  * <li><b>Stalls</b>, under awnings and umbrellas: two at each end of the bridge beside the road, three along the
  * street before the shops begin.
+ * <li><b>The city gate</b> (城门) where the street meets the wall, its outer face east, toward the bridge: its base
+ * 30 m along the wall and 9.6 m high, its passage 5.6 m wide and 19.3 m through, as the Song gate dug up at Kaifeng
+ * (景龙门) is reported to measure; a tower of five bays on it. <b>The wall</b> (城墙) either side of it to the reach's
+ * edges, 9 m high: an estimate, the scroll's being a little lower than its gate's base.
  * </ul>
  */
 public final class Fixtures {
@@ -60,6 +68,11 @@ public final class Fixtures {
     /** The wine house's middle, so far east; a road's half width and a stall's room beside it. */
     static final double WINE_HOUSE = -9_500;
     static final double ROADSIDE = 400 + 60;
+    /** The gate, as dug up; the wall so high; its ends so far short of the reach's edges. */
+    static final GateTowerSpec<Chinese, ChineseEras.NorthernSong> GATE = new GateTowerSpec<>(3_000, 1_930, 960, 560,
+            5);
+    static final double RAMPART = 900;
+    static final double SHORT = 200;
 
     /** The shops of the north row, east to west: bays, a bay's width, depth, roofing. */
     private static final List<ShopHouseSpec<Chinese, ChineseEras.NorthernSong>> NORTH = List.of(
@@ -116,6 +129,15 @@ public final class Fixtures {
                 .at("stall street 1", -8_600, STREET - ROADSIDE - 180, 0, umbrella)
                 .at("stall street 2", -9_000, STREET - ROADSIDE - 180, 0, awning)
                 .at("stall street 3", -9_400, STREET - ROADSIDE - 180, 0, umbrella);
+        // the gate where the street meets the wall, its outer face east; the wall north and south of it, each run so
+        // that its outer face is east too
+        final double gate = Reach.GATE.z();
+        reach.with(new SongGateTower()).at("the city gate", Reach.WALL, gate, 90, GATE);
+        reach.with(new SongCityWall())
+                .between("the wall north of the gate", Reach.WALL, Reach.NORTH - SHORT, Reach.WALL,
+                        gate + GATE.wide() / 2, length -> new CityWallSpec<>(length, RAMPART))
+                .between("the wall south of the gate", Reach.WALL, gate - GATE.wide() / 2, Reach.WALL,
+                        Reach.SOUTH + SHORT, length -> new CityWallSpec<>(length, RAMPART));
         return reach;
     }
 

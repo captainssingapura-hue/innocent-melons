@@ -15,7 +15,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * What stands in the reach: nothing wrong with its map; the Rainbow Bridge at its origin, landing on the street both
  * ways; fourteen shops along the street, each facing it and clear of it; the wine house and its gateway, two tea
- * houses, two warehouses, seven stalls; none of them in another, none in the river; each a piece of the world.
+ * houses, two warehouses, seven stalls; the gate where the street meets the wall, facing the bridge, the street level
+ * through it, the wall either side of it from its base to the reach's edges; none of them in another, none in the
+ * river; each a piece of the world.
  */
 class FixturesTest {
 
@@ -87,6 +89,32 @@ class FixturesTest {
     }
 
     @Test
+    void theGateWhereTheStreetMeetsTheWallTheWallEitherSideOfIt() {
+        final Atlas.Fixture gate = ALL.stream().filter(f -> f.thing().equals(new Buildings.GateTower())).findFirst()
+                .orElseThrow();
+        assertEquals(Reach.GATE, new Vec2(gate.x(), gate.z()));
+        assertEquals(90, gate.yaw(), "its outer face east, toward the bridge");
+        // the street through its passage: level, and no more than a step from the ground the gate stands on
+        for (double x = Reach.WALL - 1_500; x <= Reach.WALL + 1_500; x += 100) {
+            for (final double z : new double[] {-200, 0, 200}) {
+                assertEquals(0, Reach.land().height(x, gate.z() + z), 20, "the street at " + x + ", " + z);
+            }
+        }
+        final List<Atlas.Fixture> wall = ALL.stream().filter(f -> f.thing().equals(new Buildings.CityWall())).toList();
+        assertEquals(2, wall.size());
+        final double[] north = reach(wall.get(0));
+        final double[] south = reach(wall.get(1));
+        assertEquals(gate.z() + Fixtures.GATE.wide() / 2, north[2], 1e-6, "from the gate's base");
+        assertEquals(Reach.NORTH - Fixtures.SHORT, north[3], 1e-6, "to the reach's edge");
+        assertEquals(gate.z() - Fixtures.GATE.wide() / 2, south[3], 1e-6);
+        assertEquals(Reach.SOUTH + Fixtures.SHORT, south[2], 1e-6);
+        for (final double[] box : List.of(north, south)) {
+            assertEquals(Reach.WALL, (box[0] + box[1]) / 2, 1e-6, "on the wall's line");
+            assertEquals(Fixtures.RAMPART, box[1] - box[0], 1e-6, "its top as wide as it is high");
+        }
+    }
+
+    @Test
     void noneOfThemInAnotherNoneInTheRiver() {
         for (int i = 0; i < ALL.size(); i++) {
             final double[] a = reach(ALL.get(i));
@@ -110,6 +138,6 @@ class FixturesTest {
 
     @Test
     void eachAPieceOfTheWorld() {
-        assertEquals(28, Fixtures.pieces().size());
+        assertEquals(31, Fixtures.pieces().size());
     }
 }

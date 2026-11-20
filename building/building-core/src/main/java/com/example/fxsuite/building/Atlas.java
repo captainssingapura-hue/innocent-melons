@@ -20,7 +20,8 @@ import java.util.Set;
 /**
  * A map of what stands in a world, declared: whose the world is, when, and in what year; then each thing by a place
  * and a specification. An implementation is bound once ({@link #with}), of the map's own civilization and era, as the
- * compiler checks; what it then makes is put by a name, a place and a specification of its kind, nothing more. What is
+ * compiler checks; what it then makes is put by a name, a place and a specification of its kind, nothing more, or
+ * along a line, its specification made of the line's length. What is
  * older than the map and standing still is bound apart ({@link #standing}), and checked by its years.
  *
  * @param <C> whose the world is
@@ -47,6 +48,17 @@ public final class Atlas<C extends Civilization, E extends Era<? super C>> {
          * from {@code spec}.
          */
         Maker<S> at(String name, double x, double z, double yaw, S spec);
+
+        /**
+         * One of it called {@code name} running from ({@code x0}, {@code z0}) to ({@code x1}, {@code z1}): its middle
+         * half way, its width along the line, its front to the left of the way the line runs; built from what
+         * {@code spec} makes of the line's length. A stretch of a wall, a row.
+         */
+        default Maker<S> between(final String name, final double x0, final double z0, final double x1,
+                                 final double z1, final java.util.function.DoubleFunction<S> spec) {
+            return at(name, (x0 + x1) / 2, (z0 + z1) / 2, Math.toDegrees(Math.atan2(-(z1 - z0), x1 - x0)),
+                    spec.apply(Math.hypot(x1 - x0, z1 - z0)));
+        }
     }
 
     /** A map called {@code name}, of {@code civilization} in {@code era}, as it stood in {@code year}. */
