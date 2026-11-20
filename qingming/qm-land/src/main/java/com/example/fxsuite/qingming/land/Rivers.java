@@ -11,7 +11,7 @@ import java.util.List;
  * read as, from beyond the east edge, under the bridge at the origin running west, bending away south before the
  * gate, out over the south edge; its channel cut into the plain. In centimetres.
  */
-final class Rivers {
+public final class Rivers {
 
     private Rivers() {
     }
@@ -21,18 +21,18 @@ final class Rivers {
             {520, 60}, {350, 40}, {200, 15}, {80, 2}, {0, 0}, {-80, -4}, {-170, -28}, {-240, -85}, {-280, -165},
             {-295, -270}};
     /** Its bed so wide, level; its banks so far across from the bed's edge to the plain's top; so deep under it. */
-    static final double BED = 1_600;
-    static final double BANK = 300;
-    static final double DEPTH = 400;
+    public static final double BED = 1_600;
+    public static final double BANK = 300;
+    public static final double DEPTH = 400;
     /** Its water so deep over its bed: the 6 chi (0.31 m each) the Song history has it held at for loaded boats. */
-    static final double WATER = 186;
+    public static final double WATER = 186;
     /** Its width between its banks' tops: as wide as the bridge's span. */
-    static final double TOP = BED + 2 * BANK;
+    public static final double TOP = BED + 2 * BANK;
     /** A towpath's middle so far from the river's: past the bank's top, half its width and a little more. */
     static final double TOWPATH = TOP / 2 + 230 + 70;
 
     /** Its middle, a point every 5 m along it: a smooth curve through {@link #THROUGH} (Catmull-Rom). */
-    static List<Vec2> line() {
+    public static List<Vec2> line() {
         final List<Vec2> line = new ArrayList<>();
         for (int k = 0; k + 1 < THROUGH.length; k++) {
             final double[] p0 = THROUGH[Math.max(0, k - 1)];
@@ -42,7 +42,8 @@ final class Rivers {
             final int steps = (int) Math.ceil(Math.hypot(p2[0] - p1[0], p2[1] - p1[1]) / 5);
             for (int s = 0; s < steps; s++) {
                 final double t = (double) s / steps;
-                line.add(new Vec2(spline(p0[0], p1[0], p2[0], p3[0], t) * 100, spline(p0[1], p1[1], p2[1], p3[1], t) * 100));
+                line.add(new Vec2(spline(p0[0], p1[0], p2[0], p3[0], t) * 100,
+                        spline(p0[1], p1[1], p2[1], p3[1], t) * 100));
             }
         }
         final double[] last = THROUGH[THROUGH.length - 1];

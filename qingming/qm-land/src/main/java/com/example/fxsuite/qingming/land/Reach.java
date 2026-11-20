@@ -1,6 +1,5 @@
 package com.example.fxsuite.qingming.land;
 
-import com.example.fxsuite.avatar.roads.Decks;
 import com.example.fxsuite.avatar.roads.Mapped;
 import com.example.fxsuite.avatar.roads.Profile;
 import com.example.fxsuite.avatar.roads.Roadworks;
@@ -35,7 +34,7 @@ import java.util.Map;
  * 2.1 m over its water. Its towpaths along both banks, as wide as the dike tops the Song history has kept along it
  * within the capital, 4.65 m; stopping short of the bridge, which they pass under in the scroll.
  * <li><b>Its road</b> from the country in the east, over the bridge, along the street to the gate and through it: 8 m
- * wide, as the bridge is, of earth. Over the river a plain deck where the bridge will be.
+ * wide, as the bridge is, of earth; the bridge carrying it over the river, built on its own.
  * <li><b>The city's wall</b>, here the old city's, the gate in it the Palace Museum's reading of the scroll (东角子门,
  * the bridge then 上土桥, a short way outside it): its line 540 m west of the bridge, the scroll's distance shortened
  * as the scroll shortens it; the world's west edge 60 m inside it. Neither is built yet: the ground is ready for them.
@@ -56,11 +55,9 @@ public final class Reach {
     public static final Vec2 GATE = new Vec2(WALL, 3_000);
     /** Where the avatar starts: on the street north of the bridge, facing it. */
     public static final Vec3 START = new Vec3(-6_000, 0, 3_600);
-    public static final double START_YAW = 120;
-    /** The keys the bridge's deck is drawn by. */
-    static final int DECK_KEYS = 700;
+    public static final double START_YAW = 111;
 
-    /** Its level pads: each a rectangle, west, east, south, north: the wall's line, the gate's, the bridge's two ends. */
+    /** Its level pads, each a rectangle (west, east, south, north): the wall's line, the gate's, the bridge's ends. */
     static final double[][] PADS = {
             {WALL - 1_200, WALL + 1_200, SOUTH + 100, NORTH - 100},
             {WALL - 3_000, WALL + 3_000, GATE.z() - 2_500, GATE.z() + 2_500},
@@ -69,8 +66,8 @@ public final class Reach {
 
     /** Its plain, its pads level, surveyed every 2 m: a little rough elsewhere, by 20 cm or so, 30 m apart. */
     public static Terrain terrain() {
-        final List<Contour> pads = java.util.Arrays.stream(PADS).map(p -> new Contour(0, List.of(
-                new Vec2(p[0], p[2]), new Vec2(p[1], p[2]), new Vec2(p[1], p[3]), new Vec2(p[0], p[3])), true)).toList();
+        final List<Contour> pads = java.util.Arrays.stream(PADS).map(p -> new Contour(0, List.of(new Vec2(p[0], p[2]),
+                new Vec2(p[1], p[2]), new Vec2(p[1], p[3]), new Vec2(p[0], p[3])), true)).toList();
         return new Terrain("the reach", WEST, SOUTH, EAST, NORTH, 200, 0, 1_120,
                 new Terrain.Noise(20, 3_000, 2), pads, List.of());
     }
@@ -125,9 +122,9 @@ public final class Reach {
         }
     }
 
-    /** Its ground, its river, its road's deck over it, its roads stood on; the avatar on the street, facing the bridge. */
+    /** Its ground, its river, its roads stood on; the avatar on the street, facing the bridge. */
     public static void lay(final Course.Layout world) {
-        world.start(START).land(land()).rivers(rivers()).pieces(Decks.pieces(roads(), DECK_KEYS, true))
+        world.start(START).land(land()).rivers(rivers())
                 .ways(roads().roads().stream().flatMap(r -> r.pavements().stream()).map(p -> (Volume) p).toList())
                 .ruled(false);
     }

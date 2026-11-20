@@ -7,16 +7,17 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * The reach's roads as a road map's text ({@code RoadMap.parse}), in metres: the road from the country over the bridge
- * and along the street to the gate, the stretch over the river a bridge; a towpath along each bank either side of the
- * bridge, each stopping short of it and of the world's edges. Of earth, all of them.
+ * The reach's roads as a road map's text ({@code RoadMap.parse}), in metres: the road from the country to the bridge's
+ * south end, and the street from its north end to the gate and through it, the bridge itself carrying the way between
+ * them; a towpath along each bank either side of the bridge, each stopping short of it and of the world's edges. Of
+ * earth, all of them.
  */
 final class Streets {
 
     private Streets() {
     }
 
-    /** The road: in from the east on the south bank, square onto the bridge, over it, round west along the street. */
+    /** The road, in from the east on the south bank, square onto the bridge's south end; the street from its north. */
     private static final double[][] ROAD = {
             {500, -60}, {300, -48}, {150, -40}, {60, -36}, {10, -32}, {0, -26}, {0, -16}};
     private static final double[][] STREET = {
@@ -28,17 +29,19 @@ final class Streets {
     /** Its kinds; the road; its towpaths. */
     static String text() {
         final StringBuilder text = new StringBuilder("""
-                kind road width=8m surface=earth grade=8% curve=1/10m corners slope=1:2 camber=2% transition=6m vertical=30m
-                kind towpath width=4.6m surface=earth grade=8% curve=1/8m corners slope=1:2 camber=0% transition=6m vertical=20m
-                road "the road over the bridge" kind=road
+                kind road width=8m surface=earth grade=8% curve=1/10m corners slope=1:2 camber=2% \
+                transition=6m vertical=30m
+                kind towpath width=4.6m surface=earth grade=8% curve=1/8m corners slope=1:2 camber=0% \
+                transition=6m vertical=20m
+                road "the road to the bridge" kind=road
                 """);
         point(text, "from", ROAD[0][0], ROAD[0][1], "");
         for (int k = 1; k < ROAD.length; k++) {
             point(text, "to", ROAD[k][0], ROAD[k][1], "");
         }
-        point(text, "to", STREET[0][0], STREET[0][1], " bridge");
-        point(text, "to", STREET[1][0], STREET[1][1], " ground");
-        for (int k = 2; k < STREET.length; k++) {
+        text.append("road \"the street from the bridge\" kind=road\n");
+        point(text, "from", STREET[0][0], STREET[0][1], "");
+        for (int k = 1; k < STREET.length; k++) {
             point(text, "to", STREET[k][0], STREET[k][1], "");
         }
         int n = 0;

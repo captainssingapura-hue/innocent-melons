@@ -5,12 +5,13 @@ import com.example.fxsuite.avatar.look.RoadScenery;
 import com.example.fxsuite.avatar.look.Scenery;
 import com.example.fxsuite.avatar.sim.Course;
 import com.example.fxsuite.qingming.land.Reach;
+import com.example.fxsuite.qingming.structures.RainbowBridge;
 
 /**
- * The reach of the Bian River from the Rainbow Bridge to the city gate, as a demo of its own ({@link Reach}): its land,
- * the river cut into it, its water, its streets, lanes and towpaths; the ground the bridge and the gate will stand on,
- * a plain deck where the bridge will be. Its buildings, its boats and its people are to come. Known by its name,
- * {@code QINGMING}, its runs kept and replayed.
+ * The reach of the Bian River from the Rainbow Bridge to the city gate, as a demo of its own ({@link Reach}): its
+ * land, the river cut into it, its water, its streets and towpaths; the Rainbow Bridge over the river
+ * ({@link RainbowBridge}); the ground the city's wall and its gate will stand on. Its buildings, its boats and its
+ * people are to come. Known by its name, {@code QINGMING}, its runs kept and replayed.
  */
 public final class Qingming implements DrawnDemo {
 
@@ -42,7 +43,8 @@ public final class Qingming implements DrawnDemo {
     @Override
     public String description() {
         return "The reach of the Bian River from the Rainbow Bridge to the city gate, after Zhang Zeduan's scroll: its"
-                + " plain, the river and its banks, its streets and towpaths, the ground for the bridge and the gate."
+                + " plain, the river and its banks, its streets and towpaths, the Rainbow Bridge over the river, the"
+                + " ground for the gate."
                 + " Buildings, boats and people to come.";
     }
 
@@ -59,6 +61,7 @@ public final class Qingming implements DrawnDemo {
     @Override
     public void lay(final Course.Layout world) {
         Reach.lay(world);
+        world.pieces(RainbowBridge.pieces());
     }
 
     /** Its streets' surfaces, drawn in stretches as they are seen. */
