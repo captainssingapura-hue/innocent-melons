@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * Timbers, boards and blocks as solids ({@link Solid}), in a structure's own frame (across, along, up; centimetres): a
  * squared member from one point to another in a plane across, a block square to the frame, a board whose top follows a
- * slope, a slab between any two heights at each end, a block battered front and back, a strut across.
+ * slope, a slab between any two heights at each end, a block battered front and back, a strut across, a wedge.
  */
 public final class Timbers {
 
@@ -102,6 +102,21 @@ public final class Timbers {
             final double s = (k & 4) != 0 ? 1 : -1;
             corners.add(new Point((end ? x1 : x0) + s * nx, z + ((k & 2) != 0 ? side / 2 : -side / 2),
                     (end ? y1 : y0) + s * ny));
+        }
+        return new Solid(name, role, material, corners);
+    }
+
+    /**
+     * A block across from {@code x0} to {@code x1}, along from {@code z0} to {@code z1}, up from {@code y}, its top
+     * sloping across: {@code top0} high at {@code x0}, {@code top1} at {@code x1}. A ramp.
+     */
+    public static Solid wedge(final String name, final Role role, final Material material, final double x0,
+                              final double x1, final double z0, final double z1, final double y, final double top0,
+                              final double top1) {
+        final List<Point> corners = new ArrayList<>();
+        for (int k = 0; k < 8; k++) {
+            final boolean far = (k & 1) != 0;
+            corners.add(new Point(far ? x1 : x0, (k & 2) != 0 ? z1 : z0, (k & 4) == 0 ? y : far ? top1 : top0));
         }
         return new Solid(name, role, material, corners);
     }

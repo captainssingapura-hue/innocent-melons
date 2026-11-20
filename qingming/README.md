@@ -14,8 +14,9 @@ each end of the bridge, two warehouses on the north bank, and seven stalls under
 boxer motorcycle are parked on the street by the start, to get about on (not of the scroll's time). Where the street
 ends, the city gate (城门): a brick-faced base through the wall, a passage through it framed in timber, its two leaves
 standing open, a tower of five bays on it; and the wall (城墙) either side of it, a bare rampart of rammed earth 9 m
-high, to the reach's edges. The passage is walked and ridden through; the wall is in the way. Boats and people are to
-come; so is a way up to the gate's tower and the wall's top, which only the jet-pack reaches yet.
+high, to the reach's edges. The passage is walked and ridden through; the wall is in the way. Inside the wall, south
+of the gate, a brick ramp (慢道) 48 m long climbs to the gate's top; the wall's top is stepped onto from it on the way
+up. Boats and people are to come.
 
 ## Build and launch
 
@@ -47,6 +48,7 @@ west of the bridge; `-Davatar.at=-485,30,0,270` starts before it, facing it. Una
 | Its towpaths | 4.65 m wide | the dike tops the Song history keeps along it within the capital |
 | The wall | half as thick again at its foot as it is high, as thick at its top as it is high: 13.5 m and 9 m | the Yingzao Fashi's rule for a city's wall (筑城之制); its height an estimate; no battlements, as the scroll draws none |
 | The gate's passage | 5.6 m wide and 19.3 m through; posts along both sides (排叉柱), struts slanting in to a beam, its head a trapezoid, not an arch | as reported of the Song gate dug up at Kaifeng (景龙门); the framing as the scroll draws it and the Yingzao Fashi describes; its height an estimate |
+| The gate's way up | a ramp inside the wall, a foot up for every five along: 48 m for the base's 9.6 m | the Yingzao Fashi's rule for a city gate's ramp (城门慢道), its five taken along the ground; which side of the gate, and its width, estimates |
 | The gate's tower | five bays, a folded gable roof | the frame the shops share; the scroll's has a hipped roof on bracket sets, not built yet |
 | The gate | an old-city gate, the bridge a short way outside it | the Palace Museum's reading (东角子门, the bridge 上土桥); the distance shortened as the scroll shortens it |
 | The land | level | the plain round Kaifeng |

@@ -29,10 +29,19 @@ class FixturesTest {
 
     /** {@code f}'s floors' reach in the world: least and most east, least and most north; its turn a quarter's. */
     private static double[] reach(final Atlas.Fixture f) {
+        return reach(f, f.structure().rooms().stream().flatMap(room -> room.outline().stream()).toList());
+    }
+
+    /** Each of {@code f}'s floors' reach in the world. */
+    private static List<double[]> floors(final Atlas.Fixture f) {
+        return f.structure().rooms().stream().map(room -> reach(f, room.outline())).toList();
+    }
+
+    private static double[] reach(final Atlas.Fixture f, final List<Vec2> outline) {
         final double r = Math.toRadians(f.yaw());
         final double[] box = {Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY,
             Double.NEGATIVE_INFINITY};
-        for (final Vec2 p : f.structure().rooms().stream().flatMap(room -> room.outline().stream()).toList()) {
+        for (final Vec2 p : outline) {
             // as the game turns a thing: its right (cos, -sin), its ahead (sin, cos)
             final double x = f.x() + Math.cos(r) * p.x() + Math.sin(r) * p.z();
             final double z = f.z() - Math.sin(r) * p.x() + Math.cos(r) * p.z();
@@ -107,6 +116,10 @@ class FixturesTest {
         assertEquals(gate.z() + Fixtures.GATE.wide() / 2, north[2], 1e-6, "from the gate's base");
         assertEquals(Reach.NORTH - Fixtures.SHORT, north[3], 1e-6, "to the reach's edge");
         assertEquals(gate.z() - Fixtures.GATE.wide() / 2, south[3], 1e-6);
+        // the gate's way up inside the wall, west of it, south of the gate: its foot 48 m from the gate's base
+        final double[] up = floors(gate).get(3);
+        assertTrue(up[1] <= Reach.WALL && up[3] <= south[3] + 1e-6, "inside the wall, south of the gate");
+        assertEquals(5 * Fixtures.GATE.high(), up[3] - up[2], 1e-6);
         assertEquals(Reach.SOUTH + Fixtures.SHORT, south[2], 1e-6);
         for (final double[] box : List.of(north, south)) {
             assertEquals(Reach.WALL, (box[0] + box[1]) / 2, 1e-6, "on the wall's line");
@@ -119,9 +132,13 @@ class FixturesTest {
         for (int i = 0; i < ALL.size(); i++) {
             final double[] a = reach(ALL.get(i));
             for (int j = i + 1; j < ALL.size(); j++) {
-                final double[] b = reach(ALL.get(j));
-                assertTrue(a[1] <= b[0] || b[1] <= a[0] || a[3] <= b[2] || b[3] <= a[2],
-                        ALL.get(i).name() + " and " + ALL.get(j).name());
+                // no floor of the one over a floor of the other
+                for (final double[] f : floors(ALL.get(i))) {
+                    for (final double[] b : floors(ALL.get(j))) {
+                        assertTrue(f[1] <= b[0] || b[1] <= f[0] || f[3] <= b[2] || b[3] <= f[2],
+                                ALL.get(i).name() + " and " + ALL.get(j).name());
+                    }
+                }
             }
             if (i == 0) {
                 continue;

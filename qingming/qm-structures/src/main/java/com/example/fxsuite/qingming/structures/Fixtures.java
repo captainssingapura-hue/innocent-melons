@@ -48,7 +48,8 @@ import java.util.List;
  * street before the shops begin.
  * <li><b>The city gate</b> (城门) where the street meets the wall, its outer face east, toward the bridge: its base
  * 30 m along the wall and 9.6 m high, its passage 5.6 m wide and 19.3 m through, as the Song gate dug up at Kaifeng
- * (景龙门) is reported to measure; a tower of five bays on it. <b>The wall</b> (城墙) either side of it to the reach's
+ * (景龙门) is reported to measure; a tower of five bays on it, its way up a ramp inside the wall
+ * south of it. <b>The wall</b> (城墙) either side of it to the reach's
  * edges, 9 m high: an estimate, the scroll's being a little lower than its gate's base.
  * </ul>
  */
@@ -70,7 +71,7 @@ public final class Fixtures {
     static final double ROADSIDE = 400 + 60;
     /** The gate, as dug up; the wall so high; its ends so far short of the reach's edges. */
     static final GateTowerSpec<Chinese, ChineseEras.NorthernSong> GATE = new GateTowerSpec<>(3_000, 1_930, 960, 560,
-            5);
+            5, GateTowerSpec.Ascent.RIGHT);
     static final double RAMPART = 900;
     static final double SHORT = 200;
 
