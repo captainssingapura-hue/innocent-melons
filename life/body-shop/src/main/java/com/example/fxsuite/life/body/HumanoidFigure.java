@@ -62,7 +62,15 @@ public final class HumanoidFigure implements Figure {
     private final Group strap = new Group();
     private final Group effects = new Group();
     private boolean fromEyes;
+    private boolean headless;
     private Rig last;
+
+    /** Where its eyes are, in its head's frame. */
+    static final V3 EYES = new V3(0, 7, 7.5);
+    /** The cameras on its body, and where each is, in its chest's frame: on its breastbone; on the strap, on its left shoulder. */
+    static final List<String> CAMS = List.of("chest", "shoulder");
+    static final V3 ON_CHEST = new V3(0, 12, 15);
+    static final V3 ON_SHOULDER = new V3(-10, 19.5, 12);
 
     public HumanoidFigure(final Puppet.Kind kind) {
         puppet = new Puppet(kind, proportions, RobotDesign.DEFAULT, Palette.DEFAULT, new V3(1, -1, 1));
@@ -146,10 +154,68 @@ public final class HumanoidFigure implements Figure {
     }
 
     @Override
+    public boolean seesFromItsHead() {
+        return true;
+    }
+
+    @Override
+    public void headless(final boolean off) {
+        headless = off;
+        fromItsEyes(fromEyes);
+    }
+
+    @Override
+    public Vec3 eyesNow() {
+        return last == null ? null : world(last.place(Part.HEAD, EYES));
+    }
+
+    @Override
+    public List<String> bodyCams() {
+        return CAMS;
+    }
+
+    @Override
+    public Viewpoint bodyCam(final String name) {
+        if (last == null) {
+            return null;
+        }
+        final Rig.Frame chest = last.frame(Part.CHEST);
+        final V3 on = name.equals(CAMS.get(1)) ? ON_SHOULDER : ON_CHEST;
+        final Point3D ahead = way(chest.way(V3.Z));
+        final Point3D right = way(chest.way(V3.X));
+        final double yaw = Math.toDegrees(Math.atan2(ahead.getX(), ahead.getZ()));
+        final double pitch = Math.toDegrees(Math.atan2(-ahead.getY(), Math.hypot(ahead.getX(), ahead.getZ())));
+        final Vec3 level = com.example.fxsuite.avatar.sim.Num.right(yaw);
+        final double roll = Math.toDegrees(Math.atan2(right.getY(),
+                right.getX() * level.x() + right.getZ() * level.z()));
+        return new Viewpoint(world(last.place(Part.CHEST, on)), yaw, pitch, roll);
+    }
+
+    /** {@code b}, a point in the body's frame as it was last shown, in the world. */
+    private Vec3 world(final V3 b) {
+        Point3D p = new Point3D(b.x(), -b.y(), b.z());
+        p = lean.transform(p);
+        p = bank.transform(p);
+        p = raise.transform(p);
+        p = inView.transform(p);
+        p = turn.transform(p);
+        p = at.transform(p);
+        return new Vec3(p.getX(), p.getY(), p.getZ());
+    }
+
+    /** {@code d}, a way in the body's frame as it was last shown, in the world's. */
+    private Point3D way(final V3 d) {
+        Point3D p = new Point3D(d.x(), -d.y(), d.z());
+        p = lean.deltaTransform(p);
+        p = bank.deltaTransform(p);
+        return turn.deltaTransform(p);
+    }
+
+    @Override
     public void fromItsEyes(final boolean eyes) {
         fromEyes = eyes;
         for (final Part p : Part.values()) {
-            puppet.part(p).setVisible(!eyes || arm(p));
+            puppet.part(p).setVisible((!eyes || arm(p)) && !(headless && (p == Part.HEAD || p == Part.NECK)));
         }
         puppet.pistons(!eyes);
         strap.setVisible(!eyes && gun.isVisible());

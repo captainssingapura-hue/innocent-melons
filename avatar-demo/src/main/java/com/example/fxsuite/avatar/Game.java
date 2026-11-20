@@ -248,6 +248,12 @@ public final class Game {
     private static final double[] RIDER_CHEST = {5, 65};
     private static final double[] RIDER_EYES = {20, 105};
     private static final double RIDER_VIEW = 70;
+    /** A camera on the body: a wide lens, as a body camera has. */
+    private static final double BODY_CAM_VIEW = 70;
+    /** Whether the view is from a camera on the body, this frame. */
+    private boolean wideView;
+    /** On foot, which camera on the body the view is from, of those the figure has; -1 behind it. */
+    private int bodyCam = -1;
     private static final double RIDER_BARS = 0.8;
     /** Flying an aircraft, how much longer the view is held where the mouse turned it, before it swings back behind. */
     private double lookHeld;
@@ -327,7 +333,7 @@ public final class Game {
     private final Label status = new Label();
     /** The keys, for whatever the avatar is doing: on foot, or at the controls of each kind of vehicle. */
     private final Label help = new Label();
-    private static final String VIEW_KEYS = "Q/E look round · C camera behind · V first person ·"
+    private static final String VIEW_KEYS = "Q/E look round · C camera behind, or on its body · V first person ·"
             + " scroll to zoom · Esc frees the mouse · "
             + "M mute · P sound profile · Tab: the demos (or the menu bar)";
     /** Driving, the view the vehicle's alone: the next camera, its cockpit, looking back; no looking round. */
@@ -909,11 +915,32 @@ public final class Game {
         // but driving, the view the driver chose, from on the vehicle or behind it, its head still
         final boolean eyes = driving ? driveView == DriveView.COCKPIT : firstPerson;
         headYaw = eyes && seated && !driving ? Num.clamp(headYaw + mouse, -HEAD_TURN, HEAD_TURN) : 0;
-        final View cockpit = driving && driveView.onIt() && craft != null ? onIt(flying.get(), craft, shownAt)
-                : eyes ? cockpit(flying.orElse(null), alone.orElse(null), shownAt, body,
-                Gait.of(avatar, chase.yaw(), chase.pitch() - Chase.DEFAULT_PITCH)) : null;
-        // on foot, from its own eyes: only its arms and what they hold are drawn, at the bottom of the view
-        final boolean ownEyes = cockpit != null && flying.isEmpty() && alone.isEmpty();
+        final Pose looking = Gait.of(avatar, chase.yaw(), chase.pitch() - Chase.DEFAULT_PITCH);
+        // on foot, a figure that sees from its own head, or a camera on its body: the figure posed first, whole but
+        // for its head from its eyes, then looked from; from its eyes, looking where it aims
+        final boolean afoot = !driving && flying.isEmpty() && alone.isEmpty();
+        final boolean whole = afoot && eyes && rig.seesFromItsHead();
+        final List<String> cams = rig.bodyCams();
+        final boolean onBody = afoot && !eyes && bodyCam >= 0 && bodyCam < cams.size();
+        wideView = onBody;
+        rig.headless(whole);
+        View fromFigure = null;
+        if (whole || onBody) {
+            rig.fromItsEyes(false);
+            rig.show(avatar, looking);
+            if (whole) {
+                fromFigure = new View(rig.eyesNow(), body.yaw(), chase.pitch() - restPitch());
+            } else {
+                final Figure.Viewpoint cam = rig.bodyCam(cams.get(bodyCam));
+                fromFigure = new View(cam.at(), cam.yaw(), cam.pitch(), cam.roll());
+            }
+        }
+        final View cockpit = fromFigure != null ? fromFigure
+                : driving && driveView.onIt() && craft != null ? onIt(flying.get(), craft, shownAt)
+                : eyes ? cockpit(flying.orElse(null), alone.orElse(null), shownAt, body, looking) : null;
+        // on foot, from its own eyes, a figure that does not see from its head: only its arms and what they hold are
+        // drawn, at the bottom of the view
+        final boolean ownEyes = fromFigure == null && cockpit != null && flying.isEmpty() && alone.isEmpty();
         rig.fromItsEyes(ownEyes);
         world.glassFrom(cockpit != null && flying.isPresent() ? flying.get().piece() : -1);
         final Vec3 viewer = cockpit != null ? cockpit.at() : chase.position(standingWas);
@@ -922,11 +949,10 @@ public final class Game {
         world.glassInside(in >= 0 ? in : damage.stagedAround(body.position()));
         // inside a closed vehicle the avatar is out of sight: no figure, no sights; looking
         // out from where its eyes are, its own figure is not seen either
-        rig.node().setVisible(!inside && (cockpit == null || ownEyes));
-        rig.effects().setVisible(!inside && (cockpit == null || ownEyes));
+        rig.node().setVisible(!inside && (cockpit == null || ownEyes || fromFigure != null));
+        rig.effects().setVisible(!inside && (cockpit == null || ownEyes || fromFigure != null));
         reticle.node().setVisible(!inside);
         // at the wheel of a land vehicle, sat in its seat, facing the way it heads, as it is drawn now
-        final Pose looking = Gait.of(avatar, chase.yaw(), chase.pitch() - Chase.DEFAULT_PITCH);
         final Lift driven = flying.filter(lift -> lift.craft() instanceof Course.Chassis).orElse(null);
         if (driven != null && craft != null) {
             // in a car, sat; on a two-wheeler, astride, leaning with it into its turns
@@ -942,7 +968,8 @@ public final class Game {
             // from its own eyes, its arms upright and steady at the bottom of the view, however it is tipped
             rig.showFromEyes(avatar, Gait.upright(avatar, chase.yaw(), chase.pitch() - Chase.DEFAULT_PITCH),
                     cockpit.at(), cockpit.yaw());
-        } else {
+        } else if (fromFigure == null) {
+            // on foot or in the air, seen from behind; posed already, if looked from
             rig.show(avatar, looking);
         }
         // each reads what is new to it in the journal
@@ -1003,7 +1030,8 @@ public final class Game {
         // and riding, from the rider, wider, to take in the bars below and the road ahead
         final boolean riderView = driving && driveView == DriveView.COCKPIT
                 && flying.filter(lift -> lift.craft() instanceof Course.Chassis chassis && chassis.twoWheels()).isPresent();
-        fieldOfView = Num.ease(fieldOfView, (riderView ? RIDER_VIEW : FIELD_OF_VIEW) + BOOST_VIEW * boost, 4, seconds);
+        fieldOfView = Num.ease(fieldOfView, (riderView ? RIDER_VIEW : wideView ? BODY_CAM_VIEW : FIELD_OF_VIEW)
+                + BOOST_VIEW * boost, 4, seconds);
         eye.setFieldOfView(fieldOfView);
         eye.setNearClip(nearClip(cockpit != null));
         final Vec3 at = cockpit != null ? cockpit.at() : chase.position(standingWas);
@@ -1418,7 +1446,14 @@ public final class Game {
                     driveView = driveView.next();
                     lifts.stream().filter(Lift::held).findFirst().ifPresent(lift -> zoomTo = driveFrom(lift));
                 } else {
-                    chase = Chase.behind(chase.pivot(), avatar.body().yaw()).zoomed(chase.distance() / Chase.DEFAULT_DISTANCE);
+                    // on foot, the next camera on the body, if it has any, and from the last back behind it
+                    final int cams = rig.bodyCams().size();
+                    bodyCam = firstPerson || bodyCam + 1 >= cams ? -1 : bodyCam + 1;
+                    firstPerson = false;
+                    if (bodyCam < 0) {
+                        chase = Chase.behind(chase.pivot(), avatar.body().yaw())
+                                .zoomed(chase.distance() / Chase.DEFAULT_DISTANCE);
+                    }
                     headYaw = 0;
                 }
             }

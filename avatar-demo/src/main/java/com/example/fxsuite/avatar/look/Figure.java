@@ -35,4 +35,36 @@ public interface Figure {
     default boolean holds(final com.example.fxsuite.avatar.sim.Weapon weapon) {
         return true;
     }
+
+    /** A point on the figure to look from, in the world: where, turned {@code yaw} round, {@code pitch} up, rolled {@code roll} to the right. */
+    record Viewpoint(Vec3 at, double yaw, double pitch, double roll) {
+    }
+
+    /**
+     * Whether, seen from its own eyes, it is drawn whole but for its head, the view from where its eyes are as it is
+     * drawn ({@link #eyesNow}), rather than its arms alone held up into view ({@link #showFromEyes}). Not, unless it
+     * says.
+     */
+    default boolean seesFromItsHead() {
+        return false;
+    }
+
+    /** Its head drawn ({@code false}) or out of sight ({@code true}), as when it is seen from its own eyes. */
+    default void headless(final boolean off) {
+    }
+
+    /** Where its eyes are in the world, as it was last shown ({@link #show}); for one that sees from its head. */
+    default Vec3 eyesNow() {
+        return null;
+    }
+
+    /** The cameras on its body, by name, to be seen from in turn: none, unless it says. */
+    default java.util.List<String> bodyCams() {
+        return java.util.List.of();
+    }
+
+    /** Where the camera on its body called {@code name} is, and which way it looks, as it was last shown. */
+    default Viewpoint bodyCam(final String name) {
+        return null;
+    }
 }
