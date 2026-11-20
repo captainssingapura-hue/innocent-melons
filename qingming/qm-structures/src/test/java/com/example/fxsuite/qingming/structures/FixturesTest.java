@@ -4,6 +4,7 @@ import com.example.fxsuite.avatar.sim.Vec2;
 import com.example.fxsuite.building.Atlas;
 import com.example.fxsuite.existence.Buildings;
 import com.example.fxsuite.qingming.land.Reach;
+import com.example.fxsuite.qingming.land.Rivers;
 import com.example.fxsuite.taxonomy.Leaf;
 import org.junit.jupiter.api.Test;
 
@@ -16,8 +17,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * What stands in the reach: nothing wrong with its map; the Rainbow Bridge at its origin, landing on the street both
  * ways; fourteen shops along the street, each facing it and clear of it; the wine house and its gateway, two tea
  * houses, two warehouses, seven stalls; the gate where the street meets the wall, facing the bridge, the street level
- * through it, the wall either side of it from its base to the reach's edges; none of them in another, none in the
- * river; each a piece of the world.
+ * through it, the wall either side of it from its base to the reach's edges; the quay before the warehouses, its face
+ * in the water, its deck level with the bank, its landings over the water; four farmsteads in the country, each facing
+ * the road and clear of it; none of them in another, none but the bridge and the quay in the river; each a piece of
+ * the world.
  */
 class FixturesTest {
 
@@ -85,7 +88,7 @@ class FixturesTest {
     void theWineHouseAndItsGatewayTheTeaHousesWarehousesAndStalls() {
         assertEquals(1, count(new Buildings.WineHouse()));
         assertEquals(1, count(new Buildings.FestiveGateway()));
-        assertEquals(2, count(new Buildings.TeaHouse()));
+        assertEquals(3, count(new Buildings.TeaHouse()));
         assertEquals(2, count(new Buildings.Warehouse()));
         assertEquals(7, count(new Buildings.Stall()));
         // the gateway before the wine house's door: on its middle line, between it and the street
@@ -127,11 +130,84 @@ class FixturesTest {
         }
     }
 
+    /** How far {@code p} is from {@code line}, a point every so far along it. */
+    private static double from(final Vec2 p, final List<Vec2> line) {
+        double best = Double.POSITIVE_INFINITY;
+        for (int k = 0; k + 1 < line.size(); k++) {
+            final Vec2 a = line.get(k);
+            final Vec2 b = line.get(k + 1);
+            final double dx = b.x() - a.x();
+            final double dz = b.z() - a.z();
+            final double t = Math.max(0, Math.min(1, ((p.x() - a.x()) * dx + (p.z() - a.z()) * dz)
+                    / (dx * dx + dz * dz)));
+            best = Math.min(best, Math.hypot(p.x() - a.x() - t * dx, p.z() - a.z() - t * dz));
+        }
+        return best;
+    }
+
+    /** Where {@code f}'s own ({@code across}, {@code along}) is in the world. */
+    private static Vec2 world(final Atlas.Fixture f, final double across, final double along) {
+        final double r = Math.toRadians(f.yaw());
+        return new Vec2(f.x() + Math.cos(r) * across + Math.sin(r) * along,
+                f.z() - Math.sin(r) * across + Math.cos(r) * along);
+    }
+
+    @Test
+    void theQuayBeforeTheWarehousesItsFaceInTheWaterItsDeckLevelWithTheBank() {
+        final List<Atlas.Fixture> quay = ALL.stream().filter(f -> f.thing().equals(new Buildings.Quay())).toList();
+        assertEquals(2, quay.size());
+        for (final Atlas.Fixture q : quay) {
+            assertEquals(180, q.yaw(), 10, q.name() + " facing the river, south");
+            assertEquals(0, Reach.land().height(q.x(), q.z()), 2, q.name() + " on the bank's top, level");
+            final double face = from(world(q, 0, 200), Rivers.line());
+            // the water's edge so far from the river's middle, up its bank from its bed's edge
+            final double edge = Rivers.channel().across(Rivers.DEPTH - Rivers.WATER);
+            assertTrue(face > edge - 60 && face < edge, q.name() + " its face at " + face);
+            final double landing = q.structure().rooms().get(1).level();
+            assertTrue(landing > Rivers.WATER - Rivers.DEPTH && landing < Rivers.WATER - Rivers.DEPTH + 30,
+                    q.name() + " its landing just over the water");
+        }
+        final double[] east = reach(quay.get(0));
+        final double[] west = reach(quay.get(1));
+        assertEquals(Fixtures.QUAY[0], east[1], 30, "its east end");
+        assertEquals(Fixtures.QUAY[2], west[0], 30, "its west end");
+        assertEquals(east[0], west[1], 30, "its stretches meeting");
+    }
+
+    @Test
+    void fourFarmsteadsInTheCountryEachFacingTheRoadAndClearOfIt() {
+        final List<Atlas.Fixture> farms = ALL.stream().filter(f -> f.thing().equals(new Buildings.Farmhouse()))
+                .toList();
+        assertEquals(4, farms.size());
+        final List<Vec2> road = new java.util.ArrayList<>();
+        final var way = Reach.roads().roads().stream().filter(r -> r.name().equals("the road to the bridge"))
+                .findFirst().orElseThrow();
+        for (int k = 0; k < way.size(); k++) {
+            road.add(way.point(k));
+        }
+        for (final Atlas.Fixture farm : farms) {
+            assertTrue(farm.x() > 30_000, farm.name() + " in the country");
+            final double gate = from(world(farm, 0, farm.structure().rooms().get(1).outline().get(2).z()), road);
+            assertEquals(Fixtures.ROAD + Fixtures.FARM_BACK, gate, 100, farm.name() + " its gateway toward the road");
+            final double[] box = reach(farm);
+            for (final double x : new double[] {box[0], box[1]}) {
+                for (final double z : new double[] {box[2], box[3]}) {
+                    assertTrue(from(new Vec2(x, z), road) > Fixtures.ROAD + 400, farm.name() + " clear of the road");
+                }
+            }
+        }
+    }
+
     @Test
     void noneOfThemInAnotherNoneInTheRiver() {
         for (int i = 0; i < ALL.size(); i++) {
             final double[] a = reach(ALL.get(i));
             for (int j = i + 1; j < ALL.size(); j++) {
+                // stretches of the quay meet end to end, at a little angle
+                final Buildings.Quay quay = new Buildings.Quay();
+                if (ALL.get(i).thing().equals(quay) && ALL.get(j).thing().equals(quay)) {
+                    continue;
+                }
                 // no floor of the one over a floor of the other
                 for (final double[] f : floors(ALL.get(i))) {
                     for (final double[] b : floors(ALL.get(j))) {
@@ -140,10 +216,10 @@ class FixturesTest {
                     }
                 }
             }
-            if (i == 0) {
+            if (ALL.get(i).thing().equals(new Buildings.Bridge()) || ALL.get(i).thing().equals(new Buildings.Quay())) {
                 continue;
             }
-            // all but the bridge on the plain: no corner of its floor down the river's bank
+            // all but the bridge and the quay on the plain: no corner of its floor down the river's bank
             for (final double x : new double[] {a[0], a[1]}) {
                 for (final double z : new double[] {a[2], a[3]}) {
                     assertTrue(Reach.ground().height(x, z) > -60,
@@ -155,6 +231,6 @@ class FixturesTest {
 
     @Test
     void eachAPieceOfTheWorld() {
-        assertEquals(31, Fixtures.pieces().size());
+        assertEquals(38, Fixtures.pieces().size());
     }
 }

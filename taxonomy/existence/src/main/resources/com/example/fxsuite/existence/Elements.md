@@ -153,7 +153,7 @@ Marks or announces; carries nothing.
 
 ## Pole
 
-A standing pole carrying a sign, a vane or a figure.
+A standing pole: carrying a sign, a vane or a figure, or a boat's line made fast to it.
 
 ## Sign
 

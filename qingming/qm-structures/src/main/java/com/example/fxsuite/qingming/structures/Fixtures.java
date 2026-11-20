@@ -1,11 +1,14 @@
 package com.example.fxsuite.qingming.structures;
 
 import com.example.fxsuite.avatar.sim.Course;
+import com.example.fxsuite.avatar.sim.Vec2;
 import com.example.fxsuite.building.Atlas;
 import com.example.fxsuite.building.chinese.FestiveGate;
 import com.example.fxsuite.building.chinese.SongCityWall;
+import com.example.fxsuite.building.chinese.SongFarmhouse;
 import com.example.fxsuite.building.chinese.SongFestiveGate;
 import com.example.fxsuite.building.chinese.SongGateTower;
+import com.example.fxsuite.building.chinese.SongQuay;
 import com.example.fxsuite.building.chinese.SongShopHouse;
 import com.example.fxsuite.building.chinese.SongStall;
 import com.example.fxsuite.building.chinese.SongTeaHouse;
@@ -14,8 +17,10 @@ import com.example.fxsuite.building.chinese.SongWineHouse;
 import com.example.fxsuite.building.chinese.SongWovenArch;
 import com.example.fxsuite.building.chinese.WovenArch;
 import com.example.fxsuite.building.spec.CityWallSpec;
+import com.example.fxsuite.building.spec.FarmhouseSpec;
 import com.example.fxsuite.building.spec.GateTowerSpec;
 import com.example.fxsuite.building.spec.HallSpec;
+import com.example.fxsuite.building.spec.QuaySpec;
 import com.example.fxsuite.building.spec.Roofing;
 import com.example.fxsuite.building.spec.ShopHouseSpec;
 import com.example.fxsuite.building.spec.StallSpec;
@@ -51,6 +56,11 @@ import java.util.List;
  * (景龙门) is reported to measure; a tower of five bays on it, its way up a ramp inside the wall
  * south of it. <b>The wall</b> (城墙) either side of it to the reach's
  * edges, 9 m high: an estimate, the scroll's being a little lower than its gate's base.
+ * <li><b>The quay</b> along the north bank before the warehouses, 30 m of it in two stretches, its face standing in
+ * the water, a flight of steps down each to a landing over it.
+ * <li><b>The country</b> at the reach's east end, where the scroll begins: four farmsteads either side of the road,
+ * each a house, most thatched, and its yard fenced round, its gateway toward the road; a thatched tea house by the
+ * road.
  * </ul>
  */
 public final class Fixtures {
@@ -74,6 +84,20 @@ public final class Fixtures {
             5, GateTowerSpec.Ascent.RIGHT);
     static final double RAMPART = 900;
     static final double SHORT = 200;
+    /** The quay's line so far from the river's middle, a little behind its bank's top; its ends and joint so far east.
+     */
+    static final double QUAY_LINE = Rivers.TOP / 2 + 20;
+    static final double[] QUAY = {7_300, 5_800, 4_300};
+    /** A farmstead's yard's front so far from the road's edge; the road's half width. */
+    static final double FARM_BACK = 600;
+    static final double ROAD = 400;
+    /** The farmsteads: so far east, the road's middle there so far north, which side of it (1 north, -1 south). */
+    static final double[][] FARMS = {{45_000, -5_700, -1}, {41_000, -5_460, 1}, {37_000, -5_220, -1},
+        {31_000, -4_860, 1}};
+    private static final List<FarmhouseSpec<Chinese, ChineseEras.NorthernSong>> HOUSES = List.of(
+            new FarmhouseSpec<>(3, 330, 600, Roofing.THATCH, 800),
+            new FarmhouseSpec<>(2, 340, 560, Roofing.THATCH, 700),
+            new FarmhouseSpec<>(4, 320, 620, Roofing.THATCH, 900), new FarmhouseSpec<>(3, 350, 580, Roofing.TILE, 800));
 
     /** The shops of the north row, east to west: bays, a bay's width, depth, roofing. */
     private static final List<ShopHouseSpec<Chinese, ChineseEras.NorthernSong>> NORTH = List.of(
@@ -139,6 +163,25 @@ public final class Fixtures {
                         gate + GATE.wide() / 2, length -> new CityWallSpec<>(length, RAMPART))
                 .between("the wall south of the gate", Reach.WALL, gate - GATE.wide() / 2, Reach.WALL,
                         Reach.SOUTH + SHORT, length -> new CityWallSpec<>(length, RAMPART));
+        // the quay along the north bank, each stretch run west so that its face is to the river
+        final List<Vec2> bank = Rivers.beside(true, QUAY_LINE);
+        final Atlas.Maker<QuaySpec<Chinese, ChineseEras.NorthernSong>> quay = reach.with(new SongQuay());
+        for (int k = 0; k + 1 < QUAY.length; k++) {
+            final Vec2 east = at(bank, QUAY[k]);
+            final Vec2 west = at(bank, QUAY[k + 1]);
+            quay.between("the quay " + (k + 1), east.x(), east.z(), west.x(), west.z(), length -> new QuaySpec<>(
+                    length, 200, Rivers.DEPTH, Rivers.DEPTH - Rivers.WATER - 14, 1));
+        }
+        // the farmsteads either side of the road in the country, each facing it; a tea house by it
+        final Atlas.Maker<FarmhouseSpec<Chinese, ChineseEras.NorthernSong>> farms = reach.with(new SongFarmhouse());
+        for (int k = 0; k < FARMS.length; k++) {
+            final FarmhouseSpec<Chinese, ChineseEras.NorthernSong> house = HOUSES.get(k);
+            final double side = FARMS[k][2];
+            farms.at("farmstead " + (k + 1), FARMS[k][0], FARMS[k][1] + side * (ROAD + FARM_BACK + house.yard()
+                    + house.depth() / 2), side > 0 ? 180 : 0, house);
+        }
+        reach.with(new SongTeaHouse()).at("the roadside tea house", 24_000, -4_480 + BACK + 300, 180,
+                new HallSpec<>(3, 380, 600, Roofing.THATCH));
         return reach;
     }
 
@@ -156,6 +199,19 @@ public final class Fixtures {
                     STREET + side * (BACK + spec.depth() / 2), side > 0 ? 180 : 0, spec);
             east -= spec.width() + BETWEEN;
         }
+    }
+
+    /** Where {@code line}, running east to west, is so far east: between the two of its points either side. */
+    private static Vec2 at(final List<Vec2> line, final double x) {
+        for (int k = 0; k + 1 < line.size(); k++) {
+            final Vec2 a = line.get(k);
+            final Vec2 b = line.get(k + 1);
+            if (a.x() >= x && b.x() <= x) {
+                final double t = (a.x() - x) / (a.x() - b.x());
+                return new Vec2(x, a.z() + t * (b.z() - a.z()));
+            }
+        }
+        throw new IllegalArgumentException("the line does not reach " + x);
     }
 
     /** Everything on the map as pieces of the world, each standing on the reach's land. */
