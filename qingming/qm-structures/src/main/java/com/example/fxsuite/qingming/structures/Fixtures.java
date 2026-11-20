@@ -2,11 +2,20 @@ package com.example.fxsuite.qingming.structures;
 
 import com.example.fxsuite.avatar.sim.Course;
 import com.example.fxsuite.building.Atlas;
+import com.example.fxsuite.building.chinese.FestiveGate;
+import com.example.fxsuite.building.chinese.SongFestiveGate;
 import com.example.fxsuite.building.chinese.SongShopHouse;
+import com.example.fxsuite.building.chinese.SongStall;
+import com.example.fxsuite.building.chinese.SongTeaHouse;
+import com.example.fxsuite.building.chinese.SongWarehouse;
+import com.example.fxsuite.building.chinese.SongWineHouse;
 import com.example.fxsuite.building.chinese.SongWovenArch;
 import com.example.fxsuite.building.chinese.WovenArch;
+import com.example.fxsuite.building.spec.HallSpec;
 import com.example.fxsuite.building.spec.Roofing;
 import com.example.fxsuite.building.spec.ShopHouseSpec;
+import com.example.fxsuite.building.spec.StallSpec;
+import com.example.fxsuite.building.spec.WineHouseSpec;
 import com.example.fxsuite.historian.Chinese;
 import com.example.fxsuite.historian.ChineseEras;
 import com.example.fxsuite.historian.Years;
@@ -27,6 +36,12 @@ import java.util.List;
  * <li><b>The shops along the street</b>, seven a side on its straight stretch west of the bridge, each fronting the
  * street 3 m back from its edge, the north row facing south and the south row north: two to five bays each, as the
  * scroll's are of all sizes, most tiled, some thatched.
+ * <li><b>The wine house</b> (脚店), of two storeys, on the street's north side between the bridge and the shops, as
+ * the scroll has one by the bridge; its <b>festive gateway</b> (彩楼欢门) before its door.
+ * <li><b>A tea house</b> at each end of the bridge, beside the road, open to it; <b>two warehouses</b> on the north
+ * bank east of the bridge, facing the towpath and the river.
+ * <li><b>Stalls</b>, under awnings and umbrellas: two at each end of the bridge beside the road, three along the
+ * street before the shops begin.
  * </ul>
  */
 public final class Fixtures {
@@ -42,6 +57,9 @@ public final class Fixtures {
     /** A shop's front so far back from the street's middle; the room between one shop's gable and the next's. */
     static final double BACK = 400 + 300;
     static final double BETWEEN = 250;
+    /** The wine house's middle, so far east; a road's half width and a stall's room beside it. */
+    static final double WINE_HOUSE = -9_500;
+    static final double ROADSIDE = 400 + 60;
 
     /** The shops of the north row, east to west: bays, a bay's width, depth, roofing. */
     private static final List<ShopHouseSpec<Chinese, ChineseEras.NorthernSong>> NORTH = List.of(
@@ -73,6 +91,31 @@ public final class Fixtures {
         final Atlas.Maker<ShopHouseSpec<Chinese, ChineseEras.NorthernSong>> shops = reach.with(new SongShopHouse());
         row(shops, "north", NORTH, 1);
         row(shops, "south", SOUTH, -1);
+        // the wine house on the street's north side, east of the shops; its gateway before its door, clear of its eaves
+        final WineHouseSpec<Chinese, ChineseEras.NorthernSong> wine = new WineHouseSpec<>(5, 360, 720, Roofing.TILE);
+        reach.with(new SongWineHouse()).at("the wine house", WINE_HOUSE, STREET + BACK + wine.depth() / 2, 180, wine);
+        reach.with(new SongFestiveGate()).at("the wine house's gateway", WINE_HOUSE, STREET + BACK - 200, 180,
+                new FestiveGate(600, 140, 700));
+        // a tea house at each end of the bridge, beside the road and facing it: west of it south, east of it north
+        reach.with(new SongTeaHouse())
+                .at("tea house south", -1_000, -2_400, 90, new HallSpec<>(3, 380, 600, Roofing.THATCH))
+                .at("tea house north", 1_000, 2_300, 270, new HallSpec<>(3, 380, 600, Roofing.TILE));
+        // two warehouses on the north bank east of the bridge, facing the towpath and the river
+        reach.with(new SongWarehouse())
+                .at("warehouse 1", 5_000, 2_550, 180, new HallSpec<>(3, 400, 700, Roofing.TILE))
+                .at("warehouse 2", 6_600, 2_550, 180, new HallSpec<>(3, 400, 700, Roofing.TILE));
+        // stalls beside the road at each end of the bridge, and along the street before the shops begin
+        final StallSpec<Chinese, ChineseEras.NorthernSong> awning = new StallSpec<>(200, 150, StallSpec.Shade.AWNING);
+        final StallSpec<Chinese, ChineseEras.NorthernSong> umbrella = new StallSpec<>(200, 150,
+                StallSpec.Shade.UMBRELLA);
+        reach.with(new SongStall())
+                .at("stall north 1", -ROADSIDE - 75, 1_750, 90, awning)
+                .at("stall north 2", -ROADSIDE - 75, 2_050, 90, umbrella)
+                .at("stall south 1", ROADSIDE + 75, -1_750, 270, umbrella)
+                .at("stall south 2", ROADSIDE + 75, -2_050, 270, awning)
+                .at("stall street 1", -8_600, STREET - ROADSIDE - 180, 0, umbrella)
+                .at("stall street 2", -9_000, STREET - ROADSIDE - 180, 0, awning)
+                .at("stall street 3", -9_400, STREET - ROADSIDE - 180, 0, umbrella);
         return reach;
     }
 

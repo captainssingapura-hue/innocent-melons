@@ -64,19 +64,20 @@ class SongBuildingTest {
     @Test
     void theShophousesFrameAndItsRoofAsTheBookHasThem() {
         assertEquals(List.of(), HOUSE.problems());
-        assertEquals(320, SongShopHouse.column(SHOP), "no taller than a bay is wide, 3.2 m at most");
-        assertEquals(300, SongShopHouse.column(new ShopHouseSpec<>(2, 300, 500, Roofing.THATCH)));
+        assertEquals(320, SongFrame.column(SHOP), "no taller than a bay is wide, 3.2 m at most");
+        assertEquals(300, SongFrame.column(new ShopHouseSpec<>(2, 300, 500, Roofing.THATCH)));
         // 4 lines of 2 columns, and their posts under the three purlins
         assertEquals(4 * 2 + 4 * 3, HOUSE.solids(new Elements.Column()).size());
         assertEquals(4 + 2 + 3, HOUSE.solids(new Elements.Beam()).size(), "four beams, two lintels, three purlins");
-        final double span = SHOP.depth() + 2 * SongShopHouse.EAVE;
-        final double eave = SongShopHouse.roof(SHOP, span / 2);
-        final double ridge = SongShopHouse.roof(SHOP, 0);
+        final double span = SHOP.depth() + 2 * SongFrame.EAVE;
+        final double eave = SongFrame.roof(SHOP, SongFrame.PLATFORM, span / 2);
+        final double ridge = SongFrame.roof(SHOP, SongFrame.PLATFORM, 0);
         assertEquals(span / 4, ridge - eave, 1e-9, "its ridge a quarter of its span over its eaves");
         final double straight = eave + (ridge - eave) / 2;
-        assertEquals((ridge - eave) / 10, straight - SongShopHouse.roof(SHOP, span / 4), 1e-9,
+        assertEquals((ridge - eave) / 10, straight - SongFrame.roof(SHOP, SongFrame.PLATFORM, span / 4), 1e-9,
                 "folded: the middle purlin a tenth of the rise under the straight line");
-        assertEquals(SongShopHouse.roof(SHOP, 123), SongShopHouse.roof(SHOP, -123), 1e-9, "the same front and back");
+        assertEquals(SongFrame.roof(SHOP, SongFrame.PLATFORM, 123), SongFrame.roof(SHOP, SongFrame.PLATFORM, -123),
+                1e-9, "the same front and back");
     }
 
     @Test
@@ -90,15 +91,15 @@ class SongBuildingTest {
         assertTrue(!clear(-a, 0) && !clear(a, 0), "its gables");
         assertTrue(!clear(-a + SHOP.bay(), d), "a column of its front");
         // its floor a step up from the street, no higher than is stepped onto
-        assertTrue(SongShopHouse.PLATFORM <= 20);
-        assertEquals(SongShopHouse.PLATFORM, HOUSE.shape().stream().filter(v -> v.covers(0, 0, 20))
+        assertTrue(SongFrame.PLATFORM <= 20);
+        assertEquals(SongFrame.PLATFORM, HOUSE.shape().stream().filter(v -> v.covers(0, 0, 20))
                 .mapToDouble(v -> v.topAt(0, 0, 20, 100)).filter(t -> t <= 100).max().orElseThrow(), 1e-6);
     }
 
     /** Whether nothing of the house stands between a body's knees and its head at ({@code x}, {@code z}). */
     private static boolean clear(final double x, final double z) {
         return HOUSE.shape().stream().filter(v -> v.covers(x, z, 20))
-                .noneMatch(v -> v.low() < SongShopHouse.PLATFORM + 180 && v.high() > SongShopHouse.PLATFORM + 40);
+                .noneMatch(v -> v.low() < SongFrame.PLATFORM + 180 && v.high() > SongFrame.PLATFORM + 40);
     }
 
     @Test

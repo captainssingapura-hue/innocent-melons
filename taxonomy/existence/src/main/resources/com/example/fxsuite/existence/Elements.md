@@ -162,3 +162,15 @@ A board or a banner naming or announcing.
 ## Finial
 
 A figure or a knob finishing a roof's ridge or a post's top.
+
+## Fitting
+
+Stands in a space to be used; no part of what holds the building up or shuts it in.
+
+## Counter
+
+A table or a counter to sell or to serve from.
+
+## Bench
+
+A seat for more than one.

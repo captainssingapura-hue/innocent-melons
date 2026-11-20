@@ -4,13 +4,15 @@ A world after Zhang Zeduan's scroll 清明上河图: the reach of the Bian River
 city gate. The scroll is not a map, so the plan is read from it and its sizes come from what is written and dug up. It
 is built on the engine as released to it, as the bay is.
 
-**So far: the terrain, the Rainbow Bridge and the street's shops.** A level plain 1.1 km by 0.5 km, the river cut into it with its banks
+**So far: the terrain, the Rainbow Bridge and a street of Song buildings.** A level plain 1.1 km by 0.5 km, the river cut into it with its banks
 and water, its towpaths, the earth road from the country to the bridge and the street from it to the gate, and level
 ground where the city's wall and its gate will stand. Over the river, the Rainbow Bridge: its woven timber arch, its
 deck to walk up and over, its railings and its four poles. Along the street west of it, fourteen shops, seven a side,
-each a Song timber frame under a folded gable roof, its front open to walk in by. A cruiser and a boxer motorcycle are
-parked on the street by the start, to get about on (not of the scroll's time). The wall and gate, the other kinds of
-building, boats and people are to come.
+each a Song timber frame under a folded gable roof, its front open to walk in by. Between them and the bridge, the
+two-storey wine house, its rooms reached by a stair, its festive gateway (彩楼欢门) before its door. A tea house at
+each end of the bridge, two warehouses on the north bank, and seven stalls under awnings and umbrellas. A cruiser and a
+boxer motorcycle are parked on the street by the start, to get about on (not of the scroll's time). The wall and gate,
+boats and people are to come.
 
 ## Build and launch
 

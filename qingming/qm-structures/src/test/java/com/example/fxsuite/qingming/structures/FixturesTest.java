@@ -1,8 +1,10 @@
 package com.example.fxsuite.qingming.structures;
 
+import com.example.fxsuite.avatar.sim.Vec2;
 import com.example.fxsuite.building.Atlas;
 import com.example.fxsuite.existence.Buildings;
 import com.example.fxsuite.qingming.land.Reach;
+import com.example.fxsuite.taxonomy.Leaf;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -12,11 +14,33 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * What stands in the reach: nothing wrong with its map; the Rainbow Bridge at its origin, landing on the street both
- * ways; fourteen shops along the street, each facing it and clear of it, none in another; each a piece of the world.
+ * ways; fourteen shops along the street, each facing it and clear of it; the wine house and its gateway, two tea
+ * houses, two warehouses, seven stalls; none of them in another, none in the river; each a piece of the world.
  */
 class FixturesTest {
 
     private static final List<Atlas.Fixture> ALL = Fixtures.atlas().fixtures();
+
+    private static long count(final Leaf<?> thing) {
+        return ALL.stream().filter(f -> f.thing().equals(thing)).count();
+    }
+
+    /** {@code f}'s floors' reach in the world: least and most east, least and most north; its turn a quarter's. */
+    private static double[] reach(final Atlas.Fixture f) {
+        final double r = Math.toRadians(f.yaw());
+        final double[] box = {Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY,
+            Double.NEGATIVE_INFINITY};
+        for (final Vec2 p : f.structure().rooms().stream().flatMap(room -> room.outline().stream()).toList()) {
+            // as the game turns a thing: its right (cos, -sin), its ahead (sin, cos)
+            final double x = f.x() + Math.cos(r) * p.x() + Math.sin(r) * p.z();
+            final double z = f.z() - Math.sin(r) * p.x() + Math.cos(r) * p.z();
+            box[0] = Math.min(box[0], x);
+            box[1] = Math.max(box[1], x);
+            box[2] = Math.min(box[2], z);
+            box[3] = Math.max(box[3], z);
+        }
+        return box;
+    }
 
     @Test
     void nothingWrongWithItsMapTheBridgeAtItsOriginLandingOnTheStreet() {
@@ -30,7 +54,7 @@ class FixturesTest {
     }
 
     @Test
-    void fourteenShopsAlongTheStreetEachFacingItAndClearOfItNoneInAnother() {
+    void fourteenShopsAlongTheStreetEachFacingItAndClearOfIt() {
         final List<Atlas.Fixture> shops = ALL.stream().filter(f -> f.thing().equals(new Buildings.ShopHouse()))
                 .toList();
         assertEquals(14, shops.size());
@@ -38,30 +62,54 @@ class FixturesTest {
             final boolean north = shop.z() > Fixtures.STREET;
             assertEquals(north ? 180 : 0, shop.yaw(), shop.name() + " facing the street");
             // its front 3 m back from the street's edge, its eaves, 90 cm out past it, clear of the street
-            final double front = Math.abs(shop.z() - Fixtures.STREET) - reach(shop, false);
+            final double[] box = reach(shop);
+            final double front = north ? box[2] - Fixtures.STREET : Fixtures.STREET - box[3];
             assertEquals(Fixtures.BACK, front, 1e-6, shop.name());
             assertTrue(front - 90 > 400, shop.name() + " clear of the street");
             assertTrue(shop.x() < -10_000 && shop.x() > -30_000, shop.name() + " on the straight stretch");
         }
-        for (final String row : List.of("north", "south")) {
-            final List<Atlas.Fixture> inRow = shops.stream().filter(f -> f.name().contains(row)).toList();
-            assertEquals(7, inRow.size());
-            for (int k = 0; k + 1 < inRow.size(); k++) {
-                // each wholly west of the last, their gables' overhangs, 50 cm each, apart
-                assertTrue(inRow.get(k).x() - reach(inRow.get(k), true) > inRow.get(k + 1).x()
-                        + reach(inRow.get(k + 1), true) + 100, row + " " + (k + 1) + " and the next");
+    }
+
+    @Test
+    void theWineHouseAndItsGatewayTheTeaHousesWarehousesAndStalls() {
+        assertEquals(1, count(new Buildings.WineHouse()));
+        assertEquals(1, count(new Buildings.FestiveGateway()));
+        assertEquals(2, count(new Buildings.TeaHouse()));
+        assertEquals(2, count(new Buildings.Warehouse()));
+        assertEquals(7, count(new Buildings.Stall()));
+        // the gateway before the wine house's door: on its middle line, between it and the street
+        final Atlas.Fixture wine = ALL.stream().filter(f -> f.name().equals("the wine house")).findFirst()
+                .orElseThrow();
+        final double[] gate = reach(ALL.stream().filter(f -> f.name().endsWith("gateway")).findFirst().orElseThrow());
+        assertEquals(wine.x(), (gate[0] + gate[1]) / 2, 1e-6);
+        assertTrue(gate[3] < reach(wine)[2] - 90 && gate[2] > Fixtures.STREET + 400,
+                "clear of its eaves and the street");
+    }
+
+    @Test
+    void noneOfThemInAnotherNoneInTheRiver() {
+        for (int i = 0; i < ALL.size(); i++) {
+            final double[] a = reach(ALL.get(i));
+            for (int j = i + 1; j < ALL.size(); j++) {
+                final double[] b = reach(ALL.get(j));
+                assertTrue(a[1] <= b[0] || b[1] <= a[0] || a[3] <= b[2] || b[3] <= a[2],
+                        ALL.get(i).name() + " and " + ALL.get(j).name());
+            }
+            if (i == 0) {
+                continue;
+            }
+            // all but the bridge on the plain: no corner of its floor down the river's bank
+            for (final double x : new double[] {a[0], a[1]}) {
+                for (final double z : new double[] {a[2], a[3]}) {
+                    assertTrue(Reach.ground().height(x, z) > -60,
+                            ALL.get(i).name() + " on the plain at " + x + ", " + z);
+                }
             }
         }
     }
 
-    /** How far {@code shop}'s floor reaches from its middle: across, along its front; or along, to its front. */
-    private static double reach(final Atlas.Fixture shop, final boolean across) {
-        return shop.structure().rooms().getFirst().outline().stream().mapToDouble(p -> across ? p.x() : p.z()).max()
-                .orElseThrow();
-    }
-
     @Test
     void eachAPieceOfTheWorld() {
-        assertEquals(15, Fixtures.pieces().size());
+        assertEquals(28, Fixtures.pieces().size());
     }
 }
