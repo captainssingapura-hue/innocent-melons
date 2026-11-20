@@ -53,14 +53,21 @@ public final class WardrobeBench extends Application {
     private record Range(String label, double min, double max) {
     }
 
-    private static final Map<String, Range> RANGES = Map.of(
-            "Robe.ease", new Range("How loose, cm", 0.5, 5),
-            "Robe.hem", new Range("Hem over the ground, cm", 2, 60),
-            "Robe.flare", new Range("Skirt flaring", 0, 1.5),
-            "Sash.wide", new Range("How wide, cm", 5, 30),
-            "Shirt.ease", new Range("How loose, cm", 0.3, 4),
-            "Boots.height", new Range("Up the shin, share", 0.05, 1),
-            "Belt.wide", new Range("How wide, cm", 1.5, 10));
+    private static final Map<String, Range> RANGES = Map.ofEntries(
+            Map.entry("Robe.ease", new Range("How loose, cm", 0.5, 5)),
+            Map.entry("Robe.hem", new Range("Hem over the ground, cm", 2, 60)),
+            Map.entry("Robe.flare", new Range("Skirt flaring", 0, 1.5)),
+            Map.entry("Sash.wide", new Range("How wide, cm", 5, 30)),
+            Map.entry("Shirt.ease", new Range("How loose, cm", 0.3, 4)),
+            Map.entry("Boots.height", new Range("Up the shin, share", 0.05, 1)),
+            Map.entry("Belt.wide", new Range("How wide, cm", 1.5, 10)),
+            Map.entry("Briefs.rise", new Range("Rise, share of the hips", 0.3, 1)),
+            Map.entry("BoxerBriefs.rise", new Range("Rise, share of the hips", 0.3, 1)),
+            Map.entry("BoxerBriefs.length", new Range("Down the thigh, share", 0.05, 0.9)),
+            Map.entry("Panties.rise", new Range("Rise, share of the hips", 0.3, 1)),
+            Map.entry("Undershirt.ease", new Range("How loose, cm", 0.1, 2)),
+            Map.entry("Bra.band", new Range("Band, cm", 1, 8)),
+            Map.entry("Bra.cups", new Range("Cups, cm out", 0.5, 6)));
 
 
     private final Bus bus = new Bus();
@@ -421,6 +428,7 @@ public final class WardrobeBench extends Application {
             case "colour" -> "Colour";
             case "trim" -> "Collar and cuffs";
             case "wideSleeves" -> "Wide sleeves";
+            case "waistband" -> "Waistband";
             case "longSleeves" -> "Long sleeves";
             default -> c.getName();
         };

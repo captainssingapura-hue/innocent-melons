@@ -32,9 +32,17 @@ public record Outfit(String name, List<Wear> wear) {
     public static final Outfit TRAVELLER = new Outfit("Traveller", List.of(new Wear.Leggings("#4a4f58"),
             new Wear.Shirt("#e9e4d8", 0.8, true), new Wear.Boots("#3b2a1f", 0.45), new Wear.Belt("#3b2a1f", 4)));
 
+    /** Men's underwear: an undershirt and briefs. */
+    public static final Outfit MENS_UNDERWEAR = new Outfit("Underwear, men's", List.of(
+            new Wear.Undershirt("#f2efe9", 0.3), new Wear.Briefs("#f2efe9", "#3a3f46", 0.65)));
+
+    /** Women's underwear: a bra and panties. */
+    public static final Outfit WOMENS_UNDERWEAR = new Outfit("Underwear, women's", List.of(
+            new Wear.Bra("#e9d7d2", 3, 2.5), new Wear.Panties("#e9d7d2", "#d6bfb8", 0.6)));
+
     /** The outfits there are, to start from. */
     public static final List<Outfit> ALL = List.of(BARE, monk("Monk, red", "#a3242b"), monk("Monk, blue", "#2e5a9e"),
-            monk("Monk, saffron", "#d9a521"), TRAVELLER);
+            monk("Monk, saffron", "#d9a521"), TRAVELLER, MENS_UNDERWEAR, WOMENS_UNDERWEAR);
 
     /** It with {@code piece} put on over the rest. */
     public Outfit with(final Wear piece) {

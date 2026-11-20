@@ -6,7 +6,8 @@ import java.util.Map;
  * Something worn, declared: what it is, how it is cut and in what colours; nothing of whom it is on. Of a kind, in a
  * family of kinds, each kind its own numbers to set:
  * <ul>
- *   <li>{@link Clothing}: {@link Robes} ({@link Robe}), {@link Tops} ({@link Shirt}), {@link Legwear}
+ *   <li>{@link Clothing}: {@link Underwear} ({@link ForMen}: {@link Briefs}, {@link BoxerBriefs}, {@link Undershirt};
+ *       {@link ForWomen}: {@link Bra}, {@link Panties}), {@link Robes} ({@link Robe}), {@link Tops} ({@link Shirt}), {@link Legwear}
  *       ({@link Leggings});</li>
  *   <li>{@link Footwear}: {@link Shoes}, {@link Boots};</li>
  *   <li>{@link Accessory}: {@link Sash}, {@link Belt}.</li>
@@ -20,7 +21,19 @@ public sealed interface Wear permits Wear.Clothing, Wear.Footwear, Wear.Accessor
     String name();
 
     /** What is worn on the body: fitted to it, close on it, or hanging from it. */
-    sealed interface Clothing extends Wear permits Robes, Tops, Legwear {
+    sealed interface Clothing extends Wear permits Underwear, Robes, Tops, Legwear {
+    }
+
+    /** What is worn next to the skin, under the rest. */
+    sealed interface Underwear extends Clothing permits ForMen, ForWomen {
+    }
+
+    /** Men's underwear. */
+    sealed interface ForMen extends Underwear permits Briefs, BoxerBriefs, Undershirt {
+    }
+
+    /** Women's underwear. */
+    sealed interface ForWomen extends Underwear permits Bra, Panties {
     }
 
     /** Long garments, from the shoulders to the ankles. */
@@ -142,15 +155,99 @@ public sealed interface Wear permits Wear.Clothing, Wear.Footwear, Wear.Accessor
         }
     }
 
+    /**
+     * Briefs: close on the hips, from the crotch up to {@code rise} of the way to the waist, the legs cut close at the
+     * tops of the thighs; a waistband round the top.
+     *
+     * @param colour     their cloth
+     * @param waistband  their waistband
+     * @param rise       how high they come up, as a share of the way from the crotch to the top of the hips
+     */
+    record Briefs(String colour, String waistband, double rise) implements ForMen {
+
+        @Override
+        public String name() {
+            return "Briefs";
+        }
+    }
+
+    /**
+     * Boxer briefs: as briefs, and on down the thighs {@code length} of the way to the knee.
+     *
+     * @param colour    their cloth
+     * @param waistband their waistband
+     * @param rise      how high they come up, as briefs do
+     * @param length    how far down the thigh, as a share of it
+     */
+    record BoxerBriefs(String colour, String waistband, double rise, double length) implements ForMen {
+
+        @Override
+        public String name() {
+            return "Boxer briefs";
+        }
+    }
+
+    /**
+     * An undershirt, a vest: from the waist up round the neck, close on the body's contour, {@code ease} to spare; no
+     * sleeves.
+     *
+     * @param colour its cloth
+     * @param ease   how loose, cm
+     */
+    record Undershirt(String colour, double ease) implements ForMen {
+
+        @Override
+        public String name() {
+            return "Undershirt";
+        }
+    }
+
+    /**
+     * A bra: a band round the ribs under the chest, {@code band} wide; two cups on the chest; a strap from each over its
+     * shoulder to the band behind.
+     *
+     * @param colour its cloth
+     * @param band   how wide its band, cm
+     * @param cups   how deep its cups stand out from the chest, cm
+     */
+    record Bra(String colour, double band, double cups) implements ForWomen {
+
+        @Override
+        public String name() {
+            return "Bra";
+        }
+    }
+
+    /**
+     * Panties: close on the hips, from the crotch up to {@code rise} of the way to the waist, cut high at the legs; a
+     * waistband round the top.
+     *
+     * @param colour    their cloth
+     * @param waistband their waistband
+     * @param rise      how high they come up, as a share of the way from the crotch to the top of the hips
+     */
+    record Panties(String colour, String waistband, double rise) implements ForWomen {
+
+        @Override
+        public String name() {
+            return "Panties";
+        }
+    }
+
     /** Each kind, as it is first put on. */
-    Map<Class<? extends Wear>, Wear> FIRST = Map.of(
-            Robe.class, new Robe("#8a5a2b", "#2a2420", 1.5, 11, 0.35, true),
-            Shirt.class, new Shirt("#e9e4d8", 0.8, true),
-            Leggings.class, new Leggings("#e8e4da"),
-            Shoes.class, new Shoes("#262321"),
-            Boots.class, new Boots("#3b2a1f", 0.45),
-            Sash.class, new Sash("#7a2a1c", 13),
-            Belt.class, new Belt("#3b2a1f", 4));
+    Map<Class<? extends Wear>, Wear> FIRST = Map.ofEntries(
+            Map.entry(Briefs.class, new Briefs("#f2efe9", "#3a3f46", 0.65)),
+            Map.entry(BoxerBriefs.class, new BoxerBriefs("#2f3a4a", "#1c1f24", 0.68, 0.35)),
+            Map.entry(Undershirt.class, new Undershirt("#f2efe9", 0.3)),
+            Map.entry(Bra.class, new Bra("#e9d7d2", 3, 2.5)),
+            Map.entry(Panties.class, new Panties("#e9d7d2", "#d6bfb8", 0.6)),
+            Map.entry(Robe.class, new Robe("#8a5a2b", "#2a2420", 1.5, 11, 0.35, true)),
+            Map.entry(Shirt.class, new Shirt("#e9e4d8", 0.8, true)),
+            Map.entry(Leggings.class, new Leggings("#e8e4da")),
+            Map.entry(Shoes.class, new Shoes("#262321")),
+            Map.entry(Boots.class, new Boots("#3b2a1f", 0.45)),
+            Map.entry(Sash.class, new Sash("#7a2a1c", 13)),
+            Map.entry(Belt.class, new Belt("#3b2a1f", 4)));
 
     /** {@code kind} as it is first put on. */
     static Wear first(final Class<? extends Wear> kind) {

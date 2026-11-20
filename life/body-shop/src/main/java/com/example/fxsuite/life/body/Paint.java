@@ -36,6 +36,7 @@ public enum Paint {
     LEGGINGS("Leggings", "#e8e4da", Finish.MATTE),
     CLOTH_SHOES("Cloth shoes", "#262321", Finish.MATTE),
     LEATHER("Leather", "#3b2a1f", Finish.GLOSS),
+    UNDERWEAR("Underwear", "#f2efe9", Finish.MATTE),
     MARK_MASS("Centre of mass", "#e24b4a", Finish.MATTE),
     MARK_SUPPORT("Support", "#ba7517", Finish.MATTE),
     MARK_FALLING("Falling", "#a32d2d", Finish.MATTE),

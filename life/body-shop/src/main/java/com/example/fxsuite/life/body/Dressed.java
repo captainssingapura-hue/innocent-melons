@@ -46,6 +46,7 @@ public final class Dressed {
             final double ease = switch (wear.get(i)) {
                 case Wear.Robe r -> r.ease();
                 case Wear.Shirt s -> s.ease();
+                case Wear.Undershirt u -> u.ease();
                 default -> -1;
             };
             if (ease >= 0) {
@@ -71,6 +72,8 @@ public final class Dressed {
             Part.LEFT_GIRDLE, Part.RIGHT_UPPER_ARM, Part.LEFT_UPPER_ARM, Part.RIGHT_THIGH, Part.LEFT_THIGH);
     private static final Set<Part> SHIRTED = EnumSet.of(Part.ABDOMEN, Part.CHEST, Part.RIGHT_GIRDLE, Part.LEFT_GIRDLE,
             Part.RIGHT_UPPER_ARM, Part.LEFT_UPPER_ARM);
+    private static final Set<Part> UNDERSHIRTED = EnumSet.of(Part.ABDOMEN, Part.CHEST, Part.RIGHT_GIRDLE,
+            Part.LEFT_GIRDLE);
     private static final Set<Part> LEGGED = EnumSet.of(Part.PELVIS, Part.RIGHT_THIGH, Part.LEFT_THIGH, Part.RIGHT_SHIN,
             Part.LEFT_SHIN);
 
@@ -84,6 +87,7 @@ public final class Dressed {
             final boolean covers = switch (wear.get(i)) {
                 case Wear.Robe r -> ROBED.contains(p) || forearm(p);
                 case Wear.Shirt s -> SHIRTED.contains(p) || forearm(p) && s.longSleeves();
+                case Wear.Undershirt u -> UNDERSHIRTED.contains(p);
                 default -> false;
             };
             if (covers) {
@@ -103,7 +107,10 @@ public final class Dressed {
         final List<Puppet.Layer> layers = new ArrayList<>();
         final boolean underLeggings = wear.stream().anyMatch(w -> w instanceof Wear.Leggings) && LEGGED.contains(p);
         final boolean underShoes = wear.stream().anyMatch(w -> w instanceof Wear.Footwear) && foot(p);
-        if (!hidden(p, 0) && !underLeggings && !underShoes) {
+        // the hips under a pair of underwear: under its cloth, not through it
+        final boolean underPants = p == Part.PELVIS && wear.stream().anyMatch(w -> w instanceof Wear.Briefs
+                || w instanceof Wear.BoxerBriefs || w instanceof Wear.Panties);
+        if (!hidden(p, 0) && !underLeggings && !underShoes && !underPants) {
             layers.add(new Puppet.Layer(bare, Palette.DEFAULT.with(Paint.SKIN, person.skin())));
         }
         for (int i = 0; i < wear.size(); i++) {
@@ -145,6 +152,9 @@ public final class Dressed {
                         bare.forEach(k -> s.add(Cloth.fitted(k, fit.ease() * 0.6, "sleeve", Paint.ROBE)));
                     }
                 }
+
+
+
                 default -> {
                 }
             }
@@ -153,6 +163,64 @@ public final class Dressed {
             }
         }
         return layers;
+    }
+
+    /** How close underwear is on the skin, cm. */
+    private static final double UNDER = 0.4;
+
+    /**
+     * A pair of underwear as {@code rig} carries it: fitted round the hips and the tops of the thighs as one, from the
+     * crotch up {@code rise} of the way to the top of the hips; down each thigh {@code down} of the way to the knee, if
+     * any; its legs cut up at the sides by {@code cut}, cm; a waistband round its top.
+     */
+    private List<Surface> pants(final double rise, final double down, final double cut, final Rig rig) {
+        final Proportions body = person.body();
+        final Garment pants = FITTED.computeIfAbsent(body.said() + " pants " + rise + " " + down + " " + cut,
+                k -> Garment.pants(OUTLINES.get(body.said()), UNDER, rise, down, cut, Paint.UNDERWEAR));
+        final List<Surface> s = new ArrayList<>(pants.at(rig));
+        final double[][] round = new double[25][];
+        for (int k = 0; k < round.length; k++) {
+            round[k] = new double[] {1, 90 - k * 15.0};
+        }
+        s.addAll(Cloth.band("waistband", Paint.TRIM, laid(pants, round, 0.2, rig), rig.place(Part.PELVIS, V3.ZERO),
+                2.2 * body.scale(), 0.5));
+        return s;
+    }
+
+    /**
+     * A bra laid on {@code on}: a band round the ribs under the chest; a cup on each side of the chest, standing out as
+     * deep as it is set; a strap from the top of each cup up over its shoulder and down the back to the band.
+     */
+    private static List<Surface> bra(final Garment on, final Wear.Bra bra, final Rig rig) {
+        final List<Surface> s = new ArrayList<>();
+        final double[][] band = new double[25][];
+        for (int k = 0; k < band.length; k++) {
+            band[k] = new double[] {0.5, 90 - k * 15.0};
+        }
+        final List<V3> round = new ArrayList<>();
+        for (final double[] b : band) {
+            round.add(on.at(on.onHeight(b[0], b[1], 0.3), rig));
+        }
+        final V3 middle = rig.place(Part.CHEST, V3.ZERO);
+        s.addAll(Cloth.band("bra band", Paint.UNDERWEAR, round, middle, bra.band(), 0.5));
+        for (final int side : new int[] {1, -1}) {
+            // the cup, on the chest a little to its side, standing out from it
+            final double front = side > 0 ? 55 : 125;
+            final V3 at = on.at(on.onHeight(0.62, front, 0), rig);
+            final V3 out = at.minus(new V3(middle.x(), at.y(), middle.z())).unit();
+            s.add(Shapes.ellipsoid("cup", Paint.UNDERWEAR, at, 6, 5.5,
+                    Math.max(1, bra.cups() * 0.9), 18, 10));
+            // the strap, from the cup's top over the shoulder to the band behind
+            final double[][] way = side > 0
+                    ? new double[][] {{0.72, 62}, {0.88, 55}, {0.97, 40}, {0.9, -40}, {0.7, -55}, {0.52, -60}}
+                    : new double[][] {{0.72, 118}, {0.88, 125}, {0.97, 140}, {0.9, -140}, {0.7, -125}, {0.52, -120}};
+            final List<V3> strap = new ArrayList<>();
+            for (final double[] w : way) {
+                strap.add(on.at(on.onHeight(w[0], w[1], 0.35), rig));
+            }
+            s.addAll(Cloth.band("bra strap", Paint.UNDERWEAR, strap, middle, 1.4, 0.4));
+        }
+        return s;
     }
 
     private static boolean foot(final Part p) {
@@ -164,6 +232,11 @@ public final class Dressed {
         return switch (w) {
             case Wear.Robe r -> Palette.DEFAULT.with(Paint.ROBE, r.colour()).with(Paint.TRIM, r.trim());
             case Wear.Shirt s -> Palette.DEFAULT.with(Paint.ROBE, s.colour());
+            case Wear.Undershirt u -> Palette.DEFAULT.with(Paint.UNDERWEAR, u.colour()).with(Paint.ROBE, u.colour());
+            case Wear.Bra b -> Palette.DEFAULT.with(Paint.UNDERWEAR, b.colour());
+            case Wear.Briefs b -> Palette.DEFAULT.with(Paint.UNDERWEAR, b.colour()).with(Paint.TRIM, b.waistband());
+            case Wear.BoxerBriefs b -> Palette.DEFAULT.with(Paint.UNDERWEAR, b.colour()).with(Paint.TRIM, b.waistband());
+            case Wear.Panties b -> Palette.DEFAULT.with(Paint.UNDERWEAR, b.colour()).with(Paint.TRIM, b.waistband());
             case Wear.Leggings l -> Palette.DEFAULT.with(Paint.LEGGINGS, l.colour());
             case Wear.Shoes s -> Palette.DEFAULT.with(Paint.CLOTH_SHOES, s.colour());
             case Wear.Boots b -> Palette.DEFAULT.with(Paint.LEATHER, b.colour());
@@ -241,6 +314,11 @@ public final class Dressed {
                             fit.ease() + 1.5, 9));
                 }
                 case Wear.Shirt sh -> hung.addAll(fit.garment().at(rig));
+                case Wear.Undershirt u -> hung.add(fit.garment().bodyAt(rig));
+                case Wear.Bra bra -> hung.addAll(bra(under(i), bra, rig));
+                case Wear.Briefs b -> hung.addAll(pants(b.rise(), 0, 6, rig));
+                case Wear.BoxerBriefs b -> hung.addAll(pants(b.rise(), b.length(), 0, rig));
+                case Wear.Panties b -> hung.addAll(pants(b.rise(), 0, 10, rig));
                 case Wear.Sash sash -> hung.addAll(Cloth.band("sash", Paint.KASAYA, laid(under(i), SASH, 0.6, rig),
                         rig.place(Part.ABDOMEN, new V3(0, 10, 0)), sash.wide() * s, 0.7));
                 case Wear.Belt b -> hung.addAll(Cloth.band("belt", Paint.LEATHER, laid(under(i), BELT, 0.4, rig),

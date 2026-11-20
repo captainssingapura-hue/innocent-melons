@@ -51,6 +51,29 @@ public final class Garment {
         return out;
     }
 
+    /** Its body alone, without its sleeves, as {@code now} carries it: a vest's. */
+    public Surface bodyAt(final Rig now) {
+        return at(now).getFirst();
+    }
+
+    /**
+     * A point on its body as {@link #on} finds one, but {@code high} of the way up from its waist to its neck by height,
+     * not by its rings.
+     */
+    public Bound onHeight(final double high, final double round, final double off) {
+        final List<List<Bound>> rings = pieces.getFirst().rings();
+        final double bottom = rings.getFirst().getFirst().rest().y();
+        final double top = rings.getLast().getFirst().rest().y();
+        final double y = bottom + (top - bottom) * Math.clamp(high, 0, 1);
+        int best = 0;
+        for (int i = 0; i < rings.size(); i++) {
+            if (Math.abs(rings.get(i).getFirst().rest().y() - y) < Math.abs(rings.get(best).getFirst().rest().y() - y)) {
+                best = i;
+            }
+        }
+        return on((double) best / (rings.size() - 1), round, off);
+    }
+
     /** Where {@code b} is as {@code now} carries it: where each of its parts takes it, blended by weight. */
     public V3 at(final Bound b, final Rig now) {
         V3 sum = V3.ZERO;
@@ -104,6 +127,119 @@ public final class Garment {
         return new Garment(rest, pieces);
     }
 
+    /** How many rings round a pair of pants at the hips, and points round each; along each leg. */
+    static final int HIP_RINGS = 14;
+    static final int HIP_ROUND = 48;
+    static final int LEG_RINGS = 10;
+
+    /**
+     * A pair of pants on the body {@code env} outlines, {@code ease} out from its contour, coloured {@code paint}: round
+     * the hips and the tops of both thighs as one, from the crotch up to {@code rise} of the way to the top of the hips;
+     * and, if {@code down} is more than nothing, down each thigh that share of the way to the knee. Its points moving
+     * with the pelvis, and with the thigh they lie over, the lower the more. Its legs cut up toward the hips at the
+     * sides by {@code cut}, cm, low at the crotch before and behind.
+     */
+    public static Garment pants(final Envelope env, final double ease, final double rise, final double down,
+                                final double cut,
+                                final Paint paint) {
+        final Rig rest = env.rest();
+        final List<Piece> pieces = new ArrayList<>();
+        final V3 right = rest.frame(Part.RIGHT_THIGH).at();
+        final V3 left = rest.frame(Part.LEFT_THIGH).at();
+        final double crotch = rest.place(Part.PELVIS, new V3(0, -7.5, 0)).y();
+        final double top = rest.place(Part.PELVIS, new V3(0, -9 + 24 * rise, 0)).y();
+        final Set<Part> hips = EnumSet.of(Part.PELVIS, Part.RIGHT_THIGH, Part.LEFT_THIGH);
+        final double[][] r = new double[HIP_RINGS][HIP_ROUND];
+        final double[][] ys = new double[HIP_RINGS][HIP_ROUND];
+        final double[] zs = new double[HIP_RINGS];
+        for (int i = 0; i < HIP_RINGS; i++) {
+            final double share = (double) i / (HIP_RINGS - 1);
+            final double y = crotch + (top - crotch) * share;
+            final V3 rough = new V3(0, y, 0);
+            final double front = env.out(rough, V3.Z, hips, v -> true);
+            final double back = env.out(rough, V3.Z.times(-1), hips, v -> true);
+            zs[i] = front > 0 && back > 0 ? (front - back) / 2 : 0;
+            for (int j = 0; j < HIP_ROUND; j++) {
+                final double phi = 2 * Math.PI * j / HIP_ROUND;
+                // the leg openings cut up at the sides, low at the crotch before and behind
+                final double bottom = crotch + cut * Math.pow(Math.abs(Math.cos(phi)), 1.5);
+                ys[i][j] = bottom + (top - bottom) * share;
+                r[i][j] = env.out(new V3(0, ys[i][j], zs[i]), new V3(Math.cos(phi), 0, Math.sin(phi)), hips,
+                        v -> true);
+            }
+        }
+        fill(r);
+        bridge(r, 4, 1);
+        final List<List<Bound>> rings = new ArrayList<>();
+        for (int i = 0; i < HIP_RINGS; i++) {
+            final List<Bound> ring = new ArrayList<>();
+            for (int j = 0; j < HIP_ROUND; j++) {
+                final double phi = 2 * Math.PI * j / HIP_ROUND;
+                final V3 p = new V3((r[i][j] + ease) * Math.cos(phi), ys[i][j],
+                        zs[i] + (r[i][j] + ease) * Math.sin(phi));
+                ring.add(hipBound(p, right, left));
+            }
+            rings.add(ring);
+        }
+        pieces.add(new Piece("pants", paint, rings, hipBound(new V3(0, crotch - 1, zs[0]), right, left),
+                hipBound(new V3(0, top + 1, zs[HIP_RINGS - 1]), right, left)));
+        if (down > 0) {
+            for (final int side : new int[] {1, -1}) {
+                pieces.add(leg(env, rest, side, ease, down, paint));
+            }
+        }
+        return new Garment(rest, pieces);
+    }
+
+    /** What a point of a pair of pants at the hips moves with: the pelvis, and the thigh under it, the lower the more. */
+    private static Bound hipBound(final V3 p, final V3 right, final V3 left) {
+        final V3 hip = p.x() >= 0 ? right : left;
+        final double toThigh = 0.6 * smooth(hip.y() + 4, hip.y() - 8, p.y());
+        final Part thigh = p.x() >= 0 ? Part.RIGHT_THIGH : Part.LEFT_THIGH;
+        return new Bound(p, new Part[] {Part.PELVIS, thigh}, new double[] {1 - toThigh, toThigh});
+    }
+
+    /** A pair of pants' leg on side {@code side}: down the thigh from below the crotch, {@code down} of the way to the knee. */
+    private static Piece leg(final Envelope env, final Rig rest, final int side, final double ease, final double down,
+                             final Paint paint) {
+        final Part thigh = side > 0 ? Part.RIGHT_THIGH : Part.LEFT_THIGH;
+        final V3 hip = rest.frame(thigh).at();
+        final V3 knee = rest.frame(side > 0 ? Part.RIGHT_SHIN : Part.LEFT_SHIN).at();
+        final V3 u = knee.minus(hip).unit();
+        final double length = knee.minus(hip).length();
+        final V3 a = u.cross(V3.Z).unit();
+        final V3 b = a.cross(u).unit();
+        final double from = 0.1;
+        final double[][] r = new double[LEG_RINGS][SLEEVE_ROUND];
+        final V3[] middles = new V3[LEG_RINGS];
+        for (int i = 0; i < LEG_RINGS; i++) {
+            final double s = from + (down - from) * i / (LEG_RINGS - 1);
+            middles[i] = hip.plus(u.times(length * s));
+            for (int j = 0; j < SLEEVE_ROUND; j++) {
+                final double phi = 2 * Math.PI * j / SLEEVE_ROUND;
+                r[i][j] = env.out(middles[i], a.times(Math.cos(phi)).plus(b.times(Math.sin(phi))), EnumSet.of(thigh),
+                        v -> true);
+            }
+        }
+        fill(r);
+        bridge(r, 2, 1);
+        final List<List<Bound>> rings = new ArrayList<>();
+        for (int i = 0; i < LEG_RINGS; i++) {
+            final double toThigh = i == 0 ? 0.7 : 1;
+            final List<Bound> ring = new ArrayList<>();
+            for (int j = 0; j < SLEEVE_ROUND; j++) {
+                final double phi = 2 * Math.PI * j / SLEEVE_ROUND;
+                final V3 way = a.times(Math.cos(phi)).plus(b.times(Math.sin(phi)));
+                ring.add(new Bound(middles[i].plus(way.times(r[i][j] + ease)), new Part[] {Part.PELVIS, thigh},
+                        new double[] {1 - toThigh, toThigh}));
+            }
+            rings.add(ring);
+        }
+        return new Piece((side > 0 ? "right" : "left") + " leg", paint, rings,
+                new Bound(middles[0].minus(u.times(2)), new Part[] {thigh}, new double[] {1}),
+                new Bound(middles[LEG_RINGS - 1].plus(u.times(1)), new Part[] {thigh}, new double[] {1}));
+    }
+
     /** The robe's body: from the waist up round the trunk and over the shoulders to round the neck. */
     private static Piece body(final Envelope env, final Rig rest, final double ease, final Paint paint) {
         final double waist = rest.place(Part.PELVIS, new V3(0, 6, 0)).y();
@@ -146,7 +282,8 @@ public final class Garment {
             final List<Bound> ring = new ArrayList<>();
             for (int j = 0; j < BODY_ROUND; j++) {
                 final double phi = 2 * Math.PI * j / BODY_ROUND;
-                final V3 p = new V3((r[i][j] + ease) * Math.cos(phi), ys[i], zs[i] + (r[i][j] + ease) * Math.sin(phi));
+                final V3 p = new V3((r[i][j] + ease) * Math.cos(phi), ys[i],
+                        zs[i] + (r[i][j] + ease) * Math.sin(phi));
                 ring.add(bodyBound(p, yAbdomen, yChest, rightShoulder, leftShoulder));
             }
             rings.add(ring);
