@@ -104,37 +104,50 @@ public final class Cloth {
     }
 
     /**
-     * A skirt hanging from {@code waist} (its middle, {@code waistAcross} out to each side and {@code waistDeep} to the
-     * front and back) down to {@code hem} over the ground, flaring to {@code hemAcross} and {@code hemDeep}: its rings
-     * level, each one at least as wide as the one above it and wide enough, {@code ease} to spare, to hold
-     * {@code legs} where they are; soft folds round it, deeper toward its hem.
+     * A skirt carrying on down from {@code top}, the ring round the bottom of the garment above it (its points round
+     * from the right, toward the front), to {@code hem} over the ground: from that ring's own outline it eases into
+     * hanging, flaring out by {@code flare} of its width by the hem (more to the front and back); its rings level, each
+     * at least as wide as the one above it and wide enough, {@code ease} to spare, to hold {@code legs} where they are;
+     * soft folds round it, deeper toward its hem.
      */
-    public static Surface skirt(final String name, final Paint paint, final V3 waist, final double waistAcross,
-                                final double waistDeep, final double hem, final double hemAcross, final double hemDeep,
-                                final List<Leg> legs, final double ease, final int folds) {
+    public static Surface skirt(final String name, final Paint paint, final List<V3> top, final double hem,
+                                final double flare, final List<Leg> legs, final double ease, final int folds) {
         final int rings = 12;
-        final int round = 40;
+        final int round = top.size();
+        double cx = 0;
+        double cy = 0;
+        double cz = 0;
+        for (final V3 p : top) {
+            cx += p.x() / round;
+            cy += p.y() / round;
+            cz += p.z() / round;
+        }
+        // how far out it reaches each way from the middle: to the right and left, to the front and back
+        double right = 0;
+        double left = 0;
+        double front = 0;
+        double back = 0;
+        for (final V3 p : top) {
+            right = Math.max(right, p.x() - cx);
+            left = Math.max(left, cx - p.x());
+            front = Math.max(front, p.z() - cz);
+            back = Math.max(back, cz - p.z());
+        }
+        final double[] from = {right, left, front, back};
         final List<List<V3>> out = new ArrayList<>();
-        final double cx = waist.x();
-        final double cz = waist.z();
-        // how far out it reaches each way from the waist's middle: to the right and left, to the front and back
-        double right = waistAcross;
-        double left = waistAcross;
-        double front = waistDeep;
-        double back = waistDeep;
         for (int k = 0; k < rings; k++) {
             final double t = (double) k / (rings - 1);
             // more rings near the waist, where it turns from fitted to hanging
             final double s = t * t * 0.4 + t * 0.6;
-            final double y = waist.y() + (hem - waist.y()) * s;
-            final double across = waistAcross + (hemAcross - waistAcross) * s;
-            final double deep = waistDeep + (hemDeep - waistDeep) * s;
+            final double y = cy + (hem - cy) * s;
+            final double across = 1 + flare * s;
+            final double deep = 1 + flare * 1.2 * s;
             // no narrower than the ring above, nor than it flares; and out as far as each leg needs, each way alone:
             // the leg ahead pushes its front out, the one behind its back
-            right = Math.max(right, across);
-            left = Math.max(left, across);
-            front = Math.max(front, deep);
-            back = Math.max(back, deep);
+            right = Math.max(right, from[0] * across);
+            left = Math.max(left, from[1] * across);
+            front = Math.max(front, from[2] * deep);
+            back = Math.max(back, from[3] * deep);
             for (final Leg leg : legs) {
                 final double[] l = leg.at(y);
                 if (l == null) {
@@ -145,17 +158,30 @@ public final class Cloth {
                 front = Math.max(front, l[1] - cz + l[2] + ease);
                 back = Math.max(back, cz - l[1] + l[2] + ease);
             }
+            // from the outline above into hanging, over its first quarter
+            final double hung = s <= 0 ? 0 : Math.min(1, s / 0.25);
+            final double w = hung * hung * (3 - 2 * hung);
             final List<V3> ring = new ArrayList<>(round);
             for (int j = 0; j < round; j++) {
                 final double phi = 2 * Math.PI * j / round;
                 final double c = Math.cos(phi);
                 final double sn = Math.sin(phi);
                 final double fold = 1 + 0.035 * s * Math.sin(folds * phi);
-                ring.add(new V3(cx + (c > 0 ? right : left) * fold * c, y, cz + (sn > 0 ? front : back) * fold * sn));
+                final V3 hanging = new V3(cx + (c > 0 ? right : left) * fold * c, y,
+                        cz + (sn > 0 ? front : back) * fold * sn);
+                final V3 above = new V3(top.get(j).x(), y, top.get(j).z());
+                // never inside the outline above, so it does not draw in under it
+                final V3 at = above.plus(hanging.minus(above).times(w));
+                ring.add(w < 1 ? farther(at, above, cx, cz) : at);
             }
             out.add(ring);
         }
         final V3 last = out.getLast().getFirst();
-        return new Surface(name, paint, out, new V3(cx, waist.y() + 1, cz), new V3(cx, last.y(), cz), true);
+        return new Surface(name, paint, out, new V3(cx, cy + 1, cz), new V3(cx, last.y(), cz), true);
+    }
+
+    /** Of {@code a} and {@code b} at one height, the farther out from the middle {@code cx, cz}. */
+    private static V3 farther(final V3 a, final V3 b, final double cx, final double cz) {
+        return Math.hypot(a.x() - cx, a.z() - cz) >= Math.hypot(b.x() - cx, b.z() - cz) ? a : b;
     }
 }

@@ -52,22 +52,23 @@ public record Monk(String name, Proportions proportions, Palette palette, double
         return new Monk(name, proportions, colours, ease, hem, flare);
     }
 
-    /** What is drawn of {@code p}, fitted to it, in its own frame as on the right side: its robe, or its skin. */
+    /** Robes fitted already, by the body they fit and how loose: fitting one is slow. */
+    private static final java.util.Map<String, Garment> FITTED = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** Its robe, from the waist to the neck and down to the elbows, fitted to its body's contour. */
+    public Garment robe() {
+        return FITTED.computeIfAbsent(proportions.said() + " " + ease, k -> Garment.robe(proportions, ease, Paint.ROBE));
+    }
+
+    /**
+     * What is drawn of {@code p}, fitted to it, in its own frame as on the right side: its skin where it shows, its
+     * wide sleeve, its leggings and shoes; nothing where its robe covers it ({@link #robe}).
+     */
     public List<Surface> drawn(final Part p) {
         final List<Surface> skin = Skin.shapes(p, Muscles.Bulge.REST, Puppet.TWIST, Skin.HUMAN);
         final List<Surface> s = new ArrayList<>();
         switch (p) {
             case HEAD, NECK, RIGHT_HAND, LEFT_HAND -> s.addAll(skin);
-            case CHEST -> {
-                skin.forEach(k -> s.add(Cloth.fitted(k, ease, "robe", Paint.ROBE)));
-                s.addAll(collar(s.getFirst()));
-            }
-            case ABDOMEN -> skin.forEach(k -> s.add(Cloth.fitted(k, ease, "robe", Paint.ROBE)));
-            case PELVIS -> skin.forEach(k -> s.add(Cloth.fitted(k, ease + 0.5, "robe", Paint.ROBE)));
-            // over the shoulders close, so they do not stand up round the neck
-            case RIGHT_GIRDLE, LEFT_GIRDLE -> skin.forEach(k -> s.add(Cloth.fitted(k, 0.5, "robe", Paint.ROBE)));
-            case RIGHT_UPPER_ARM, LEFT_UPPER_ARM ->
-                    skin.forEach(k -> s.add(Cloth.fitted(k, ease, "robe", Paint.ROBE)));
             // the sleeve a wide bell from the elbow, its hem short of the wrist
             case RIGHT_FOREARM, LEFT_FOREARM -> s.addAll(Cloth.bell("sleeve", Paint.ROBE, Paint.TRIM,
                     new V3(0, 3, 0), new V3(0, -22, 0.5), 5 + ease, 13 + ease));
@@ -75,76 +76,46 @@ public record Monk(String name, Proportions proportions, Palette palette, double
             case RIGHT_FOOT, LEFT_FOOT, RIGHT_TOES, LEFT_TOES ->
                     skin.forEach(k -> s.add(Cloth.fitted(k, 0.6, "shoe", Paint.CLOTH_SHOES)));
             // under the robe, out of sight: not drawn
-            case RIGHT_THIGH, LEFT_THIGH -> {
+            default -> {
             }
         }
         return s;
     }
 
     /**
-     * The crossed collar on {@code robe}, the chest's: a band round the back of the neck, its left lapel crossing over
-     * to the right under the right arm, the right's edge short under it.
+     * The crossed collar, on the robe: round the back of the neck, its left lapel crossing over to the right under the
+     * right arm, the right's edge short under it. Each point up from the waist to the neck, and round from the right.
      */
-    private static List<Surface> collar(final Surface robe) {
-        final List<V3> over = List.of(on(robe, 6, 31, -1), on(robe, 0, 32, -1), on(robe, -6, 31, -1),
-                on(robe, -5, 30, 1), on(robe, 0, 24, 1), on(robe, 6, 18, 1), on(robe, 11, 12, 1));
-        final List<V3> under = List.of(on(robe, 5, 30, 1), on(robe, 1, 26, 1));
-        final V3 middle = new V3(0, 15, 0);
-        final List<Surface> s = new ArrayList<>(Cloth.band("collar", Paint.TRIM, over, middle, 3.6, 0.7));
-        s.addAll(Cloth.band("under collar", Paint.TRIM, under, middle, 3, 0.5));
-        return s;
+    private static final double[][] COLLAR = {{1, 75}, {1, 30}, {1, -30}, {1, -90}, {1, -150}, {1, 150}, {1, 110},
+        {0.9, 95}, {0.8, 72}, {0.7, 48}, {0.62, 25}};
+    private static final double[][] UNDER_COLLAR = {{1, 72}, {0.92, 84}};
+    /** The kasaya's way on the robe: from over the left shoulder down across the chest to the right hip, round, back. */
+    private static final double[][] KASAYA = {{0.94, 180}, {0.86, 140}, {0.66, 100}, {0.42, 60}, {0.2, 25},
+        {0.06, 0}, {0.12, -40}, {0.4, -100}, {0.66, -140}, {0.86, -170}, {0.94, 180}};
+
+    /** The points {@code way} on the robe, {@code off} out from it, as {@code rig} carries them. */
+    private List<V3> laid(final double[][] way, final double off, final Rig rig) {
+        final Garment robe = robe();
+        final List<V3> out = new ArrayList<>();
+        for (final double[] w : way) {
+            out.add(robe.at(robe.on(w[0], w[1], off), rig));
+        }
+        return out;
     }
 
     /**
-     * The point of {@code robe} nearest {@code x} across at {@code y} up, on its front ({@code side} 1) or back (-1):
-     * out of it a little, for what lies on it.
-     */
-    static V3 on(final Surface robe, final double x, final double y, final int side) {
-        List<V3> ring = robe.rings().getFirst();
-        double off = Double.POSITIVE_INFINITY;
-        for (final List<V3> r : robe.rings()) {
-            double h = 0;
-            for (final V3 p : r) {
-                h += p.y();
-            }
-            h /= r.size();
-            if (Math.abs(h - y) < off) {
-                off = Math.abs(h - y);
-                ring = r;
-            }
-        }
-        V3 best = ring.getFirst();
-        double miss = Double.POSITIVE_INFINITY;
-        for (final V3 p : ring) {
-            if (p.z() * side > 0 && Math.abs(p.x() - x) < miss) {
-                miss = Math.abs(p.x() - x);
-                best = p;
-            }
-        }
-        return best.plus(new V3(0, 0, 0.4 * side));
-    }
-
-    /** The kasaya's way round the body, each point in a part's frame, as on the right side; round from the shoulder. */
-    private static final List<Object[]> KASAYA = List.of(
-            new Object[] {Part.CHEST, new V3(-11, 27, 1)},
-            new Object[] {Part.CHEST, new V3(-9, 21, 13.5)},
-            new Object[] {Part.CHEST, new V3(-1, 11, 16.5)},
-            new Object[] {Part.ABDOMEN, new V3(8, 6, 15)},
-            new Object[] {Part.PELVIS, new V3(16, 12, 9)},
-            new Object[] {Part.PELVIS, new V3(20, 10, -2)},
-            new Object[] {Part.PELVIS, new V3(15, 13, -13)},
-            new Object[] {Part.ABDOMEN, new V3(4, 8, -15)},
-            new Object[] {Part.CHEST, new V3(-6, 12, -15.5)},
-            new Object[] {Part.CHEST, new V3(-10, 22, -11)},
-            new Object[] {Part.CHEST, new V3(-11, 27, 1)});
-
-    /**
-     * What hangs, as {@code rig} stands, in the body's frame: the skirt from the waist, clear of the legs; the kasaya
-     * round the body from the left shoulder.
+     * What is worked out afresh as {@code rig} stands, in the body's frame: the robe fitted to its contour, its body and
+     * sleeves; its collar and the kasaya laid on it; the skirt hanging from the waist, clear of the legs.
      */
     public List<Surface> hanging(final Rig rig) {
         final double s = proportions.scale();
         final double b = proportions.build();
+        final List<Surface> hung = new ArrayList<>(robe().at(rig));
+        final V3 middle = rig.place(Part.CHEST, new V3(0, 0, 0));
+        hung.addAll(Cloth.band("collar", Paint.TRIM, laid(COLLAR, 0.3, rig), middle, 3.6 * s, 0.7));
+        hung.addAll(Cloth.band("under collar", Paint.TRIM, laid(UNDER_COLLAR, 0.15, rig), middle, 3 * s, 0.5));
+        hung.addAll(Cloth.band("kasaya", Paint.KASAYA, laid(KASAYA, 0.6, rig), rig.place(Part.ABDOMEN,
+                new V3(0, 10, 0)), 13 * s, 0.7));
         final List<Cloth.Leg> legs = new ArrayList<>();
         for (final int side : new int[] {1, -1}) {
             final Part thigh = side > 0 ? Part.RIGHT_THIGH : Part.LEFT_THIGH;
@@ -153,18 +124,10 @@ public record Monk(String name, Proportions proportions, Palette palette, double
             legs.add(new Cloth.Leg(rig.frame(thigh).at(), rig.frame(shin).at(), rig.frame(foot).at(), 9 * s * b,
                     6 * s * b, 4.5 * s * b));
         }
-        final V3 waist = rig.place(Part.PELVIS, new V3(0, 9, 0.5));
-        final double across = 17 * s * b + ease + 1;
-        final double deep = 12 * s * b + ease + 1;
-        final List<Surface> hung = new ArrayList<>();
-        hung.add(Cloth.skirt("skirt", Paint.ROBE, waist, across, deep, hem * s, across * (1 + flare),
-                deep * (1 + flare * 1.2), legs, ease + 1.5, 9));
-        final List<V3> way = new ArrayList<>();
-        for (final Object[] o : KASAYA) {
-            way.add(rig.place((Part) o[0], (V3) o[1]));
-        }
-        hung.addAll(Cloth.band("kasaya", Paint.KASAYA, way, rig.place(Part.ABDOMEN, new V3(0, 10, 0)),
-                13 * s, 0.7));
+        // the skirt carrying on from the robe's bottom edge as it is now, its outline, point for point
+        final Garment robe = robe();
+        final List<V3> waist = robe.pieces().getFirst().rings().getFirst().stream().map(p -> robe.at(p, rig)).toList();
+        hung.add(Cloth.skirt("skirt", Paint.ROBE, waist, hem * s, flare, legs, ease + 1.5, 9));
         return hung;
     }
 }
