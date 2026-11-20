@@ -6,8 +6,9 @@ import com.example.fxsuite.bay.buildings.Mbfc;
 import com.example.fxsuite.bay.buildings.Orq;
 
 /**
- * The bay's jar, run: its bench ({@link BayBench}), the bay with its towers standing in it; or, with {@code towers},
- * the tower bench with the bay's towers offered among its choices, each to be looked into on its own. Started from a
+ * The bay's jar, run: its bench ({@link BayBench}), its towers one at a time where each stands, each played alone;
+ * or, with {@code towers}, the tower bench with the bay's towers offered among its choices, each on its own
+ * ground, away from the bay. Started from a
  * class that is not JavaFX's, so the jar runs with JavaFX on its class path; the engine's worlds and the bay told of
  * the simulation first, by the bay itself.
  */
