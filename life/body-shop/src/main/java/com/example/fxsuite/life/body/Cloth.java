@@ -40,6 +40,30 @@ public final class Cloth {
         return new Surface(name, paint, rings, start, end, skin.smooth());
     }
 
+    /**
+     * {@code skin} made a garment as {@link #fitted} makes it, of its rings from {@code from} to {@code to} of the way
+     * along it only (0 its first ring, 1 its last), closed flat at both ends: as a boot covers the foot of a shin.
+     */
+    public static Surface fitted(final Surface skin, final double ease, final String name, final Paint paint,
+                                 final double from, final double to) {
+        final Surface whole = fitted(skin, ease, name, paint);
+        final int n = whole.rings().size();
+        final int first = (int) Math.floor(Math.clamp(from, 0, 1) * (n - 1));
+        final int last = Math.max(first + 1, (int) Math.ceil(Math.clamp(to, 0, 1) * (n - 1)));
+        final List<List<V3>> rings = whole.rings().subList(first, Math.min(n, last + 1));
+        final V3 start = first == 0 ? whole.start() : middle(rings.getFirst());
+        final V3 end = last >= n - 1 ? whole.end() : middle(rings.getLast());
+        return new Surface(name, paint, rings, start, end, whole.smooth());
+    }
+
+    private static V3 middle(final List<V3> ring) {
+        V3 c = V3.ZERO;
+        for (final V3 p : ring) {
+            c = c.plus(p);
+        }
+        return c.times(1.0 / ring.size());
+    }
+
     private static V3 away(final V3 p, final V3 from, final double by) {
         final V3 d = p.minus(from);
         return d.length() < 1e-9 ? p : p.plus(d.unit().times(by));

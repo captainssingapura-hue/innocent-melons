@@ -58,17 +58,21 @@ public final class Puppet {
         this(kind, proportions, design, palette, signs, null);
     }
 
+    /** Shapes drawn together in the colours of one palette: a layer of someone's skin or of what they wear. */
+    public record Layer(List<Surface> surfaces, Palette palette) {
+    }
+
     /**
-     * A human drawn as {@code drawn} has each part, in the part's own frame as on the right side (dressed, say), in
-     * {@code palette}'s colours.
+     * A human drawn as {@code drawn} has each part, in the part's own frame as on the right side (dressed, say), layer
+     * by layer, each in its own colours.
      */
-    public Puppet(final java.util.function.Function<Part, List<Surface>> drawn, final Proportions proportions,
-                  final Palette palette, final V3 signs) {
-        this(Kind.HUMAN, proportions, RobotDesign.DEFAULT, palette, signs, drawn);
+    public Puppet(final java.util.function.Function<Part, List<Layer>> drawn, final Proportions proportions,
+                  final V3 signs) {
+        this(Kind.HUMAN, proportions, RobotDesign.DEFAULT, Palette.DEFAULT, signs, drawn);
     }
 
     private Puppet(final Kind kind, final Proportions proportions, final RobotDesign design, final Palette palette,
-                   final V3 signs, final java.util.function.Function<Part, List<Surface>> drawn) {
+                   final V3 signs, final java.util.function.Function<Part, List<Layer>> drawn) {
         this.kind = kind;
         this.proportions = proportions;
         this.design = design;
@@ -76,12 +80,16 @@ public final class Puppet {
         this.signs = signs;
         rest = new Rig(proportions, Pose.REST);
         for (final Part p : Part.values()) {
-            final List<Surface> baked = new ArrayList<>();
-            for (final Surface s : drawn != null ? drawn.apply(p) : local(p)) {
-                baked.add(s.moved(v -> bake(p, v)));
-            }
+            final List<Layer> layers = drawn != null ? drawn.apply(p) : List.of(new Layer(local(p), palette));
             // drawn in the part's own frame; its frame put where it is each frame, into the scene's
-            final Group g = FigureModel.meshes(baked, palette, v -> new Point3D(v.x(), v.y(), v.z()));
+            final Group g = new Group();
+            for (final Layer layer : layers) {
+                final List<Surface> baked = new ArrayList<>();
+                for (final Surface s : layer.surfaces()) {
+                    baked.add(s.moved(v -> bake(p, v)));
+                }
+                g.getChildren().add(FigureModel.meshes(baked, layer.palette(), v -> new Point3D(v.x(), v.y(), v.z())));
+            }
             final Affine a = new Affine();
             g.getTransforms().add(a);
             parts.put(p, g);
@@ -89,6 +97,16 @@ public final class Puppet {
             node.getChildren().add(g);
         }
         node.getChildren().add(pistons);
+    }
+
+    /** {@code layers}, in the body's frame where it stands, drawn into the scene's, each in its own colours. */
+    public Group drawnLayers(final List<Layer> layers) {
+        final Group g = new Group();
+        for (final Layer layer : layers) {
+            g.getChildren().add(FigureModel.meshes(layer.surfaces(), layer.palette(),
+                    v -> new Point3D(signs.x() * v.x(), signs.y() * v.y(), signs.z() * v.z())));
+        }
+        return g;
     }
 
     public Kind kind() {

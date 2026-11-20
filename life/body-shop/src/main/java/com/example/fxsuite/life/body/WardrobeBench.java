@@ -14,6 +14,11 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TreeCell;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.FlowPane;
@@ -52,11 +57,11 @@ public final class WardrobeBench extends Application {
             "Robe.ease", new Range("How loose, cm", 0.5, 5),
             "Robe.hem", new Range("Hem over the ground, cm", 2, 60),
             "Robe.flare", new Range("Skirt flaring", 0, 1.5),
-            "Sash.wide", new Range("How wide, cm", 5, 30));
+            "Sash.wide", new Range("How wide, cm", 5, 30),
+            "Shirt.ease", new Range("How loose, cm", 0.3, 4),
+            "Boots.height", new Range("Up the shin, share", 0.05, 1),
+            "Belt.wide", new Range("How wide, cm", 1.5, 10));
 
-    /** Each kind of piece, as it is first put on. */
-    private static final List<Wear> PIECES = List.of(new Wear.Robe("#8a5a2b", "#2a2420", 1.5, 11, 0.35, true),
-            new Wear.Sash("#7a2a1c", 13), new Wear.Leggings("#e8e4da"), new Wear.Shoes("#262321"));
 
     private final Bus bus = new Bus();
     private final Shell shell = new Shell("Innocent Melons: the wardrobe", bus);
@@ -75,7 +80,11 @@ public final class WardrobeBench extends Application {
     private final Slider at = new Slider(0, 1, 0);
     private final Slider[] shape = new Slider[6];
     private final ChoiceBox<Outfit> outfits = new ChoiceBox<>();
-    private final VBox pieces = new VBox(8);
+    private final TreeView<Object> catalogue = new TreeView<>();
+    private final ListView<Wear> worn = new ListView<>();
+    private final VBox settings = new VBox(6);
+    /** While what is worn is shown afresh: its choosing heard of not. */
+    private boolean settingWorn;
     private final Button play = new Button("Pause");
     private boolean playing = true;
     private boolean setting;
@@ -158,14 +167,55 @@ public final class WardrobeBench extends Application {
                 .orElse(Outfit.BARE));
         outfits.valueProperty().addListener((o, was, is) -> {
             person = person.with(is);
-            showPieces();
+            showWorn(-1);
             dress();
         });
-        final Label hint = new Label("Any piece on any body: each is made to the body it is put on. Drag to turn the"
-                + " view, right-drag to move it, scroll to come nearer.");
+
+        // the catalogue, its kinds as a tree; what is worn, inner first; the settings of the one chosen
+        catalogue.setRoot(catalogue(Wear.class));
+        catalogue.setPrefHeight(230);
+        catalogue.setCellFactory(t -> new TreeCell<>() {
+            @Override
+            protected void updateItem(final Object item, final boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : said(item));
+            }
+        });
+        catalogue.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                putOn();
+            }
+        });
+        final Button on = new Button("Put on");
+        on.setOnAction(e -> putOn());
+        worn.setPrefHeight(150);
+        worn.setCellFactory(l -> new ListCell<>() {
+            @Override
+            protected void updateItem(final Wear item, final boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : (getIndex() + 1) + "  " + item.name() + "  ("
+                        + said(item.getClass().getInterfaces()[0]).toLowerCase(Locale.ROOT) + ")");
+            }
+        });
+        worn.getSelectionModel().selectedIndexProperty().addListener((o, was, is) -> {
+            if (!settingWorn) {
+                showSettings();
+            }
+        });
+        final Button off = new Button("Take off");
+        off.setOnAction(e -> change(worn.getSelectionModel().getSelectedIndex(), 0, true));
+        final Button inward = new Button("Inward");
+        inward.setOnAction(e -> change(worn.getSelectionModel().getSelectedIndex(), -1, false));
+        final Button outward = new Button("Outward");
+        outward.setOnAction(e -> change(worn.getSelectionModel().getSelectedIndex(), 1, false));
+
+        final Label hint = new Label("Any piece on any body, any number of them: each is made to the body it is put"
+                + " on, over what is under it. Drag to turn the view, right-drag to move it, scroll to come nearer.");
         hint.setWrapText(true);
         final VBox side = new VBox(10, new Label("How fast"), paces, motion, new FlowPane(10, 6, play),
-                new Label("The body"), body, papers, new Label("Wearing, to start from"), outfits, pieces, hint);
+                new Label("The body"), body, papers, new Label("To start from"), outfits,
+                new Label("What may be worn"), catalogue, on, new Label("Worn, from the skin out"), worn,
+                new FlowPane(6, 6, off, inward, outward), settings, hint);
         side.setPadding(new Insets(8));
         final ScrollPane scroll = new ScrollPane(side);
         scroll.setFitToWidth(true);
@@ -180,7 +230,7 @@ public final class WardrobeBench extends Application {
                 Double.parseDouble(System.getProperty("wardrobe.distance", "3.5")));
         shown.getTransforms().add(lifted);
         view.show(ModelView.Model.moving(shown));
-        showPieces();
+        showWorn(-1);
         reshape();
         final String stopped = System.getProperty("wardrobe.at");
         if (stopped != null) {
@@ -215,7 +265,7 @@ public final class WardrobeBench extends Application {
     /** Dressed afresh as it is. */
     private void dress() {
         dressed = new Dressed(person);
-        puppet = new Puppet(dressed::drawn, person.body(), dressed.palette(), new V3(-1, -1, -1));
+        puppet = new Puppet(dressed::drawn, person.body(), new V3(-1, -1, -1));
         shown.getChildren().setAll(puppet.node(), hanging);
         draw();
     }
@@ -226,7 +276,7 @@ public final class WardrobeBench extends Application {
         }
         final Rig rig = walker.rig();
         puppet.show(rig);
-        hanging.getChildren().setAll(puppet.drawn(dressed.hanging(rig)));
+        hanging.getChildren().setAll(puppet.drawnLayers(dressed.hanging(rig)));
         lifted.setY(-(walker.flying(speed.getValue()) + SOLE));
     }
 
@@ -262,28 +312,75 @@ public final class WardrobeBench extends Application {
         }
     }
 
-    /** Each kind of piece: a tick to put it on or take it off; on, every number and colour of it to change. */
-    private void showPieces() {
-        pieces.getChildren().clear();
-        for (final Wear kind : PIECES) {
-            final Class<? extends Wear> type = kind.getClass();
-            final Wear on = person.outfit().piece(type).orElse(null);
-            final CheckBox wearing = new CheckBox(kind.name());
-            wearing.setSelected(on != null);
-            wearing.selectedProperty().addListener((o, was, is) -> {
-                person = person.with(person.outfit().with(type, kind, is));
-                showPieces();
-                dress();
-            });
-            pieces.getChildren().add(wearing);
-            if (on != null) {
-                pieces.getChildren().add(knobs(on));
+    /**
+     * The catalogue of what may be worn, as its kinds are families of kinds: each family a branch, each kind a leaf; read
+     * from the kinds themselves, so a kind declared is a leaf of it.
+     */
+    private static TreeItem<Object> catalogue(final Class<?> kind) {
+        final TreeItem<Object> item = new TreeItem<>(kind);
+        if (kind.isSealed()) {
+            for (final Class<?> sub : kind.getPermittedSubclasses()) {
+                item.getChildren().add(catalogue(sub));
             }
+            item.setExpanded(true);
+        }
+        return item;
+    }
+
+    /** A kind's name as words: {@code Legwear}, {@code Robe}; {@code Wearables} for them all. */
+    private static String said(final Object kind) {
+        if (kind == Wear.class) {
+            return "Wearables";
+        }
+        return kind instanceof Class<?> c ? c.getSimpleName().replaceAll("([a-z])([A-Z])", "$1 $2") : String.valueOf(kind);
+    }
+
+    /** The kind chosen in the catalogue, if a kind and not a family, put on over the rest. */
+    @SuppressWarnings("unchecked")
+    private void putOn() {
+        final TreeItem<Object> chosen = catalogue.getSelectionModel().getSelectedItem();
+        if (chosen == null || !(chosen.getValue() instanceof Class<?> c) || !c.isRecord()) {
+            return;
+        }
+        person = person.with(person.outfit().with(Wear.first((Class<? extends Wear>) c)));
+        showWorn(person.outfit().wear().size() - 1);
+        dress();
+    }
+
+    /** What is worn, inner first, the one at {@code chosen} chosen and its settings shown. */
+    private void showWorn(final int chosen) {
+        settingWorn = true;
+        worn.getItems().setAll(person.outfit().wear());
+        settingWorn = false;
+        if (chosen >= 0 && chosen < worn.getItems().size()) {
+            worn.getSelectionModel().select(chosen);
+        }
+        showSettings();
+    }
+
+    /** The settings of what is chosen of what is worn. */
+    private void showSettings() {
+        settings.getChildren().clear();
+        final int i = worn.getSelectionModel().getSelectedIndex();
+        if (i >= 0) {
+            settings.getChildren().addAll(new Label(worn.getItems().get(i).name() + ", worn " + (i + 1) + " of "
+                    + worn.getItems().size() + " from the skin"), knobs(i, worn.getItems().get(i)));
         }
     }
 
-    /** A slider, tick or picker for every number, yes-or-no and colour of {@code piece}, each changing it alone. */
-    private Node knobs(final Wear piece) {
+    /** The one worn at {@code i} taken off; or moved {@code by} places outward, or inward when less than nothing. */
+    private void change(final int i, final int by, final boolean off) {
+        if (i < 0) {
+            return;
+        }
+        person = person.with(off ? person.outfit().without(i) : person.outfit().moved(i, by));
+        showWorn(off ? Math.min(i, person.outfit().wear().size() - 1) : Math.clamp(i + by, 0,
+                person.outfit().wear().size() - 1));
+        dress();
+    }
+
+    /** A slider, tick or picker for every number, yes-or-no and colour of {@code piece}, worn at {@code at}. */
+    private Node knobs(final int at, final Wear piece) {
         final GridPane grid = new GridPane();
         grid.setHgap(8);
         grid.setVgap(4);
@@ -294,20 +391,20 @@ public final class WardrobeBench extends Application {
             final String label = label(piece, c);
             if (c.getType() == String.class) {
                 final ColorPicker picker = new ColorPicker(Color.web((String) now));
-                picker.setOnAction(e -> set(piece, c, hex(picker.getValue())));
+                picker.setOnAction(e -> set(at, piece, c, hex(picker.getValue())));
                 grid.add(new Label(label), 0, row);
                 grid.add(picker, 1, row++);
             } else if (c.getType() == boolean.class) {
                 final CheckBox tick = new CheckBox(label);
                 tick.setSelected((Boolean) now);
-                tick.selectedProperty().addListener((o, was, is) -> set(piece, c, is));
+                tick.selectedProperty().addListener((o, was, is) -> set(at, piece, c, is));
                 grid.add(tick, 0, row++, 2, 1);
             } else {
                 final Range r = RANGES.getOrDefault(piece.getClass().getSimpleName() + "." + c.getName(),
                         new Range(label, 0, 2 * ((Number) now).doubleValue() + 1));
                 final Slider s = new Slider(r.min(), r.max(), ((Number) now).doubleValue());
                 s.setPrefWidth(180);
-                s.setOnMouseReleased(e -> set(piece, c, s.getValue()));
+                s.setOnMouseReleased(e -> set(at, piece, c, s.getValue()));
                 grid.add(new Label(r.label()), 0, row);
                 grid.add(s, 1, row++);
             }
@@ -324,6 +421,7 @@ public final class WardrobeBench extends Application {
             case "colour" -> "Colour";
             case "trim" -> "Collar and cuffs";
             case "wideSleeves" -> "Wide sleeves";
+            case "longSleeves" -> "Long sleeves";
             default -> c.getName();
         };
     }
@@ -336,8 +434,8 @@ public final class WardrobeBench extends Application {
         }
     }
 
-    /** {@code piece} with {@code c} set to {@code v}, all else as it was, worn in its place. */
-    private void set(final Wear piece, final RecordComponent c, final Object v) {
+    /** {@code piece}, worn at {@code at}, with {@code c} set to {@code v}, all else as it was, worn in its place. */
+    private void set(final int at, final Wear piece, final RecordComponent c, final Object v) {
         final RecordComponent[] all = piece.getClass().getRecordComponents();
         final Object[] args = new Object[all.length];
         final Class<?>[] types = new Class<?>[all.length];
@@ -347,11 +445,11 @@ public final class WardrobeBench extends Application {
         }
         try {
             final Wear next = (Wear) piece.getClass().getDeclaredConstructor(types).newInstance(args);
-            person = person.with(person.outfit().with(piece.getClass(), next, true));
+            person = person.with(person.outfit().with(at, next));
         } catch (final ReflectiveOperationException e) {
             return;
         }
-        showPieces();
+        showWorn(at);
         dress();
     }
 
