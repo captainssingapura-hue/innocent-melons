@@ -42,7 +42,7 @@ import java.util.Map;
  *
  * <p>{@code -Dwardrobe.outfit} (an outfit's name), {@code -Dwardrobe.speed} (cm/s), {@code -Dwardrobe.at} (0 to 1,
  * stopped there), {@code -Dwardrobe.yaw}, {@code -Dwardrobe.pitch}, {@code -Dwardrobe.distance} (m) what it shows
- * first; {@code -Dbench.snapshot=out.png} saves the window after {@code -Dbench.settle} ms and exits.
+ * first, {@code -Dwardrobe.look} the height looked at (cm); {@code -Dbench.snapshot=out.png} saves the window after {@code -Dbench.settle} ms and exits.
  */
 public final class WardrobeBench extends Application {
 
@@ -279,7 +279,7 @@ public final class WardrobeBench extends Application {
         shell.middle(view.node());
         view.grid(0, 0, 0, 1_200, 10, 5);
         view.zoom(60, 2_500);
-        view.lookAt(0, 95, 0);
+        view.lookAt(0, Double.parseDouble(System.getProperty("wardrobe.look", "95")), 0);
         view.from("wardrobe", Double.parseDouble(System.getProperty("wardrobe.yaw", "25")),
                 Double.parseDouble(System.getProperty("wardrobe.pitch", "6")),
                 Double.parseDouble(System.getProperty("wardrobe.distance", "3.5")));

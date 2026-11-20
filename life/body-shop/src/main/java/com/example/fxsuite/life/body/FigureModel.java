@@ -22,8 +22,6 @@ import java.util.Map;
  */
 public final class FigureModel {
 
-    /** Whether a triangle's corners, as a surface goes round them, must be given the other way round to the screen. */
-    static final boolean REVERSED = true;
     /** The skin of the part chosen: warmer. */
     static final String CHOSEN = "#e6c49c";
     /** How much of what is behind its skin shows through it, seen through. */
@@ -99,8 +97,9 @@ public final class FigureModel {
     }
 
     /**
-     * {@code surfaces} drawn as they are mapped by {@code map} (which, with whatever transform the drawing is given,
-     * must turn the body's frame inside out once, as the scene's frame does): one mesh a colour, each its finish.
+     * {@code surfaces} drawn as they are mapped by {@code map}: one mesh a colour, each its finish. Their triangles'
+     * corners given the other way round only if {@code map} turns them inside out; a transform the drawing is given that
+     * does so (a puppet's part put into the scene's frame), JavaFX allows for itself.
      */
     public static Group meshes(final List<Surface> surfaces, final Palette palette,
                                final java.util.function.Function<V3, javafx.geometry.Point3D> map) {
@@ -129,16 +128,29 @@ public final class FigureModel {
             final javafx.geometry.Point3D at = map.apply(v);
             mesh.getPoints().addAll((float) at.getX(), (float) at.getY(), (float) at.getZ());
         }
+        final boolean reversed = mirrors(map);
         final List<int[]> triangles = s.triangles();
         final List<Integer> faces = s.faces();
         for (int k = 0; k < triangles.size(); k++) {
             final int[] t = triangles.get(k);
-            final int b = REVERSED ? t[2] : t[1];
-            final int c = REVERSED ? t[1] : t[2];
+            final int b = reversed ? t[2] : t[1];
+            final int c = reversed ? t[1] : t[2];
             mesh.getFaces().addAll(base + t[0], 0, base + b, 0, base + c, 0);
             // smooth all round; or each face its own, a box's six
             mesh.getFaceSmoothingGroups().addAll(s.smooth() ? 1 : 1 << (1 + faces.get(k) % 30));
         }
+    }
+
+    /**
+     * Whether {@code map} turns what it maps inside out, as a mirror does, so that a triangle's corners must be given the
+     * other way round to face the way they did.
+     */
+    static boolean mirrors(final java.util.function.Function<V3, javafx.geometry.Point3D> map) {
+        final javafx.geometry.Point3D o = map.apply(V3.ZERO);
+        final javafx.geometry.Point3D x = map.apply(new V3(1, 0, 0)).subtract(o);
+        final javafx.geometry.Point3D y = map.apply(new V3(0, 1, 0)).subtract(o);
+        final javafx.geometry.Point3D z = map.apply(new V3(0, 0, 1)).subtract(o);
+        return x.crossProduct(y).dotProduct(z) < 0;
     }
 
     /**
