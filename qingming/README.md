@@ -7,7 +7,8 @@ is built on the engine as released to it, as the bay is.
 **So far: the terrain and the Rainbow Bridge.** A level plain 1.1 km by 0.5 km, the river cut into it with its banks
 and water, its towpaths, the earth road from the country to the bridge and the street from it to the gate, and level
 ground where the city's wall and its gate will stand. Over the river, the Rainbow Bridge: its woven timber arch, its
-deck to walk up and over, its railings and its four poles. The wall and gate, buildings, boats and people are to come.
+deck to walk up and over, its railings and its four poles. A cruiser and a boxer motorcycle are parked on the street
+by the start, to get about on (not of the scroll's time). The wall and gate, buildings, boats and people are to come.
 
 ## Build and launch
 

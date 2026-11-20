@@ -9,6 +9,7 @@ import com.example.fxsuite.avatar.sim.Channel;
 import com.example.fxsuite.avatar.sim.Contour;
 import com.example.fxsuite.avatar.sim.Course;
 import com.example.fxsuite.avatar.sim.Land;
+import com.example.fxsuite.avatar.sim.Place;
 import com.example.fxsuite.avatar.sim.River;
 import com.example.fxsuite.avatar.sim.RoadMap;
 import com.example.fxsuite.avatar.sim.Terrain;
@@ -38,6 +39,8 @@ import java.util.Map;
  * <li><b>The city's wall</b>, here the old city's, the gate in it the Palace Museum's reading of the scroll (东角子门,
  * the bridge then 上土桥, a short way outside it): its line 540 m west of the bridge, the scroll's distance shortened
  * as the scroll shortens it; the world's west edge 60 m inside it. Neither is built yet: the ground is ready for them.
+ * <li><b>Two motorcycles</b>, the engine's cruiser and boxer, parked on the street by the start, ready to ride: not of
+ * the scroll's time, but to get about the reach on.
  * </ul>
  */
 public final class Reach {
@@ -56,6 +59,10 @@ public final class Reach {
     /** Where the avatar starts: on the street north of the bridge, facing it. */
     public static final Vec3 START = new Vec3(-6_000, 0, 3_600);
     public static final double START_YAW = 111;
+    /** The motorcycles parked on the street just ahead of the start, side by side, facing the bridge. */
+    public static final List<Course.Chassis> BIKES = List.of(Course.CRUISER, Course.BOXER);
+    private static final double BIKES_AHEAD = 400;
+    private static final double BIKES_APART = 240;
 
     /** Its level pads, each a rectangle (west, east, south, north): the wall's line, the gate's, the bridge's ends. */
     static final double[][] PADS = {
@@ -122,9 +129,30 @@ public final class Reach {
         }
     }
 
-    /** Its ground, its river, its roads stood on; the avatar on the street, facing the bridge. */
+    /**
+     * Its motorcycles ({@link #BIKES}), each ready to ride: side by side on the street just ahead of the start, facing
+     * the bridge as the avatar does, standing on the street, each its own colour.
+     */
+    public static List<Course.Piece> parked() {
+        final double r = Math.toRadians(START_YAW);
+        // ahead (sin, cos), to the right (cos, -sin), as the game turns a thing
+        final double aheadX = START.x() + Math.sin(r) * BIKES_AHEAD;
+        final double aheadZ = START.z() + Math.cos(r) * BIKES_AHEAD;
+        final List<Course.Piece> parked = new java.util.ArrayList<>();
+        for (int k = 0; k < BIKES.size(); k++) {
+            final double side = (k - (BIKES.size() - 1) / 2.0) * BIKES_APART;
+            final double x = aheadX + Math.cos(r) * side;
+            final double z = aheadZ - Math.sin(r) * side;
+            final Course.Chassis bike = BIKES.get(k);
+            parked.add(Course.Piece.vehicle(bike, null, new Place(x, z, land().height(x, z) + bike.ride(), START_YAW),
+                    k));
+        }
+        return parked;
+    }
+
+    /** Its ground, its river, its roads stood on, its motorcycles; the avatar on the street, facing the bridge. */
     public static void lay(final Course.Layout world) {
-        world.start(START).land(land()).rivers(rivers())
+        world.start(START).land(land()).rivers(rivers()).pieces(parked())
                 .ways(roads().roads().stream().flatMap(r -> r.pavements().stream()).map(p -> (Volume) p).toList())
                 .ruled(false);
     }
