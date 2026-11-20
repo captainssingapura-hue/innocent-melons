@@ -4,6 +4,10 @@ import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Sketch;
 import com.example.fxsuite.life.body.bone.Bone;
 import com.example.fxsuite.life.body.bone.Region;
+import com.example.fxsuite.life.body.joint.Place;
+import com.example.fxsuite.life.body.joint.Point;
+
+import java.util.function.Supplier;
 
 /**
  * A palatine bone, one a side, the back of the hard palate.
@@ -11,6 +15,32 @@ import com.example.fxsuite.life.body.bone.Region;
 public record Palatine() implements Bone {
 
     public static final Palatine INSTANCE = new Palatine();
+
+    /** Where it meets its neighbours, as on the right, each a frame in the frame it is drawn in. */
+    public enum Points implements Point<Palatine> {
+        MAXILLA("to the maxilla", () -> SkullContacts.INSTANCE.between(SkullContacts.MAXILLA, SkullContacts.PALATINE)),
+        PALATINE("to its fellow", () -> SkullContacts.INSTANCE.middle(SkullContacts.PALATINE)),
+        SPHENOID("to the sphenoid",
+                () -> SkullContacts.INSTANCE.between(SkullContacts.SPHENOID, SkullContacts.PALATINE));
+
+        private final String said;
+        private final Supplier<Place> frame;
+
+        Points(final String said, final Supplier<Place> frame) {
+            this.said = said;
+            this.frame = frame;
+        }
+
+        @Override
+        public String said() {
+            return said;
+        }
+
+        @Override
+        public Place frame() {
+            return frame.get();
+        }
+    }
 
     @Override
     public String name() {

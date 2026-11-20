@@ -4,6 +4,10 @@ import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Sketch;
 import com.example.fxsuite.life.body.bone.Bone;
 import com.example.fxsuite.life.body.bone.Region;
+import com.example.fxsuite.life.body.joint.Place;
+import com.example.fxsuite.life.body.joint.Point;
+
+import java.util.function.Supplier;
 
 /**
  * The sphenoid bone: the middle of the skull's base, before the occipital, its greater wings out to the temples, its
@@ -12,6 +16,41 @@ import com.example.fxsuite.life.body.bone.Region;
 public record Sphenoid() implements Bone {
 
     public static final Sphenoid INSTANCE = new Sphenoid();
+
+    /** Where it meets its neighbours, as on the right, each a frame in the frame it is drawn in. */
+    public enum Points implements Point<Sphenoid> {
+        OCCIPITAL("its body, on the occipital's base",
+                () -> SkullContacts.INSTANCE.between(SkullContacts.OCCIPITAL, SkullContacts.SPHENOID)),
+        FRONTAL("its wings, to the frontal",
+                () -> SkullContacts.INSTANCE.between(SkullContacts.FRONTAL, SkullContacts.SPHENOID)),
+        TEMPORAL("its greater wings, to the temporals",
+                () -> SkullContacts.INSTANCE.between(SkullContacts.SPHENOID, SkullContacts.TEMPORAL)),
+        PARIETAL("its greater wings, to the parietals",
+                () -> SkullContacts.INSTANCE.between(SkullContacts.SPHENOID, SkullContacts.PARIETAL)),
+        ETHMOID("to the ethmoid", () -> SkullContacts.INSTANCE.between(SkullContacts.SPHENOID, SkullContacts.ETHMOID)),
+        PALATINE("its plates, to the palatines",
+                () -> SkullContacts.INSTANCE.between(SkullContacts.SPHENOID, SkullContacts.PALATINE)),
+        VOMER("its body, on the vomer",
+                () -> SkullContacts.INSTANCE.between(SkullContacts.SPHENOID, SkullContacts.VOMER));
+
+        private final String said;
+        private final Supplier<Place> frame;
+
+        Points(final String said, final Supplier<Place> frame) {
+            this.said = said;
+            this.frame = frame;
+        }
+
+        @Override
+        public String said() {
+            return said;
+        }
+
+        @Override
+        public Place frame() {
+            return frame.get();
+        }
+    }
 
     @Override
     public String name() {

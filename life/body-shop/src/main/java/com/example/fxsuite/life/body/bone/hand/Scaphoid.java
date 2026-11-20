@@ -4,6 +4,10 @@ import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Sketch;
 import com.example.fxsuite.life.body.bone.Bone;
 import com.example.fxsuite.life.body.bone.Region;
+import com.example.fxsuite.life.body.joint.Place;
+import com.example.fxsuite.life.body.joint.Point;
+
+import java.util.function.Supplier;
 
 import static com.example.fxsuite.life.body.Sketch.v;
 
@@ -13,6 +17,35 @@ import static com.example.fxsuite.life.body.Sketch.v;
 public record Scaphoid() implements Bone {
 
     public static final Scaphoid INSTANCE = new Scaphoid();
+
+    /** Where it meets its neighbours, as on the right, each a frame in the frame it is drawn in. */
+    public enum Points implements Point<Scaphoid> {
+        RADIUS("on the radius, at the wrist", () -> HandContacts.INSTANCE.wrist()),
+        LUNATE("to the lunate", () -> HandContacts.INSTANCE.between(HandContacts.SCAPHOID, HandContacts.LUNATE)),
+        TRAPEZIUM("to the trapezium",
+                () -> HandContacts.INSTANCE.between(HandContacts.SCAPHOID, HandContacts.TRAPEZIUM)),
+        TRAPEZOID("to the trapezoid",
+                () -> HandContacts.INSTANCE.between(HandContacts.SCAPHOID, HandContacts.TRAPEZOID)),
+        CAPITATE("to the capitate", () -> HandContacts.INSTANCE.between(HandContacts.SCAPHOID, HandContacts.CAPITATE));
+
+        private final String said;
+        private final Supplier<Place> frame;
+
+        Points(final String said, final Supplier<Place> frame) {
+            this.said = said;
+            this.frame = frame;
+        }
+
+        @Override
+        public String said() {
+            return said;
+        }
+
+        @Override
+        public Place frame() {
+            return frame.get();
+        }
+    }
 
     @Override
     public String name() {

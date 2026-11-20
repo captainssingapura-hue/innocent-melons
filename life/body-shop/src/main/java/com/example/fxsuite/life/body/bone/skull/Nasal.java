@@ -4,6 +4,10 @@ import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Sketch;
 import com.example.fxsuite.life.body.bone.Bone;
 import com.example.fxsuite.life.body.bone.Region;
+import com.example.fxsuite.life.body.joint.Place;
+import com.example.fxsuite.life.body.joint.Point;
+
+import java.util.function.Supplier;
 
 /**
  * A nasal bone, one a side of the bridge of the nose, over its opening.
@@ -11,6 +15,31 @@ import com.example.fxsuite.life.body.bone.Region;
 public record Nasal() implements Bone {
 
     public static final Nasal INSTANCE = new Nasal();
+
+    /** Where it meets its neighbours, as on the right, each a frame in the frame it is drawn in. */
+    public enum Points implements Point<Nasal> {
+        FRONTAL("to the frontal", () -> SkullContacts.INSTANCE.between(SkullContacts.FRONTAL, SkullContacts.NASAL)),
+        NASAL("to its fellow", () -> SkullContacts.INSTANCE.middle(SkullContacts.NASAL)),
+        MAXILLA("to the maxilla", () -> SkullContacts.INSTANCE.between(SkullContacts.NASAL, SkullContacts.MAXILLA));
+
+        private final String said;
+        private final Supplier<Place> frame;
+
+        Points(final String said, final Supplier<Place> frame) {
+            this.said = said;
+            this.frame = frame;
+        }
+
+        @Override
+        public String said() {
+            return said;
+        }
+
+        @Override
+        public Place frame() {
+            return frame.get();
+        }
+    }
 
     @Override
     public String name() {

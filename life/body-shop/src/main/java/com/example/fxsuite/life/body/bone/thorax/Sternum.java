@@ -3,7 +3,12 @@ package com.example.fxsuite.life.body.bone.thorax;
 import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Sketch;
 import com.example.fxsuite.life.body.bone.Bone;
+import com.example.fxsuite.life.body.bone.arm.ArmContacts;
 import com.example.fxsuite.life.body.bone.Region;
+import com.example.fxsuite.life.body.joint.Place;
+import com.example.fxsuite.life.body.joint.Point;
+
+import java.util.function.Supplier;
 
 import static com.example.fxsuite.life.body.Sketch.v;
 
@@ -14,6 +19,31 @@ import static com.example.fxsuite.life.body.Sketch.v;
 public record Sternum() implements Bone {
 
     public static final Sternum INSTANCE = new Sternum();
+
+    /** Where it meets its neighbours, as on the right, each a frame in the frame it is drawn in. */
+    public enum Points implements Point<Sternum> {
+        CARTILAGES("where the cartilages reach it", () -> ThoraxContacts.INSTANCE.sternocostal()),
+        CLAVICLE("its clavicular notch",
+                () -> ArmContacts.INSTANCE.sternoclavicular(Part.CHEST));
+
+        private final String said;
+        private final Supplier<Place> frame;
+
+        Points(final String said, final Supplier<Place> frame) {
+            this.said = said;
+            this.frame = frame;
+        }
+
+        @Override
+        public String said() {
+            return said;
+        }
+
+        @Override
+        public Place frame() {
+            return frame.get();
+        }
+    }
 
     @Override
     public String name() {

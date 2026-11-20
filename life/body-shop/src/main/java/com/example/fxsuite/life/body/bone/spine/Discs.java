@@ -6,14 +6,15 @@ import com.example.fxsuite.life.body.Proportions;
 import com.example.fxsuite.life.body.Rig;
 import com.example.fxsuite.life.body.Rot;
 import com.example.fxsuite.life.body.V3;
+import com.example.fxsuite.life.body.joint.Axes;
 import com.example.fxsuite.life.body.joint.Place;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 /**
  * Where the spine's bones meet, as frames in the body at rest (x to the right, y up along the spine, z ahead): each
  * disc, midway between the middles of the bodies above and below it, up from the one to the other; the pivot the atlas
- * turns on round the axis's dens; the joint between the sacrum and the coccyx; and where the skull nods on the atlas.
- * And any of them in the frame of the part a bone is drawn in.
+ * turns on round the axis's dens; the joint between the sacrum and the coccyx; where the skull nods on the atlas; where
+ * each rib meets its vertebra. And any of them in the frame of the part a bone is drawn in.
  */
 public record Discs() implements StatelessFunctionalObject {
 
@@ -50,6 +51,16 @@ public record Discs() implements StatelessFunctionalObject {
     /** Where the head nods on the atlas, upright. */
     public Place head() {
         return new Place(HEAD, Rot.NONE);
+    }
+
+    /**
+     * Where the rib hung from {@code level} meets it, on the right: at its head, beside the vertebra's body, turning
+     * about its neck, in from its tubercle on the transverse process, its y up. Turned so, its front rises.
+     */
+    public Place rib(final Level level) {
+        final V3 head = level.at(level.wide() / 2 + 0.25, level.high() * 0.35, -level.deep() * 0.2);
+        final V3 tubercle = level.transverseTip().plus(new V3(0.15, -0.2, 0.25));
+        return new Place(head, Axes.INSTANCE.along(head.minus(tubercle), V3.Y));
     }
 
     /** A frame midway between {@code low} and {@code high}, up from the one to the other, x to the right. */

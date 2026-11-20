@@ -4,6 +4,10 @@ import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Sketch;
 import com.example.fxsuite.life.body.bone.Bone;
 import com.example.fxsuite.life.body.bone.Region;
+import com.example.fxsuite.life.body.joint.Place;
+import com.example.fxsuite.life.body.joint.Point;
+
+import java.util.function.Supplier;
 
 import static com.example.fxsuite.life.body.Sketch.v;
 
@@ -13,6 +17,31 @@ import static com.example.fxsuite.life.body.Sketch.v;
 public record Vomer() implements Bone {
 
     public static final Vomer INSTANCE = new Vomer();
+
+    /** Where it meets its neighbours, as on the right, each a frame in the frame it is drawn in. */
+    public enum Points implements Point<Vomer> {
+        SPHENOID("to the sphenoid", () -> SkullContacts.INSTANCE.between(SkullContacts.SPHENOID, SkullContacts.VOMER)),
+        ETHMOID("to the ethmoid", () -> SkullContacts.INSTANCE.between(SkullContacts.ETHMOID, SkullContacts.VOMER)),
+        MAXILLA("to the maxillae", () -> SkullContacts.INSTANCE.between(SkullContacts.MAXILLA, SkullContacts.VOMER));
+
+        private final String said;
+        private final Supplier<Place> frame;
+
+        Points(final String said, final Supplier<Place> frame) {
+            this.said = said;
+            this.frame = frame;
+        }
+
+        @Override
+        public String said() {
+            return said;
+        }
+
+        @Override
+        public Place frame() {
+            return frame.get();
+        }
+    }
 
     @Override
     public String name() {

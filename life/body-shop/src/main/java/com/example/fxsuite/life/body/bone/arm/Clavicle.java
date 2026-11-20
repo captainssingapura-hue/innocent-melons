@@ -4,6 +4,10 @@ import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Sketch;
 import com.example.fxsuite.life.body.bone.Bone;
 import com.example.fxsuite.life.body.bone.Region;
+import com.example.fxsuite.life.body.joint.Place;
+import com.example.fxsuite.life.body.joint.Point;
+
+import java.util.function.Supplier;
 
 import static com.example.fxsuite.life.body.Sketch.v;
 
@@ -14,6 +18,30 @@ import static com.example.fxsuite.life.body.Sketch.v;
 public record Clavicle() implements Bone {
 
     public static final Clavicle INSTANCE = new Clavicle();
+
+    /** Where it meets its neighbours, as on the right, each a frame in the frame it is drawn in. */
+    public enum Points implements Point<Clavicle> {
+        STERNUM("its sternal end", () -> ArmContacts.INSTANCE.sternoclavicular(Part.RIGHT_GIRDLE)),
+        ACROMION("its acromial end", () -> ArmContacts.INSTANCE.acromioclavicular());
+
+        private final String said;
+        private final Supplier<Place> frame;
+
+        Points(final String said, final Supplier<Place> frame) {
+            this.said = said;
+            this.frame = frame;
+        }
+
+        @Override
+        public String said() {
+            return said;
+        }
+
+        @Override
+        public Place frame() {
+            return frame.get();
+        }
+    }
 
     @Override
     public String name() {

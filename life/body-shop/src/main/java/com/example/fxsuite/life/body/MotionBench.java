@@ -28,15 +28,15 @@ import java.util.Locale;
  * The motion bench: a humanoid walking and running on the spot, over and over, to polish how it moves before the game
  * has it ({@link Gait}, {@link Walker}). The ground goes back under it as far as its feet carry it, so a foot down
  * stands still on the grid; a foot that slides is a gait to put right. At any speed, from standing to a sprint, or
- * round a tour of them all and back; slowed, or stopped at any point of its stride. A human, or a robot exposed or
- * shelled, moving the same. With the Gatling gun slung from its strap ({@link GatlingHold}), aimed up or down, the
- * only weapon it holds for now.
+ * round a tour of them all and back; slowed, or stopped at any point of its stride. A human, a skeleton, or a robot
+ * exposed or shelled, moving the same. With the Gatling gun slung from its strap ({@link GatlingHold}), aimed up or
+ * down, the only weapon it holds for now.
  *
- * <p>{@code -Dmotion.look} (exposed, shelled, human), {@code -Dmotion.speed} (cm/s), {@code -Dmotion.tour=true},
- * {@code -Dmotion.gatling=true}, {@code -Dmotion.aim} (degrees), {@code -Dmotion.slow} (a share of real time) what it
- * plays first; {@code -Dmotion.at} (0 to 1) stops it at that point of its stride; {@code -Dmotion.yaw},
- * {@code -Dmotion.pitch}, {@code -Dmotion.distance} (m) where it is seen from; {@code -Dbench.snapshot=out.png} saves
- * the window after {@code -Dbench.settle} ms and exits.
+ * <p>{@code -Dmotion.look} (exposed, shelled, human, skeleton), {@code -Dskeleton.detail} (mm, a skeleton's grid),
+ * {@code -Dmotion.speed} (cm/s), {@code -Dmotion.tour=true}, {@code -Dmotion.gatling=true}, {@code -Dmotion.aim}
+ * (degrees), {@code -Dmotion.slow} (a share of real time) what it plays first; {@code -Dmotion.at} (0 to 1) stops it at
+ * that point of its stride; {@code -Dmotion.yaw}, {@code -Dmotion.pitch}, {@code -Dmotion.distance} (m) where it is
+ * seen from; {@code -Dbench.snapshot=out.png} saves the window after {@code -Dbench.settle} ms and exits.
  */
 public final class MotionBench extends Application {
 
@@ -84,6 +84,8 @@ public final class MotionBench extends Application {
     private final Slider aim = new Slider(-30, 30, 0);
     private final CheckBox treadmill = new CheckBox("The ground going back under it");
     private final CheckBox forces = new CheckBox("The forces on the gun, as arrows");
+    private final Slider grid = new Slider(2, 16, Double.parseDouble(System.getProperty("skeleton.detail", "8")));
+    private final Label gridSaid = new Label();
     private GunStatics.Solved statics;
     private double balance;
 
@@ -153,6 +155,20 @@ public final class MotionBench extends Application {
         knobs.add(at, 1, 3);
         knobs.add(new Label("Aim, degrees up"), 0, 4);
         knobs.add(aim, 1, 4);
+        knobs.add(new Label("A skeleton's grid, mm"), 0, 5);
+        knobs.add(grid, 1, 5);
+        knobs.add(gridSaid, 1, 6);
+        grid.setPrefWidth(220);
+        grid.valueProperty().addListener((o, was, is) -> {
+            if (!grid.isValueChanging()) {
+                regrid();
+            }
+        });
+        grid.valueChangingProperty().addListener((o, was, is) -> {
+            if (!is) {
+                regrid();
+            }
+        });
 
         final Label hint = new Label("A foot down should stand still on the grid while the ground goes back under it."
                 + " Stop it and move the point of its stride to look at a moment. Drag to turn the view, right-drag"
@@ -204,6 +220,9 @@ public final class MotionBench extends Application {
 
     private static Puppet.Kind kind(final String said) {
         final String s = said.toLowerCase(Locale.ROOT);
+        if (s.startsWith("sk")) {
+            return Puppet.Kind.SKELETON;
+        }
         return s.startsWith("h") ? Puppet.Kind.HUMAN : s.startsWith("s") ? Puppet.Kind.SHELLED : Puppet.Kind.EXPOSED;
     }
 
@@ -212,6 +231,27 @@ public final class MotionBench extends Application {
         puppet = new Puppet(look.getValue(), proportions, RobotDesign.DEFAULT, Palette.DEFAULT, new V3(-1, -1, -1));
         shown.getChildren().setAll(puppet.node(), gun, strap, loads);
         draw(walker.rig(), 0);
+        regrid();
+    }
+
+    /** A skeleton found afresh on the grid asked for, away from the screen, then drawn; how many triangles, said. */
+    private void regrid() {
+        if (puppet.kind() != Puppet.Kind.SKELETON) {
+            gridSaid.setText("for a skeleton");
+            return;
+        }
+        final Puppet mine = puppet;
+        final Detail d = new Detail(grid.getValue() / 10);
+        gridSaid.setText("finding its bones");
+        new Thread(() -> {
+            final long n = mine.levels().triangles(d);
+            javafx.application.Platform.runLater(() -> {
+                if (mine == puppet) {
+                    mine.detail(d);
+                    gridSaid.setText(String.format(Locale.ROOT, "%.1f mm: %,d triangles", d.cell() * 10, n));
+                }
+            });
+        }, "skeleton").start();
     }
 
     private void playing(final boolean on) {

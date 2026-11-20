@@ -9,7 +9,7 @@ import com.example.fxsuite.life.body.bone.Region;
 
 /**
  * The seventh thoracic vertebra, drawn in the body's frame at rest and moving with the chest, as big as its level has
- * it; meeting the vertebra above and the one below on the discs between them.
+ * it; meeting the vertebra above and the one below on the discs between them; its ribs at their heads.
  */
 public record T7() implements Bone {
 
@@ -43,7 +43,8 @@ public record T7() implements Bone {
     /** Where it meets its neighbours, each a frame in the frame it is drawn in. */
     public enum Points implements Point<T7> {
         ABOVE("on the disc above"),
-        BELOW("on the disc below");
+        BELOW("on the disc below"),
+        RIB("its rib's head, beside its body");
 
         private final String said;
 
@@ -59,7 +60,11 @@ public record T7() implements Bone {
         @Override
         public Place frame() {
             final Discs d = Discs.INSTANCE;
-            return d.inPart(this == ABOVE ? d.below(Level.T6) : d.below(Level.T7), Part.CHEST);
+            return switch (this) {
+                case ABOVE -> d.inPart(d.below(Level.T6), Part.CHEST);
+                case BELOW -> d.inPart(d.below(Level.T7), Part.CHEST);
+                case RIB -> d.inPart(d.rib(Level.T7), Part.CHEST);
+            };
         }
     }
 

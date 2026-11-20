@@ -12,15 +12,16 @@ import java.util.Map;
 
 /**
  * A humanoid drawn to be moved: each part drawn once, rigid, in its own frame, and put each frame where its skeleton
- * has it, as a puppet's; an exposed robot's pistons drawn afresh as they slide. A human, or a robot exposed or shelled.
- * Drawn into a scene whose frame is the body's with each way's sign as {@code signs} has it (the game's turns the body
- * up its down; a bench's, round too).
+ * has it, as a puppet's; an exposed robot's pistons drawn afresh as they slide. A human, or a robot exposed or shelled;
+ * or a skeleton, the lab's bones part by part ({@link PartBones}), as finely as asked ({@link #detail}), at first as
+ * {@code -Dskeleton.detail} says (mm, the big bones' grid; 8 if not). Drawn into a scene whose frame is the body's with
+ * each way's sign as {@code signs} has it (the game's turns the body up its down; a bench's, round too).
  */
 public final class Puppet {
 
     /** What it is drawn as. */
     public enum Kind {
-        EXPOSED("Robot, exposed"), SHELLED("Robot, shelled"), HUMAN("Human");
+        EXPOSED("Robot, exposed"), SHELLED("Robot, shelled"), HUMAN("Human"), SKELETON("Skeleton");
 
         private final String label;
 
@@ -51,6 +52,9 @@ public final class Puppet {
     private final Map<Part, Group> parts = new EnumMap<>(Part.class);
     private final Map<Part, Affine> placed = new EnumMap<>(Part.class);
     private final Group pistons = new Group();
+    private final SkeletonLevels levels = new SkeletonLevels();
+    private final Map<Part, Group> bones = new EnumMap<>(Part.class);
+    private Detail detail = new Detail(Double.parseDouble(System.getProperty("skeleton.detail", "8")) / 10);
     private boolean drawPistons = true;
 
     public Puppet(final Kind kind, final Proportions proportions, final RobotDesign design, final Palette palette,
@@ -80,9 +84,14 @@ public final class Puppet {
         this.signs = signs;
         rest = new Rig(proportions, Pose.REST);
         for (final Part p : Part.values()) {
-            final List<Layer> layers = drawn != null ? drawn.apply(p) : List.of(new Layer(local(p), palette));
+            final List<Layer> layers = drawn != null ? drawn.apply(p)
+                    : kind == Kind.SKELETON ? List.of() : List.of(new Layer(local(p), palette));
             // drawn in the part's own frame; its frame put where it is each frame, into the scene's
             final Group g = new Group();
+            if (drawn == null && kind == Kind.SKELETON) {
+                bones.put(p, new Group(skeleton(p, detail)));
+                g.getChildren().add(bones.get(p));
+            }
             for (final Layer layer : layers) {
                 final List<Surface> baked = new ArrayList<>();
                 for (final Surface s : layer.surfaces()) {
@@ -121,6 +130,35 @@ public final class Puppet {
     /** The group a part is drawn in, moving with it: to hang more on it, in its own frame. */
     public Group part(final Part p) {
         return parts.get(p);
+    }
+
+    /**
+     * A skeleton's bones drawn as finely as {@code d} says, on the scene's thread: found now if not yet, which, for a
+     * level not yet found, is best done first on another ({@link #levels}). Nothing, if it is not a skeleton.
+     */
+    public void detail(final Detail d) {
+        detail = d;
+        bones.forEach((p, g) -> g.getChildren().setAll(skeleton(p, d)));
+    }
+
+    /** How finely its skeleton is drawn. */
+    public Detail detail() {
+        return detail;
+    }
+
+    /** Its skeleton's levels of detail, found and kept: to find one on another thread before it is drawn. */
+    public SkeletonLevels levels() {
+        return levels;
+    }
+
+    /** {@code p}'s bones as finely as {@code d} says, made to the body's size and to its side. */
+    private List<Node> skeleton(final Part p, final Detail d) {
+        final List<Node> nodes = new ArrayList<>();
+        for (final PartBones.Piece piece : levels.of(p, d)) {
+            nodes.add(com.example.fxsuite.life.body.bone.BoneView.INSTANCE.mapped(piece.mesh(), piece.paint(),
+                    v -> bake(p, v), p.side() < 0));
+        }
+        return nodes;
     }
 
     /** Whether its pistons are drawn, if it has any. */
@@ -171,6 +209,7 @@ public final class Puppet {
     private List<Surface> local(final Part p) {
         return switch (kind) {
             case HUMAN -> Skin.shapes(p, Muscles.Bulge.REST, TWIST, Skin.HUMAN);
+            case SKELETON -> List.of();
             case SHELLED -> Skin.shell(p, TWIST, design);
             case EXPOSED -> {
                 if (RobotFrame.designed(p)) {

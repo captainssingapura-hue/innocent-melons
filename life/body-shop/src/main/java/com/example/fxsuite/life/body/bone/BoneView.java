@@ -2,6 +2,7 @@ package com.example.fxsuite.life.body.bone;
 
 import com.example.fxsuite.life.body.Mesher;
 import com.example.fxsuite.life.body.Paint;
+import com.example.fxsuite.life.body.V3;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import javafx.scene.Group;
 import javafx.scene.paint.Color;
@@ -10,6 +11,8 @@ import javafx.scene.shape.CullFace;
 import javafx.scene.shape.MeshView;
 import javafx.scene.shape.TriangleMesh;
 import javafx.scene.shape.VertexFormat;
+
+import java.util.function.UnaryOperator;
 
 /**
  * A bone's surface drawn on its own, standing on the ground over the scene's origin: turned into the scene's frame,
@@ -39,6 +42,21 @@ public record BoneView() implements StatelessFunctionalObject {
         return drawn(mesh, paint, new double[] {0, 0, 0}, true);
     }
 
+    /**
+     * {@code mesh}, coloured {@code paint}, each point where {@code map} takes it; {@code mirrors} if the map is a
+     * mirror's, turning the surface inside out, which is turned back.
+     */
+    public Group mapped(final Mesher.Mesh mesh, final Paint paint, final UnaryOperator<V3> map, final boolean mirrors) {
+        final float[] p = mesh.points().clone();
+        for (int i = 0; i < p.length; i += 3) {
+            final V3 v = map.apply(new V3(p[i], p[i + 1], p[i + 2]));
+            p[i] = (float) v.x();
+            p[i + 1] = (float) v.y();
+            p[i + 2] = (float) v.z();
+        }
+        return made(p, mesh.triangles().clone(), paint, mirrors);
+    }
+
     private Group drawn(final Mesher.Mesh mesh, final Paint paint, final double[] from, final boolean mirrored) {
         final float[] p = mesh.points().clone();
         // into the scene's frame, turned and turned over: a mirror, so the triangles go round the other way; and
@@ -48,8 +66,12 @@ public record BoneView() implements StatelessFunctionalObject {
             p[i + 1] = (float) -(p[i + 1] - from[1]);
             p[i + 2] = (float) -(p[i + 2] - from[2]);
         }
-        final int[] t = mesh.triangles().clone();
-        if (!mirrored) {
+        return made(p, mesh.triangles().clone(), paint, !mirrored);
+    }
+
+    /** Points {@code p} and triangles {@code t} made a surface, the triangles turned round first if {@code over}. */
+    private Group made(final float[] p, final int[] t, final Paint paint, final boolean over) {
+        if (over) {
             for (int i = 0; i < t.length; i += 3) {
                 final int b = t[i + 1];
                 t[i + 1] = t[i + 2];

@@ -4,6 +4,10 @@ import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Sketch;
 import com.example.fxsuite.life.body.bone.Bone;
 import com.example.fxsuite.life.body.bone.Region;
+import com.example.fxsuite.life.body.joint.Place;
+import com.example.fxsuite.life.body.joint.Point;
+
+import java.util.function.Supplier;
 
 import static com.example.fxsuite.life.body.Sketch.v;
 
@@ -13,6 +17,33 @@ import static com.example.fxsuite.life.body.Sketch.v;
 public record Hamate() implements Bone {
 
     public static final Hamate INSTANCE = new Hamate();
+
+    /** Where it meets its neighbours, as on the right, each a frame in the frame it is drawn in. */
+    public enum Points implements Point<Hamate> {
+        TRIQUETRUM("to the triquetrum",
+                () -> HandContacts.INSTANCE.between(HandContacts.TRIQUETRUM, HandContacts.HAMATE)),
+        CAPITATE("to the capitate", () -> HandContacts.INSTANCE.between(HandContacts.CAPITATE, HandContacts.HAMATE)),
+        FOURTH("under the fourth metacarpal", () -> HandContacts.INSTANCE.carpometacarpal(Digit.RING)),
+        FIFTH("under the fifth metacarpal", () -> HandContacts.INSTANCE.carpometacarpal(Digit.LITTLE));
+
+        private final String said;
+        private final Supplier<Place> frame;
+
+        Points(final String said, final Supplier<Place> frame) {
+            this.said = said;
+            this.frame = frame;
+        }
+
+        @Override
+        public String said() {
+            return said;
+        }
+
+        @Override
+        public Place frame() {
+            return frame.get();
+        }
+    }
 
     @Override
     public String name() {

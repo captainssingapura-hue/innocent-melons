@@ -41,8 +41,15 @@ public record Fingers() implements StatelessFunctionalObject {
         }
     }
 
+    /** The joint between {@code d}'s phalanges {@code q - 1} and {@code q}: midway from the one's end to the other. */
+    public V3 interphalangeal(final Digit d, final int q) {
+        final V3[] before = way(d, q - 1);
+        final V3 end = before[0].plus(before[1].times(d.length(q - 1)));
+        return end.plus(way(d, q)[0]).times(0.5);
+    }
+
     /** Where {@code d}'s phalanx {@code q} starts, and the way it goes: on from its metacarpal, each joint bent on. */
-    private V3[] way(final Digit d, final int q) {
+    public V3[] way(final Digit d, final int q) {
         V3 dir = d.head().minus(d.base()).unit();
         V3 at = d.head().plus(dir.times(0.5 * d.thick() + 0.08));
         for (int k = 0; k <= q; k++) {

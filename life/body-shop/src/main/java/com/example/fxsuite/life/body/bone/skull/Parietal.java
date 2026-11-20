@@ -4,6 +4,10 @@ import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Sketch;
 import com.example.fxsuite.life.body.bone.Bone;
 import com.example.fxsuite.life.body.bone.Region;
+import com.example.fxsuite.life.body.joint.Place;
+import com.example.fxsuite.life.body.joint.Point;
+
+import java.util.function.Supplier;
 
 /**
  * A parietal bone, one a side: the top and the side of the vault, between the coronal and the lambdoid sutures, above
@@ -12,6 +16,37 @@ import com.example.fxsuite.life.body.bone.Region;
 public record Parietal() implements Bone {
 
     public static final Parietal INSTANCE = new Parietal();
+
+    /** Where it meets its neighbours, as on the right, each a frame in the frame it is drawn in. */
+    public enum Points implements Point<Parietal> {
+        FRONTAL("the coronal suture, to the frontal",
+                () -> SkullContacts.INSTANCE.between(SkullContacts.FRONTAL, SkullContacts.PARIETAL)),
+        PARIETAL("the sagittal suture, to its fellow", () -> SkullContacts.INSTANCE.middle(SkullContacts.PARIETAL)),
+        OCCIPITAL("the lambdoid suture, to the occipital",
+                () -> SkullContacts.INSTANCE.between(SkullContacts.OCCIPITAL, SkullContacts.PARIETAL)),
+        TEMPORAL("the squamous suture, to the temporal",
+                () -> SkullContacts.INSTANCE.between(SkullContacts.PARIETAL, SkullContacts.TEMPORAL)),
+        SPHENOID("to the sphenoid's wing",
+                () -> SkullContacts.INSTANCE.between(SkullContacts.SPHENOID, SkullContacts.PARIETAL));
+
+        private final String said;
+        private final Supplier<Place> frame;
+
+        Points(final String said, final Supplier<Place> frame) {
+            this.said = said;
+            this.frame = frame;
+        }
+
+        @Override
+        public String said() {
+            return said;
+        }
+
+        @Override
+        public Place frame() {
+            return frame.get();
+        }
+    }
 
     @Override
     public String name() {

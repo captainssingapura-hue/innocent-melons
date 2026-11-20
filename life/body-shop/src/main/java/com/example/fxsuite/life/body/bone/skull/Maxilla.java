@@ -4,6 +4,10 @@ import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Sketch;
 import com.example.fxsuite.life.body.bone.Bone;
 import com.example.fxsuite.life.body.bone.Region;
+import com.example.fxsuite.life.body.joint.Place;
+import com.example.fxsuite.life.body.joint.Point;
+
+import java.util.function.Supplier;
 
 /**
  * A maxilla, one a side, the upper jaw: the face under the orbit beside the nose, the upper teeth's arch, the front of
@@ -12,6 +16,42 @@ import com.example.fxsuite.life.body.bone.Region;
 public record Maxilla() implements Bone {
 
     public static final Maxilla INSTANCE = new Maxilla();
+
+    /** Where it meets its neighbours, as on the right, each a frame in the frame it is drawn in. */
+    public enum Points implements Point<Maxilla> {
+        FRONTAL("to the frontal", () -> SkullContacts.INSTANCE.between(SkullContacts.FRONTAL, SkullContacts.MAXILLA)),
+        NASAL("to the nasal", () -> SkullContacts.INSTANCE.between(SkullContacts.NASAL, SkullContacts.MAXILLA)),
+        MAXILLA("to its fellow, down the middle", () -> SkullContacts.INSTANCE.middle(SkullContacts.MAXILLA)),
+        ZYGOMATIC("to the zygomatic",
+                () -> SkullContacts.INSTANCE.between(SkullContacts.MAXILLA, SkullContacts.ZYGOMATIC)),
+        LACRIMAL("to the lacrimal",
+                () -> SkullContacts.INSTANCE.between(SkullContacts.MAXILLA, SkullContacts.LACRIMAL)),
+        PALATINE("to the palatine",
+                () -> SkullContacts.INSTANCE.between(SkullContacts.MAXILLA, SkullContacts.PALATINE)),
+        CONCHA("to the inferior nasal concha",
+                () -> SkullContacts.INSTANCE.between(SkullContacts.MAXILLA, SkullContacts.CONCHA)),
+        VOMER("to the vomer", () -> SkullContacts.INSTANCE.between(SkullContacts.MAXILLA, SkullContacts.VOMER)),
+        TEETH("its arch, round the upper teeth",
+                () -> SkullContacts.INSTANCE.between(SkullContacts.MAXILLA, SkullContacts.UPPER_TEETH));
+
+        private final String said;
+        private final Supplier<Place> frame;
+
+        Points(final String said, final Supplier<Place> frame) {
+            this.said = said;
+            this.frame = frame;
+        }
+
+        @Override
+        public String said() {
+            return said;
+        }
+
+        @Override
+        public Place frame() {
+            return frame.get();
+        }
+    }
 
     @Override
     public String name() {

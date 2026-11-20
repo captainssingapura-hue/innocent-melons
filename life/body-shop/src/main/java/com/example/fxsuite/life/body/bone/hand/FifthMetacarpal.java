@@ -4,6 +4,10 @@ import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Sketch;
 import com.example.fxsuite.life.body.bone.Bone;
 import com.example.fxsuite.life.body.bone.Region;
+import com.example.fxsuite.life.body.joint.Place;
+import com.example.fxsuite.life.body.joint.Point;
+
+import java.util.function.Supplier;
 
 /**
  * The fifth metacarpal, in the hand's frame: from its base in the wrist to its head, the knuckle.
@@ -11,6 +15,31 @@ import com.example.fxsuite.life.body.bone.Region;
 public record FifthMetacarpal() implements Bone {
 
     public static final FifthMetacarpal INSTANCE = new FifthMetacarpal();
+
+    /** Where it meets its neighbours, as on the right, each a frame in the frame it is drawn in. */
+    public enum Points implements Point<FifthMetacarpal> {
+        BASE("its base, on its carpal", () -> HandContacts.INSTANCE.carpometacarpal(Digit.LITTLE)),
+        HEAD("its head, under its finger", () -> HandContacts.INSTANCE.metacarpophalangeal(Digit.LITTLE)),
+        PREVIOUS("its base, beside the one toward the thumb", () -> HandContacts.INSTANCE.intermetacarpal(Digit.RING));
+
+        private final String said;
+        private final Supplier<Place> frame;
+
+        Points(final String said, final Supplier<Place> frame) {
+            this.said = said;
+            this.frame = frame;
+        }
+
+        @Override
+        public String said() {
+            return said;
+        }
+
+        @Override
+        public Place frame() {
+            return frame.get();
+        }
+    }
 
     @Override
     public String name() {

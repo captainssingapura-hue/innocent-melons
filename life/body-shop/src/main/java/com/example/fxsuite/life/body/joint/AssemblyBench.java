@@ -50,7 +50,7 @@ public final class AssemblyBench extends Application {
 
     private final Bus bus = new Bus();
     private final ModelView view = new ModelView();
-    private final Rig rest = new Rig(Proportions.DRAWN, Pose.REST, false);
+    private final Rig rest = new Rig(Proportions.DRAWN, Pose.REST.unturned(), false);
     private final Map<Group, CheckBox> groups = new EnumMap<>(Group.class);
     private final ChoiceBox<BoneAt> holder = new ChoiceBox<>();
     private final ChoiceBox<Postures.Named> postures = new ChoiceBox<>();
@@ -83,7 +83,8 @@ public final class AssemblyBench extends Application {
 
     /** The bench's side: which groups, held by which bone, posed how, which joint moved how far. */
     private Node controls(final Shell shell) {
-        final String asked = System.getProperty("assembly.groups", "spine,pelvis,legs,feet").toLowerCase(Locale.ROOT);
+        final String asked = System.getProperty("assembly.groups", "skull,spine,thorax,arms,hands,pelvis,legs,feet")
+                .toLowerCase(Locale.ROOT);
         final VBox box = new VBox(8, new Label("Put together"));
         for (final Group g : Group.values()) {
             final CheckBox c = new CheckBox(g.said());
@@ -126,8 +127,10 @@ public final class AssemblyBench extends Application {
         bus.publish(new Bus.Working(true, "assembly"));
         final Scope mine = scope;
         new Thread(() -> {
-            mine.bones().parallelStream().forEach(b -> meshes.computeIfAbsent(b, x -> Mesher.of(
-                    new Field(Drawn.INSTANCE.shape(x, 0).elements()), Math.min(0.2, x.coarsest()))));
+            // each made first, then kept: made inside the map's computeIfAbsent, its bins locked meanwhile, the threads
+            // wait on each other, five times slower than one thread alone
+            mine.bones().parallelStream().filter(b -> !meshes.containsKey(b)).forEach(b -> meshes.putIfAbsent(b,
+                    Mesher.of(new Field(Drawn.INSTANCE.shape(b, 0).elements()), Math.min(0.2, b.coarsest()))));
             Platform.runLater(() -> {
                 if (mine == scope) {
                     draw();
@@ -162,7 +165,8 @@ public final class AssemblyBench extends Application {
         final List<Posture.Key> keys = new ArrayList<>();
         for (final Complex c : scope.joints()) {
             if (!c.movements().isEmpty()) {
-                final boolean paired = c.articulations().stream().anyMatch(j -> j.from().paired() || j.to().paired());
+                final boolean paired = !c.whole()
+                        && c.articulations().stream().anyMatch(j -> j.from().paired() || j.to().paired());
                 for (final Side s : paired ? List.of(Side.RIGHT, Side.LEFT) : List.of(Side.MIDDLE)) {
                     keys.add(new Posture.Key(c, s, c.movements().getFirst()));
                 }

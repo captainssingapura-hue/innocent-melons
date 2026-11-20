@@ -27,4 +27,12 @@ public interface Complex extends StatelessFunctionalObject {
 
     /** How far its articulation {@code joint} turns each way, the joint moved {@code moved}. */
     Map<Movement, Double> turns(Joint<?, ?> joint, Map<Movement, Double> moved);
+
+    /**
+     * Whether it moves as one, both its sides alike, as the jaw does on its two joints at once: posed down the middle,
+     * not on each side.
+     */
+    default boolean whole() {
+        return false;
+    }
 }

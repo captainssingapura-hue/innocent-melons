@@ -4,6 +4,10 @@ import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Sketch;
 import com.example.fxsuite.life.body.bone.Bone;
 import com.example.fxsuite.life.body.bone.Region;
+import com.example.fxsuite.life.body.joint.Place;
+import com.example.fxsuite.life.body.joint.Point;
+
+import java.util.function.Supplier;
 
 import static com.example.fxsuite.life.body.Sketch.v;
 
@@ -15,6 +19,31 @@ import static com.example.fxsuite.life.body.Sketch.v;
 public record Ulna() implements Bone {
 
     public static final Ulna INSTANCE = new Ulna();
+
+    /** Where it meets its neighbours, as on the right, each a frame in the frame it is drawn in. */
+    public enum Points implements Point<Ulna> {
+        TROCHLEA("its notch, round the trochlea", () -> ArmContacts.INSTANCE.trochlea(false)),
+        RADIAL_NOTCH("its radial notch, round the radius's head", () -> ArmContacts.INSTANCE.radialNotch()),
+        HEAD("its head, in the radius's notch", () -> ArmContacts.INSTANCE.ulnarNotch());
+
+        private final String said;
+        private final Supplier<Place> frame;
+
+        Points(final String said, final Supplier<Place> frame) {
+            this.said = said;
+            this.frame = frame;
+        }
+
+        @Override
+        public String said() {
+            return said;
+        }
+
+        @Override
+        public Place frame() {
+            return frame.get();
+        }
+    }
 
     @Override
     public String name() {

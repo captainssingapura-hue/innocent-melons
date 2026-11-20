@@ -30,6 +30,18 @@ public final class Pose {
         return new Pose(angles, root);
     }
 
+    /**
+     * This pose's pelvis where it is, every part unturned: standing straight, the arms hanging at the sides, the palms
+     * forward, as the bones are drawn and every joint of a skeleton is at rest.
+     */
+    public Pose unturned() {
+        final Map<Part, double[]> a = new EnumMap<>(Part.class);
+        for (final Part p : Part.values()) {
+            a.put(p, new double[p.dofs().size()]);
+        }
+        return new Pose(a, root);
+    }
+
     /** Standing at rest: arms a little out from the sides, elbows a little bent, palms in. */
     public static final Pose REST = rest();
 

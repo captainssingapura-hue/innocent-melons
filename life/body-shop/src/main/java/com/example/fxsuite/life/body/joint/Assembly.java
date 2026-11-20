@@ -4,24 +4,26 @@ import com.example.fxsuite.life.body.Rot;
 import com.example.fxsuite.life.body.V3;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Set;
 
 /**
  * A skeleton put together from its joints, as far as a scope of bones goes ({@link Scope}), from any one of them
- * outward: that bone where it is said to be, then every bone met at one of its joints placed so that its point there
- * lies on its neighbour's, turned as far as the joint has moved; then theirs, until every bone that can be reached is
- * placed. A joint walked from the bone it carries back to the one it is carried by is turned back. A bone and a joint
- * are drawn as on the right; on the left, each is its mirror, its points and its turns mirrored across the middle, so
- * that a leg swung out on the right is swung out on the left. Where bones meet again by a way not walked (a ring of
- * them), how far apart their points are is told, not mended.
+ * outward: that bone where it is said to be, then, one at a time, a bone not yet placed met at a joint of one that is,
+ * placed so that its point there lies on its neighbour's, turned as far as the joint has moved; until every bone that
+ * can be reached is placed. Of the joints that could place a bone next, the one the skeleton's joints list first
+ * ({@link Joints}) is walked: so the joints walked are the same whichever bone it is held by, the spine's before the
+ * ribs', a rib's head on its vertebra before its cartilage. A joint walked from the bone it carries back to the one it
+ * is carried by is turned back. A bone and a joint are drawn as on the right; on the left, each is its mirror, its
+ * points and its turns mirrored across the middle, so that a leg swung out on the right is swung out on the left. Where
+ * bones meet again by a way not walked (a ring of them), at the joint of the ring listed last, how far apart their
+ * points are is told, not mended.
  */
 public record Assembly() implements StatelessFunctionalObject {
 
@@ -30,30 +32,35 @@ public record Assembly() implements StatelessFunctionalObject {
     /** The bones of {@code scope}, put together from {@code root} placed at {@code where}, posed {@code posture}. */
     public Assembled build(final Scope scope, final BoneAt root, final Place where, final Posture posture) {
         final List<Edge> edges = edges(scope, posture);
+        final Map<BoneAt, List<Integer>> meeting = new HashMap<>();
+        for (int k = 0; k < edges.size(); k++) {
+            meeting.computeIfAbsent(edges.get(k).from(), b -> new ArrayList<>()).add(k);
+            meeting.computeIfAbsent(edges.get(k).to(), b -> new ArrayList<>()).add(k);
+        }
         final Map<BoneAt, Place> places = new HashMap<>();
-        final Set<Edge> walked = new HashSet<>();
+        final Set<Integer> walked = new HashSet<>();
+        final PriorityQueue<Integer> next = new PriorityQueue<>(meeting.getOrDefault(root, List.of()));
         places.put(root, where);
-        final Deque<BoneAt> next = new ArrayDeque<>(List.of(root));
         while (!next.isEmpty()) {
-            final BoneAt here = next.poll();
-            for (final Edge e : edges) {
-                final boolean outward = e.from().equals(here) && !places.containsKey(e.to());
-                final boolean inward = e.to().equals(here) && !places.containsKey(e.from());
-                if (outward) {
-                    places.put(e.to(), places.get(here).then(e.fromPoint()).then(e.turn()).then(e.toPoint().inverse()));
-                } else if (inward) {
-                    places.put(e.from(), places.get(here).then(e.toPoint()).then(e.turn().inverse())
-                            .then(e.fromPoint().inverse()));
-                }
-                if (outward || inward) {
-                    walked.add(e);
-                    next.add(outward ? e.to() : e.from());
-                }
+            final int k = next.poll();
+            final Edge e = edges.get(k);
+            final boolean outward = places.containsKey(e.from()) && !places.containsKey(e.to());
+            final boolean inward = places.containsKey(e.to()) && !places.containsKey(e.from());
+            if (outward) {
+                places.put(e.to(), places.get(e.from()).then(e.fromPoint()).then(e.turn()).then(e.toPoint().inverse()));
+            } else if (inward) {
+                places.put(e.from(), places.get(e.to()).then(e.toPoint()).then(e.turn().inverse())
+                        .then(e.fromPoint().inverse()));
+            }
+            if (outward || inward) {
+                walked.add(k);
+                next.addAll(meeting.get(outward ? e.to() : e.from()));
             }
         }
         final List<Gap> gaps = new ArrayList<>();
-        for (final Edge e : edges) {
-            if (!walked.contains(e) && places.containsKey(e.from()) && places.containsKey(e.to())) {
+        for (int k = 0; k < edges.size(); k++) {
+            final Edge e = edges.get(k);
+            if (!walked.contains(k) && places.containsKey(e.from()) && places.containsKey(e.to())) {
                 gaps.add(gap(e, places));
             }
         }
@@ -78,9 +85,10 @@ public record Assembly() implements StatelessFunctionalObject {
     /** Articulation {@code j} of joint {@code c}, its bones on the sides {@code ends} say, turned as posed. */
     private Edge edge(final Complex c, final Joint<?, ?> j, final Joint.Ends ends, final Posture posture) {
         final Side side = ends.from() != Side.MIDDLE ? ends.from() : ends.to();
+        final Side posed = c.whole() ? Side.MIDDLE : side;
         final Map<Movement, Double> moved = new EnumMap<>(Movement.class);
         for (final Movement m : c.movements()) {
-            moved.put(m, posture.degrees(c, side, m));
+            moved.put(m, posture.degrees(c, posed, m));
         }
         final Rot turn = j.motion().turn(c.turns(j, moved));
         final boolean left = side == Side.LEFT;
