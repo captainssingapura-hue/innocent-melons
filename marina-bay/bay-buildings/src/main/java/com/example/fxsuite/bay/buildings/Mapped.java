@@ -66,4 +66,24 @@ record Mapped(List<double[]> outline, double x, double z, double yaw) {
         outline.get(1)[1] = front;
         return new Mapped(outline, mx * 100, mz * 100, Math.toDegrees(Math.atan2(s, c)));
     }
+
+    /**
+     * Another of the map's outlines of the same building ({@code points}, m, the bay's frame: a part of it higher up,
+     * where it steps in) in this one's own frame, cm, anticlockwise.
+     */
+    List<double[]> own(final double[][] points) {
+        final double r = Math.toRadians(yaw);
+        final double c = Math.cos(r);
+        final double s = Math.sin(r);
+        final List<double[]> own = new ArrayList<>();
+        double area = 0;
+        for (int k = 0; k < points.length; k++) {
+            final double ex = points[k][0] * 100 - x;
+            final double ez = points[k][1] * 100 - z;
+            own.add(new double[] {Math.round(c * ex - s * ez), Math.round(s * ex + c * ez)});
+            final double[] q = points[(k + 1) % points.length];
+            area += points[k][0] * q[1] - q[0] * points[k][1];
+        }
+        return area > 0 ? own : own.reversed();
+    }
 }

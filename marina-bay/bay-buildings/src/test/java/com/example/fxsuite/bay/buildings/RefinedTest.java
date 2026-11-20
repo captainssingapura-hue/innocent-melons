@@ -30,7 +30,7 @@ class RefinedTest {
             assertTrue(names.add(t.name()), t.name() + " twice");
             assertEquals(t.name(), STANDING.get(k).tower().name());
         }
-        assertEquals(11, names.size());
+        assertEquals(24, names.size());
     }
 
     @Test

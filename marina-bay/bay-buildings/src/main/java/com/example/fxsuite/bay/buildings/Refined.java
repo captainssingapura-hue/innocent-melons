@@ -29,6 +29,9 @@ import java.util.function.Supplier;
  * <li>Asia Square's two ({@link AsiaSquare}): the map draws both the same, 64.6 by 56.5 m, its long sides at 106°;
  * Tower 1's plan's long sides along them, Tower 2's, nearly square, its longer sides along them. Which end of each is
  * its plan's top, the plans do not say: a guess.
+ * <li>The business district's towers round Raffles Place, Collyer Quay, Shenton Way and Tanjong Pagar, and Marina
+ * One's: on the map's outlines, as the homes towers are; One Raffles Place's Tower 2 its plans' plate set at the middle
+ * of the map's, turned as it is.
  * </ul>
  */
 public final class Refined {
@@ -63,7 +66,20 @@ public final class Refined {
             mapped("The Sail, Marina Bay Tower", Sail.MARINA_BAY_TOWER, Sail::marinaBayTower),
             mapped("The Sail, Central Park Tower", Sail.CENTRAL_PARK_TOWER, Sail::centralParkTower),
             new Tower("Asia Square Tower 1", -85_590, -78_710, -74.2, AsiaSquare::tower1),
-            new Tower("Asia Square Tower 2", -88_680, -89_810, 15.9, AsiaSquare::tower2));
+            new Tower("Asia Square Tower 2", -88_680, -89_810, 15.9, AsiaSquare::tower2),
+            mapped("IOI Central Boulevard West Tower", IoiCentralBoulevard.WEST_TOWER, IoiCentralBoulevard::westTower),
+            mapped("Marina One East Tower", MarinaOne.EAST_TOWER, MarinaOne::eastTower),
+            mapped("Marina One West Tower", MarinaOne.WEST_TOWER, MarinaOne::westTower),
+            mapped("Ocean Financial Centre", OceanFinancialCentre.MAPPED, OceanFinancialCentre::tower),
+            mapped("One Raffles Place Tower 1", OneRafflesPlace.TOWER_1, OneRafflesPlace::tower1),
+            mapped("One Raffles Place Tower 2", OneRafflesPlace.TOWER_2, OneRafflesPlace::tower2),
+            mapped("Republic Plaza", RepublicPlaza.MAPPED, RepublicPlaza::tower),
+            mapped("UOB Plaza One", UobPlaza.MAPPED, UobPlaza::tower),
+            mapped("CapitaGreen", CapitaGreen.MAPPED, CapitaGreen::tower),
+            mapped("One Shenton Tower 1", OneShenton.TOWER_1, OneShenton::tower1),
+            mapped("One Shenton Tower 2", OneShenton.TOWER_2, OneShenton::tower2),
+            mapped("Capital Tower", CapitalTower.MAPPED, CapitalTower::tower),
+            mapped("Guoco Tower", GuocoTower.MAPPED, GuocoTower::tower));
 
     private static Tower mapped(final String name, final Mapped mapped, final Supplier<OfficeTower> model) {
         return new Tower(name, mapped.x(), mapped.z(), mapped.yaw(), model);
