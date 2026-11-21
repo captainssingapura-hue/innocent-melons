@@ -37,12 +37,15 @@ final class FootCage {
         this.toes = target.bind().frame(Part.RIGHT_TOES);
     }
 
-    /** The forefoot and the toes hung from {@code ring}, set out along {@code ways}; every point put in {@code kept}.
+    /**
+     * The forefoot and the toes hung from {@code ring}, set out along {@code ways}; every point put in {@code held},
+     * wholly but the forefoot's first ring, a little.
      */
-    void hang(final Building b, final int[] ring, final V3[] ways, final Set<Integer> kept) {
+    void hang(final Building b, final int[] ring, final V3[] ways, final java.util.Map<Integer, Double> held) {
         final int from = b.size();
         final IntPredicate fore = forefoot();
         final int[][] rings = {across(b, fore, false), across(b, fore, true)};
+        b.making(Part.RIGHT_FOOT);
         new Zip(b).join(ring, rings[0], foot.way(V3.Z), ways, forefootWays());
         final int faces = b.faceCount();
         final int n = 2 * ACROSS;
@@ -50,6 +53,7 @@ final class FootCage {
             b.face(rings[0][j], rings[0][(j + 1) % n], rings[1][(j + 1) % n], rings[1][j]);
         }
         final int[] balls = rings[1];
+        b.making(Part.RIGHT_TOES);
         final int last = n - 1;
         toe(b, Toe.GREAT, new int[] {balls[0], balls[1], balls[2], balls[3], balls[last - 3], balls[last - 2],
             balls[last - 1], balls[last]}, 1.6);
@@ -63,7 +67,10 @@ final class FootCage {
         }
         b.agree(faces);
         for (int i = from; i < b.size(); i++) {
-            kept.add(i);
+            held.put(i, 1.0);
+        }
+        for (final int p : rings[0]) {
+            held.put(p, 0.4);
         }
     }
 
@@ -133,7 +140,7 @@ final class FootCage {
             final V3 w = up.minus(way.times(up.dot(way))).unit();
             for (final double f : q == 0 && t == Toe.GREAT ? new double[] {0.35, 0.8} : new double[] {0.5}) {
                 rings.add(new Limb.Ring(a.plus(z.minus(a).times(f)), way.cross(w).unit(), w,
-                        Double.POSITIVE_INFINITY, out, "right " + t.said()));
+                        Double.POSITIVE_INFINITY, out, "right " + t.said(), Part.RIGHT_TOES));
             }
         }
         final int[] ring = new Limb(target).hang(b, loop, own, rings, false, Double.NaN);

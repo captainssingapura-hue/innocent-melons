@@ -20,8 +20,9 @@ import java.util.stream.IntStream;
  * the skin as thick as they are over what is beneath, its cage smoothed twice ({@link Wrap}); then drawn taut, so
  * many times as its tension says, each point moved half way toward its neighbours' middle, then a third of the way
  * back to lying as far out as the fat and the skin are thick, and never nearer than the skin and {@link #KEPT} of the
- * fat; the fat soft, pressed thinner over what bulges, gathered in the hollows. The hands' and the feet's points kept
- * as their cage makes them, the fingers and the toes too thin to be drawn taut. How each point follows the body
+ * fat; the fat soft, pressed thinner over what bulges, gathered in the hollows. Each point moved as far as it is free:
+ * the hands' and the feet's held as their cage makes them, the fingers and the toes too thin to be drawn taut, the
+ * wrists and the insteps between, partly. How each point follows the body
  * spread along it ({@link Spread}); smoothed once more to be drawn.
  */
 public record SkinFit() implements StatelessFunctionalObject {
@@ -40,35 +41,53 @@ public record SkinFit() implements StatelessFunctionalObject {
      * times.
      */
     public Flesh of(final FatTarget target, final double skin, final int tension) {
+        return of(target, skin, tension, -1);
+    }
+
+    /**
+     * As {@link #of(FatTarget, double, int)}; then, if {@code base} is not negative, taken for a scan, a smooth
+     * surface fitted to it ({@link ScanFit}), its base the cage smoothed {@code base} times, its points following the
+     * body as the scan's do.
+     */
+    public Flesh of(final FatTarget target, final double skin, final int tension, final int base) {
         final Wrap.Shape shape = Wrap.INSTANCE.start(target, STEPS);
         final V3[] at = shape.at();
         final Weights[] w = new Weights[at.length];
         Wrap.INSTANCE.onto(target, shape, at.clone(), w, BACK, FAR);
         final int[][] next = Around.INSTANCE.neighbours(at.length, shape.triangles());
         for (int round = 0; round < tension; round++) {
-            taut(at, next, shape.kept());
+            taut(at, next, shape.held());
             settle(target, shape, skin);
         }
-        return finer(shape, Spread.INSTANCE.over(w, next, SPREADING), target);
+        final Flesh scan = finer(shape, Spread.INSTANCE.over(w, next, SPREADING), target);
+        if (base < 0) {
+            return scan;
+        }
+        final Subdivision s = Subdivision.INSTANCE;
+        final V3[] points = new V3[scan.size()];
+        for (int i = 0; i < points.length; i++) {
+            points[i] = scan.point(i);
+        }
+        return scan.reshaped(ScanFit.INSTANCE.fitted(s.times(s.of(shape.cage(), 1), base), STEPS + 1 - base, points));
     }
 
-    /** Every point moved half way toward its neighbours' middle. */
-    private void taut(final V3[] at, final int[][] next, final boolean[] kept) {
+    /** Every point moved half way toward its neighbours' middle, as far as it is free. */
+    private void taut(final V3[] at, final int[][] next, final double[] held) {
         final V3[] moved = new V3[at.length];
         for (int i = 0; i < at.length; i++) {
-            moved[i] = kept[i] ? at[i] : at[i].plus(Around.INSTANCE.middle(at, next[i]).minus(at[i]).times(0.5));
+            moved[i] = at[i].plus(Around.INSTANCE.middle(at, next[i]).minus(at[i]).times(0.5 * (1 - held[i])));
         }
         System.arraycopy(moved, 0, at, 0, at.length);
     }
 
     /**
      * Every point moved a third of the way to lying as far out as the fat and the skin are thick, and set out to no
-     * nearer than the skin and {@link #KEPT} of the fat; the hands' and the feet's points left.
+     * nearer than the skin and {@link #KEPT} of the fat; each as far as it is free.
      */
     private void settle(final FatTarget target, final Wrap.Shape s, final double skin) {
         final V3[] at = s.at();
         final V3[] out = Around.INSTANCE.normals(at, s.triangles());
-        IntStream.range(0, at.length).parallel().filter(i -> !s.kept()[i]).forEach(i -> {
+        IntStream.range(0, at.length).parallel().filter(i -> s.held()[i] == 0).forEach(i -> {
             final double[] d = target.depth(at[i], s.regions()[i], at[i].x() < 0 ? -1 : 1, 3);
             final double floor = skin + KEPT * (d[1] - skin);
             final double toward = (d[1] - d[0]) / 3;
@@ -77,7 +96,10 @@ public record SkinFit() implements StatelessFunctionalObject {
         });
     }
 
-    /** The skin smoothed once more to be drawn, how each point follows the body with it; bound to the body. */
+    /**
+     * The skin smoothed once more to be drawn, how each point follows the body with it; bound to the body, each
+     * triangle of the part its piece of the cage is.
+     */
     private Flesh finer(final Wrap.Shape s, final Weights[] w, final FatTarget target) {
         final Subdivision sub = Subdivision.INSTANCE;
         final Subdivision.Level fine = sub.once(new Subdivision.Level(flat(s.at()), s.level().faces(),
@@ -106,7 +128,13 @@ public record SkinFit() implements StatelessFunctionalObject {
         for (int i = 0; i < t.length; i += 3) {
             sheet.triangle(t[i], t[i + 1], t[i + 2]);
         }
-        return sheet.flesh(target.bind());
+        final Part[] faces = Wrap.INSTANCE.carried(s.parts(), sub.parents(s.level()));
+        final int[] of = sub.triangleFaces(fine);
+        final Part[] patches = new Part[of.length];
+        for (int i = 0; i < of.length; i++) {
+            patches[i] = faces[of[i]];
+        }
+        return sheet.flesh(target.bind()).patched(patches);
     }
 
     private double[] flat(final V3[] at) {

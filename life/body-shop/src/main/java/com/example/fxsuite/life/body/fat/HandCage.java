@@ -41,9 +41,10 @@ final class HandCage {
 
     /**
      * The hand hung from {@code wrist}, its points set out along {@code wristWays}, added to {@code b}; every point of
-     * it put in {@code kept}. Its faces made to go round the way the wrist's go ({@link Building#agree}).
+     * it put in {@code held}, wholly but the palm's first two rings, a little and more, the skin over the wrist free
+     * to run on into the forearm's. Its faces made to go round the way the wrist's go ({@link Building#agree}).
      */
-    void hang(final Building b, final int[] wrist, final V3[] wristWays, final Set<Integer> kept) {
+    void hang(final Building b, final int[] wrist, final V3[] wristWays, final java.util.Map<Integer, Double> held) {
         final int from = b.size();
         final IntPredicate hands = target.among(Part.RIGHT_HAND, p -> hand.local(p).y() > -10.5);
         final IntPredicate wrists = target.among(Part.RIGHT_FOREARM, p -> hand.local(p).y() < 4);
@@ -52,6 +53,7 @@ final class HandCage {
         for (int r = 0; r < rings.length; r++) {
             rings[r] = palmRing(b, palm, r);
         }
+        b.making(Part.RIGHT_HAND);
         new Zip(b).join(wrist, rings[0], hand.way(V3.Y.times(-1)), wristWays, palmWays());
         final int faces = b.faceCount();
         palm(b, rings);
@@ -63,7 +65,13 @@ final class HandCage {
         }
         b.agree(faces);
         for (int i = from; i < b.size(); i++) {
-            kept.add(i);
+            held.put(i, 1.0);
+        }
+        for (final int p : rings[0]) {
+            held.put(p, 0.3);
+        }
+        for (final int p : rings[1]) {
+            held.put(p, 0.7);
         }
     }
 
@@ -153,7 +161,7 @@ final class HandCage {
             final V3 palm = hand.way(V3.Z);
             final V3 w = palm.minus(way.times(palm.dot(way))).unit();
             rings.add(new Limb.Ring(hand.place(at[0]), way.cross(w).unit(), w, Double.POSITIVE_INFINITY, out,
-                    "right " + d.said()));
+                    "right " + d.said(), Part.RIGHT_HAND));
         }
         return rings;
     }

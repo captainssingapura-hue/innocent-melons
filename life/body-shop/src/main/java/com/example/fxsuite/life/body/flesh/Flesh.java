@@ -6,6 +6,9 @@ import com.example.fxsuite.life.body.Rot;
 import com.example.fxsuite.life.body.V3;
 
 import java.util.List;
+import java.util.function.IntPredicate;
+import java.util.function.Predicate;
+import java.util.stream.IntStream;
 
 /**
  * A body's flesh as one surface, bound to the parts it moves with: each of its points as it was found, with the body
@@ -14,7 +17,8 @@ import java.util.List;
  * (dual quaternion skinning, Kavan's), so that the flesh round a bending knee or elbow turns round it, keeping its
  * bulk, rather than its corners pinching in as places blended would; and its way out turned the same. A forearm's
  * flesh twisted with it as far as each point lies along it from the elbow toward the wrist, as its radius is, not at
- * the wrist alone, where the hand takes the whole twist; the body bound with its forearms untwisted.
+ * the wrist alone, where the hand takes the whole twist; the body bound with its forearms untwisted. Each triangle
+ * known to be of a part, if it was made from a cage whose faces each are: its piece of the cage.
  */
 public final class Flesh {
 
@@ -32,6 +36,8 @@ public final class Flesh {
     private final float[] shares;
     /** How much of its forearm's twist each point feels, by how far along it it lies; none, if it follows no forearm. */
     private final float[] along;
+    /** The part each triangle is of, if each is known to be of one; none, if not. */
+    private final Part[] patches;
 
     /**
      * Points and their ways out, as found; its triangles; the parts it follows and where each was as it was bound; for
@@ -39,6 +45,12 @@ public final class Flesh {
      */
     public Flesh(final float[] points, final float[] normals, final int[] triangles, final List<Part> parts,
                  final List<Rig.Frame> bound, final int[] which, final float[] shares) {
+        this(points, normals, triangles, parts, bound, which, shares, null);
+    }
+
+    private Flesh(final float[] points, final float[] normals, final int[] triangles, final List<Part> parts,
+                  final List<Rig.Frame> bound, final int[] which, final float[] shares, final Part[] patches) {
+        this.patches = patches == null ? null : patches.clone();
         this.points = points.clone();
         this.normals = normals.clone();
         this.triangles = triangles.clone();
@@ -115,6 +127,74 @@ public final class Flesh {
             }
         }
         return s;
+    }
+
+    /**
+     * Only its triangles whose points {@code keep} each says to keep, a part's, say ({@link PartCut}); its points all
+     * kept, by the same numbers.
+     */
+    public Flesh only(final IntPredicate keep) {
+        return keeping(t -> keep.test(triangles[3 * t]) && keep.test(triangles[3 * t + 1])
+                && keep.test(triangles[3 * t + 2]));
+    }
+
+    /** The same, each triangle of the part {@code each} says, by number. */
+    public Flesh patched(final Part[] each) {
+        return new Flesh(points, normals, triangles, parts, bound, which, shares, each);
+    }
+
+    /** The same but its points at {@code at}, by number, their ways out found afresh from its triangles. */
+    public Flesh reshaped(final V3[] at) {
+        final V3[] out = Around.INSTANCE.normals(at, triangles);
+        final float[] p = new float[3 * at.length];
+        final float[] n = new float[p.length];
+        for (int i = 0; i < at.length; i++) {
+            p[3 * i] = (float) at[i].x();
+            p[3 * i + 1] = (float) at[i].y();
+            p[3 * i + 2] = (float) at[i].z();
+            n[3 * i] = (float) out[i].x();
+            n[3 * i + 1] = (float) out[i].y();
+            n[3 * i + 2] = (float) out[i].z();
+        }
+        return new Flesh(p, n, triangles, parts, bound, which, shares, patches);
+    }
+
+    /** Whether each triangle is known to be of a part ({@link #patched}). */
+    public boolean inPatches() {
+        return patches != null;
+    }
+
+    /** Only its triangles of the parts {@code keep} says, each known to be of one ({@link #patched}). */
+    public Flesh patch(final Predicate<Part> keep) {
+        return keeping(t -> keep.test(patches[t]));
+    }
+
+    /** Only its triangles {@code triangle} says to keep, by number, each of the part it was; its points all kept. */
+    private Flesh keeping(final IntPredicate triangle) {
+        final int[] kept = IntStream.range(0, triangleCount()).filter(triangle).toArray();
+        final int[] t = new int[3 * kept.length];
+        final Part[] p = patches == null ? null : new Part[kept.length];
+        for (int k = 0; k < kept.length; k++) {
+            System.arraycopy(triangles, 3 * kept[k], t, 3 * k, 3);
+            if (p != null) {
+                p[k] = patches[kept[k]];
+            }
+        }
+        return new Flesh(points, normals, t, parts, bound, which, shares, p);
+    }
+
+    /** The part point {@code i} follows most. */
+    public Part most(final int i) {
+        Part most = null;
+        double share = -1;
+        for (int k = 0; k < PARTS; k++) {
+            final int q = which[PARTS * i + k];
+            if (q >= 0 && shares[PARTS * i + k] > share) {
+                share = shares[PARTS * i + k];
+                most = parts.get(q);
+            }
+        }
+        return most;
     }
 
     /** Every point and its way out posed as {@code rig} holds the body, into {@code at} and {@code out}, three each. */

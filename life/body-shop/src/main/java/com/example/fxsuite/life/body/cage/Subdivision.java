@@ -135,6 +135,32 @@ public record Subdivision() implements StatelessFunctionalObject {
         return new Level(out, next, sharp);
     }
 
+    /** Which of {@code l}'s faces each of its next step's comes of, by number, in the order {@link #once} makes them. */
+    public int[] parents(final Level l) {
+        return from(l, 0);
+    }
+
+    /** Which of {@code l}'s faces each of its triangles comes of, by number, in the order {@link #mesh} makes them. */
+    public int[] triangleFaces(final Level l) {
+        return from(l, 2);
+    }
+
+    /** Each face's number, once for each of its corners but {@code fewer}, face by face. */
+    private int[] from(final Level l, final int fewer) {
+        int n = 0;
+        for (final int[] f : l.faces()) {
+            n += f.length - fewer;
+        }
+        final int[] from = new int[n];
+        int k = 0;
+        for (int f = 0; f < l.faces().size(); f++) {
+            for (int i = fewer; i < l.faces().get(f).length; i++) {
+                from[k++] = f;
+            }
+        }
+        return from;
+    }
+
     /** {@code l} as triangles: each four-sided face cut across its shorter way, any other fanned. */
     public Mesher.Mesh mesh(final Level l) {
         final float[] p = new float[l.points().length];
