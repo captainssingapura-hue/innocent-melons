@@ -12,8 +12,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The leg's muscles as measured: the whole leg's muscle as Handsfield's subjects had it for their height and mass;
- * each muscle drawn within a fifth of what it was measured, its tendons aside; a heavier body more muscle.
+ * The muscles as measured: the whole leg's muscle as Handsfield's subjects had it for their height and mass;
+ * each leg and arm muscle drawn within a fifth of what it was measured; a heavier body more muscle.
  */
 class MeasuredTest {
 
@@ -29,9 +29,8 @@ class MeasuredTest {
     @Test
     void eachMeasuredMuscleIsDrawnNearlyAsBigAsMeasured() {
         final Measured body = new Measured(Proportions.DRAWN.stature() / 100, Proportions.DRAWN.mass());
-        final double whole = LegVolumes.INSTANCE.whole(body.height(), body.mass());
         for (final Muscle m : Musculature.INSTANCE.muscles()) {
-            final var wanted = LegVolumes.INSTANCE.volume(m.name(), whole);
+            final var wanted = body.measured(m);
             if (wanted.isPresent()) {
                 final double drawn = volume(MuscleShape.INSTANCE.mesh(m, body, rig, false, 2));
                 assertTrue(drawn > 0.8 * wanted.get() && drawn < 1.35 * wanted.get(),

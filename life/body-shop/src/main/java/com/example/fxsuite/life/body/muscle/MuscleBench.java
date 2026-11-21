@@ -74,7 +74,7 @@ public final class MuscleBench extends Application {
     private final CheckBox measured = new CheckBox("Sized as measured, not as drawn");
     private final Label about = new Label();
     private final Rig rig = new Rig(Proportions.DRAWN, Fleshing.INSTANCE.bind(), false);
-    private final Muscularity asMeasured = new Measured(Proportions.DRAWN.stature() / 100, Proportions.DRAWN.mass());
+    private final Measured asMeasured = new Measured(Proportions.DRAWN.stature() / 100, Proportions.DRAWN.mass());
     private final Map<String, MuscleShape.Surface> surfaces = new ConcurrentHashMap<>();
     private final ExecutorService worker = Executors.newSingleThreadExecutor(r -> {
         final Thread t = new Thread(r, "muscles");
@@ -238,10 +238,10 @@ public final class MuscleBench extends Application {
 
     /** How big {@code m} was measured in a body the drawn figure's height and mass, if it was. */
     private String measure(final Muscle m) {
-        final LegVolumes v = LegVolumes.INSTANCE;
-        return v.volume(m.name(), v.whole(Proportions.DRAWN.stature() / 100, Proportions.DRAWN.mass()))
+        final String by = LegVolumes.INSTANCE.volume(m.name(), 1).isPresent() ? "Handsfield" : "Holzbaur";
+        return asMeasured.measured(m)
                 .map(x -> String.format(Locale.ROOT, "Measured %.0f cm3 in a body %.0f cm tall and %.0f kg"
-                        + " (Handsfield).", x, Proportions.DRAWN.stature(), Proportions.DRAWN.mass()))
+                        + " (%s).", x, Proportions.DRAWN.stature(), Proportions.DRAWN.mass(), by))
                 .orElse("Not measured: as drawn.");
     }
 }
