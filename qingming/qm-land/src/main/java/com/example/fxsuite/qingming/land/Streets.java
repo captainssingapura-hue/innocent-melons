@@ -17,11 +17,15 @@ final class Streets {
     private Streets() {
     }
 
-    /** The road, in from the east on the south bank, square onto the bridge's south end; the street from its north. */
+    /**
+     * The road, in from the east on the south bank, square onto the bridge's south end; the street from its north,
+     * straight for 40 m before the gate, square through it and on to the reach's edge.
+     */
     private static final double[][] ROAD = {
             {500, -60}, {300, -48}, {150, -40}, {60, -36}, {10, -32}, {0, -26}, {0, -16}};
     private static final double[][] STREET = {
-            {0, 16}, {0, 24}, {-12, 34}, {-100, 42}, {-300, 42}, {-450, 36}, {Reach.WALL / 100, 30}, {-598, 30}};
+            {0, 16}, {0, 24}, {-12, 34}, {-100, 42}, {-300, 42}, {-440, 36},
+            {Reach.WALL / 100 + 40, Reach.GATE.z() / 100}, {-598, Reach.GATE.z() / 100}};
     /** How far from the bridge's middle a towpath stops, and from the world's edges. */
     private static final double SHORT = 2_500;
     private static final double EDGE = 200;

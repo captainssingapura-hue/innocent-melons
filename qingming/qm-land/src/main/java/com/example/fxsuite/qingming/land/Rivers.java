@@ -57,7 +57,7 @@ public final class Rivers {
     }
 
     /** Its channel, cut into the plain along its middle. */
-    static Channel channel() {
+    public static Channel channel() {
         return new Channel(line(), BED, BANK, DEPTH);
     }
 
@@ -65,7 +65,7 @@ public final class Rivers {
      * Along its bank on its right going downstream ({@code right}), or its left, so far from its middle: a point every
      * 5 m, each square off the river from the one it is beside.
      */
-    static List<Vec2> beside(final boolean right, final double off) {
+    public static List<Vec2> beside(final boolean right, final double off) {
         final List<Vec2> line = line();
         final List<Vec2> beside = new ArrayList<>();
         for (int k = 0; k < line.size(); k++) {

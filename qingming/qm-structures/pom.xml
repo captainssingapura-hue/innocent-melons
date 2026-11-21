@@ -14,13 +14,18 @@
     <packaging>jar</packaging>
 
     <description>
-        What stands in the reach, each built from what is written of it and what the scroll draws: the Rainbow Bridge first.
+        What stands in the reach, declared on a map: each thing a place and a specification, built as the Northern Song
+        built (fxsuite-building-chinese): the Rainbow Bridge, the shops along the street.
     </description>
 
     <dependencies>
         <dependency>
             <groupId>com.example.fxsuite.qingming</groupId>
             <artifactId>qm-land</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>fxsuite-building-chinese</artifactId>
         </dependency>
         <dependency>
             <groupId>com.example.fxsuite</groupId>

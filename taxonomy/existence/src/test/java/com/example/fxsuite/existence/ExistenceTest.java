@@ -23,8 +23,8 @@ class ExistenceTest {
         assertEquals(21, Buildings.TREE.leaves().size());
         assertEquals(32, Uses.TREE.leaves().size());
         assertEquals(20, Spaces.TREE.leaves().size());
-        assertEquals(31, Elements.TREE.leaves().size());
-        assertEquals(135, Existence.TREES.stream().mapToInt(tree -> tree.nodes().size()).sum());
+        assertEquals(33, Elements.TREE.leaves().size());
+        assertEquals(138, Existence.TREES.stream().mapToInt(tree -> tree.nodes().size()).sum());
         assertEquals("Rooms let by the night, served from a lobby.", Uses.TREE.meaning(new Uses.HotelRooms()));
     }
 

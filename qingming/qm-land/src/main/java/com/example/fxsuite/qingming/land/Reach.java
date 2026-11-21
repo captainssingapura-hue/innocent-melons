@@ -27,7 +27,7 @@ import java.util.Map;
  *
  * <ul>
  * <li><b>Its plain</b>, level, as the ground round Kaifeng is, roughened a little; level pads where the bridge's ends,
- * the city's wall and its gate will stand.
+ * the city's wall and its gate stand, and the quay before the warehouses.
  * <li><b>The river</b> ({@link Rivers}), coming in from the east, under the bridge, bending away south before the
  * gate, as the scroll has it turn away from the street: its water 1.86 m deep, the 6 chi the Song history (宋史) has
  * it held at for loaded boats; 22 m across between its banks' tops, as wide as the bridge's span, about 20 to 22 m by
@@ -38,7 +38,7 @@ import java.util.Map;
  * wide, as the bridge is, of earth; the bridge carrying it over the river, built on its own.
  * <li><b>The city's wall</b>, here the old city's, the gate in it the Palace Museum's reading of the scroll (东角子门,
  * the bridge then 上土桥, a short way outside it): its line 540 m west of the bridge, the scroll's distance shortened
- * as the scroll shortens it; the world's west edge 60 m inside it. Neither is built yet: the ground is ready for them.
+ * as the scroll shortens it; the world's west edge 60 m inside it. Both are built on their own.
  * <li><b>Two motorcycles</b>, the engine's cruiser and boxer, parked on the street by the start, ready to ride: not of
  * the scroll's time, but to get about the reach on.
  * </ul>
@@ -64,12 +64,16 @@ public final class Reach {
     private static final double BIKES_AHEAD = 400;
     private static final double BIKES_APART = 240;
 
-    /** Its level pads, each a rectangle (west, east, south, north): the wall's line, the gate's, the bridge's ends. */
+    /**
+     * Its level pads, each a rectangle (west, east, south, north): the wall's line, the gate's, the bridge's ends, the
+     * quay's and the warehouses' ground on the north bank.
+     */
     static final double[][] PADS = {
             {WALL - 1_200, WALL + 1_200, SOUTH + 100, NORTH - 100},
             {WALL - 3_000, WALL + 3_000, GATE.z() - 2_500, GATE.z() + 2_500},
             {-700, 700, -2_400, -1_200},
-            {-700, 700, 1_200, 2_400}};
+            {-700, 700, 1_200, 2_400},
+            {4_000, 7_600, 1_000, 3_200}};
 
     /** Its plain, its pads level, surveyed every 2 m: a little rough elsewhere, by 20 cm or so, 30 m apart. */
     public static Terrain terrain() {
@@ -102,7 +106,8 @@ public final class Reach {
 
     /**
      * Its kinds of road across, unmarked, as a Song street is: the road, earth either side of its middle, falling 2% to
-     * its edges; a towpath, earth and level.
+     * its edges; a towpath, earth and level, its sides steep, so that where it runs along the river's bank it throws
+     * no bank of its own down into the channel.
      */
     static final String SECTIONS = """
             section "road" grade=8% vertical=30m fill=2 cut=2 ditch=0,0 bank=4m cutting=4m
@@ -110,7 +115,7 @@ public final class Reach {
               |
               path      4m     earth        fall=2%
 
-            section "towpath" grade=8% vertical=20m fill=2 cut=2 ditch=0,0 bank=3m cutting=3m
+            section "towpath" grade=8% vertical=20m fill=0.5 cut=2 ditch=0,0 bank=3m cutting=3m
               path      2.3m   earth
               |
               path      2.3m   earth

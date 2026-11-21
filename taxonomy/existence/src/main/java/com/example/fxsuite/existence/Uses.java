@@ -10,7 +10,8 @@ import java.util.List;
 
 /**
  * Uses: what a storey or a space is for. A branch that is {@link Occupied} says so for every use under it: people
- * spend their time there, so it must be reached. A use that is {@link Louvred} is shut in with louvres, not glazed.
+ * spend their time there, so it must be reached. A use that is {@link Louvred} is shut in with louvres, not glazed;
+ * one that is {@link Through} is gone through, and has two ends.
  *
  * <p>Each node is a record, its parent in its type; what each means is beside this class, in {@code Uses.md}.
  */
@@ -87,8 +88,8 @@ public final class Uses {
     public record Movement() implements L1<Use> { public Use parent() { return new Use(); } }
     public record Lobby() implements Leaf<Movement> { public Movement parent() { return new Movement(); } }
     public record SkyLobby() implements Leaf<Movement> { public Movement parent() { return new Movement(); } }
-    public record Crossing() implements Leaf<Movement> { public Movement parent() { return new Movement(); } }
-    public record Passage() implements Leaf<Movement> { public Movement parent() { return new Movement(); } }
+    public record Crossing() implements Leaf<Movement>, Through { public Movement parent() { return new Movement(); } }
+    public record Passage() implements Leaf<Movement>, Through { public Movement parent() { return new Movement(); } }
 
     // Defence
     public record Defence() implements L1<Use> { public Use parent() { return new Use(); } }

@@ -24,7 +24,8 @@ public final class Elements {
             new Rib(), new Roof(), new Eave(), new Canopy(), new Crown(), new Wall(), new CurtainWall(), new Spandrel(),
             new Louvre(), new Screen(), new Door(), new Window(), new Shopfront(), new Archway(), new Railing(),
             new Parapet(), new Steps(), new LiftBank(), new Incline(), new Pole(), new Sign(),
-            new Finial()), Meanings.beside(Elements.class));
+            new Finial(), new Counter(),
+            new Bench()), Meanings.beside(Elements.class));
 
     /** The root. A part a building is made of. */
     public record Element() implements L0 {
@@ -84,4 +85,9 @@ public final class Elements {
     public record Pole() implements Leaf<Ornament> { public Ornament parent() { return new Ornament(); } }
     public record Sign() implements Leaf<Ornament> { public Ornament parent() { return new Ornament(); } }
     public record Finial() implements Leaf<Ornament> { public Ornament parent() { return new Ornament(); } }
+
+    // Fitting
+    public record Fitting() implements L1<Element> { public Element parent() { return new Element(); } }
+    public record Counter() implements Leaf<Fitting> { public Fitting parent() { return new Fitting(); } }
+    public record Bench() implements Leaf<Fitting> { public Fitting parent() { return new Fitting(); } }
 }

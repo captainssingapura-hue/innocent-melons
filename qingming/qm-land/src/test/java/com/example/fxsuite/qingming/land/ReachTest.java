@@ -31,6 +31,15 @@ class ReachTest {
                 "its water within its banks: " + river.wide());
         // the plain beside it, past its banks
         assertEquals(0, GROUND.height(0, Rivers.TOP / 2 + 500), 40, "the plain north of it");
+        // its banks as cut, the towpaths along them throwing nothing down into it
+        for (final double x : new double[] {-12_000, 6_000, 30_000}) {
+            for (double z = -Rivers.TOP / 2; z <= Rivers.TOP / 2; z += 50) {
+                final Vec2 at = Rivers.line().stream().min(java.util.Comparator.comparingDouble(
+                        p -> Math.abs(p.x() - x))).orElseThrow();
+                assertEquals(GROUND.height(at.x(), at.z() + z), Reach.land().height(at.x(), at.z() + z), 1,
+                        "its bank at " + at.x() + ", " + (at.z() + z));
+            }
+        }
     }
 
     @Test
