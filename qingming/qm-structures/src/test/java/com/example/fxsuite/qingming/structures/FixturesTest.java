@@ -1,5 +1,7 @@
 package com.example.fxsuite.qingming.structures;
 
+import com.example.fxsuite.existence.Bridges;
+import com.example.fxsuite.existence.Earthworks;
 import com.example.fxsuite.avatar.sim.Vec2;
 import com.example.fxsuite.building.Atlas;
 import com.example.fxsuite.existence.Buildings;
@@ -61,7 +63,7 @@ class FixturesTest {
         assertEquals(List.of(), Fixtures.INSTANCE.problems());
         final Atlas.Fixture bridge = ALL.getFirst();
         assertEquals("the Rainbow Bridge", bridge.name());
-        assertEquals(new Buildings.Bridge(), bridge.thing());
+        assertEquals(new Bridges.Bridge(), bridge.thing());
         assertEquals(0, Math.hypot(bridge.x(), bridge.z()));
         assertEquals(0, Reach.INSTANCE.ground().height(0, 1_250), 30, "the street where it lands, north");
         assertEquals(0, Reach.INSTANCE.ground().height(0, -1_250), 30, "and south");
@@ -112,7 +114,7 @@ class FixturesTest {
                 assertEquals(0, Reach.INSTANCE.land().height(x, gate.z() + z), 20, "the street at " + x + ", " + z);
             }
         }
-        final List<Atlas.Fixture> wall = ALL.stream().filter(f -> f.thing().equals(new Buildings.CityWall())).toList();
+        final List<Atlas.Fixture> wall = ALL.stream().filter(f -> f.thing().equals(new Earthworks.CityWall())).toList();
         assertEquals(2, wall.size());
         final double[] north = reach(wall.get(0));
         final double[] south = reach(wall.get(1));
@@ -216,7 +218,7 @@ class FixturesTest {
                     }
                 }
             }
-            if (ALL.get(i).thing().equals(new Buildings.Bridge()) || ALL.get(i).thing().equals(new Buildings.Quay())) {
+            if (ALL.get(i).thing().equals(new Bridges.Bridge()) || ALL.get(i).thing().equals(new Buildings.Quay())) {
                 continue;
             }
             // all but the bridge and the quay on the plain: no corner of its floor down the river's bank

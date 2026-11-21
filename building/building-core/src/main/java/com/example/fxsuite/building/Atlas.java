@@ -1,11 +1,11 @@
 package com.example.fxsuite.building;
 
+import com.example.fxsuite.existence.Made;
 import com.example.fxsuite.avatar.build.Sites;
 import com.example.fxsuite.avatar.build.Town;
 import com.example.fxsuite.avatar.sim.Course;
 import com.example.fxsuite.avatar.sim.Land;
 import com.example.fxsuite.avatar.sim.Place;
-import com.example.fxsuite.existence.Buildings;
 import com.example.fxsuite.historian.Civilization;
 import com.example.fxsuite.historian.Era;
 import com.example.fxsuite.historian.Years;
@@ -136,8 +136,8 @@ public final class Atlas<C extends Civilization, E extends Era<? super C>> {
             if (!names.add(f.name())) {
                 problems.add("two things called " + f.name());
             }
-            if (!Buildings.TREE.leaves().contains(f.thing())) {
-                problems.add(f.name() + ": " + f.thing().title() + " is no kind of building");
+            if (!Made.TREE.leaves().contains(f.thing())) {
+                problems.add(f.name() + ": " + f.thing().title() + " is nothing made");
             }
             if (f.era().from().isAfter(year)) {
                 problems.add(f.name() + ": the " + f.era().name() + " had not begun by " + Years.INSTANCE.said(year));

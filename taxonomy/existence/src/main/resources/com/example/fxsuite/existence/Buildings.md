@@ -5,7 +5,8 @@ built: a shophouse is a shophouse in timber or in brick.
 
 ## Building
 
-A thing built to stand: for people to be in, or to carry, bar or mark.
+A thing built to stand on the ground: for people to be in, or to land at, bar or mark. It changes nothing of the
+ground.
 
 ## Residence
 
@@ -93,11 +94,7 @@ Courtrooms and their offices.
 
 ## Infrastructure
 
-Built to carry or to land.
-
-## Bridge
-
-Carries a way over water or over another way.
+Built to land at, or to serve what passes.
 
 ## Quay
 
@@ -110,7 +107,3 @@ Built to keep out.
 ## GateTower
 
 A gate through a wall, and the tower over it.
-
-## CityWall
-
-A wall round a town, walked along its top.

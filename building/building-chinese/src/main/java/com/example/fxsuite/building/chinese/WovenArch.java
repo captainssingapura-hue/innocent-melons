@@ -1,7 +1,7 @@
 package com.example.fxsuite.building.chinese;
 
+import com.example.fxsuite.existence.Bridges;
 import com.example.fxsuite.building.Spec;
-import com.example.fxsuite.existence.Buildings;
 import com.example.fxsuite.historian.Chinese;
 import com.example.fxsuite.historian.ChineseEras;
 
@@ -24,7 +24,7 @@ import com.example.fxsuite.historian.ChineseEras;
  */
 public record WovenArch(double span, double width, double crown, double landing, double springing, double bed,
                         int groups, double pitch, double log, int posts, double poles)
-        implements Spec<Buildings.Bridge, Chinese, ChineseEras.NorthernSong> {
+        implements Spec<Bridges.Bridge, Chinese, ChineseEras.NorthernSong> {
 
     public WovenArch {
         if (!(span > 0) || !(width > 0) || !(crown > 0) || !(landing > span / 2) || !(bed > 0)

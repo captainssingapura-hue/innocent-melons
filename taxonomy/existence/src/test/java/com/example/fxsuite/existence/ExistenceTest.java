@@ -1,5 +1,6 @@
 package com.example.fxsuite.existence;
 
+import com.example.fxsuite.taxonomy.Node;
 import com.example.fxsuite.taxonomy.Taxonomy;
 import org.junit.jupiter.api.Test;
 
@@ -10,23 +11,84 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * What exists: nothing wrong with its four trees, every node with its meaning; a use occupied or not by its branch,
- * louvred where it says; the kinds the worlds have built so far each in their tree.
+ * What exists: nothing wrong with its six trees, every node with its meaning. The land in its layers: the base
+ * terrain, its features, the canal a river people dug among them, and the made in its departments, highways, bridges,
+ * tunnels, earthworks and buildings, the city wall an earthwork. Ground level where it says, water wet, boats where it
+ * is navigable; what can carry traffic, whatever layer it lies in, so that a network may join them. A use occupied or
+ * not by its branch, louvred where it says; the kinds the worlds have built so far each in their tree.
  */
 class ExistenceTest {
 
     @Test
-    void nothingWrongWithItsFourTreesEveryNodeWithItsMeaning() {
+    void nothingWrongWithItsSixTreesEveryNodeWithItsMeaning() {
         assertEquals(List.of(), Existence.INSTANCE.problems());
-        assertEquals(List.of("buildings", "uses", "spaces", "elements"),
-                Existence.INSTANCE.trees().stream().map(Taxonomy::name)
-                .toList());
-        assertEquals(21, Buildings.TREE.leaves().size());
+        assertEquals(List.of("terrains", "features", "made", "uses", "spaces", "elements"),
+                Existence.INSTANCE.trees().stream().map(Taxonomy::name).toList());
+        assertEquals(19, Terrains.TREE.leaves().size());
+        assertEquals(11, Features.TREE.leaves().size());
+        assertEquals(46, Made.TREE.leaves().size());
         assertEquals(32, Uses.TREE.leaves().size());
         assertEquals(20, Spaces.TREE.leaves().size());
         assertEquals(33, Elements.TREE.leaves().size());
-        assertEquals(138, Existence.INSTANCE.trees().stream().mapToInt(tree -> tree.nodes().size()).sum());
+        assertEquals(220, Existence.INSTANCE.trees().stream().mapToInt(tree -> tree.nodes().size()).sum());
         assertEquals("Rooms let by the night, served from a lobby.", Uses.TREE.meaning(new Uses.HotelRooms()));
+        assertEquals("A wide ditch round a town or a castle, often holding water, to keep out.",
+                Made.TREE.meaning(new Earthworks.Moat()));
+    }
+
+    @Test
+    void theMadeInItsDepartmentsTheCanalARiverPeopleDug() {
+        assertEquals(List.of(new Buildings.OfficeTower(), new Buildings.Commerce(), new Buildings.Building(),
+                new Made()), new Buildings.OfficeTower().lineage());
+        assertEquals(List.of(new Bridges.Bridge(), new Bridges.Span(), new Made()), new Bridges.Bridge().lineage());
+        assertEquals(List.of(new Tunnels.Tunnel(), new Tunnels.Bore(), new Made()), new Tunnels.Tunnel().lineage());
+        assertEquals(List.of(new Earthworks.CityWall(), new Earthworks.Raised(), new Earthworks.Earthwork(),
+                new Made()), new Earthworks.CityWall().lineage());
+        assertEquals(List.of(new Highways.Road(), new Highways.Street(), new Highways.Lane(), new Highways.Path(),
+                new Highways.Towpath(), new Highways.Ford()), Made.TREE.under(new Highways.Way()));
+        assertEquals(List.of(new Buildings.GateTower()), Made.TREE.under(new Buildings.Fortification()));
+        assertEquals(List.of(new Features.Canal(), new Features.Flowing(), new Features.Water(),
+                new Features.Feature()), new Features.Canal().lineage());
+        // each layer's things in its own tree, and no other
+        assertTrue(Terrains.TREE.has(new Terrains.Floodplain()) && !Made.TREE.has(new Terrains.Floodplain()));
+        assertTrue(Features.TREE.has(new Features.Canal()) && !Made.TREE.has(new Features.Canal()));
+        assertTrue(Made.TREE.has(new Highways.Towpath()) && !Features.TREE.has(new Highways.Towpath()));
+    }
+
+    @Test
+    void groundLevelWhereItSaysWaterWetBoatsWhereItIsNavigable() {
+        for (final Node ground : List.<Node>of(new Terrains.Plain(), new Terrains.Floodplain(), new Earthworks.Pad(),
+                new Earthworks.Terrace())) {
+            assertTrue(ground.answer(Level.class).isPresent(), ground.title() + " built on");
+        }
+        for (final Node ground : List.<Node>of(new Terrains.Hill(), new Terrains.Cliff(), new Earthworks.Dike(),
+                new Features.Bank(), new Features.River())) {
+            assertFalse(ground.answer(Level.class).isPresent(), ground.title() + " not built on");
+        }
+        for (final Node water : List.<Node>of(new Features.River(), new Features.Canal(), new Features.Pond(),
+                new Features.Marsh())) {
+            assertTrue(water.answer(Wet.class).isPresent(), water.title() + " wet");
+        }
+        for (final Node dry : List.<Node>of(new Terrains.Plain(), new Features.Bank(), new Earthworks.Moat())) {
+            assertFalse(dry.answer(Wet.class).isPresent(), dry.title() + " dry, but for what a moat's spec says");
+        }
+        assertEquals(List.of(new Features.River(), new Features.Canal(), new Features.Lake(), new Features.Sea(),
+                new Features.Bay()), Features.TREE.leaves().stream()
+                .filter(leaf -> leaf.answer(Navigable.class).isPresent()).toList());
+    }
+
+    @Test
+    void whatCarriesTrafficWhateverLayerItLiesInSoANetworkMayJoinIt() {
+        // the reach's street, the bridge it lands on, the towpath along the canal and the canal itself
+        for (final Node member : List.<Node>of(new Highways.Street(), new Highways.Towpath(), new Highways.Ford(),
+                new Bridges.Bridge(), new Bridges.Viaduct(), new Tunnels.Tunnel(), new Features.Canal(),
+                new Features.River())) {
+            assertTrue(member.answer(Transit.class).isPresent(), member.title() + " carries traffic");
+        }
+        for (final Node not : List.<Node>of(new Highways.Paving(), new Buildings.Quay(), new Earthworks.Pad(),
+                new Features.Pond(), new Features.Bank(), new Terrains.Plain())) {
+            assertFalse(not.answer(Transit.class).isPresent(), not.title() + " carries none");
+        }
     }
 
     @Test
@@ -47,19 +109,16 @@ class ExistenceTest {
 
     @Test
     void theKindsTheWorldsHaveBuiltSoFarEachInTheirTree() {
-        // the bay's towers; the reach's bridge, and what is to stand in it
-        assertEquals(List.of(new Buildings.OfficeTower(), new Buildings.Commerce(), new Buildings.Building()),
-                new Buildings.OfficeTower().lineage());
+        // the bay's towers; the reach's bridge, street, wall, quay and country
         for (final String name : List.of("homes-tower", "hotel-tower", "mixed-tower", "bridge", "shop-house",
-                "wine-house", "festive-gateway", "gate-tower", "city-wall")) {
-            assertTrue(Buildings.TREE.named(name).isPresent(), name);
+                "wine-house", "festive-gateway", "gate-tower", "city-wall", "quay", "farmhouse", "towpath")) {
+            assertTrue(Made.TREE.named(name).isPresent(), name);
         }
+        assertTrue(Features.TREE.named("canal").isPresent());
         // the bridge's parts, as elements
         for (final String name : List.of("rib", "abutment", "decking", "railing", "pole")) {
             assertTrue(Elements.TREE.named(name).isPresent(), name);
         }
-        assertEquals(List.of(new Buildings.GateTower(), new Buildings.CityWall()),
-                Buildings.TREE.under(new Buildings.Fortification()));
         assertTrue(Spaces.TREE.has(new Spaces.CoveredWay()) && !Spaces.TREE.has(new Uses.Homes()));
     }
 }

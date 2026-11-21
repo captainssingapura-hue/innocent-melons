@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.example.fxsuite</groupId>
+        <artifactId>fxsuite-road</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>fxsuite-road-core</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        What every road shares: its profile, an attribute at a time, each with its natural order; the transition of an
+        attribute, a type of its own, from a lower value to a higher, a function along its length, and that length
+        worked out from the road's design.
+    </description>
+
+    <dependencies>
+        <!-- the ontology's markers: what is a value, what is a stateless function -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.lang.ontology</groupId>
+            <artifactId>core</artifactId>
+            <version>0.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>
