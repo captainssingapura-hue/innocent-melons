@@ -1,7 +1,7 @@
 package com.example.fxsuite.qingming.structures;
 
+import com.example.fxsuite.existence.Bridges;
 import com.example.fxsuite.existence.Earthworks;
-import com.example.fxsuite.existence.Networks;
 import com.example.fxsuite.avatar.sim.Vec2;
 import com.example.fxsuite.building.Atlas;
 import com.example.fxsuite.existence.Buildings;
@@ -63,7 +63,7 @@ class FixturesTest {
         assertEquals(List.of(), Fixtures.INSTANCE.problems());
         final Atlas.Fixture bridge = ALL.getFirst();
         assertEquals("the Rainbow Bridge", bridge.name());
-        assertEquals(new Networks.Bridge(), bridge.thing());
+        assertEquals(new Bridges.Bridge(), bridge.thing());
         assertEquals(0, Math.hypot(bridge.x(), bridge.z()));
         assertEquals(0, Reach.INSTANCE.ground().height(0, 1_250), 30, "the street where it lands, north");
         assertEquals(0, Reach.INSTANCE.ground().height(0, -1_250), 30, "and south");
@@ -218,7 +218,7 @@ class FixturesTest {
                     }
                 }
             }
-            if (ALL.get(i).thing().equals(new Networks.Bridge()) || ALL.get(i).thing().equals(new Buildings.Quay())) {
+            if (ALL.get(i).thing().equals(new Bridges.Bridge()) || ALL.get(i).thing().equals(new Buildings.Quay())) {
                 continue;
             }
             // all but the bridge and the quay on the plain: no corner of its floor down the river's bank

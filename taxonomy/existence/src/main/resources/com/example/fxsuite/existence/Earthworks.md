@@ -1,6 +1,6 @@
 # Earthworks
 
-The second part of the made layer: the ground itself reshaped by people, laid over the networks. An earthwork changes
+The made layer's department of the ground itself reshaped by people. An earthwork changes
 the ground's height and stands on nothing; a building stands on the ground and changes nothing of it. A kind says what
 the work does, never what it is dug with.
 

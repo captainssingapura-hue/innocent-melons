@@ -1,11 +1,12 @@
 # Features
 
-The natural layer, laid over the base terrain: its waters and their edges. Nobody made them. A kind says what the
-feature is, never how big.
+The layer of the land's features, laid over the base terrain: its waters and their edges, however they came there.
+A canal is a river people dug; how a river was made matters to nothing in the world. None of them is built by a
+civilization. A kind says what the feature is, never how big.
 
 ## Feature
 
-A natural feature of the land, laid over its terrain.
+A feature of the land, laid over its terrain.
 
 ## Water
 
@@ -22,6 +23,10 @@ A large flowing water, deep and wide enough for boats.
 ## Stream
 
 A small flowing water, waded across.
+
+## Canal
+
+A river dug by people, straight in its reaches, its water held level, deep and wide enough for boats.
 
 ## Still
 

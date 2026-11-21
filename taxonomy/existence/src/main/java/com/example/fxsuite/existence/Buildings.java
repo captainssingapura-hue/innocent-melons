@@ -5,8 +5,8 @@ import com.example.fxsuite.taxonomy.L2;
 import com.example.fxsuite.taxonomy.Leaf;
 
 /**
- * Buildings: the third part of the made layer ({@link Made}), laid over the networks and the earthworks: the kinds
- * of building, by what each is for. A building stands on the ground and changes nothing of it.
+ * Buildings: the made layer's department of what stands on the ground ({@link Made}): the kinds of building, by what
+ * each is for. A building stands on the ground and changes nothing of it.
  *
  * <p>Each node is a record, its parent in its type; what each means is beside this class, in {@code Buildings.md}.
  * Their tree is the made layer's, {@link Made#TREE}.

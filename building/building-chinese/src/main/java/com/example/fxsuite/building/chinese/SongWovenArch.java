@@ -1,6 +1,6 @@
 package com.example.fxsuite.building.chinese;
 
-import com.example.fxsuite.existence.Networks;
+import com.example.fxsuite.existence.Bridges;
 import com.example.fxsuite.avatar.build.Material;
 import com.example.fxsuite.avatar.build.Role;
 import com.example.fxsuite.avatar.build.Solid;
@@ -38,7 +38,7 @@ import java.util.List;
  * Estimates, nothing published saying: its railings 1 m high, its deck's boards 15 cm thick.
  */
 public final class SongWovenArch
-        implements ThingImpl<Networks.Bridge, Chinese, ChineseEras.NorthernSong, WovenArch> {
+        implements ThingImpl<Bridges.Bridge, Chinese, ChineseEras.NorthernSong, WovenArch> {
 
     private static final Timbers TIMBERS = Timbers.INSTANCE;
 
@@ -51,8 +51,8 @@ public final class SongWovenArch
     static final double FOUR = 0.30;
 
     @Override
-    public Networks.Bridge thing() {
-        return new Networks.Bridge();
+    public Bridges.Bridge thing() {
+        return new Bridges.Bridge();
     }
 
     @Override

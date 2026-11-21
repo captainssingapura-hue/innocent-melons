@@ -5,9 +5,9 @@ import com.example.fxsuite.taxonomy.L2;
 import com.example.fxsuite.taxonomy.Leaf;
 
 /**
- * Earthworks: the second part of the made layer ({@link Made}), laid over the networks: the ground itself reshaped, for
- * what will stand on it, to hold water back or out, or to be farmed. An earthwork changes the ground's height and
- * stands on nothing; a building stands on the ground and changes nothing of it. Ground levelled is {@link Level}.
+ * Earthworks: the made layer's department of the ground itself reshaped ({@link Made}): for what will stand on it, to
+ * hold water back or out, or to be farmed. An earthwork changes the ground's height and stands on nothing; a building
+ * stands on the ground and changes nothing of it. Ground levelled is {@link Level}.
  *
  * <p>Each node is a record, its parent in its type; what each means is beside this class, in {@code Earthworks.md}.
  * Their tree is the made layer's, {@link Made#TREE}.

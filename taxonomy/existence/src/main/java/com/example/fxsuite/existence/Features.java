@@ -10,9 +10,10 @@ import com.example.fxsuite.taxonomy.Taxonomy;
 import java.util.List;
 
 /**
- * Features: the natural layer, laid over the base terrain ({@link Terrains}): its waters, cut into it or lying in it,
- * and their edges. Nobody made them, so no civilization builds them. Water is {@link Wet}; where boats go, it is
- * {@link Navigable}.
+ * Features: the layer of the land's features, laid over the base terrain ({@link Terrains}): its waters, cut into it or
+ * lying in it, and their edges, however they came there: a canal is a river people dug, and none of them is built by a
+ * civilization. Their layer may be a stack of its own, each feature laid over those before it: a river, a sandbar in
+ * it, a marsh along it. Water is {@link Wet}; where boats go, it is {@link Navigable}.
  *
  * <p>Each node is a record, its parent in its type; what each means is beside this class, in {@code Features.md}.
  */
@@ -23,10 +24,11 @@ public final class Features {
 
     /** The tree, read once from its leaves. */
     public static final Taxonomy TREE = new Taxonomy("features", new Feature(), List.of(new River(), new Stream(),
-            new Lake(), new Pond(), new Marsh(), new Sea(), new Bay(), new Bank(), new Shore(), new Beach()),
+            new Canal(), new Lake(), new Pond(), new Marsh(), new Sea(), new Bay(), new Bank(), new Shore(),
+            new Beach()),
             Meanings.INSTANCE.beside(Features.class));
 
-    /** The root: a natural feature of the land. */
+    /** The root: a feature of the land, laid over its terrain. */
     public record Feature() implements L0 {
     }
 
@@ -36,6 +38,7 @@ public final class Features {
     public record Flowing() implements L2<Water> { public Water parent() { return new Water(); } }
     public record River() implements Leaf<Flowing>, Navigable { public Flowing parent() { return new Flowing(); } }
     public record Stream() implements Leaf<Flowing> { public Flowing parent() { return new Flowing(); } }
+    public record Canal() implements Leaf<Flowing>, Navigable { public Flowing parent() { return new Flowing(); } }
 
     public record Still() implements L2<Water> { public Water parent() { return new Water(); } }
     public record Lake() implements Leaf<Still>, Navigable { public Still parent() { return new Still(); } }
