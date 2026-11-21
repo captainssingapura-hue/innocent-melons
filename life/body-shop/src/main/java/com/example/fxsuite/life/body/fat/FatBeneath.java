@@ -9,8 +9,8 @@ import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 /**
  * What the fat lies on ({@link Beneath}): the body's muscles, the deep ones too, so that none of the grooves between
- * the superficial ones goes deeper than it should; its bones; and the bulk of the belly behind its wall
- * ({@link Viscera}).
+ * the superficial ones goes deeper than it should; its bones; and the bulk of the belly behind its wall and the
+ * throat behind the front of the neck ({@link Viscera}).
  */
 public record FatBeneath() implements StatelessFunctionalObject {
 
@@ -20,6 +20,7 @@ public record FatBeneath() implements StatelessFunctionalObject {
     public Beneath of(final MuscleBody.Bound body, final Rig bind) {
         final Beneath bones = Underneath.INSTANCE.bones(bind, new Detail(0.6));
         final Underneath u = Underneath.INSTANCE;
-        return u.with(u.with(u.muscles(body.flesh()), bones), Viscera.INSTANCE.of(bones, bind));
+        final Beneath inside = u.with(Viscera.INSTANCE.of(bones, bind), Viscera.INSTANCE.throat(bones, bind));
+        return u.with(u.with(u.muscles(body.flesh()), bones), inside);
     }
 }

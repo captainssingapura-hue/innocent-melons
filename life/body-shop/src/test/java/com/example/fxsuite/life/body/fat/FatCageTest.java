@@ -38,6 +38,20 @@ class FatCageTest {
     }
 
     @Test
+    void itClosesOverTheWholeBodyEveryEdgeBetweenTwoFaces() {
+        final java.util.Map<Long, Integer> sides = new java.util.HashMap<>();
+        for (final int[] f : lean.cage().faces()) {
+            for (int k = 0; k < f.length; k++) {
+                final long a = Math.min(f[k], f[(k + 1) % f.length]);
+                final long b = Math.max(f[k], f[(k + 1) % f.length]);
+                sides.merge(a << 32 | b, 1, Integer::sum);
+            }
+        }
+        assertTrue(sides.values().stream().allMatch(n -> n == 2), "no hole, no edge shared by three");
+        assertArrayEquals(lean.wrapped(), fat.wrapped(), "the same mittens");
+    }
+
+    @Test
     void theFatterOnesPointsLieFurtherOut() {
         int further = 0;
         for (int i = 0; i < lean.cage().size(); i++) {
@@ -47,13 +61,17 @@ class FatCageTest {
     }
 
     @Test
-    void itsPointsLieOnTheFatsOutside() {
+    void itsPointsLieOnTheFatsOutsideButTheMittensWrappedRoundIt() {
         int on = 0;
+        int all = 0;
         for (int i = 0; i < lean.cage().size(); i++) {
-            final V3 p = lean.cage().points().get(i);
-            on += Math.abs(leanTarget.clearance(p, lean.regions()[i], p.x() < 0 ? -1 : 1)) < 0.02 ? 1 : 0;
+            if (!lean.wrapped()[i]) {
+                final V3 p = lean.cage().points().get(i);
+                on += Math.abs(leanTarget.clearance(p, lean.regions()[i], p.x() < 0 ? -1 : 1)) < 0.02 ? 1 : 0;
+                all++;
+            }
         }
-        assertTrue(on > 0.9 * lean.cage().size(), on + " of " + lean.cage().size() + " on the fat's outside");
+        assertTrue(on > 0.9 * all, on + " of " + all + " on the fat's outside");
     }
 
     /** How far {@code p} is out from what is beneath it, the muscles, the bones, the belly. */

@@ -3,6 +3,7 @@ package com.example.fxsuite.life.body.fat;
 import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Rig;
 import com.example.fxsuite.life.body.V3;
+import com.example.fxsuite.life.body.wear.Hoop;
 import com.example.fxsuite.life.body.wear.Weights;
 
 import java.util.EnumSet;
@@ -112,6 +113,27 @@ public final class FatTarget {
     public double clearance(final V3 x, final Region r, final int side) {
         final Nearness.Near n = near.nearest(x, 4, counts(r, side));
         return n.triangle() < 0 ? 4 : n.distance() - map.thickness(near.weights(n), x, bind);
+    }
+
+    /**
+     * The fat wrapped round what counts for {@code r} on side {@code side} where {@code plane} cuts it, as a mitten
+     * wraps a hand, across the gaps between the fingers ({@link Hoop}), at {@code angles} round from the plane's
+     * {@code u} toward its {@code w}, as far out as the fat is thick at its middle.
+     */
+    public Hoop.Ring wrap(final Hoop.Plane plane, final Region r, final int side, final double[] angles) {
+        final IntPredicate counts = counts(r, side);
+        final int[] among = java.util.stream.IntStream.range(0, mainOf.length).filter(counts).toArray();
+        final double ease = map.thickness(under(plane.at()), plane.at(), bind);
+        return Hoop.INSTANCE.ring(near.beneath(), among, plane, p -> true, angles, ease);
+    }
+
+    /** How high what goes with part {@code p} beneath the fat reaches: the crown, of the head's. */
+    public double highest(final Part p) {
+        double top = Double.NEGATIVE_INFINITY;
+        for (int i = 0; i < near.beneath().size(); i++) {
+            top = near.beneath().main()[i] == p ? Math.max(top, near.beneath().points()[3 * i + 1]) : top;
+        }
+        return top;
     }
 
     /** How the body under {@code x} moves: the nearest point beneath's, whatever it is. */

@@ -52,6 +52,38 @@ public record Viscera() implements StatelessFunctionalObject {
         return beneath(points, weights);
     }
 
+    /**
+     * The throat: the windpipe, the larynx and the gullet before the neck's bones, as one tube, from behind the top of
+     * the breastbone up to under the jaw, broadest at the larynx; so that the front of the neck has something under its
+     * strap muscles. Following the neck, the chest at its foot.
+     */
+    public Beneath throat(final Beneath bones, final Rig bind) {
+        final double neck = bind.frame(Part.NECK).at().y();
+        final double jaw = bind.frame(Part.HEAD).at().y() - 1;
+        double spine = Double.NEGATIVE_INFINITY;
+        for (int i = 0; i < bones.size(); i++) {
+            final V3 p = bones.point(i);
+            spine = bones.main()[i] == Part.NECK && p.y() > neck && p.y() < neck + 6 && Math.abs(p.x()) < 1.5
+                    ? Math.max(spine, p.z()) : spine;
+        }
+        final List<V3> points = new ArrayList<>();
+        final List<Weights> weights = new ArrayList<>();
+        for (int r = 0; r < RINGS; r++) {
+            final double u = (double) r / (RINGS - 1);
+            final double y = neck - 6 + (jaw - neck + 6) * u;
+            final double radius = 1.8 + 0.6 * Math.sin(Math.PI * Math.min(1, u / 0.8));
+            for (int k = 0; k < ROUND; k++) {
+                final double a = 2 * Math.PI * k / ROUND;
+                points.add(new V3(radius * Math.cos(a), y, spine + radius + 0.3 + radius * Math.sin(a)));
+                final float[] w = new float[Part.values().length];
+                w[Part.CHEST.ordinal()] = (float) Math.max(0, 1 - 3 * u);
+                w[Part.NECK.ordinal()] = 1 - w[Part.CHEST.ordinal()];
+                weights.add(new Weights(w));
+            }
+        }
+        return beneath(points, weights);
+    }
+
     /** The section of {@code bones} at height {@code y}: its hull, {@link #ROUND} points round. */
     private Hoop.Ring section(final Beneath bones, final double y) {
         final double[] angles = new double[ROUND];

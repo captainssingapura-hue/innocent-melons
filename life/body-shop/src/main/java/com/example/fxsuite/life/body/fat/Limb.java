@@ -1,16 +1,18 @@
 package com.example.fxsuite.life.body.fat;
 
-import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.V3;
 import com.example.fxsuite.life.body.cage.Building;
+import com.example.fxsuite.life.body.wear.Hoop;
+
+import java.util.List;
 
 /**
- * A limb of the fat cage, hung from a loop of the torso's points where it goes out ({@link FatCage}): rings square to
- * its bones, at shares of the way along each from its joint to the next, as many points round as its loop, evenly
- * round, the first at the angle round of the loop's first and on the way the loop goes; each point on the fat's
- * outside along a line in to the bone, among what of the limb counts ({@link FatTarget}); where a line meets nothing,
- * as far out as the ring before. Four-sided faces between one ring and the next, the first ring's and the loop's; its
- * end shut by one face. On the right.
+ * A limb of the fat cage, hung from a loop of the torso's points where it goes out ({@link FatCage}): rings, each in a
+ * plane of its own ({@link Ring}), as many points round as its loop, evenly round, the first at the angle round of the
+ * loop's first and on the way the loop goes; each point on the fat's outside along a line in to the ring's middle,
+ * among what of the limb counts ({@link FatTarget}); where a line meets nothing, as far out as the ring before.
+ * Four-sided faces between one ring and the next, the first ring's and the loop's; its end shut by one face. On the
+ * right.
  */
 final class Limb {
 
@@ -19,79 +21,91 @@ final class Limb {
 
     private final FatTarget target;
 
+    /**
+     * A ring's plane: its middle; its two ways, {@code u} to the body's right and {@code w} to its front, or what the
+     * front turns into round a heel; no further out toward {@code w} than {@code toward}, the line it turns through;
+     * {@code wrapped} round what it cuts, as a mitten round the fingers, or on it.
+     */
+    record Ring(V3 middle, V3 u, V3 w, double toward, boolean wrapped, String said) {
+    }
+
     Limb(final FatTarget target) {
         this.target = target;
     }
 
     /**
-     * The limb on region {@code r} through {@code parts}' joints (each part's, and the next's, the last's its end),
-     * hung from {@code loop}, its rings at {@code along} shares of each part's way, added to {@code b}.
+     * The limb on region {@code r} through {@code rings}, hung from {@code loop}, added to {@code b}; the points of its
+     * wrapped rings put in {@code wrapped}.
      */
-    void hang(final Building b, final int[] loop, final FatTarget.Region r, final Part[] parts,
-              final double[][] along) {
+    void hang(final Building b, final int[] loop, final FatTarget.Region r, final List<Ring> rings,
+              final java.util.Set<Integer> wrapped) {
         final int n = loop.length;
-        final V3 first = target.bind().frame(parts[0]).at();
-        final V3 way0 = target.bind().frame(parts[1]).at().minus(first).unit();
         V3 mid = V3.ZERO;
         for (final int p : loop) {
             mid = mid.plus(b.point(p).times(1.0 / n));
         }
+        final Ring first = rings.getFirst();
         final double[] round = new double[n];
         double turned = 0;
         for (int k = 0; k < n; k++) {
-            round[k] = angle(b.point(loop[k]).minus(mid), way0);
+            final V3 v = b.point(loop[k]).minus(mid);
+            round[k] = Math.atan2(v.dot(first.u()), v.dot(first.w()));
         }
         for (int k = 0; k < n; k++) {
             turned += Math.IEEEremainder(round[(k + 1) % n] - round[k], 2 * Math.PI);
         }
         int[] above = loop;
         double reach = OUT;
-        for (int s = 0; s < along.length; s++) {
-            final V3 from = target.bind().frame(parts[s]).at();
-            final V3 to = target.bind().frame(parts[s + 1]).at();
-            final V3 way = to.minus(from).unit();
-            for (final double f : along[s]) {
-                final V3 c = from.plus(to.minus(from).times(f));
-                final int[] ring = new int[n];
-                double far = 0;
-                for (int k = 0; k < n; k++) {
-                    final V3 out = across(way, round[0] + Math.signum(turned) * 2 * Math.PI * k / n);
-                    final double before = reach;
-                    final V3 p = target.onto(c.plus(out.times(OUT)), out.times(-1), r, 1, OUT)
-                            .map(FatTarget.Hit::at).orElse(c.plus(out.times(before)));
-                    far = Math.max(far, p.minus(c).length());
-                    ring[k] = b.add(p, parts[s].said() + " " + Math.round(f * 100) + "%, " + k);
+        for (final Ring ring : rings) {
+            final int[] at = new int[n];
+            final V3[] found = ring.wrapped() ? wrap(ring, r, round[0], turned, n) : null;
+            double far = 0;
+            for (int k = 0; k < n; k++) {
+                final double a = round[0] + Math.signum(turned) * 2 * Math.PI * k / n;
+                final V3 out = ring.u().times(Math.sin(a)).plus(ring.w().times(Math.cos(a))).unit();
+                final double start = Math.cos(a) > 0 ? Math.min(OUT, 0.95 * ring.toward() / Math.cos(a)) : OUT;
+                final double before = reach;
+                final V3 p = found != null ? found[k] : target.onto(ring.middle().plus(out.times(start)),
+                        out.times(-1), r, 1, start).map(FatTarget.Hit::at)
+                        .orElse(ring.middle().plus(out.times(Math.min(before, start))));
+                far = Math.max(far, p.minus(ring.middle()).length());
+                at[k] = b.add(p, ring.said() + ", " + k);
+                if (ring.wrapped()) {
+                    wrapped.add(at[k]);
                 }
-                reach = Math.min(OUT, far);
-                for (int k = 0; k < n; k++) {
-                    final int next = (k + 1) % n;
-                    b.face(ring[k], ring[next], above[next], above[k]);
-                }
-                above = ring;
             }
+            reach = Math.min(OUT, far);
+            for (int k = 0; k < n; k++) {
+                final int next = (k + 1) % n;
+                b.face(at[k], at[next], above[next], above[k]);
+            }
+            above = at;
         }
+        shut(b, above);
+    }
+
+    /**
+     * {@code ring}'s points wrapped round what it cuts, {@code n} of them evenly round from {@code first}, the way
+     * {@code turned} goes; none if it cuts nothing.
+     */
+    private V3[] wrap(final Ring ring, final FatTarget.Region r, final double first, final double turned,
+                      final int n) {
+        final double[] angles = new double[n];
+        for (int k = 0; k < n; k++) {
+            // a mitten's ways round are read from u toward w, the cage's from w toward u
+            angles[k] = Math.PI / 2 - (first + Math.signum(turned) * 2 * Math.PI * k / n);
+        }
+        final Hoop.Ring h = target.wrap(new Hoop.Plane(ring.middle(), ring.u(), ring.w()), r, 1, angles);
+        return h == null || h.points().size() < n ? null : h.points().toArray(new V3[0]);
+    }
+
+    /** The end of the limb, past {@code above}, shut by one face. */
+    private void shut(final Building b, final int[] above) {
+        final int n = above.length;
         final int[] shut = new int[n];
         for (int k = 0; k < n; k++) {
             shut[k] = above[n - 1 - k];
         }
         b.face(shut);
-    }
-
-    /** The angle round {@code way} of {@code v}, from the body's front toward its right. */
-    private double angle(final V3 v, final V3 way) {
-        final V3[] uw = basis(way);
-        return Math.atan2(v.dot(uw[0]), v.dot(uw[1]));
-    }
-
-    /** The way out square to {@code way} at angle {@code a} round it, from the body's front toward its right. */
-    private V3 across(final V3 way, final double a) {
-        final V3[] uw = basis(way);
-        return uw[0].times(Math.sin(a)).plus(uw[1].times(Math.cos(a))).unit();
-    }
-
-    /** Two ways square to {@code way} and to each other: toward the body's right, and toward its front. */
-    private V3[] basis(final V3 way) {
-        final V3 front = V3.Z.minus(way.times(way.z())).unit();
-        return new V3[] {front.cross(way).unit(), front};
     }
 }
