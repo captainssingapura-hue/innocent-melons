@@ -12,12 +12,15 @@ import java.util.List;
  * Where the fat cage's limbs' rings are ({@link Limb.Ring}), on the right, as the body is held to be bound. A leg's:
  * square to the thigh and the shin, at shares of the way down each; at the ankle, turning through a line across its
  * front, clear of it, from level to upright, round the heel; then upright along the foot to the toes, its top where the
- * shin's front was. An arm's: square to the upper arm and the forearm; past the wrist, on down the hand to the
- * fingertips, the hand a mitten.
+ * shin's front was. An arm's: square to the upper arm and the forearm, to the wrist, the hand going on from there
+ * ({@link HandCage}).
  */
 public record LimbRings() implements StatelessFunctionalObject {
 
     public static final LimbRings INSTANCE = new LimbRings();
+
+    /** How far out a limb's lines start, cm. */
+    private static final double OUT = 15;
 
     /** The right leg's rings. */
     public List<Limb.Ring> leg(final Rig bind) {
@@ -33,12 +36,12 @@ public record LimbRings() implements StatelessFunctionalObject {
         for (final double deg : new double[] {0, 30, 60, 90}) {
             final double a = Math.toRadians(deg);
             final V3 away = foot.way(new V3(0, -Math.sin(a), -Math.cos(a))).unit();
-            rings.add(new Limb.Ring(hinge.plus(away.times(far)), foot.way(V3.X).unit(), away.times(-1), far, false,
+            rings.add(new Limb.Ring(hinge.plus(away.times(far)), foot.way(V3.X).unit(), away.times(-1), far, OUT,
                     "heel " + Math.round(deg) + "°"));
         }
-        for (final double z : new double[] {8, 11.5, 15, 18.5}) {
+        for (final double z : new double[] {8}) {
             rings.add(new Limb.Ring(foot.place(new V3(0, z < 14 ? -3.5 : -5, z)), foot.way(V3.X).unit(),
-                    foot.way(V3.Y).unit(), Double.POSITIVE_INFINITY, z > 14, "foot " + z));
+                    foot.way(V3.Y).unit(), Double.POSITIVE_INFINITY, OUT, "foot " + z));
         }
         return rings;
     }
@@ -50,14 +53,7 @@ public record LimbRings() implements StatelessFunctionalObject {
         final V3 elbow = bind.frame(Part.RIGHT_FOREARM).at();
         final V3 wrist = bind.frame(Part.RIGHT_HAND).at();
         along(rings, shoulder, elbow, new double[] {0.12, 0.3, 0.5, 0.7, 0.88, 1}, "upper arm");
-        along(rings, elbow, wrist, new double[] {0.15, 0.35, 0.55, 0.75}, "forearm");
-        final V3 down = wrist.minus(elbow).unit();
-        // the wrist wrapped with the hand, the thumb's root with it
-        rings.add(ring(elbow.plus(wrist.minus(elbow).times(0.92)), down, true, "forearm 92%"));
-        final double hand = bind.frame(Part.RIGHT_HAND).scale().y();
-        for (final double d : new double[] {2, 5.5, 9, 12.5, 16}) {
-            rings.add(ring(wrist.plus(down.times(d * hand)), down, true, "hand " + d));
-        }
+        along(rings, elbow, wrist, new double[] {0.15, 0.35, 0.55, 0.75, 0.94}, "forearm");
         return rings;
     }
 
@@ -66,13 +62,13 @@ public record LimbRings() implements StatelessFunctionalObject {
                        final String said) {
         final V3 way = to.minus(from).unit();
         for (final double s : shares) {
-            rings.add(ring(from.plus(to.minus(from).times(s)), way, false, said + " " + Math.round(s * 100) + "%"));
+            rings.add(ring(from.plus(to.minus(from).times(s)), way, said + " " + Math.round(s * 100) + "%"));
         }
     }
 
-    /** A ring round {@code middle}, square to {@code way}, its front toward the body's, wrapped or not. */
-    private Limb.Ring ring(final V3 middle, final V3 way, final boolean wrapped, final String said) {
+    /** A ring round {@code middle}, square to {@code way}, its front toward the body's. */
+    private Limb.Ring ring(final V3 middle, final V3 way, final String said) {
         final V3 front = V3.Z.minus(way.times(way.z())).unit();
-        return new Limb.Ring(middle, front.cross(way).unit(), front, Double.POSITIVE_INFINITY, wrapped, said);
+        return new Limb.Ring(middle, front.cross(way).unit(), front, Double.POSITIVE_INFINITY, OUT, said);
     }
 }

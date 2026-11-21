@@ -43,13 +43,16 @@ import java.util.concurrent.Executors;
 
 /**
  * The skin bench: a man's skin over his muscles and bones, the fat under it as how thick it is ({@link SkinFit}); or,
- * slower, over his fat as a layer of its own ({@link SkinLayer}); each shown or not; his fat as thick as asked, from a lean athlete's to a heavy man's, as Störchle's ten young men had it on average by default
- * ({@link FatMap}); his skin drawn as taut as asked; held as it was found, its arms out from its sides, or standing at
- * rest, or kicking out in the parade step, all of it moving with him. The body found once, away from the screen; the
- * fat and the skin for each asked, and kept.
+ * slower, over his fat as a layer of its own ({@link SkinLayer}); each shown or not; his fat as thick as asked, from a
+ * lean athlete's to a heavy man's, as Störchle's ten young men had it on average by default ({@link FatMap}); his
+ * skin drawn as taut as asked; held as it was found, its arms out from its sides, or standing at rest, or kicking out
+ * in the parade step, all of it moving with him. The body found once, away from the screen; the fat and the skin for
+ * each asked, and kept.
  *
- * <p>{@code -Dskin.mean} (mm), {@code -Dskin.tension}, {@code -Dskin.fat=layer} (the fat a layer of its own), {@code -Dskin.show} (skin, fat, muscles, bones, by commas),
- * {@code -Dskin.held} (fitted, rest, kick); {@code -Dskin.yaw}, {@code -Dskin.pitch}, {@code -Dskin.distance} where
+ * <p>{@code -Dskin.mean} (mm), {@code -Dskin.tension}, {@code -Dskin.fat=layer} (the fat a layer of its own),
+ * {@code -Dskin.show} (skin, fat, muscles, bones, by commas),
+ * {@code -Dskin.held} (fitted, rest, kick); {@code -Dskin.at} how high it is looked at (cm); {@code -Dskin.yaw},
+ * {@code -Dskin.pitch}, {@code -Dskin.distance} where
  * it is seen from.</p>
  */
 public final class SkinBench extends Application {
@@ -118,7 +121,7 @@ public final class SkinBench extends Application {
         shell.middle(view.node());
         view.zoom(10, 900);
         view.from("skin", 200, 6, 2.6);
-        view.lookAt(0, 90, 0);
+        view.lookAt(0, Double.parseDouble(System.getProperty("skin.at", "90")), 0);
         shell.show(stage, 1400, 920);
         make();
     }

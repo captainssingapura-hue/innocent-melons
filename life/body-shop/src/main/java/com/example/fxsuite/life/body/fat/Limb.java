@@ -2,31 +2,29 @@ package com.example.fxsuite.life.body.fat;
 
 import com.example.fxsuite.life.body.V3;
 import com.example.fxsuite.life.body.cage.Building;
-import com.example.fxsuite.life.body.wear.Hoop;
 
 import java.util.List;
+import java.util.function.IntPredicate;
 
 /**
  * A limb of the fat cage, hung from a loop of the torso's points where it goes out ({@link FatCage}): rings, each in a
  * plane of its own ({@link Ring}), as many points round as its loop, evenly round, the first at the angle round of the
  * loop's first and on the way the loop goes; each point on the fat's outside along a line in to the ring's middle,
  * among what of the limb counts ({@link FatTarget}); where a line meets nothing, as far out as the ring before.
- * Four-sided faces between one ring and the next, the first ring's and the loop's; its end shut by one face. On the
- * right.
+ * Four-sided faces between one ring and the next, the first ring's and the loop's; its end shut by one face, or left
+ * open for what goes on from it, a hand. On the right.
  */
 final class Limb {
 
-    /** How far out the lines start, cm. */
-    private static final double OUT = 15;
-
     private final FatTarget target;
+    private V3[] ways = new V3[0];
 
     /**
      * A ring's plane: its middle; its two ways, {@code u} to the body's right and {@code w} to its front, or what the
      * front turns into round a heel; no further out toward {@code w} than {@code toward}, the line it turns through;
-     * {@code wrapped} round what it cuts, as a mitten round the fingers, or on it.
+     * how far out its lines start, {@code out}.
      */
-    record Ring(V3 middle, V3 u, V3 w, double toward, boolean wrapped, String said) {
+    record Ring(V3 middle, V3 u, V3 w, double toward, double out, String said) {
     }
 
     Limb(final FatTarget target) {
@@ -34,70 +32,78 @@ final class Limb {
     }
 
     /**
-     * The limb on region {@code r} through {@code rings}, hung from {@code loop}, added to {@code b}; the points of its
-     * wrapped rings put in {@code wrapped}.
+     * The limb among what {@code counts} says through {@code rings}, hung from {@code loop}, added to {@code b}; its
+     * end shut if {@code shut}. Its last ring. Each ring's first
+     * point as far round as {@code phase}, if it is a number, every body's the same way; or as far round as the loop's
+     * first point is.
      */
-    void hang(final Building b, final int[] loop, final FatTarget.Region r, final List<Ring> rings,
-              final java.util.Set<Integer> wrapped) {
+    int[] hang(final Building b, final int[] loop, final IntPredicate counts, final List<Ring> rings,
+               final boolean shut, final double phase) {
         final int n = loop.length;
-        V3 mid = V3.ZERO;
-        for (final int p : loop) {
-            mid = mid.plus(b.point(p).times(1.0 / n));
-        }
         final Ring first = rings.getFirst();
         final double[] round = new double[n];
-        double turned = 0;
-        for (int k = 0; k < n; k++) {
-            final V3 v = b.point(loop[k]).minus(mid);
-            round[k] = Math.atan2(v.dot(first.u()), v.dot(first.w()));
-        }
-        for (int k = 0; k < n; k++) {
-            turned += Math.IEEEremainder(round[(k + 1) % n] - round[k], 2 * Math.PI);
+        final double turned = round(b, loop, first, round);
+        if (!Double.isNaN(phase)) {
+            round[0] = phase;
         }
         int[] above = loop;
-        double reach = OUT;
+        double reach = first.out();
         for (final Ring ring : rings) {
             final int[] at = new int[n];
-            final V3[] found = ring.wrapped() ? wrap(ring, r, round[0], turned, n) : null;
             double far = 0;
+            ways = new V3[n];
             for (int k = 0; k < n; k++) {
                 final double a = round[0] + Math.signum(turned) * 2 * Math.PI * k / n;
                 final V3 out = ring.u().times(Math.sin(a)).plus(ring.w().times(Math.cos(a))).unit();
-                final double start = Math.cos(a) > 0 ? Math.min(OUT, 0.95 * ring.toward() / Math.cos(a)) : OUT;
+                ways[k] = out;
+                final double start = Math.cos(a) > 0 ? Math.min(ring.out(), 0.95 * ring.toward() / Math.cos(a))
+                        : ring.out();
                 final double before = reach;
-                final V3 p = found != null ? found[k] : target.onto(ring.middle().plus(out.times(start)),
-                        out.times(-1), r, 1, start).map(FatTarget.Hit::at)
+                final V3 p = target.onto(ring.middle().plus(out.times(start)), out.times(-1), counts, start)
+                        .map(FatTarget.Hit::at)
                         .orElse(ring.middle().plus(out.times(Math.min(before, start))));
                 far = Math.max(far, p.minus(ring.middle()).length());
                 at[k] = b.add(p, ring.said() + ", " + k);
-                if (ring.wrapped()) {
-                    wrapped.add(at[k]);
-                }
             }
-            reach = Math.min(OUT, far);
+            reach = Math.min(ring.out(), far);
             for (int k = 0; k < n; k++) {
                 final int next = (k + 1) % n;
                 b.face(at[k], at[next], above[next], above[k]);
             }
             above = at;
         }
-        shut(b, above);
+        if (shut) {
+            shut(b, above);
+        }
+        return above;
+    }
+
+    /** Which way out each point of the last ring hung was set along: every body's the same, if its phase was given. */
+    V3[] ways() {
+        return ways.clone();
     }
 
     /**
-     * {@code ring}'s points wrapped round what it cuts, {@code n} of them evenly round from {@code first}, the way
-     * {@code turned} goes; none if it cuts nothing.
+     * How far round each point of {@code loop} is about its middle, read in {@code first}'s plane, into {@code round};
+     * how far round they go, all told, the way they go.
      */
-    private V3[] wrap(final Ring ring, final FatTarget.Region r, final double first, final double turned,
-                      final int n) {
-        final double[] angles = new double[n];
-        for (int k = 0; k < n; k++) {
-            // a mitten's ways round are read from u toward w, the cage's from w toward u
-            angles[k] = Math.PI / 2 - (first + Math.signum(turned) * 2 * Math.PI * k / n);
+    private double round(final Building b, final int[] loop, final Ring first, final double[] round) {
+        final int n = loop.length;
+        V3 mid = V3.ZERO;
+        for (final int p : loop) {
+            mid = mid.plus(b.point(p).times(1.0 / n));
         }
-        final Hoop.Ring h = target.wrap(new Hoop.Plane(ring.middle(), ring.u(), ring.w()), r, 1, angles);
-        return h == null || h.points().size() < n ? null : h.points().toArray(new V3[0]);
+        for (int k = 0; k < n; k++) {
+            final V3 v = b.point(loop[k]).minus(mid);
+            round[k] = Math.atan2(v.dot(first.u()), v.dot(first.w()));
+        }
+        double turned = 0;
+        for (int k = 0; k < n; k++) {
+            turned += Math.IEEEremainder(round[(k + 1) % n] - round[k], 2 * Math.PI);
+        }
+        return turned;
     }
+
 
     /** The end of the limb, past {@code above}, shut by one face. */
     private void shut(final Building b, final int[] above) {

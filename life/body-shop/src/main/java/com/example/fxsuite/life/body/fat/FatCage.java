@@ -27,8 +27,11 @@ public record FatCage() implements StatelessFunctionalObject {
     /** The torso ring at the armpits: the arm's opening from it two rings up. */
     static final int ARMPITS = 9;
 
-    /** A cage, what each of its points is on, and whether it is wrapped round what it is on, as a mitten. */
-    public record Built(Cage cage, FatTarget.Region[] regions, boolean[] wrapped) {
+    /**
+     * A cage, what each of its points is on, and whether it is to be kept as the cage makes it, a hand's or a foot's,
+     * its fingers and toes too thin and too near each other to be set on anything.
+     */
+    public record Built(Cage cage, FatTarget.Region[] regions, boolean[] kept) {
     }
 
     /** The fat's cage on {@code target}. */
@@ -45,25 +48,31 @@ public record FatCage() implements StatelessFunctionalObject {
         System.arraycopy(grid[0], 0, leg, 0, COLUMNS / 2 + 1);
         leg[COLUMNS / 2 + 1] = crotch;
         final Limb limb = new Limb(target);
-        final java.util.Set<Integer> mittens = new java.util.HashSet<>();
+        final java.util.Set<Integer> ends = new java.util.HashSet<>();
         final int legs = b.size();
-        limb.hang(b, leg, FatTarget.Region.LEG, LimbRings.INSTANCE.leg(bind), mittens);
+        // each of the leg's rings begun before it and in, every body's the same way, for the foot to go on from it
+        final int[] instep = limb.hang(b, leg, target.counts(FatTarget.Region.LEG, 1), LimbRings.INSTANCE.leg(bind),
+                false, -1.0);
+        new FootCage(target).hang(b, instep, limb.ways(), ends);
         final int arms = b.size();
         final int a = ARMPITS;
         final int[] arm = {grid[a][ARM + 1], grid[a][ARM], grid[a][ARM - 1], grid[a + 1][ARM - 1],
             grid[a + 2][ARM - 1], grid[a + 2][ARM], grid[a + 2][ARM + 1], grid[a + 1][ARM + 1]};
-        limb.hang(b, arm, FatTarget.Region.ARM, LimbRings.INSTANCE.arm(bind), mittens);
+        // each of the arm's rings begun behind and below, every body's the same way, for the hand to go on from it
+        final int[] wrist = limb.hang(b, arm, target.counts(FatTarget.Region.ARM, 1), LimbRings.INSTANCE.arm(bind),
+                false, -0.75 * Math.PI);
+        new HandCage(target).hang(b, wrist, limb.ways(), ends);
         final int right = b.size();
         b.mirror(limbs, limbFaces);
         final FatTarget.Region[] regions = new FatTarget.Region[b.size()];
-        final boolean[] wrapped = new boolean[b.size()];
+        final boolean[] kept = new boolean[b.size()];
         for (int i = 0; i < b.size(); i++) {
             final int r = i < right ? i : b.fellow(i);
             regions[i] = r >= arms ? FatTarget.Region.ARM : r >= legs ? FatTarget.Region.LEG
                     : FatTarget.Region.TRUNK;
-            wrapped[i] = mittens.contains(r);
+            kept[i] = ends.contains(r);
         }
-        return new Built(b.cage(), regions, wrapped);
+        return new Built(b.cage(), regions, kept);
     }
 
     /**

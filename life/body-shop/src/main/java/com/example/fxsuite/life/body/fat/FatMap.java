@@ -33,7 +33,7 @@ public record FatMap(double mean, double over) implements Scalar {
         return fat(w, x, bind) + over;
     }
 
-    /** How thick the fat alone is at {@code x}, cm, following the body as {@code w} says, where {@code bind} holds it. */
+    /** How thick the fat alone is at {@code x}, cm, following the body as {@code w} says, held as {@code bind} is. */
     public double fat(final Weights w, final V3 x, final Rig bind) {
         double t = 0;
         for (final Part p : Part.values()) {

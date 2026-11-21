@@ -16,12 +16,13 @@ import java.util.stream.IntStream;
 
 /**
  * A body's skin found over its muscles and bones at once, the fat under it as how thick it is, not a layer of its own
- * ({@link com.example.fxsuite.life.body.fat.FatMap}): wrapped round where the skin's outside would be, the fat and the
- * skin as thick as they are over what is beneath, its cage smoothed twice ({@link Wrap}); then drawn taut, so many times
- * as its tension says, each point moved half way toward its neighbours' middle, then a third of the way back to lying
- * as far out as the fat and the skin are thick, and never nearer than the skin and {@link #KEPT} of the fat; the fat
- * soft, pressed thinner over what bulges, gathered in the hollows. A mitten's points, round the fingers and the toes,
- * only ever set out. How each point follows the body spread along it ({@link Spread}); smoothed once more to be drawn.
+ * ({@link com.example.fxsuite.life.body.fat.FatMap}): wrapped round where the skin's outside would be, the fat and
+ * the skin as thick as they are over what is beneath, its cage smoothed twice ({@link Wrap}); then drawn taut, so
+ * many times as its tension says, each point moved half way toward its neighbours' middle, then a third of the way
+ * back to lying as far out as the fat and the skin are thick, and never nearer than the skin and {@link #KEPT} of the
+ * fat; the fat soft, pressed thinner over what bulges, gathered in the hollows. The hands' and the feet's points kept
+ * as their cage makes them, the fingers and the toes too thin to be drawn taut. How each point follows the body
+ * spread along it ({@link Spread}); smoothed once more to be drawn.
  */
 public record SkinFit() implements StatelessFunctionalObject {
 
@@ -45,32 +46,32 @@ public record SkinFit() implements StatelessFunctionalObject {
         Wrap.INSTANCE.onto(target, shape, at.clone(), w, BACK, FAR);
         final int[][] next = Around.INSTANCE.neighbours(at.length, shape.triangles());
         for (int round = 0; round < tension; round++) {
-            taut(at, next);
+            taut(at, next, shape.kept());
             settle(target, shape, skin);
         }
         return finer(shape, Spread.INSTANCE.over(w, next, SPREADING), target);
     }
 
     /** Every point moved half way toward its neighbours' middle. */
-    private void taut(final V3[] at, final int[][] next) {
+    private void taut(final V3[] at, final int[][] next, final boolean[] kept) {
         final V3[] moved = new V3[at.length];
         for (int i = 0; i < at.length; i++) {
-            moved[i] = at[i].plus(Around.INSTANCE.middle(at, next[i]).minus(at[i]).times(0.5));
+            moved[i] = kept[i] ? at[i] : at[i].plus(Around.INSTANCE.middle(at, next[i]).minus(at[i]).times(0.5));
         }
         System.arraycopy(moved, 0, at, 0, at.length);
     }
 
     /**
      * Every point moved a third of the way to lying as far out as the fat and the skin are thick, and set out to no
-     * nearer than the skin and {@link #KEPT} of the fat; a mitten's points only set out.
+     * nearer than the skin and {@link #KEPT} of the fat; the hands' and the feet's points left.
      */
     private void settle(final FatTarget target, final Wrap.Shape s, final double skin) {
         final V3[] at = s.at();
         final V3[] out = Around.INSTANCE.normals(at, s.triangles());
-        IntStream.range(0, at.length).parallel().forEach(i -> {
+        IntStream.range(0, at.length).parallel().filter(i -> !s.kept()[i]).forEach(i -> {
             final double[] d = target.depth(at[i], s.regions()[i], at[i].x() < 0 ? -1 : 1, 3);
             final double floor = skin + KEPT * (d[1] - skin);
-            final double toward = s.mitten()[i] ? 0 : (d[1] - d[0]) / 3;
+            final double toward = (d[1] - d[0]) / 3;
             final double by = Math.max(toward, floor - d[0]);
             at[i] = at[i].plus(out[i].times(by));
         });

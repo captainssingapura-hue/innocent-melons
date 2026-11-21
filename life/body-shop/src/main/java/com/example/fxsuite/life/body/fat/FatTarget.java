@@ -3,7 +3,6 @@ package com.example.fxsuite.life.body.fat;
 import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Rig;
 import com.example.fxsuite.life.body.V3;
-import com.example.fxsuite.life.body.wear.Hoop;
 import com.example.fxsuite.life.body.wear.Weights;
 
 import java.util.EnumSet;
@@ -86,7 +85,11 @@ public final class FatTarget {
      * counts for {@code r} on side {@code side} (1 right, -1 left); none if the line does not meet it.
      */
     public Optional<Hit> onto(final V3 from, final V3 in, final Region r, final int side, final double reach) {
-        final IntPredicate counts = counts(r, side);
+        return onto(from, in, counts(r, side), reach);
+    }
+
+    /** As {@link #onto(V3, V3, Region, int, double)}, among the triangles {@code counts} says. */
+    public Optional<Hit> onto(final V3 from, final V3 in, final IntPredicate counts, final double reach) {
         final V3 way = in.unit();
         double gone = 0;
         while (gone <= reach) {
@@ -115,17 +118,6 @@ public final class FatTarget {
         return n.triangle() < 0 ? 4 : n.distance() - map.thickness(near.weights(n), x, bind);
     }
 
-    /**
-     * The fat wrapped round what counts for {@code r} on side {@code side} where {@code plane} cuts it, as a mitten
-     * wraps a hand, across the gaps between the fingers ({@link Hoop}), at {@code angles} round from the plane's
-     * {@code u} toward its {@code w}, as far out as the fat is thick at its middle.
-     */
-    public Hoop.Ring wrap(final Hoop.Plane plane, final Region r, final int side, final double[] angles) {
-        final IntPredicate counts = counts(r, side);
-        final int[] among = java.util.stream.IntStream.range(0, mainOf.length).filter(counts).toArray();
-        final double ease = map.thickness(under(plane.at()), plane.at(), bind);
-        return Hoop.INSTANCE.ring(near.beneath(), among, plane, p -> true, angles, ease);
-    }
 
     /** How high what goes with part {@code p} beneath the fat reaches: the crown, of the head's. */
     public double highest(final Part p) {
@@ -151,8 +143,21 @@ public final class FatTarget {
         return near.weights(near.nearest(x, 60, i -> true));
     }
 
+    /**
+     * The triangles of what goes with part {@code p} beneath whose first point lies where {@code where} says, once
+     * found: to look among them alone, one finger's, say.
+     */
+    public IntPredicate among(final Part p, final java.util.function.Predicate<V3> where) {
+        final int[] t = near.beneath().triangles();
+        final boolean[] in = new boolean[mainOf.length];
+        for (int i = 0; i < in.length; i++) {
+            in[i] = mainOf[i] == p && where.test(near.beneath().point(t[3 * i]));
+        }
+        return i -> in[i];
+    }
+
     /** Which triangles count for {@code r} on side {@code side}. */
-    private IntPredicate counts(final Region r, final int side) {
+    public IntPredicate counts(final Region r, final int side) {
         final Set<Part> arms = arms();
         final float[] p = near.beneath().points();
         final int[] t = near.beneath().triangles();

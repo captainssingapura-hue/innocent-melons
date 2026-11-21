@@ -48,7 +48,15 @@ class FatCageTest {
             }
         }
         assertTrue(sides.values().stream().allMatch(n -> n == 2), "no hole, no edge shared by three");
-        assertArrayEquals(lean.wrapped(), fat.wrapped(), "the same mittens");
+        final java.util.Set<Long> ways = new java.util.HashSet<>();
+        for (final int[] f : lean.cage().faces()) {
+            for (int k = 0; k < f.length; k++) {
+                final int next = f[(k + 1) % f.length];
+                assertTrue(ways.add((long) f[k] << 32 | next), "each face round the same way out as its neighbours: "
+                        + lean.cage().name(f[k]) + " to " + lean.cage().name(next));
+            }
+        }
+        assertArrayEquals(lean.kept(), fat.kept(), "the same hands and feet");
     }
 
     @Test
@@ -61,11 +69,11 @@ class FatCageTest {
     }
 
     @Test
-    void itsPointsLieOnTheFatsOutsideButTheMittensWrappedRoundIt() {
+    void itsPointsLieOnTheFatsOutsideButTheHandsAndFeet() {
         int on = 0;
         int all = 0;
         for (int i = 0; i < lean.cage().size(); i++) {
-            if (!lean.wrapped()[i]) {
+            if (!lean.kept()[i]) {
                 final V3 p = lean.cage().points().get(i);
                 on += Math.abs(leanTarget.clearance(p, lean.regions()[i], p.x() < 0 ? -1 : 1)) < 0.02 ? 1 : 0;
                 all++;
