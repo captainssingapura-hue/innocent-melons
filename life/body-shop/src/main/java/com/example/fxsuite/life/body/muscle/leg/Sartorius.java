@@ -1,8 +1,8 @@
 package com.example.fxsuite.life.body.muscle.leg;
 
-import com.example.fxsuite.life.body.bone.leg.Tibia;
-import com.example.fxsuite.life.body.bone.leg.Femur;
 import com.example.fxsuite.life.body.bone.hip.HipBone;
+import com.example.fxsuite.life.body.bone.leg.Femur;
+import com.example.fxsuite.life.body.bone.leg.Tibia;
 import com.example.fxsuite.life.body.muscle.Muscle;
 import com.example.fxsuite.life.body.muscle.MuscleRegion;
 import com.example.fxsuite.life.body.muscle.Section;

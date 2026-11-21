@@ -1,8 +1,8 @@
 package com.example.fxsuite.life.body.muscle.trunk;
 
-import com.example.fxsuite.life.body.bone.spine.C4;
-import com.example.fxsuite.life.body.bone.spine.Atlas;
 import com.example.fxsuite.life.body.bone.arm.Scapula;
+import com.example.fxsuite.life.body.bone.spine.Atlas;
+import com.example.fxsuite.life.body.bone.spine.C4;
 import com.example.fxsuite.life.body.muscle.Muscle;
 import com.example.fxsuite.life.body.muscle.MuscleRegion;
 import com.example.fxsuite.life.body.muscle.Section;

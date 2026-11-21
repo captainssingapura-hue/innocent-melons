@@ -1,6 +1,6 @@
 package com.example.fxsuite.life.body.muscle.trunk;
 
-import com.example.fxsuite.life.body.bone.arm.Scapula;
+import com.example.fxsuite.life.body.bone.spine.T3;
 import com.example.fxsuite.life.body.bone.spine.T4;
 import com.example.fxsuite.life.body.muscle.Layer;
 import com.example.fxsuite.life.body.muscle.Muscle;
@@ -11,16 +11,15 @@ import com.example.fxsuite.life.body.muscle.Sections;
 import java.util.List;
 
 /**
- * The rhomboids, major and minor: from the spines of the seventh cervical and the upper thoracic vertebrae, under the
- * trapezius, down and out to the scapula's inner border.
+ * The rotator of T3: from the transverse process of T4, up and in to the root of T3's spine.
  */
-public record Rhomboids() implements Muscle {
+public record RotatorT3() implements Muscle {
 
-    public static final Rhomboids INSTANCE = new Rhomboids();
+    public static final RotatorT3 INSTANCE = new RotatorT3();
 
     @Override
     public String name() {
-        return "rhomboids";
+        return "rotator, T3";
     }
 
     @Override
@@ -37,7 +36,7 @@ public record Rhomboids() implements Muscle {
     public List<Section> sections() {
         final Sections s = Sections.INSTANCE;
         return List.of(
-                s.at(T4.INSTANCE, 1, 44, -11.2, 9.0, 0.8, 0, 0, -1),
-                s.at(Scapula.INSTANCE, 7.459, 40.5, -10.306, 10.0, 0.6, -0.2, 0, -1));
+                s.at(T4.INSTANCE, 1.8, 45.6, -7.23, 0.70, 0.50, 0.000, 0.000, -1.000),
+                s.at(T3.INSTANCE, 0.9, 48.25, -6.91, 0.70, 0.50, 0.000, 0.000, -1.000));
     }
 }

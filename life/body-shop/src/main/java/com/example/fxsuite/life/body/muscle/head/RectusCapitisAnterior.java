@@ -1,8 +1,7 @@
 package com.example.fxsuite.life.body.muscle.head;
 
-import com.example.fxsuite.life.body.bone.spine.C4;
-import com.example.fxsuite.life.body.bone.spine.C7;
-import com.example.fxsuite.life.body.bone.thorax.FirstRib;
+import com.example.fxsuite.life.body.bone.skull.Occipital;
+import com.example.fxsuite.life.body.bone.spine.Atlas;
 import com.example.fxsuite.life.body.muscle.Layer;
 import com.example.fxsuite.life.body.muscle.Muscle;
 import com.example.fxsuite.life.body.muscle.MuscleRegion;
@@ -12,16 +11,16 @@ import com.example.fxsuite.life.body.muscle.Sections;
 import java.util.List;
 
 /**
- * The scalenes: from the transverse processes of the neck's vertebrae, down its side behind the sternocleidomastoid, to
- * the first ribs.
+ * The rectus capitis anterior: a short muscle from the atlas's lateral mass up to the base of the occiput before its
+ * condyle.
  */
-public record Scalenes() implements Muscle {
+public record RectusCapitisAnterior() implements Muscle {
 
-    public static final Scalenes INSTANCE = new Scalenes();
+    public static final RectusCapitisAnterior INSTANCE = new RectusCapitisAnterior();
 
     @Override
     public String name() {
-        return "scalenes";
+        return "rectus capitis anterior";
     }
 
     @Override
@@ -38,8 +37,7 @@ public record Scalenes() implements Muscle {
     public List<Section> sections() {
         final Sections s = Sections.INSTANCE;
         return List.of(
-                s.at(C4.INSTANCE, 2.9, 56.4, -1, 1.6, 1.0, 1, 0, 0),
-                s.at(C7.INSTANCE, 4.13, 52.5, -0.801, 2.4, 1.4, 1, 0, 0.3),
-                s.at(FirstRib.INSTANCE, 5.248, 48.346, 1.349, 2.6, 0.6, 0.6, 1, 0.2));
+                s.at(Atlas.INSTANCE, 1.6, 60.2, 0.15, 0.8, 0.5, 0, 0, 1),
+                s.at(Occipital.INSTANCE, 1.2, -0.2, 0.75, 0.8, 0.5, 0, 0, 1));
     }
 }

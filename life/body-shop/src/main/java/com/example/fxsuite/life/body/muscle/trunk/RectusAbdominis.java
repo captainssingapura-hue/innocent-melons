@@ -1,10 +1,10 @@
 package com.example.fxsuite.life.body.muscle.trunk;
 
-import com.example.fxsuite.life.body.bone.spine.T12;
-import com.example.fxsuite.life.body.bone.thorax.Sternum;
 import com.example.fxsuite.life.body.bone.hip.HipBone;
 import com.example.fxsuite.life.body.bone.spine.L3;
 import com.example.fxsuite.life.body.bone.spine.L5;
+import com.example.fxsuite.life.body.bone.spine.T12;
+import com.example.fxsuite.life.body.bone.thorax.Sternum;
 import com.example.fxsuite.life.body.muscle.Muscle;
 import com.example.fxsuite.life.body.muscle.MuscleRegion;
 import com.example.fxsuite.life.body.muscle.Section;

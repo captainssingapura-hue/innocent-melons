@@ -1,7 +1,7 @@
 package com.example.fxsuite.life.body.muscle.head;
 
-import com.example.fxsuite.life.body.bone.skull.Zygomatic;
 import com.example.fxsuite.life.body.bone.skull.Maxilla;
+import com.example.fxsuite.life.body.bone.skull.Zygomatic;
 import com.example.fxsuite.life.body.muscle.Muscle;
 import com.example.fxsuite.life.body.muscle.MuscleRegion;
 import com.example.fxsuite.life.body.muscle.Section;

@@ -1,10 +1,10 @@
 package com.example.fxsuite.life.body.muscle.leg;
 
-import com.example.fxsuite.life.body.bone.leg.Femur;
-import com.example.fxsuite.life.body.bone.spine.L5;
 import com.example.fxsuite.life.body.bone.hip.HipBone;
-import com.example.fxsuite.life.body.bone.spine.T12;
+import com.example.fxsuite.life.body.bone.leg.Femur;
 import com.example.fxsuite.life.body.bone.spine.L3;
+import com.example.fxsuite.life.body.bone.spine.L5;
+import com.example.fxsuite.life.body.bone.spine.T12;
 import com.example.fxsuite.life.body.muscle.Layer;
 import com.example.fxsuite.life.body.muscle.Muscle;
 import com.example.fxsuite.life.body.muscle.MuscleRegion;

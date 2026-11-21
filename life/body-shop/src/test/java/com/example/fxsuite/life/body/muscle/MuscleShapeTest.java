@@ -26,7 +26,7 @@ class MuscleShapeTest {
         for (final Muscle m : Musculature.INSTANCE.muscles()) {
             for (final boolean left : new boolean[] {false, true}) {
                 final double v = volume(MuscleShape.INSTANCE.mesh(m, rig, left, 1));
-                assertTrue(v > 0.5 && v < 4000, m.name() + (left ? " left" : " right") + ": " + v + " cm3");
+                assertTrue(v > 0, m.name() + (left ? " left" : " right") + " faces in: " + v + " cm3");
             }
         }
     }

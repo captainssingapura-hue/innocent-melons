@@ -8,6 +8,6 @@ package com.example.fxsuite.life.body.muscle;
  */
 public interface Muscularity {
 
-    /** How many cm3 muscle {@code m} is on this body, its sections as written amounting to {@code asDrawn}. */
+    /** How many cm3 muscle {@code m} is on this body, its sections as written holding {@code asDrawn}, smoothed. */
     double volume(Muscle m, double asDrawn);
 }

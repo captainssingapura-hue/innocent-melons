@@ -1,8 +1,8 @@
 package com.example.fxsuite.life.body.muscle.arm;
 
+import com.example.fxsuite.life.body.bone.arm.Humerus;
 import com.example.fxsuite.life.body.bone.arm.Radius;
 import com.example.fxsuite.life.body.bone.arm.Scapula;
-import com.example.fxsuite.life.body.bone.arm.Humerus;
 import com.example.fxsuite.life.body.muscle.Muscle;
 import com.example.fxsuite.life.body.muscle.MuscleRegion;
 import com.example.fxsuite.life.body.muscle.Section;

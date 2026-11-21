@@ -81,7 +81,13 @@ public record MuscleShape() implements StatelessFunctionalObject {
             on[i] = s.at().in(rig, left);
             way[i] = s.at().way(s.facing(), rig, left).unit();
         }
-        final double grown = grown(m, bulk, on);
+        return cageAt(m, on, way, grown(m, bulk, on, way));
+    }
+
+    /** {@code m}'s cage where its sections lie at {@code on}, facing {@code way}, its belly {@code grown} times. */
+    private Cage cageAt(final Muscle m, final V3[] on, final V3[] way, final double grown) {
+        final List<Section> sections = m.sections();
+        final int n = sections.size();
         final V3[] at = new V3[n];
         final double[] k = new double[n];
         for (int i = 0; i < n; i++) {
@@ -92,7 +98,8 @@ public record MuscleShape() implements StatelessFunctionalObject {
         final List<String> names = new ArrayList<>();
         for (int i = 0; i < n; i++) {
             final Section s = sections.get(i);
-            final V3 along = at[Math.min(i + 1, n - 1)].minus(at[Math.max(i - 1, 0)]).unit();
+            final V3 along = m.ring() ? at[(i + 1) % n].minus(at[(i + n - 1) % n]).unit()
+                    : at[Math.min(i + 1, n - 1)].minus(at[Math.max(i - 1, 0)]).unit();
             V3 face = way[i].minus(along.times(way[i].dot(along)));
             if (face.length() < 1e-6) {
                 face = Math.abs(along.y()) < 0.9 ? along.cross(V3.Y) : along.cross(V3.X);
@@ -106,7 +113,7 @@ public record MuscleShape() implements StatelessFunctionalObject {
                 names.add(m.name() + ", section " + (i + 1) + ", " + q);
             }
         }
-        return new Cage(points, names, faces(n, outward(points, n)), List.of());
+        return new Cage(points, names, faces(n, m.ring(), outward(points, n, m.ring())), List.of());
     }
 
     /**
@@ -123,7 +130,7 @@ public record MuscleShape() implements StatelessFunctionalObject {
      */
     public boolean kept(final Muscle m, final int i) {
         final int n = m.sections().size();
-        return tendon(m, i) || n > 2 && (i == 0 || i == n - 1);
+        return tendon(m, i) || !m.ring() && n > 2 && (i == 0 || i == n - 1);
     }
 
     /**
@@ -144,18 +151,44 @@ public record MuscleShape() implements StatelessFunctionalObject {
         return s.get(i).wide() * s.get(i).deep() < 0.25 * area || s.get(i).deep() < 0.3 * deep;
     }
 
-    /** How much wider and deeper {@code m}'s belly is than drawn, to be as much as {@code bulk} has it. */
-    private double grown(final Muscle m, final Muscularity bulk, final V3[] on) {
-        final double drawn = asDrawn(m, on);
-        final double wanted = bulk.volume(m, drawn);
-        if (Math.abs(wanted - drawn) <= 1e-9 * drawn || m.layer() == Layer.TENDON) {
+    /**
+     * How much wider and deeper {@code m}'s belly is than drawn, to be as much as {@code bulk} has it: found on its
+     * sections' frustums, then put right by its surface, smoothed twice, a few times, and then by that surface alone.
+     */
+    private double grown(final Muscle m, final Muscularity bulk, final V3[] on, final V3[] way) {
+        if (m.layer() == Layer.TENDON) {
             return 1;
         }
+        final double drawn = smoothed(m, on, way, 1);
+        final double wanted = bulk.volume(m, drawn);
+        if (Math.abs(wanted - drawn) <= 1e-9 * drawn) {
+            return 1;
+        }
+        double target = asDrawn(m, on) * wanted / drawn;
+        double k = frustums(m, on, target);
+        for (int round = 0; round < 3; round++) {
+            target *= wanted / smoothed(m, on, way, k);
+            k = frustums(m, on, target);
+        }
+        for (int round = 0; round < 4; round++) {
+            k *= Math.sqrt(wanted / smoothed(m, on, way, k));
+        }
+        return k;
+    }
+
+    /** How much {@code m} holds, its belly {@code k} times, its surface smoothed twice, as it is drawn. */
+    private double smoothed(final Muscle m, final V3[] on, final V3[] way, final double k) {
+        final Subdivision s = Subdivision.INSTANCE;
+        return volume(s.mesh(s.times(s.of(Fitting.INSTANCE.fitted(cageAt(m, on, way, k), 1), 1), 2)));
+    }
+
+    /** How much wider and deeper {@code m}'s belly is than drawn, for its frustums to come to {@code target}. */
+    private double frustums(final Muscle m, final V3[] on, final double target) {
         double lo = 0.05;
         double hi = 10;
         for (int i = 0; i < 60; i++) {
             final double mid = (lo + hi) / 2;
-            if (volume(m, on, mid) < wanted) {
+            if (volume(m, on, mid) < target) {
                 lo = mid;
             } else {
                 hi = mid;
@@ -164,14 +197,30 @@ public record MuscleShape() implements StatelessFunctionalObject {
         return (lo + hi) / 2;
     }
 
+    /** How much {@code mesh} holds, cm3: closed and facing out. */
+    public double volume(final Mesher.Mesh mesh) {
+        final float[] p = mesh.points();
+        final int[] t = mesh.triangles();
+        double v = 0;
+        for (int i = 0; i < t.length; i += 3) {
+            final V3 a = new V3(p[3 * t[i]], p[3 * t[i] + 1], p[3 * t[i] + 2]);
+            final V3 b = new V3(p[3 * t[i + 1]], p[3 * t[i + 1] + 1], p[3 * t[i + 1] + 2]);
+            final V3 c = new V3(p[3 * t[i + 2]], p[3 * t[i + 2] + 1], p[3 * t[i + 2] + 2]);
+            v += a.dot(b.cross(c)) / 6;
+        }
+        return v;
+    }
+
     /** {@code m}'s volume, its belly's sections {@code k} times as wide and deep as drawn. */
     private double volume(final Muscle m, final V3[] on, final double k) {
         final List<Section> s = m.sections();
         double v = 0;
-        for (int i = 0; i + 1 < s.size(); i++) {
+        final int n = s.size();
+        for (int i = 0; i + 1 < n || m.ring() && i < n; i++) {
+            final int j = (i + 1) % n;
             final double a = area(s.get(i), kept(m, i) ? 1 : k);
-            final double b = area(s.get(i + 1), kept(m, i + 1) ? 1 : k);
-            v += on[i + 1].minus(on[i]).length() * (a + b + Math.sqrt(a * b)) / 3;
+            final double b = area(s.get(j), kept(m, j) ? 1 : k);
+            v += on[j].minus(on[i]).length() * (a + b + Math.sqrt(a * b)) / 3;
         }
         return v;
     }
@@ -180,23 +229,29 @@ public record MuscleShape() implements StatelessFunctionalObject {
         return Math.PI / 4 * s.wide() * s.deep() * k * k;
     }
 
-    /** The faces round {@code n} rings, from each to the next, and shutting either end; turned round if not out. */
-    private List<int[]> faces(final int n, final boolean out) {
+    /**
+     * The faces round {@code n} rings, from each to the next, and shutting either end, or, a ring's, the last to the
+     * first; turned round if not out.
+     */
+    private List<int[]> faces(final int n, final boolean ring, final boolean out) {
         final List<int[]> faces = new ArrayList<>();
-        for (int i = 0; i + 1 < n; i++) {
+        for (int i = 0; i + 1 < n || ring && i < n; i++) {
+            final int j = (i + 1) % n;
             for (int k = 0; k < ROUND; k++) {
                 final int q = (k + 1) % ROUND;
-                faces.add(new int[] {i * ROUND + k, i * ROUND + q, (i + 1) * ROUND + q, (i + 1) * ROUND + k});
+                faces.add(new int[] {i * ROUND + k, i * ROUND + q, j * ROUND + q, j * ROUND + k});
             }
         }
-        final int[] first = new int[ROUND];
-        final int[] last = new int[ROUND];
-        for (int k = 0; k < ROUND; k++) {
-            first[k] = ROUND - 1 - k;
-            last[k] = (n - 1) * ROUND + k;
+        if (!ring) {
+            final int[] first = new int[ROUND];
+            final int[] last = new int[ROUND];
+            for (int k = 0; k < ROUND; k++) {
+                first[k] = ROUND - 1 - k;
+                last[k] = (n - 1) * ROUND + k;
+            }
+            faces.add(first);
+            faces.add(last);
         }
-        faces.add(first);
-        faces.add(last);
         if (!out) {
             for (int f = 0; f < faces.size(); f++) {
                 final int[] c = faces.get(f);
@@ -211,10 +266,10 @@ public record MuscleShape() implements StatelessFunctionalObject {
     }
 
     /** Whether the faces as first laid round {@code n} rings of {@code points} face out: enclose a volume above none. */
-    private boolean outward(final List<V3> points, final int n) {
+    private boolean outward(final List<V3> points, final int n, final boolean ring) {
         double v = 0;
         final V3 o = points.getFirst();
-        for (final int[] f : faces(n, true)) {
+        for (final int[] f : faces(n, ring, true)) {
             for (int i = 1; i + 1 < f.length; i++) {
                 v += points.get(f[0]).minus(o).dot(points.get(f[i]).minus(o).cross(points.get(f[i + 1]).minus(o)));
             }

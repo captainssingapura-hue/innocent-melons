@@ -10,6 +10,7 @@ import com.example.fxsuite.life.body.Rig;
 import com.example.fxsuite.life.body.V3;
 import com.example.fxsuite.life.body.cage.CageView;
 import com.example.fxsuite.life.body.flesh.Fleshing;
+import com.example.fxsuite.life.body.muscle.leg.LegVolumes;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -70,8 +71,10 @@ public final class MuscleBench extends Application {
     private final CheckBox both = new CheckBox("Both sides");
     private final CheckBox deep = new CheckBox("The deep muscles");
     private final CheckBox bones = new CheckBox("The bones");
+    private final CheckBox measured = new CheckBox("Sized as measured, not as drawn");
     private final Label about = new Label();
     private final Rig rig = new Rig(Proportions.DRAWN, Fleshing.INSTANCE.bind(), false);
+    private final Muscularity asMeasured = new Measured(Proportions.DRAWN.stature() / 100, Proportions.DRAWN.mass());
     private final Map<String, MuscleShape.Surface> surfaces = new ConcurrentHashMap<>();
     private final ExecutorService worker = Executors.newSingleThreadExecutor(r -> {
         final Thread t = new Thread(r, "muscles");
@@ -105,9 +108,10 @@ public final class MuscleBench extends Application {
         shown.setOnAction(e -> make());
         final String hide = System.getProperty("muscles.hide", "").toLowerCase(Locale.ROOT);
         both.setSelected(!hide.contains("left"));
+        measured.setSelected(!"drawn".equalsIgnoreCase(System.getProperty("muscles.sized", "measured")));
         deep.setSelected(!hide.contains("deep"));
         bones.setSelected(!hide.contains("bones"));
-        for (final CheckBox c : List.of(both, deep, bones)) {
+        for (final CheckBox c : List.of(both, deep, bones, measured)) {
             c.setOnAction(e -> make());
         }
         tree.setShowRoot(false);
@@ -127,7 +131,7 @@ public final class MuscleBench extends Application {
             }
         });
         about.setWrapText(true);
-        final VBox box = new VBox(8, new Label("Shown with it"), shown, both, deep, bones,
+        final VBox box = new VBox(8, new Label("Shown with it"), shown, both, deep, bones, measured,
                 new Label("The muscles, by where they are"), tree, about, shell.problems());
         box.setPadding(new Insets(10));
         return box;
@@ -168,13 +172,14 @@ public final class MuscleBench extends Application {
                 .filter(x -> x == m || deep.isSelected() || x.layer() != Layer.DEEP).toList();
         final boolean left = both.isSelected();
         final boolean withBones = bones.isSelected();
+        final Muscularity bulk = measured.isSelected() ? asMeasured : AsDrawn.INSTANCE;
         bus.publish(new Bus.Working(true, "muscles"));
         worker.submit(() -> {
             final long t0 = System.nanoTime();
             final List<Node> nodes = new ArrayList<>();
             for (final Muscle x : with) {
-                for (final boolean side : left ? new boolean[] {false, true} : new boolean[] {false}) {
-                    nodes.add(drawn(x, side, x == m));
+                for (final boolean side : left && x.paired() ? new boolean[] {false, true} : new boolean[] {false}) {
+                    nodes.add(drawn(x, side, x == m, bulk));
                 }
             }
             if (withBones && skeleton == null) {
@@ -191,9 +196,9 @@ public final class MuscleBench extends Application {
     }
 
     /** Muscle {@code m} on one side drawn, its belly coloured as deep as it lies, brighter if chosen, its tendons pale. */
-    private Node drawn(final Muscle m, final boolean left, final boolean picked) {
-        final MuscleShape.Surface s = surfaces.computeIfAbsent(m.name() + (left ? " left" : " right"),
-                k -> MuscleShape.INSTANCE.surface(m, AsDrawn.INSTANCE, rig, left, 2));
+    private Node drawn(final Muscle m, final boolean left, final boolean picked, final Muscularity bulk) {
+        final MuscleShape.Surface s = surfaces.computeIfAbsent(m.name() + (left ? " left" : " right") + bulk,
+                k -> MuscleShape.INSTANCE.surface(m, bulk, rig, left, 2));
         final String belly = picked ? "#e8a03a" : switch (m.layer()) {
             case SUPERFICIAL -> "#b0453a";
             case DEEP -> "#7c3029";
@@ -227,7 +232,16 @@ public final class MuscleBench extends Application {
             view.distance(Math.max(60, reach * (shown.getValue() == Shown.ALONE ? 3.2 : 4.5)));
         }
         about.setText(String.format(Locale.ROOT, "The %s: %s, %s.%nFrom the %s to the %s, %d sections.%n"
-                        + "Made in %,d ms.", m.name(), m.region().label().toLowerCase(Locale.ROOT), m.layer().said(),
-                m.origin(), m.insertion(), m.sections().size(), ms));
+                        + "%s%nMade in %,d ms.", m.name(), m.region().label().toLowerCase(Locale.ROOT), m.layer().said(),
+                m.origin(), m.insertion(), m.sections().size(), measure(m), ms));
+    }
+
+    /** How big {@code m} was measured in a body the drawn figure's height and mass, if it was. */
+    private String measure(final Muscle m) {
+        final LegVolumes v = LegVolumes.INSTANCE;
+        return v.volume(m.name(), v.whole(Proportions.DRAWN.stature() / 100, Proportions.DRAWN.mass()))
+                .map(x -> String.format(Locale.ROOT, "Measured %.0f cm3 in a body %.0f cm tall and %.0f kg"
+                        + " (Handsfield).", x, Proportions.DRAWN.stature(), Proportions.DRAWN.mass()))
+                .orElse("Not measured: as drawn.");
     }
 }

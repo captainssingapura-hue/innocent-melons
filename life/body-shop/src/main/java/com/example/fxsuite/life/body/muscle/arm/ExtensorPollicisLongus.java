@@ -1,9 +1,9 @@
 package com.example.fxsuite.life.body.muscle.arm;
 
+import com.example.fxsuite.life.body.bone.arm.Radius;
+import com.example.fxsuite.life.body.bone.arm.Ulna;
 import com.example.fxsuite.life.body.bone.hand.FirstMetacarpal;
 import com.example.fxsuite.life.body.bone.hand.ThumbProximalPhalanx;
-import com.example.fxsuite.life.body.bone.arm.Ulna;
-import com.example.fxsuite.life.body.bone.arm.Radius;
 import com.example.fxsuite.life.body.muscle.Layer;
 import com.example.fxsuite.life.body.muscle.Muscle;
 import com.example.fxsuite.life.body.muscle.MuscleRegion;
