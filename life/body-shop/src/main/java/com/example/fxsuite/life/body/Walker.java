@@ -9,7 +9,8 @@ import java.util.Map;
  * a foot is down it stays where it is, the body going on as far as the foot goes back under it, rolling from its heel
  * to its toes; in the air, at the speed asked. Its strides as often as carry it that fast ({@link #cadence}): as many a
  * second as its feet, down, go back under it a stride's worth at that speed. Off the ground between strides running,
- * as high as falling for so long would bring it down from.
+ * as high as falling for so long would bring it down from. Or marching ({@link Move}): in step at the drill's pace,
+ * however fast it is asked to go, as far on as its feet carry it, one always down.
  */
 public final class Walker {
 
@@ -26,10 +27,32 @@ public final class Walker {
     private double time;
     private Rig rig;
     private int down;
+    private Move move = Move.WALK;
 
     public Walker(final Proportions proportions) {
         this.proportions = proportions;
         rig = new Rig(proportions, Gait.at(0, 0, 0, false));
+    }
+
+    /** How it goes from now on: walking and running, or marching; its strides measured afresh. */
+    public void move(final Move m) {
+        move = m;
+        strides.clear();
+    }
+
+    /** How it goes. */
+    public Move move() {
+        return move;
+    }
+
+    /** Its pose at {@code c} of a stride at {@code speed}, as it goes. */
+    private Pose pose(final double c, final double speed, final boolean holding) {
+        return move.marching() ? March.INSTANCE.at(move, c, time, holding) : Gait.at(c, speed, time, holding);
+    }
+
+    /** How much of a stride each foot is down, as it goes, at {@code speed}. */
+    public double stance(final double speed) {
+        return move.marching() ? move.stance() : Gait.stance(speed);
     }
 
     /** How far round its stride, 0 to 1, the right heel striking at 0. */
@@ -54,7 +77,7 @@ public final class Walker {
 
     /** How high off the ground in its flight, cm. */
     public double flying(final double speed) {
-        final double flight = Gait.flight(speed) / 2;
+        final double flight = move.marching() ? 0 : Gait.flight(speed) / 2;
         if (flight <= 0) {
             return 0;
         }
@@ -75,14 +98,14 @@ public final class Walker {
      */
     public void step(final double seconds, final double speed, final boolean holding) {
         time += Math.abs(seconds);
-        final double f = speed < 1 ? 0 : cadence(speed);
+        final double f = move.marching() ? move.cadence() : speed < 1 ? 0 : cadence(speed);
         // backward, if the seconds are: walking back, its stride run the other way
         c += f * seconds;
         c -= Math.floor(c);
         final Rig before = rig;
         final int was = down;
-        rig = new Rig(proportions, Gait.at(c, speed, time, holding));
-        down = down(c, speed);
+        rig = new Rig(proportions, pose(c, speed, holding));
+        down = down(c, stance(speed));
         if (down != 0 && down == was && seconds > 0) {
             ahead += carried(before, rig, down);
         } else {
@@ -93,13 +116,12 @@ public final class Walker {
     /** Set at {@code cycle} of its stride, still, as it is at {@code speed}: to look at. */
     public void at(final double cycle, final double speed, final boolean holding) {
         c = cycle - Math.floor(cycle);
-        rig = new Rig(proportions, Gait.at(c, speed, time, holding));
-        down = down(c, speed);
+        rig = new Rig(proportions, pose(c, speed, holding));
+        down = down(c, stance(speed));
     }
 
-    /** Which foot carries it at {@code c}: the last to strike, while it is down. */
-    static int down(final double c, final double speed) {
-        final double stance = Gait.stance(speed);
+    /** Which foot carries it at {@code c}, each down {@code stance} of a stride: the last to strike, while down. */
+    static int down(final double c, final double stance) {
         final double right = c - Math.floor(c);
         final double left = (right + 0.5) % 1;
         // the last to strike is the one whose strike is the nearer behind
@@ -124,8 +146,16 @@ public final class Walker {
         return then.get(low).z() - now.get(low).z();
     }
 
+    /** How fast it marches, cm/s: as far as its feet carry it a stride, as many strides a second as its drill's. */
+    public double marching() {
+        return stride(0) * move.cadence();
+    }
+
     /** Strides a second at {@code speed}: as many as its feet, down, carry it that fast. */
     public double cadence(final double speed) {
+        if (move.marching()) {
+            return move.cadence();
+        }
         final double stride = stride(speed);
         final double carried = speed * (1 - Gait.flight(speed));
         return stride <= 1e-6 ? SLOWEST : Math.clamp(carried / stride, SLOWEST, FASTEST);
@@ -140,12 +170,12 @@ public final class Walker {
     private double measured(final double speed) {
         final int n = 400;
         double sum = 0;
-        Rig was = new Rig(proportions, Gait.at(0, speed, 0, false));
-        int side = down(0, speed);
+        Rig was = new Rig(proportions, pose(0, speed, false));
+        int side = down(0, stance(speed));
         for (int k = 1; k <= n; k++) {
             final double at = (double) k / n;
-            final Rig is = new Rig(proportions, Gait.at(at, speed, 0, false));
-            final int now = down(at, speed);
+            final Rig is = new Rig(proportions, pose(at, speed, false));
+            final int now = down(at, stance(speed));
             if (now != 0 && now == side) {
                 sum += carried(was, is, now);
             }

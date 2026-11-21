@@ -35,8 +35,9 @@ import java.util.Locale;
  *
  * <p>{@code -Dmotion.look} (exposed, shelled, human, skeleton, muscles, man, woman), {@code -Dskeleton.detail} (mm,
  * a skeleton's grid), {@code -Dmotion.deep=true} (its deep muscles too), {@code -Dskin.tone} (0 to 1),
- * {@code -Dmotion.speed} (cm/s), {@code -Dmotion.tour=true}, {@code -Dmotion.gatling=true}, {@code -Dmotion.aim}
- * (degrees), {@code -Dmotion.slow} (a share of real time) what it plays first;
+ * {@code -Dmotion.move} (walk, quick, parade), {@code -Dmotion.speed} (cm/s), {@code -Dmotion.tour=true},
+ * {@code -Dmotion.gatling=true}, {@code -Dmotion.aim} (degrees), {@code -Dmotion.slow} (a share of real time) what
+ * it plays first;
  * {@code -Dmotion.at} (0 to 1) stops it at that point of its stride; {@code -Dmotion.yaw}, {@code -Dmotion.pitch},
  * {@code -Dmotion.distance} (m) where it is seen from; {@code -Dbench.snapshot=out.png} saves the window after
  * {@code -Dbench.settle} ms and exits.
@@ -77,6 +78,7 @@ public final class MotionBench extends Application {
     private Pose arms = GatlingHold.ready(Pose.REST);
 
     private final ChoiceBox<Puppet.Kind> look = new ChoiceBox<>();
+    private final ChoiceBox<Move> how = new ChoiceBox<>();
     private final Slider speed = new Slider(0, 800, 140);
     private final Label speedSaid = new Label();
     private final CheckBox tour = new CheckBox("Tour: standing to a sprint and back, " + (int) TOUR + " s");
@@ -111,6 +113,17 @@ public final class MotionBench extends Application {
         look.getItems().setAll(Puppet.Kind.values());
         look.setValue(kind(System.getProperty("motion.look", "exposed")));
         look.valueProperty().addListener((o, was, is) -> dress());
+        how.getItems().setAll(Move.values());
+        how.setValue(move(System.getProperty("motion.move", "walk")));
+        how.valueProperty().addListener((o, was, is) -> {
+            walker.move(is);
+            speed.setDisable(is.marching());
+            tour.setSelected(false);
+            said();
+            if (!playing) {
+                still();
+            }
+        });
         speed.setValue(Double.parseDouble(System.getProperty("motion.speed", "140")));
         speed.setPrefWidth(220);
         speed.valueProperty().addListener((o, was, is) -> said());
@@ -206,8 +219,9 @@ public final class MotionBench extends Application {
                 + " Stop it and move the point of its stride to look at a moment. Drag to turn the view, right-drag"
                 + " to move it, scroll to come nearer.");
         hint.setWrapText(true);
-        final VBox side = new VBox(10, new Label("Drawn as"), look, new Label("How fast"), paces, tour, knobs,
-                new FlowPane(10, 6, play), tights, deep, muscleSaid, gatling, forces, treadmill, hint);
+        final VBox side = new VBox(10, new Label("Drawn as"), look, new Label("How it goes"), how,
+                new Label("How fast"), paces, tour, knobs, new FlowPane(10, 6, play), tights, deep, muscleSaid, gatling,
+                forces, treadmill, hint);
         side.setPadding(new Insets(8));
         final ScrollPane scroll = new ScrollPane(side);
         scroll.setFitToWidth(true);
@@ -250,6 +264,12 @@ public final class MotionBench extends Application {
         shell.show(stage, 1440, 920);
     }
 
+    /** How it goes, as said: walking (and running), the quick march, the parade step. */
+    private static Move move(final String said) {
+        final String s = said.toLowerCase(Locale.ROOT);
+        return s.startsWith("q") ? Move.QUICK_MARCH : s.startsWith("p") ? Move.PARADE_STEP : Move.WALK;
+    }
+
     private static Puppet.Kind kind(final String said) {
         final String s = said.toLowerCase(Locale.ROOT);
         if (s.startsWith("sk")) {
@@ -271,6 +291,7 @@ public final class MotionBench extends Application {
     private void dress() {
         proportions = look.getValue().proportions(Proportions.PAPERS);
         walker = new Walker(proportions);
+        walker.move(how.getValue());
         hold = new GatlingHold(proportions);
         puppet = new Puppet(look.getValue(), proportions, RobotDesign.DEFAULT, Palette.DEFAULT, new V3(-1, -1, -1));
         puppet.tone(new SkinTone(tone.getValue()));
@@ -358,6 +379,9 @@ public final class MotionBench extends Application {
 
     /** How fast it is asked to go now: as the slider has it, or where the tour has got to. */
     private double speed() {
+        if (how.getValue().marching()) {
+            return walker.marching();
+        }
         if (!tour.isSelected()) {
             return speed.getValue();
         }
@@ -424,6 +448,11 @@ public final class MotionBench extends Application {
     }
 
     private void said() {
+        if (how.getValue().marching()) {
+            speedSaid.setText(String.format(Locale.ROOT, "%.2f m/s, %s, %.0f steps a minute",
+                    walker.marching() / 100, how.getValue().label(), how.getValue().cadence() * 120));
+            return;
+        }
         final double v = speed.getValue();
         final String how = v < 1 ? "standing" : Gait.run(v) <= 0 ? "walking" : Gait.run(v) >= 1 ? "running"
                 : "walking into a run";
@@ -448,7 +477,7 @@ public final class MotionBench extends Application {
     }
 
     private void figures() {
-        final double v = speed.getValue();
+        final double v = how.getValue().marching() ? walker.marching() : speed.getValue();
         final double cadence = v < 1 ? 0 : walker.cadence(v);
         final int down = walker.down();
         String gunSaid = "";
@@ -464,7 +493,8 @@ public final class MotionBench extends Application {
                         + "at %.2f of its stride, %s%n%s"
                         + "its centre of mass %.1f cm inside its feet%s%n%.0f frames a second",
                 look.getValue().label(), v / 100, cadence * 120, cadence > 0 ? v / cadence / 100 : 0,
-                walker.stride(v) / 100, Gait.stance(v) * 100, Gait.flight(v) * 100, walker.cycle(),
+                walker.stride(v) / 100, walker.stance(v) * 100, how.getValue().marching() ? 0 : Gait.flight(v) * 100,
+                walker.cycle(),
                 down > 0 ? "its right foot down" : down < 0 ? "its left foot down" : "both feet off the ground",
                 gunSaid, balance, statics != null ? ", with the gun" : "", fps)));
     }
