@@ -19,6 +19,8 @@
         <module>taxonomy</module>
         <module>road</module>
         <module>avatar-demo</module>
+        <module>vulkan</module>
+        <module>texture-lab</module>
         <module>lifts-lab</module>
         <module>buildings-lab</module>
         <module>life</module>
