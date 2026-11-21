@@ -1,0 +1,224 @@
+package com.example.fxsuite.life.body.muscle;
+
+import com.example.fxsuite.life.body.Mesher;
+import com.example.fxsuite.life.body.Rig;
+import com.example.fxsuite.life.body.V3;
+import com.example.fxsuite.life.body.cage.Cage;
+import com.example.fxsuite.life.body.cage.Fitting;
+import com.example.fxsuite.life.body.cage.Subdivision;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * A muscle's shape on a body ({@link Muscle}): a cage of rings, one at each of its sections, each an oval of
+ * {@link #ROUND} points, so wide across and so deep the way it faces, its middle half its depth out from where it lies,
+ * square to the way the muscle runs there; four-sided faces from ring to ring, its ends shut; found so that its
+ * surface, smoothed, passes through its rings ({@link Fitting}). Its belly as big as the body has it
+ * ({@link Muscularity}), every section but its tendons' grown or shrunk alike, wider and deeper as one, and so lying
+ * further out from what is under it; its tendons, at either end, as they are drawn. A band or a tendon all as drawn.
+ * Where its bones are as {@code rig} holds them, on the right or the left.
+ */
+public record MuscleShape() implements StatelessFunctionalObject {
+
+    public static final MuscleShape INSTANCE = new MuscleShape();
+
+    /** How many points round each ring. */
+    public static final int ROUND = 8;
+
+    /** {@code m}'s surface as drawn, on the body {@code rig} holds, on the right or the left, smoothed so often. */
+    public Mesher.Mesh mesh(final Muscle m, final Rig rig, final boolean left, final int steps) {
+        return mesh(m, AsDrawn.INSTANCE, rig, left, steps);
+    }
+
+    /** {@code m}'s surface, as big as {@code bulk} has it, on the body {@code rig} holds, smoothed {@code steps}. */
+    public Mesher.Mesh mesh(final Muscle m, final Muscularity bulk, final Rig rig, final boolean left,
+                            final int steps) {
+        return surface(m, bulk, rig, left, steps).mesh();
+    }
+
+    /**
+     * A muscle's surface, and how far each of its points is tendon: 0 belly, 1 tendon, between where the one becomes
+     * the other.
+     */
+    public record Surface(Mesher.Mesh mesh, float[] tendon) {
+    }
+
+    /**
+     * {@code m}'s surface, as big as {@code bulk} has it, on the body {@code rig} holds, smoothed {@code steps}; each
+     * point as far tendon as the sections it is smoothed from, smoothed alike.
+     */
+    public Surface surface(final Muscle m, final Muscularity bulk, final Rig rig, final boolean left,
+                           final int steps) {
+        final Subdivision s = Subdivision.INSTANCE;
+        final Subdivision.Level shape = s.of(Fitting.INSTANCE.fitted(cage(m, bulk, rig, left), 1), 1);
+        final double[] which = new double[shape.points().length];
+        for (int i = 0; i < shape.size(); i++) {
+            which[3 * i] = tendon(m, i / ROUND) ? 1 : 0;
+        }
+        final Subdivision.Level smooth = s.times(new Subdivision.Level(which, shape.faces(), shape.sharp()), steps);
+        final float[] tendon = new float[smooth.size()];
+        for (int i = 0; i < tendon.length; i++) {
+            tendon[i] = (float) smooth.points()[3 * i];
+        }
+        return new Surface(s.mesh(s.times(shape, steps)), tendon);
+    }
+
+    /** {@code m}'s cage as drawn on the body {@code rig} holds, on the right or the left. */
+    public Cage cage(final Muscle m, final Rig rig, final boolean left) {
+        return cage(m, AsDrawn.INSTANCE, rig, left);
+    }
+
+    /** {@code m}'s cage, as big as {@code bulk} has it, on the body {@code rig} holds, its points where its skin is. */
+    public Cage cage(final Muscle m, final Muscularity bulk, final Rig rig, final boolean left) {
+        final List<Section> sections = m.sections();
+        final int n = sections.size();
+        final V3[] on = new V3[n];
+        final V3[] way = new V3[n];
+        for (int i = 0; i < n; i++) {
+            final Section s = sections.get(i);
+            on[i] = s.at().in(rig, left);
+            way[i] = s.at().way(s.facing(), rig, left).unit();
+        }
+        final double grown = grown(m, bulk, on);
+        final V3[] at = new V3[n];
+        final double[] k = new double[n];
+        for (int i = 0; i < n; i++) {
+            k[i] = kept(m, i) ? 1 : grown;
+            at[i] = on[i].plus(way[i].times(sections.get(i).deep() * k[i] / 2));
+        }
+        final List<V3> points = new ArrayList<>();
+        final List<String> names = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            final Section s = sections.get(i);
+            final V3 along = at[Math.min(i + 1, n - 1)].minus(at[Math.max(i - 1, 0)]).unit();
+            V3 face = way[i].minus(along.times(way[i].dot(along)));
+            if (face.length() < 1e-6) {
+                face = Math.abs(along.y()) < 0.9 ? along.cross(V3.Y) : along.cross(V3.X);
+            }
+            face = face.unit();
+            final V3 across = along.cross(face).unit();
+            for (int q = 0; q < ROUND; q++) {
+                final double a = 2 * Math.PI * q / ROUND;
+                points.add(at[i].plus(across.times(Math.cos(a) * s.wide() * k[i] / 2))
+                        .plus(face.times(Math.sin(a) * s.deep() * k[i] / 2)));
+                names.add(m.name() + ", section " + (i + 1) + ", " + q);
+            }
+        }
+        return new Cage(points, names, faces(n, outward(points, n)), List.of());
+    }
+
+    /**
+     * How much {@code m} is as drawn, cm3, where its sections lie at {@code on}: from each section to the next, a
+     * frustum between their ovals.
+     */
+    public double asDrawn(final Muscle m, final V3[] on) {
+        return volume(m, on, 1);
+    }
+
+    /**
+     * Whether {@code m}'s {@code i}th section is kept as drawn, whatever the body: a tendon's; or either end of a muscle
+     * of three sections or more, where it holds to its bone, one of two being a sheet all belly.
+     */
+    public boolean kept(final Muscle m, final int i) {
+        final int n = m.sections().size();
+        return tendon(m, i) || n > 2 && (i == 0 || i == n - 1);
+    }
+
+    /**
+     * Whether {@code m}'s {@code i}th section is a tendon's: all of a tendon or a band; any much thinner than its belly,
+     * under a quarter of its fullest section across, or under three tenths of its deepest, as a tendon runs.
+     */
+    public boolean tendon(final Muscle m, final int i) {
+        final List<Section> s = m.sections();
+        if (m.layer() == Layer.TENDON) {
+            return true;
+        }
+        double area = 0;
+        double deep = 0;
+        for (final Section x : s) {
+            area = Math.max(area, x.wide() * x.deep());
+            deep = Math.max(deep, x.deep());
+        }
+        return s.get(i).wide() * s.get(i).deep() < 0.25 * area || s.get(i).deep() < 0.3 * deep;
+    }
+
+    /** How much wider and deeper {@code m}'s belly is than drawn, to be as much as {@code bulk} has it. */
+    private double grown(final Muscle m, final Muscularity bulk, final V3[] on) {
+        final double drawn = asDrawn(m, on);
+        final double wanted = bulk.volume(m, drawn);
+        if (Math.abs(wanted - drawn) <= 1e-9 * drawn || m.layer() == Layer.TENDON) {
+            return 1;
+        }
+        double lo = 0.05;
+        double hi = 10;
+        for (int i = 0; i < 60; i++) {
+            final double mid = (lo + hi) / 2;
+            if (volume(m, on, mid) < wanted) {
+                lo = mid;
+            } else {
+                hi = mid;
+            }
+        }
+        return (lo + hi) / 2;
+    }
+
+    /** {@code m}'s volume, its belly's sections {@code k} times as wide and deep as drawn. */
+    private double volume(final Muscle m, final V3[] on, final double k) {
+        final List<Section> s = m.sections();
+        double v = 0;
+        for (int i = 0; i + 1 < s.size(); i++) {
+            final double a = area(s.get(i), kept(m, i) ? 1 : k);
+            final double b = area(s.get(i + 1), kept(m, i + 1) ? 1 : k);
+            v += on[i + 1].minus(on[i]).length() * (a + b + Math.sqrt(a * b)) / 3;
+        }
+        return v;
+    }
+
+    private double area(final Section s, final double k) {
+        return Math.PI / 4 * s.wide() * s.deep() * k * k;
+    }
+
+    /** The faces round {@code n} rings, from each to the next, and shutting either end; turned round if not out. */
+    private List<int[]> faces(final int n, final boolean out) {
+        final List<int[]> faces = new ArrayList<>();
+        for (int i = 0; i + 1 < n; i++) {
+            for (int k = 0; k < ROUND; k++) {
+                final int q = (k + 1) % ROUND;
+                faces.add(new int[] {i * ROUND + k, i * ROUND + q, (i + 1) * ROUND + q, (i + 1) * ROUND + k});
+            }
+        }
+        final int[] first = new int[ROUND];
+        final int[] last = new int[ROUND];
+        for (int k = 0; k < ROUND; k++) {
+            first[k] = ROUND - 1 - k;
+            last[k] = (n - 1) * ROUND + k;
+        }
+        faces.add(first);
+        faces.add(last);
+        if (!out) {
+            for (int f = 0; f < faces.size(); f++) {
+                final int[] c = faces.get(f);
+                final int[] r = new int[c.length];
+                for (int k = 0; k < c.length; k++) {
+                    r[k] = c[c.length - 1 - k];
+                }
+                faces.set(f, r);
+            }
+        }
+        return faces;
+    }
+
+    /** Whether the faces as first laid round {@code n} rings of {@code points} face out: enclose a volume above none. */
+    private boolean outward(final List<V3> points, final int n) {
+        double v = 0;
+        final V3 o = points.getFirst();
+        for (final int[] f : faces(n, true)) {
+            for (int i = 1; i + 1 < f.length; i++) {
+                v += points.get(f[0]).minus(o).dot(points.get(f[i]).minus(o).cross(points.get(f[i + 1]).minus(o)));
+            }
+        }
+        return v > 0;
+    }
+}
