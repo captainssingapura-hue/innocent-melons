@@ -14,8 +14,8 @@ import javafx.scene.shape.VertexFormat;
 import java.util.function.UnaryOperator;
 
 /**
- * A muscle's surface drawn ({@link MuscleShape.Surface}): its belly one colour, its tendons another, pale, the one
- * becoming the other where the surface does; each point coloured as far tendon as it is, from a strip of colour from
+ * A muscle's surface drawn ({@link MuscleSurface.Surface}): its belly one colour, its tendons another, pale, the
+ * one becoming the other where the surface does; each point coloured as far tendon as it is, from a strip of colour from
  * belly to tendon, sharp in its middle. Into a scene by a map from the body's frame; its triangles turned round if the
  * map is a mirror's.
  */
@@ -27,7 +27,7 @@ public record MuscleView() implements StatelessFunctionalObject {
     private static final int STRIP = 64;
 
     /** {@code s} drawn, its belly {@code belly}, its tendons {@code tendon}, each point where {@code map} puts it. */
-    public MeshView node(final MuscleShape.Surface s, final String belly, final String tendon,
+    public MeshView node(final MuscleSurface.Surface s, final String belly, final String tendon,
                          final UnaryOperator<V3> map, final boolean mirrors) {
         final float[] p = s.mesh().points().clone();
         for (int i = 0; i < p.length; i += 3) {
@@ -62,12 +62,17 @@ public record MuscleView() implements StatelessFunctionalObject {
         mesh.getFaces().setAll(faces);
         final MeshView view = new MeshView(mesh);
         view.setCullFace(CullFace.BACK);
+        view.setMaterial(material(belly, tendon));
+        return view;
+    }
+
+    /** A muscle's material: its belly {@code belly}, its tendons {@code tendon}, by how far tendon each point is, its first texture coordinate. */
+    public PhongMaterial material(final String belly, final String tendon) {
         final PhongMaterial m = new PhongMaterial(Color.WHITE);
         m.setDiffuseMap(strip(Color.web(belly), Color.web(tendon)));
         m.setSpecularColor(Color.web("#5a4a44"));
         m.setSpecularPower(18);
-        view.setMaterial(m);
-        return view;
+        return m;
     }
 
     /** A strip from {@code belly} to {@code tendon}: the one to two fifths along, the other from three, blended between. */

@@ -29,6 +29,12 @@ public record Anchor(Bone bone, V3 at) implements Scalar {
         return v;
     }
 
+    /** The part it moves with: its bone's, on the right or the left; one down the middle, that one. */
+    public Part part(final boolean left) {
+        final Part p = bone.part();
+        return p.side() == 0 || !left ? p : p.other();
+    }
+
     /** Where it is on the body {@code rig} holds: on the right, or on the left, its mirror. */
     public V3 in(final Rig rig, final boolean left) {
         final Part p = bone.part();

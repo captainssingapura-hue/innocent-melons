@@ -109,11 +109,13 @@ public final class HumanoidFigure implements Figure {
         root.getTransforms().addAll(at, turn);
     }
 
-    /** Every kind, offered as the avatar's figure to the game ({@link com.example.fxsuite.avatar.look.Figures}). */
+    /**
+     * Every kind, offered as the avatar's figure to the game ({@link com.example.fxsuite.avatar.look.Figures}); but the
+     * muscles, found too slowly yet for a figure made as it is chosen, on the motion bench only.
+     */
     public static void offer() {
-        for (final Puppet.Kind k : Puppet.Kind.values()) {
-            com.example.fxsuite.avatar.look.Figures.offer(k.label(), () -> new HumanoidFigure(k));
-        }
+        java.util.Arrays.stream(Puppet.Kind.values()).filter(k -> k != Puppet.Kind.MUSCLES).forEach(k ->
+                com.example.fxsuite.avatar.look.Figures.offer(k.label(), () -> new HumanoidFigure(k)));
     }
 
     @Override

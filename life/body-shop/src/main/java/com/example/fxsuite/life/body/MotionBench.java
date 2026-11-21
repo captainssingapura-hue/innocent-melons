@@ -33,10 +33,10 @@ import java.util.Locale;
  * exposed or shelled, moving the same. With the Gatling gun slung from its strap ({@link GatlingHold}), aimed up or
  * down, the only weapon it holds for now.
  *
- * <p>{@code -Dmotion.look} (exposed, shelled, human, skeleton, man, woman), {@code -Dskeleton.detail} (mm, a
- * skeleton's grid), {@code -Dskin.tone} (0 to 1), {@code -Dmotion.speed} (cm/s), {@code -Dmotion.tour=true},
- * {@code -Dmotion.gatling=true}, {@code -Dmotion.aim} (degrees), {@code -Dmotion.slow} (a share of real time) what it
- * plays first;
+ * <p>{@code -Dmotion.look} (exposed, shelled, human, skeleton, muscles, man, woman), {@code -Dskeleton.detail} (mm,
+ * a skeleton's grid), {@code -Dmotion.deep=true} (its deep muscles too), {@code -Dskin.tone} (0 to 1),
+ * {@code -Dmotion.speed} (cm/s), {@code -Dmotion.tour=true}, {@code -Dmotion.gatling=true}, {@code -Dmotion.aim}
+ * (degrees), {@code -Dmotion.slow} (a share of real time) what it plays first;
  * {@code -Dmotion.at} (0 to 1) stops it at that point of its stride; {@code -Dmotion.yaw}, {@code -Dmotion.pitch},
  * {@code -Dmotion.distance} (m) where it is seen from; {@code -Dbench.snapshot=out.png} saves the window after
  * {@code -Dbench.settle} ms and exits.
@@ -88,6 +88,10 @@ public final class MotionBench extends Application {
     private final CheckBox treadmill = new CheckBox("The ground going back under it");
     private final CheckBox forces = new CheckBox("The forces on the gun, as arrows");
     private final CheckBox tights = new CheckBox("In tights");
+    private final CheckBox deep = new CheckBox("Its deep muscles too");
+    private final Label muscleSaid = new Label();
+    private final java.util.Map<String, com.example.fxsuite.life.body.muscle.MuscleBody.Bound> muscleBodies =
+            new java.util.concurrent.ConcurrentHashMap<>();
     private final Slider grid = new Slider(2, 16, Double.parseDouble(System.getProperty("skeleton.detail", "8")));
     private final Label gridSaid = new Label();
     private final Slider tone = new Slider(0, 1, Double.parseDouble(System.getProperty("skin.tone", "0.25")));
@@ -113,6 +117,8 @@ public final class MotionBench extends Application {
         tour.setSelected(Boolean.getBoolean("motion.tour"));
         gatling.setSelected(Boolean.getBoolean("motion.gatling"));
         tights.setSelected(Boolean.getBoolean("wear.tights"));
+        deep.setSelected(Boolean.getBoolean("motion.deep"));
+        deep.selectedProperty().addListener((o, was, is) -> muscled());
         tights.selectedProperty().addListener((o, was, is) -> puppet.tights(is
                 ? com.example.fxsuite.life.body.flesh.Tights.BLACK : null));
         gatling.selectedProperty().addListener((o, was, is) -> {
@@ -201,7 +207,7 @@ public final class MotionBench extends Application {
                 + " to move it, scroll to come nearer.");
         hint.setWrapText(true);
         final VBox side = new VBox(10, new Label("Drawn as"), look, new Label("How fast"), paces, tour, knobs,
-                new FlowPane(10, 6, play), tights, gatling, forces, treadmill, hint);
+                new FlowPane(10, 6, play), tights, deep, muscleSaid, gatling, forces, treadmill, hint);
         side.setPadding(new Insets(8));
         final ScrollPane scroll = new ScrollPane(side);
         scroll.setFitToWidth(true);
@@ -249,6 +255,9 @@ public final class MotionBench extends Application {
         if (s.startsWith("sk")) {
             return Puppet.Kind.SKELETON;
         }
+        if (s.startsWith("mu")) {
+            return Puppet.Kind.MUSCLES;
+        }
         if (s.startsWith("m")) {
             return Puppet.Kind.MAN;
         }
@@ -270,6 +279,36 @@ public final class MotionBench extends Application {
         shown.getChildren().setAll(puppet.node(), gun, strap, loads);
         draw(walker.rig(), 0);
         regrid();
+        muscled();
+    }
+
+    /**
+     * A skeleton's muscles found away from the screen, the deep ones if asked, as big as a body its size has them, then
+     * drawn over it; kept, to be drawn again without finding them afresh. None for any other kind.
+     */
+    private void muscled() {
+        if (puppet.kind() != Puppet.Kind.MUSCLES) {
+            muscleSaid.setText("");
+            return;
+        }
+        final Puppet mine = puppet;
+        final boolean withDeep = deep.isSelected();
+        final Proportions p = proportions;
+        final String key = p + (withDeep ? " deep" : "");
+        muscleSaid.setText("finding its muscles");
+        new Thread(() -> {
+            final long t0 = System.nanoTime();
+            final com.example.fxsuite.life.body.muscle.MuscleBody.Bound b = muscleBodies.computeIfAbsent(key,
+                    k -> com.example.fxsuite.life.body.muscle.MuscleBody.INSTANCE.make(p, withDeep, 1));
+            final long ms = (System.nanoTime() - t0) / 1_000_000;
+            javafx.application.Platform.runLater(() -> {
+                if (mine == puppet) {
+                    mine.muscles(b);
+                    muscleSaid.setText(String.format(Locale.ROOT, "Muscles: %,d points, %,d triangles, found in %,d ms",
+                            b.flesh().size(), b.flesh().triangleCount(), ms));
+                }
+            });
+        }, "muscles").start();
     }
 
     /** A man's or a woman's abs drawn as defined as asked: their flesh found away from the screen, then drawn. */
@@ -293,7 +332,7 @@ public final class MotionBench extends Application {
     /** A skeleton found afresh on the grid asked for, away from the screen, then drawn; how many triangles, said. */
     private void regrid() {
         final com.example.fxsuite.life.body.flesh.Physique physique = puppet.kind().physique();
-        if (puppet.kind() != Puppet.Kind.SKELETON && physique == null) {
+        if (puppet.kind() != Puppet.Kind.SKELETON && puppet.kind() != Puppet.Kind.MUSCLES && physique == null) {
             gridSaid.setText("for a skeleton");
             return;
         }

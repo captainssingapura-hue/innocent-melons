@@ -75,7 +75,7 @@ public final class MuscleBench extends Application {
     private final Label about = new Label();
     private final Rig rig = new Rig(Proportions.DRAWN, Fleshing.INSTANCE.bind(), false);
     private final Measured asMeasured = new Measured(Proportions.DRAWN.stature() / 100, Proportions.DRAWN.mass());
-    private final Map<String, MuscleShape.Surface> surfaces = new ConcurrentHashMap<>();
+    private final Map<String, MuscleSurface.Surface> surfaces = new ConcurrentHashMap<>();
     private final ExecutorService worker = Executors.newSingleThreadExecutor(r -> {
         final Thread t = new Thread(r, "muscles");
         t.setDaemon(true);
@@ -197,8 +197,8 @@ public final class MuscleBench extends Application {
 
     /** Muscle {@code m} on one side drawn, its belly coloured as deep as it lies, brighter if chosen, its tendons pale. */
     private Node drawn(final Muscle m, final boolean left, final boolean picked, final Muscularity bulk) {
-        final MuscleShape.Surface s = surfaces.computeIfAbsent(m.name() + (left ? " left" : " right") + bulk,
-                k -> MuscleShape.INSTANCE.surface(m, bulk, rig, left, 2));
+        final MuscleSurface.Surface s = surfaces.computeIfAbsent(m.name() + (left ? " left" : " right") + bulk,
+                k -> MuscleSurface.INSTANCE.surface(m, bulk, rig, left, 2));
         final String belly = picked ? "#e8a03a" : switch (m.layer()) {
             case SUPERFICIAL -> "#b0453a";
             case DEEP -> "#7c3029";

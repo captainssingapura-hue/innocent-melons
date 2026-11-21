@@ -35,34 +35,8 @@ public record MuscleShape() implements StatelessFunctionalObject {
     /** {@code m}'s surface, as big as {@code bulk} has it, on the body {@code rig} holds, smoothed {@code steps}. */
     public Mesher.Mesh mesh(final Muscle m, final Muscularity bulk, final Rig rig, final boolean left,
                             final int steps) {
-        return surface(m, bulk, rig, left, steps).mesh();
-    }
-
-    /**
-     * A muscle's surface, and how far each of its points is tendon: 0 belly, 1 tendon, between where the one becomes
-     * the other.
-     */
-    public record Surface(Mesher.Mesh mesh, float[] tendon) {
-    }
-
-    /**
-     * {@code m}'s surface, as big as {@code bulk} has it, on the body {@code rig} holds, smoothed {@code steps}; each
-     * point as far tendon as the sections it is smoothed from, smoothed alike.
-     */
-    public Surface surface(final Muscle m, final Muscularity bulk, final Rig rig, final boolean left,
-                           final int steps) {
         final Subdivision s = Subdivision.INSTANCE;
-        final Subdivision.Level shape = s.of(Fitting.INSTANCE.fitted(cage(m, bulk, rig, left), 1), 1);
-        final double[] which = new double[shape.points().length];
-        for (int i = 0; i < shape.size(); i++) {
-            which[3 * i] = tendon(m, i / ROUND) ? 1 : 0;
-        }
-        final Subdivision.Level smooth = s.times(new Subdivision.Level(which, shape.faces(), shape.sharp()), steps);
-        final float[] tendon = new float[smooth.size()];
-        for (int i = 0; i < tendon.length; i++) {
-            tendon[i] = (float) smooth.points()[3 * i];
-        }
-        return new Surface(s.mesh(s.times(shape, steps)), tendon);
+        return s.mesh(s.times(s.of(Fitting.INSTANCE.fitted(cage(m, bulk, rig, left), 1), 1), steps));
     }
 
     /** {@code m}'s cage as drawn on the body {@code rig} holds, on the right or the left. */

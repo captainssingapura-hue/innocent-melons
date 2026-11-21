@@ -27,7 +27,7 @@ public final class Puppet {
     /** What it is drawn as. */
     public enum Kind {
         EXPOSED("Robot, exposed"), SHELLED("Robot, shelled"), HUMAN("Human"), SKELETON("Skeleton"),
-        MAN("A man, a model's build"), WOMAN("A woman, a model's build");
+        MUSCLES("Muscles on the skeleton"), MAN("A man, a model's build"), WOMAN("A woman, a model's build");
 
         private final String label;
 
@@ -73,6 +73,8 @@ public final class Puppet {
     private final Map<Part, Affine> placed = new EnumMap<>(Part.class);
     private final Group pistons = new Group();
     private final Group skin = new Group();
+    private final Group muscled = new Group();
+    private com.example.fxsuite.life.body.muscle.MusclesView muscles;
     private com.example.fxsuite.life.body.flesh.Clothed flesh;
     private com.example.fxsuite.life.body.flesh.Tights tights = Boolean.getBoolean("wear.tights")
             ? com.example.fxsuite.life.body.flesh.Tights.BLACK : null;
@@ -134,7 +136,7 @@ public final class Puppet {
             placed.put(p, a);
             node.getChildren().add(g);
         }
-        node.getChildren().addAll(skin, pistons);
+        node.getChildren().addAll(skin, muscled, pistons);
         fleshed(detail);
     }
 
@@ -211,7 +213,7 @@ public final class Puppet {
 
     /** Whether it is drawn as a skeleton, sculpted or not. */
     private boolean skeletal() {
-        return kind == Kind.SKELETON || kind.physique() != null;
+        return kind == Kind.SKELETON || kind == Kind.MUSCLES || kind.physique() != null;
     }
 
     /** Its skeleton's levels of detail, found and kept: to find one on another thread before it is drawn. */
@@ -235,6 +237,17 @@ public final class Puppet {
         return nodes;
     }
 
+    /**
+     * Its muscles, {@code body}, bound to its bones and found away from the screen ({@link
+     * com.example.fxsuite.life.body.muscle.MuscleBody}), drawn over its skeleton from now on, on the scene's thread; or
+     * none.
+     */
+    public void muscles(final com.example.fxsuite.life.body.muscle.MuscleBody.Bound body) {
+        muscles = body == null ? null
+                : new com.example.fxsuite.life.body.muscle.MusclesView(body, signs, shown != null ? shown : rest);
+        muscled.getChildren().setAll(muscles == null ? List.of() : List.of(muscles.node()));
+    }
+
     /** Its flesh coloured {@code t}, a sculpted skeleton's, as it is: nothing drawn afresh. */
     public void tone(final com.example.fxsuite.life.body.flesh.SkinTone t) {
         tone = t;
@@ -252,6 +265,9 @@ public final class Puppet {
         shown = rig;
         if (flesh != null) {
             flesh.show(rig);
+        }
+        if (muscles != null) {
+            muscles.show(rig);
         }
         for (final Part p : Part.values()) {
             final Rig.Frame f = rig.frame(p);
@@ -293,7 +309,7 @@ public final class Puppet {
     private List<Surface> local(final Part p) {
         return switch (kind) {
             case HUMAN -> Skin.shapes(p, Muscles.Bulge.REST, TWIST, Skin.HUMAN);
-            case SKELETON, MAN, WOMAN -> List.of();
+            case SKELETON, MUSCLES, MAN, WOMAN -> List.of();
             case SHELLED -> Skin.shell(p, TWIST, design);
             case EXPOSED -> {
                 if (RobotFrame.designed(p)) {
