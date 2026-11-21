@@ -4,7 +4,7 @@ import com.example.fxsuite.life.body.Mesher;
 import com.example.fxsuite.life.body.Proportions;
 import com.example.fxsuite.life.body.Rig;
 import com.example.fxsuite.life.body.V3;
-import com.example.fxsuite.life.body.flesh.Fleshing;
+import com.example.fxsuite.life.body.BoundPose;
 import com.example.fxsuite.life.body.muscle.leg.LegVolumes;
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class MeasuredTest {
 
-    private final Rig rig = new Rig(Proportions.DRAWN, Fleshing.INSTANCE.bind(), false);
+    private final Rig rig = new Rig(Proportions.DRAWN, BoundPose.INSTANCE.pose(), false);
 
     @Test
     void theWholeLegIsAsTheirSubjectsWere() {

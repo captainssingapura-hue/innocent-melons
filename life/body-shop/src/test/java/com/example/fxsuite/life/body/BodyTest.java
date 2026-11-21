@@ -185,7 +185,7 @@ class BodyTest {
     @Test
     void everyPieceIsAClosedSkinFacingOutward() {
         for (final Pose.Named n : List.of(Pose.PRESETS.get(0), Pose.PRESETS.get(7))) {
-            final Body body = new Body(P, n.pose());
+            final Body body = new Body(P, n.pose(), null);
             for (final Body.Piece piece : body.pieces(EnumSet.allOf(Body.Layer.class))) {
                 final Surface s = piece.surface();
                 assertTrue(s.volume() > 0, n.name() + ", " + s.name() + ": facing outward");
@@ -197,7 +197,7 @@ class BodyTest {
     @Test
     void aRobotIsTheSameBodyMovingTheSameReadAsAMachine() {
         for (final Pose.Named n : List.of(Pose.PRESETS.get(0), Pose.PRESETS.get(7))) {
-            final Body robot = new Body(P, n.pose(), null, Body.Look.ROBOT);
+            final Body robot = new Body(P, n.pose(), null);
             final List<Body.Piece> pieces = robot.pieces(EnumSet.allOf(Body.Layer.class));
             for (final Body.Piece piece : pieces) {
                 assertTrue(piece.surface().volume() > 0, n.name() + ", " + piece.surface().name() + ": facing outward");
@@ -226,7 +226,7 @@ class BodyTest {
     }
 
     private static Surface piston(final Pose pose, final String name) {
-        final Body robot = new Body(P, pose, null, Body.Look.ROBOT);
+        final Body robot = new Body(P, pose, null);
         return robot.pieces(EnumSet.of(Body.Layer.MUSCLES)).stream().map(Body.Piece::surface)
                 .filter(s -> s.name().equals(name)).findFirst().orElseThrow();
     }
@@ -241,14 +241,6 @@ class BodyTest {
         assertEquals("#ff8800", p.colour(Paint.SHELL));
         assertEquals(Paint.PANEL.colour(), p.colour(Paint.PANEL));
         assertEquals(Paint.SHELL.colour(), Palette.DEFAULT.colour(Paint.SHELL));
-    }
-
-    @Test
-    void aMuscleSwellsAsItShortens() {
-        final Pose bent = Pose.REST.with(Part.RIGHT_FOREARM, Dof.ELBOW, 120);
-        final Body body = new Body(P, bent);
-        assertTrue(body.bulges().get(1).biceps() > 1.1, "the right biceps swollen, the elbow bent");
-        assertEquals(1, body.bulges().get(-1).biceps(), 0.05, "the left as it was");
     }
 
     @Test

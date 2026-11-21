@@ -299,7 +299,7 @@ public final class RobotPartsBench extends Application {
      * shelled), or the whole frame and its pistons (and its shell, if shelled); the design as code.
      */
     private Made make(final Asked a) {
-        final Body body = new Body(Proportions.PAPERS, Pose.REST, null, Body.Look.ROBOT, a.design());
+        final Body body = new Body(Proportions.PAPERS, Pose.REST, null, a.design());
         final Set<Body.Layer> layers = a.whole() ? EnumSet.of(Body.Layer.BONES, Body.Layer.MUSCLES)
                 : EnumSet.of(Body.Layer.BONES);
         if (a.shelled()) {

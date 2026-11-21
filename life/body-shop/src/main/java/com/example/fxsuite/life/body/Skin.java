@@ -12,11 +12,12 @@ import static com.example.fxsuite.life.body.Loft.se;
 import static com.example.fxsuite.life.body.Loft.sw;
 
 /**
- * A body's skin, part by part, each lofted in its own frame from profiles of how broad and how deep it is along it
- * ({@link Loft}), as the interactive model of the papers draws its legs and arms: the thigh, the shin, the foot and
- * its toes, the upper arm and the forearm (twisting with it) its own, swelling as its muscles do; the pelvis, the
- * abdomen, the chest, the shoulder girdles, the neck, the head and the hands drawn the same way, in the same figure's
- * centimetres. Broader and deeper as the body's build is; each a right side's, a left its mirror.
+ * A robot's shell, part by part, each lofted in its own frame in flat panels from profiles of how broad and how deep
+ * it is along it ({@link Loft}), as the interactive model of the papers draws a body's legs and arms: the thigh, the
+ * shin, the foot and its toes, the upper arm and the forearm (twisting with it) its own; the pelvis, the abdomen, the
+ * chest, the shoulder girdles, the neck and the hands drawn the same way, in the same figure's centimetres; its joints
+ * ringed, its limbs banded, its head a helmet. Broader and deeper as the body's build is; each a right side's, a left
+ * its mirror.
  */
 final class Skin {
 
@@ -72,32 +73,16 @@ final class Skin {
     private Skin() {
     }
 
-    /** Every part's skin, posed as {@code rig} is, its muscles swollen as {@code bulges} say. */
-    static Map<Part, List<Surface>> drawn(final Rig rig, final Map<Integer, Muscles.Bulge> bulges) {
-        return drawn(rig, bulges, false);
-    }
-
     /**
-     * Every part's skin, posed as {@code rig} is: a human's, its muscles swollen as {@code bulges} say; or a robot's
-     * shell, the same lofts in flat panels, swelling with nothing, its joints ringed, its limbs banded, its head a
-     * helmet with a visor across its eyes and a pod at either side.
+     * Every part's shell, posed as {@code rig} is: the lofts in flat panels, its joints ringed, its limbs banded, its
+     * head the helmet {@code design} has.
      */
-    static Map<Part, List<Surface>> drawn(final Rig rig, final Map<Integer, Muscles.Bulge> bulges,
-                                          final boolean robot) {
-        return drawn(rig, bulges, robot, RobotDesign.DEFAULT);
-    }
-
-    /** As {@link #drawn(Rig, Map, boolean)}, a robot's head the helmet {@code design} has. */
-    static Map<Part, List<Surface>> drawn(final Rig rig, final Map<Integer, Muscles.Bulge> bulges,
-                                          final boolean robot, final RobotDesign design) {
+    static Map<Part, List<Surface>> drawn(final Rig rig, final RobotDesign design) {
         final Map<Part, List<Surface>> by = new EnumMap<>(Part.class);
         final double b = rig.proportions().build();
         for (final Part p : Part.values()) {
-            final double twist = rig.twist(p.side());
-            final List<Surface> local = robot ? shell(p, twist, design)
-                    : shapes(p, bulges.get(p.side() < 0 ? -1 : 1), twist, HUMAN);
             final List<Surface> placed = new ArrayList<>();
-            for (final Surface s : local) {
+            for (final Surface s : shell(p, rig.twist(p.side()), design)) {
                 // broader and deeper about the part's own axis as the body's build is; then where the part is
                 placed.add(s.moved(v -> rig.place(p, new V3(v.x() * b, v.y(), v.z() * b))));
             }
@@ -106,26 +91,19 @@ final class Skin {
         return by;
     }
 
-    /** {@code p}'s skin in its own frame, as on the right side. */
-    static List<Surface> local(final Part p, final Muscles.Bulge k, final double twist) {
-        return shapes(p, k, twist, HUMAN);
-    }
-
-    /** How a skin is lofted: a human's smooth, as finely round as asked; a robot's shell in so many flat panels round. */
-    record Make(boolean robot, int panels) {
+    /** How a shell is lofted: in so many flat panels round. */
+    record Make(int panels) {
         Surface of(final String name, final int along, final int round, final Loft.Skin skin) {
-            return robot ? Loft.of(name, Paint.SHELL, along, panels, skin, false)
-                    : Loft.of(name, Paint.SKIN, along, round, skin, true);
+            return Loft.of(name, Paint.SHELL, along, panels, skin, false);
         }
     }
 
     /** How many flat panels round a robot's shell is. */
     static final int PANELS = 10;
-    static final Make HUMAN = new Make(false, 0);
-    static final Make ROBOT = new Make(true, PANELS);
+    static final Make ROBOT = new Make(PANELS);
 
-    /** {@code p}'s skin in its own frame, as on the right side, lofted as {@code make} lofts. */
-    static List<Surface> shapes(final Part p, final Muscles.Bulge k, final double twist, final Make make) {
+    /** {@code p}'s shell in its own frame, as on the right side, lofted as {@code make} lofts. */
+    static List<Surface> shapes(final Part p, final double twist, final Make make) {
         final String n = p.said();
         return switch (p) {
             case PELVIS -> List.of(make.of(n, ALONG, ROUND, (t, phi) ->
@@ -142,11 +120,8 @@ final class Skin {
             case RIGHT_UPPER_ARM, LEFT_UPPER_ARM -> List.of(make.of(n, ALONG, ROUND, (t, phi) -> {
                 final double f = endF(t);
                 final double a = ip(UPPER_W, t) / 2 * f;
-                final double sn = Math.sin(phi);
-                double d = ip(UPPER_D, t) / 2 * f;
-                d += sn > 0 ? Math.pow(sn, 1.5) * (k.biceps() - 1) * 3.4 * prof(t, 0.52, 0.17) * f
-                        : Math.pow(-sn, 1.5) * (k.triceps() - 1) * 3.7 * prof(t, 0.5, 0.2) * f;
-                return new V3(a * Math.cos(phi), 3 - 36 * t, d * sn);
+                final double d = ip(UPPER_D, t) / 2 * f;
+                return new V3(a * Math.cos(phi), 3 - 36 * t, d * Math.sin(phi));
             }));
             case RIGHT_FOREARM, LEFT_FOREARM -> List.of(make.of(n, 40, 30, (t, phi) -> {
                 final double f = endF(t);
@@ -158,21 +133,14 @@ final class Skin {
             case RIGHT_THIGH, LEFT_THIGH -> List.of(make.of(n, 48, ROUND, (t, phi) -> {
                 final double f = endF(t);
                 final double a = ip(THIGH_W, t) / 2 * f;
-                final double sn = Math.sin(phi);
-                double d = ip(THIGH_D, t) / 2 * f;
-                d += sn > 0 ? Math.pow(sn, 1.5) * (k.quads() - 1) * 5.6 * prof(t, 0.55, 0.2) * f
-                        : Math.pow(-sn, 1.5) * (k.hamstrings() - 1) * 4.8 * prof(t, 0.45, 0.2) * f;
-                return new V3(2.4 * (1 - t) + a * Math.cos(phi), 4 - 48 * t, d * sn);
+                final double d = ip(THIGH_D, t) / 2 * f;
+                return new V3(2.4 * (1 - t) + a * Math.cos(phi), 4 - 48 * t, d * Math.sin(phi));
             }));
             case RIGHT_SHIN, LEFT_SHIN -> List.of(make.of(n, ALONG, ROUND, (t, phi) -> {
                 final double f = endF(t);
                 final double a = ip(SHIN_W, t) / 2 * f;
-                final double sn = Math.sin(phi);
-                double d = ip(SHIN_D, t) / 2 * f;
-                if (sn < 0) {
-                    d += Math.pow(-sn, 1.5) * (k.calf() - 1) * 5.0 * prof(t, 0.28, 0.15) * f;
-                }
-                return new V3(a * Math.cos(phi), 2 - 46 * t, -0.8 * prof(t, 0.3, 0.25) + d * sn);
+                final double d = ip(SHIN_D, t) / 2 * f;
+                return new V3(a * Math.cos(phi), 2 - 46 * t, -0.8 * prof(t, 0.3, 0.25) + d * Math.sin(phi));
             }));
             case RIGHT_FOOT, LEFT_FOOT -> List.of(make.of(n, 36, 30, (s, phi) -> {
                 final double z = -5.5 + 21 * s;
@@ -269,7 +237,7 @@ final class Skin {
             // its head the designed helmet, in its shell's colour
             return RobotFrame.helmet(design.head(), Paint.SHELL);
         }
-        for (final Surface skin : shapes(p, Muscles.Bulge.REST, twist, ROBOT)) {
+        for (final Surface skin : shapes(p, twist, ROBOT)) {
             if (skin.name().equals("nose") || skin.name().endsWith(" ear")) {
                 continue;
             }

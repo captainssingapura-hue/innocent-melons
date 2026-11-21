@@ -9,7 +9,7 @@ import com.example.fxsuite.life.body.Proportions;
 import com.example.fxsuite.life.body.Rig;
 import com.example.fxsuite.life.body.V3;
 import com.example.fxsuite.life.body.cage.CageView;
-import com.example.fxsuite.life.body.flesh.Fleshing;
+import com.example.fxsuite.life.body.BoundPose;
 import com.example.fxsuite.life.body.muscle.leg.LegVolumes;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -73,7 +73,7 @@ public final class MuscleBench extends Application {
     private final CheckBox bones = new CheckBox("The bones");
     private final CheckBox measured = new CheckBox("Sized as measured, not as drawn");
     private final Label about = new Label();
-    private final Rig rig = new Rig(Proportions.DRAWN, Fleshing.INSTANCE.bind(), false);
+    private final Rig rig = new Rig(Proportions.DRAWN, BoundPose.INSTANCE.pose(), false);
     private final Measured asMeasured = new Measured(Proportions.DRAWN.stature() / 100, Proportions.DRAWN.mass());
     private final Map<String, MuscleSurface.Surface> surfaces = new ConcurrentHashMap<>();
     private final ExecutorService worker = Executors.newSingleThreadExecutor(r -> {

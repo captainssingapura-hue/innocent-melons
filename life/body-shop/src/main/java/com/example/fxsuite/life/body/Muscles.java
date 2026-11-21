@@ -7,12 +7,9 @@ import java.util.Map;
 import java.util.function.BiFunction;
 
 /**
- * A body's muscles, as the interactive model draws them (Papers/Body): each a belly between two tendons, from its
- * origin on one part to its insertion on another; as it shortens, a pose bringing its ends nearer, its belly thickens,
- * keeping its volume ({@code sqrt} of how much shorter it is than at rest), pushed out the way it bulges. The thigh's,
- * the shin's and the upper arm's as the model has them; the shoulder's, the chest's, the belly's, the seat's and the
- * neck's added the same way. How thick each thigh, calf and upper arm's muscle is drives how its skin swells
- * ({@link Bulge}).
+ * A body's muscles as the interactive model of the papers has them (Papers/Body), read as a robot's pistons: each from
+ * its origin on one part to its insertion on another. The thigh's, the shin's and the upper arm's as the model has
+ * them; the shoulder's, the chest's, the belly's, the seat's and the neck's added the same way. Where the kneecap rides.
  */
 final class Muscles {
 
@@ -27,11 +24,6 @@ final class Muscles {
     record Muscle(String name, Part part, Side side, BiFunction<Rig, Integer, V3> origin,
                   BiFunction<Rig, Integer, V3> insertion, double tendon0, double tendon1, double radius,
                   double across, double push, double shift) {
-    }
-
-    /** How swollen each muscle that shapes the skin is on one side: 1 at rest, more as it shortens. */
-    record Bulge(double quads, double hamstrings, double calf, double biceps, double triceps) {
-        static final Bulge REST = new Bulge(1, 1, 1, 1, 1);
     }
 
     private Muscles() {
@@ -105,33 +97,6 @@ final class Muscles {
             new Muscle("trapezius", Part.NECK, Side.BACK, onMiddle(Part.NECK, new V3(1.5, 6, -4)),
                     on(Part.RIGHT_GIRDLE, new V3(15, 2.0, -8)), 1, 1, 1.8, 1.8, 0, 0));
 
-    /** {@code m}'s belly's length on {@code side}, posed as {@code rig} is: between its ends, less its tendons. */
-    static double length(final Muscle m, final Rig rig, final int side) {
-        final double s = rig.proportions().scale();
-        return Math.max(m.origin().apply(rig, side).minus(m.insertion().apply(rig, side)).length()
-                - (m.tendon0() + m.tendon1()) * s, s);
-    }
-
-    /** How swollen {@code m} is on {@code side}: as much thicker as it is shorter than at rest, its volume kept. */
-    static double swell(final Muscle m, final Rig rig, final Rig rest, final int side) {
-        return Math.sqrt(length(m, rest, side) / length(m, rig, side));
-    }
-
-    /** How swollen each muscle that shapes the skin is, on each side. */
-    static Map<Integer, Bulge> bulges(final Rig rig, final Rig rest) {
-        final Map<Integer, Bulge> b = new java.util.HashMap<>();
-        for (final int side : new int[] {1, -1}) {
-            b.put(side, new Bulge(swell(named("vastus"), rig, rest, side), swell(named("hamstrings"), rig, rest, side),
-                    swell(named("gastrocnemius"), rig, rest, side), swell(named("biceps"), rig, rest, side),
-                    swell(named("triceps"), rig, rest, side)));
-        }
-        return b;
-    }
-
-    static Muscle named(final String name) {
-        return ALL.stream().filter(m -> m.name().equals(name)).findFirst().orElseThrow();
-    }
-
     /** How long a piston's barrel is, as a share of how far apart its ends are at rest; how thick, of the muscle. */
     static final double BARREL = 0.55;
     static final double BORE = 0.5;
@@ -163,41 +128,6 @@ final class Muscles {
                         new double[] {0.45 * bore, 0.45 * bore}, 1, 0.3, 10));
                 list.add(Shapes.ellipsoid(name + " eye", Paint.HOUSING, o, 0.8 * bore, 0.8 * bore, 0.8 * bore, 10, 6));
                 list.add(Shapes.ellipsoid(name + " eye", Paint.HOUSING, i, 0.6 * bore, 0.6 * bore, 0.6 * bore, 10, 6));
-            }
-        }
-        return by;
-    }
-
-    /** Every muscle on both sides, drawn: its belly and its tendons, each with the part it goes with. */
-    static Map<Part, List<Surface>> drawn(final Rig rig, final Rig rest) {
-        final Map<Part, List<Surface>> by = new EnumMap<>(Part.class);
-        final double s = rig.proportions().scale();
-        final double b = rig.proportions().build();
-        for (final Muscle m : ALL) {
-            for (final int side : new int[] {1, -1}) {
-                final Part part = side > 0 || m.part().side() == 0 ? m.part() : m.part().other();
-                final Paint paint = switch (m.side()) {
-                    case FRONT -> Paint.MUSCLE_FRONT;
-                    case BACK -> Paint.MUSCLE_BACK;
-                    case DEEP -> Paint.MUSCLE_DEEP;
-                };
-                final V3 o = m.origin().apply(rig, side);
-                final V3 i = m.insertion().apply(rig, side);
-                final V3 dir = i.minus(o).unit();
-                final double length = length(m, rig, side);
-                final V3 p1 = o.plus(dir.times(m.tendon0() * s));
-                final V3 p2 = i.minus(dir.times(m.tendon1() * s));
-                final double k = swell(m, rig, rest, side);
-                final double r0 = m.radius() * s * b;
-                final double r = r0 * k;
-                final V3 front = rig.frame(part).way(V3.Z);
-                final V3 c = p1.plus(p2).times(0.5).plus(front.times(m.push() * (r - r0) + m.shift() * s));
-                final String name = (side > 0 ? "right " : "left ") + m.name();
-                final List<Surface> list = by.computeIfAbsent(part, x -> new ArrayList<>());
-                list.add(Shapes.ellipsoid(name, paint, V3.ZERO, r * m.across(), length / 2, r, 14, 9)
-                        .moved(v -> c.plus(Rot.between(V3.Y, dir).apply(v))));
-                list.add(Shapes.capsule(name + " tendon", paint, o, p1, 0.4 * s, 1, 6));
-                list.add(Shapes.capsule(name + " tendon", paint, p2, i, 0.45 * s, 1, 6));
             }
         }
         return by;

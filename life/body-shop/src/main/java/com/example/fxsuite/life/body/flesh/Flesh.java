@@ -9,7 +9,7 @@ import java.util.List;
 
 /**
  * A body's flesh as one surface, bound to the parts it moves with: each of its points as it was found, with the body
- * held to be bound ({@link Fleshing}), and how much it follows each of up to four parts, the shares adding to one.
+ * held to be bound ({@link BoundPose}), and how much it follows each of up to four parts, the shares adding to one.
  * Posed, each point is moved by its parts' moves blended by its shares, each move a turn and a shift taken together
  * (dual quaternion skinning, Kavan's), so that the flesh round a bending knee or elbow turns round it, keeping its
  * bulk, rather than its corners pinching in as places blended would; and its way out turned the same.
@@ -58,25 +58,25 @@ public final class Flesh {
     }
 
     /** Its points' ways out, as found, three a point: for what is cut from it. */
-    float[] normals() {
+    public float[] normals() {
         return normals.clone();
     }
 
     /** The parts it follows, and where each was bound. */
-    List<Part> parts() {
+    public List<Part> parts() {
         return parts;
     }
 
-    List<Rig.Frame> bound() {
+    public List<Rig.Frame> bound() {
         return bound;
     }
 
     /** Which parts each point follows, by number, and how much: {@link #PARTS} a point. */
-    int[] which() {
+    public int[] which() {
         return which.clone();
     }
 
-    float[] shares() {
+    public float[] shares() {
         return shares.clone();
     }
 

@@ -139,7 +139,7 @@ final class RobotFrame {
      */
     static List<Surface> helmet(final RobotDesign.Head h, final Paint shell) {
         final List<Surface> hd = new ArrayList<>();
-        final Skin.Make make = new Skin.Make(true, h.panels());
+        final Skin.Make make = new Skin.Make(h.panels());
         for (final Surface s : Skin.head(make)) {
             if (s.name().equals("head")) {
                 hd.add(new Surface("head: helmet", shell, s.rings(), s.start(), s.end(), false)

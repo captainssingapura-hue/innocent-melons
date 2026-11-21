@@ -28,18 +28,16 @@ import java.util.Set;
 import java.util.function.DoubleConsumer;
 
 /**
- * The body shop's bench: the avatar's body, still, to look at through the bench kit's model view and pose by hand, as
- * the interactive model of the papers is (Papers/Body). Its skin, its bones, its muscles and the marks of its balance,
- * each shown or not; its skin solid or seen through. Pressed on, a part is chosen, its joint's ways each on a slider;
+ * The body shop's bench: the robot's body, still, to look at through the bench kit's model view and pose by hand, as
+ * the interactive model of the papers is (Papers/Body). Its shell, its frame, its pistons and the marks of its balance,
+ * each shown or not; its shell solid or seen through. Pressed on, a part is chosen, its joint's ways each on a slider;
  * dragged, it turns at its joint after the mouse, no further than the joint goes (twisting about its own length with
  * the control key held); dragged anywhere else, the view turns. The interactive model's presets at a press; the
  * body's proportions by sliders. Whether it would stand so, read out: how far inside the area its feet hold it up over
  * its centre of mass falls. Each change makes it afresh and shows it in place of what was. Put together of the bench
  * kit's parts.
  *
- * <p>A human or a robot, on the same skeleton, moving the same: a robot its shell (its skin), its frame (its bones),
- * its pistons (its muscles), shown or not as a human's; exposed, its frame and pistons; shelled, its shell. Every
- * colour its look is drawn in its own picker.
+ * <p>Exposed, its frame and pistons; shelled, its shell. Every colour it is drawn in its own picker.
  *
  * <p>With its centre of gravity kept, its feet on the ground stay where they are, and whatever is done to it, it
  * shifts its weight, its pelvis and its standing legs, to keep its centre of gravity over where it is kept ({@link
@@ -47,7 +45,7 @@ import java.util.function.DoubleConsumer;
  * Its floor seen through, a grid of lines only.
  *
  * <p>{@code -Dbody.preset} (a preset's name), {@code -Dbody.layers} (skin, bones, muscles, marks, by commas),
- * {@code -Dbody.look} (human, robot), * {@code -Dbody.through=true}, {@code -Dbody.keep=true}, {@code -Dbody.select} (a part's name) what it shows first;
+ * {@code -Dbody.through=true}, {@code -Dbody.keep=true}, {@code -Dbody.select} (a part's name) what it shows first;
  * {@code -Dbody.yaw}, {@code -Dbody.pitch}, {@code -Dbody.distance} (m) where it is seen from, {@code -Dbody.at} how
  * high it is looked at (cm); {@code -Dbench.snapshot=out.png} saves the window after {@code -Dbench.settle} ms and exits.
  */
@@ -58,7 +56,7 @@ public final class BodyShopBench extends Application {
     private final ModelView view = new ModelView();
 
     private record Asked(Proportions proportions, Pose pose, Set<Body.Layer> layers, boolean through, Part chosen,
-                         V3 kept, Body.Look look, Palette palette) {
+                         V3 kept, Palette palette) {
     }
 
     private record Made(ModelView.Model model, String figures) {
@@ -72,10 +70,10 @@ public final class BodyShopBench extends Application {
     private Rig rig = new Rig(proportions, pose);
     private Part chosen;
 
-    private final CheckBox skin = new CheckBox("Skin");
+    private final CheckBox skin = new CheckBox("Shell");
     private final CheckBox through = new CheckBox("Seen through");
-    private final CheckBox bones = new CheckBox("Bones");
-    private final CheckBox muscles = new CheckBox("Muscles");
+    private final CheckBox bones = new CheckBox("Frame");
+    private final CheckBox muscles = new CheckBox("Pistons");
     private final CheckBox marks = new CheckBox("Balance");
     private final CheckBox both = new CheckBox("Both sides alike");
     private final Label partName = new Label("None chosen: press on a part");
@@ -92,10 +90,8 @@ public final class BodyShopBench extends Application {
     private final Slider keptRight = new Slider(-40, 40, 0);
     private final Slider keptAhead = new Slider(-40, 40, 0);
     private V3 kept;
-    // what it is drawn as, and in what colours
-    private Body.Look look = Body.Look.HUMAN;
+    // the colours it is drawn in
     private Palette palette = Palette.DEFAULT;
-    private final javafx.scene.control.ChoiceBox<Body.Look> lookBox = new javafx.scene.control.ChoiceBox<>();
     private final VBox colours = new VBox(4);
 
     /** Whether what is held is its centre of gravity, not a part. */
@@ -217,19 +213,10 @@ public final class BodyShopBench extends Application {
             ask();
         });
 
-        lookBox.getItems().setAll(Body.Look.values());
-        lookBox.setValue(look);
-        lookBox.valueProperty().addListener((o, was, is) -> {
-            look = is;
-            showColours();
-            ask();
-        });
         final Button exposed = new Button("A robot, exposed");
-        exposed.setOnAction(e -> layered(Body.Look.ROBOT, false, true, true));
+        exposed.setOnAction(e -> layered(false, true, true));
         final Button shelled = new Button("A robot, shelled");
-        shelled.setOnAction(e -> layered(Body.Look.ROBOT, true, false, false));
-        final Button human = new Button("A human");
-        human.setOnAction(e -> layered(Body.Look.HUMAN, true, false, false));
+        shelled.setOnAction(e -> layered(true, false, false));
         final Button resetColours = new Button("Its colours as they were");
         resetColours.setOnAction(e -> {
             palette = Palette.DEFAULT;
@@ -242,7 +229,7 @@ public final class BodyShopBench extends Application {
                 + " elsewhere to turn the view, right-drag to move it, scroll to come nearer.");
         hint.setWrapText(true);
         final VBox side = new VBox(10,
-                new Label("What it is"), new FlowPane(10, 6, lookBox, human, exposed, shelled),
+                new Label("What it is"), new FlowPane(10, 6, exposed, shelled),
                 new Label("Presets"), presets,
                 new Label("Shown"), new FlowPane(10, 6, skin, through, bones, muscles, marks),
                 new Label("The part chosen"), partName, joint, new FlowPane(10, 6, both, restPart),
@@ -270,11 +257,6 @@ public final class BodyShopBench extends Application {
         if (select != null) {
             chosen = Part.valueOf(select.toUpperCase(Locale.ROOT).replace(' ', '_'));
         }
-        final String asked = System.getProperty("body.look");
-        if (asked != null) {
-            look = Body.Look.valueOf(asked.toUpperCase(Locale.ROOT));
-            lookBox.setValue(look);
-        }
         showColours();
         rig = new Rig(proportions, pose);
         if (Boolean.getBoolean("body.keep")) {
@@ -289,11 +271,8 @@ public final class BodyShopBench extends Application {
         workshop.close();
     }
 
-    /** Drawn as {@code as}, its skin, its bones and its muscles each shown or not. */
-    private void layered(final Body.Look as, final boolean withSkin, final boolean withBones,
-                         final boolean withMuscles) {
-        look = as;
-        lookBox.setValue(as);
+    /** Its shell, its frame and its pistons each shown or not. */
+    private void layered(final boolean withSkin, final boolean withBones, final boolean withMuscles) {
         skin.setSelected(withSkin);
         bones.setSelected(withBones);
         muscles.setSelected(withMuscles);
@@ -302,14 +281,14 @@ public final class BodyShopBench extends Application {
         ask();
     }
 
-    /** A picker for every colour its look is drawn in, each changing that colour alone. */
+    /** A picker for every colour it is drawn in, each changing that colour alone. */
     private void showColours() {
         colours.getChildren().clear();
         final GridPane grid = new GridPane();
         grid.setHgap(8);
         grid.setVgap(4);
         int row = 0;
-        for (final Paint p : look == Body.Look.ROBOT ? Paint.ROBOT : Paint.HUMAN) {
+        for (final Paint p : Paint.ROBOT) {
             final javafx.scene.control.ColorPicker picker =
                     new javafx.scene.control.ColorPicker(javafx.scene.paint.Color.web(palette.colour(p)));
             picker.setOnAction(e -> {
@@ -362,7 +341,7 @@ public final class BodyShopBench extends Application {
             layers.add(Body.Layer.MARKS);
         }
         setSliders();
-        bus.publish(new Asked(proportions, pose, layers, through.isSelected(), chosen, kept, look, palette));
+        bus.publish(new Asked(proportions, pose, layers, through.isSelected(), chosen, kept, palette));
     }
 
     /** The proportions' sliders and the chosen part's set to what is, asking nothing. */
@@ -424,7 +403,7 @@ public final class BodyShopBench extends Application {
 
     /** On the workshop's worker: the body made and drawn, the chosen part's skin warmer; what it is, in figures. */
     private Made make(final Asked a) {
-        final Body body = new Body(a.proportions(), a.pose(), a.kept(), a.look());
+        final Body body = new Body(a.proportions(), a.pose(), a.kept());
         final List<Body.Piece> pieces = body.pieces(a.layers());
         final Group drawn = FigureModel.of(pieces, a.through(), a.chosen(), a.palette());
         return new Made(ModelView.Model.touchable(drawn), figures(body, a, FigureModel.triangles(pieces)));

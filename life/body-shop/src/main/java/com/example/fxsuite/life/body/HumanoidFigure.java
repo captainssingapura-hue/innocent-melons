@@ -73,7 +73,7 @@ public final class HumanoidFigure implements Figure {
     static final V3 ON_SHOULDER = new V3(-10, 19.5, 12);
 
     public HumanoidFigure(final Puppet.Kind kind) {
-        proportions = kind.proportions(Proportions.PAPERS);
+        proportions = Proportions.PAPERS;
         puppet = new Puppet(kind, proportions, RobotDesign.DEFAULT, Palette.DEFAULT, new V3(1, -1, 1));
         walker = new Walker(proportions);
         hold = new GatlingHold(proportions);

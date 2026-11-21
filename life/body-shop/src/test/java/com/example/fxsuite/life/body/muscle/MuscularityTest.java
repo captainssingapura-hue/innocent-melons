@@ -5,7 +5,7 @@ import com.example.fxsuite.life.body.Proportions;
 import com.example.fxsuite.life.body.Rig;
 import com.example.fxsuite.life.body.V3;
 import com.example.fxsuite.life.body.cage.Cage;
-import com.example.fxsuite.life.body.flesh.Fleshing;
+import com.example.fxsuite.life.body.BoundPose;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class MuscularityTest {
 
-    private final Rig rig = new Rig(Proportions.DRAWN, Fleshing.INSTANCE.bind(), false);
+    private final Rig rig = new Rig(Proportions.DRAWN, BoundPose.INSTANCE.pose(), false);
     private final Muscularity twice = (m, asDrawn) -> 2 * asDrawn;
 
     @Test

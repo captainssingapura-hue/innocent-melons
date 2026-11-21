@@ -17,27 +17,17 @@ final class Bones {
     private Bones() {
     }
 
-    /** Every part's bones, posed as {@code rig} is. */
-    static Map<Part, List<Surface>> drawn(final Rig rig) {
-        return drawn(rig, false);
-    }
-
     /**
-     * Every part's bones, posed as {@code rig} is: a human's, or, for a robot, its frame: the same bones in polished
-     * metal, and a housing round each joint.
+     * A robot's frame, part by part, posed as {@code rig} is: the bones in polished metal, a housing round each joint;
+     * its spine, chest, neck and head as {@code design} has them.
      */
-    static Map<Part, List<Surface>> drawn(final Rig rig, final boolean robot) {
-        return drawn(rig, robot, RobotDesign.DEFAULT);
-    }
-
-    /** As {@link #drawn(Rig, boolean)}, a robot's spine, chest, neck and head as {@code design} has them. */
-    static Map<Part, List<Surface>> drawn(final Rig rig, final boolean robot, final RobotDesign design) {
+    static Map<Part, List<Surface>> drawn(final Rig rig, final RobotDesign design) {
         final Map<Part, List<Surface>> by = new EnumMap<>(Part.class);
         for (final Part p : Part.values()) {
             final List<Surface> placed = new ArrayList<>();
-            final List<Surface> local = new ArrayList<>(robot && RobotFrame.designed(p)
+            final List<Surface> local = new ArrayList<>(RobotFrame.designed(p)
                     ? RobotFrame.part(p, design, Paint.FRAME) : local(p, rig.twist(p.side())));
-            if (robot && !RobotFrame.designed(p)) {
+            if (!RobotFrame.designed(p)) {
                 local.replaceAll(s -> new Surface(s.name(), Paint.FRAME, s.rings(), s.start(), s.end(), s.smooth()));
                 final double r = HOUSING.getOrDefault(p.name().replace("RIGHT_", "").replace("LEFT_", ""), 0.0);
                 if (r > 0) {
@@ -54,7 +44,7 @@ final class Bones {
             final V3 at = Muscles.kneecap(rig, side);
             final double s = rig.proportions().scale();
             by.get(side > 0 ? Part.RIGHT_THIGH : Part.LEFT_THIGH).add(
-                    Shapes.ellipsoid("kneecap", robot ? Paint.HOUSING : Paint.PATELLA, at, 2.3 * s, 2.5 * s, 1.15 * s,
+                    Shapes.ellipsoid("kneecap", Paint.HOUSING, at, 2.3 * s, 2.5 * s, 1.15 * s,
                             14, 8));
         }
         return by;

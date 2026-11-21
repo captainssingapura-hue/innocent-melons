@@ -3,20 +3,16 @@ package com.example.fxsuite.life.body;
 import java.util.List;
 
 /**
- * What a piece of a body is coloured as, and how it takes the light: a human's skin, bones (its radius and its
- * kneecaps apart, as the interactive model shows them) and muscles at the front, at the back and deep; a robot's
- * shell, its panel bands, its joint rings and its visor, its frame and the housings at its joints, its pistons'
- * barrels and rods; a skeleton's bone as it is, its teeth and its cartilage; and the marks of its balance. Each its
- * own colour by default, the courier's for a robot's, any of them changed by a palette ({@link Palette}).
+ * What a piece of a body is coloured as, and how it takes the light: a robot's shell (lofted as skin first), its
+ * panel bands, its joint rings and its visor, its frame (made of bones, its radius apart) and the housings at its
+ * joints, its pistons' barrels and rods; what it carries; a skeleton's bone as it is, its teeth and its cartilage; and
+ * the marks of its balance. Each its own colour by default, the courier's for a robot's, any of them changed by a
+ * palette ({@link Palette}).
  */
 public enum Paint {
     SKIN("Skin", "#d3d1c7", Finish.MATTE),
     BONE("Bone", "#b4b2a9", Finish.MATTE),
     RADIUS("Radius", "#f0997b", Finish.MATTE),
-    PATELLA("Kneecap", "#d3d1c7", Finish.MATTE),
-    MUSCLE_FRONT("Muscles at the front", "#d85a30", Finish.MATTE),
-    MUSCLE_BACK("Muscles at the back", "#7f77dd", Finish.MATTE),
-    MUSCLE_DEEP("Muscles deep", "#534ab7", Finish.MATTE),
     SHELL("Shell", "#e9e4da", Finish.GLOSS),
     PANEL("Panel bands", "#2f8f9d", Finish.GLOSS),
     JOINT_RING("Joint rings", "#2a2e35", Finish.GLOSS),
@@ -30,17 +26,6 @@ public enum Paint {
     AMMUNITION("Ammunition box", "#4b5320", Finish.MATTE),
     STRAP("Strap", "#3b2f25", Finish.MATTE),
     FLASH("Muzzle flash", "#fff3b0", Finish.GLOW),
-    ROBE("Robe", "#8a5a2b", Finish.MATTE),
-    KASAYA("Kasaya", "#7a2a1c", Finish.MATTE),
-    TRIM("Collar and hems", "#2a2420", Finish.MATTE),
-    LEGGINGS("Leggings", "#e8e4da", Finish.MATTE),
-    CLOTH_SHOES("Cloth shoes", "#262321", Finish.MATTE),
-    LEATHER("Leather", "#3b2a1f", Finish.GLOSS),
-    UNDERWEAR("Underwear", "#f2efe9", Finish.MATTE),
-    HAIR("Hair", "#2a1d14", Finish.MATTE),
-    HELMET("Helmet", "#d0d4d8", Finish.GLOSS),
-    SOLE("Sole", "#f7f7f5", Finish.MATTE),
-    CARD("Card", "#ffffff", Finish.GLOSS),
     IVORY("Bone, as it is", "#e6dcc6", Finish.MATTE),
     TEETH("Teeth", "#f3efe3", Finish.GLOSS),
     CARTILAGE("Cartilage", "#c9d6d2", Finish.GLOSS),
@@ -52,8 +37,6 @@ public enum Paint {
     /** How a colour takes the light: flat, with a soft sheen, as polished metal, or lit from within. */
     public enum Finish { MATTE, GLOSS, METAL, GLOW }
 
-    /** The colours a human is drawn in, that may be changed. */
-    public static final List<Paint> HUMAN = List.of(SKIN, BONE, RADIUS, MUSCLE_FRONT, MUSCLE_BACK, MUSCLE_DEEP);
     /** The colours a robot is drawn in, that may be changed. */
     public static final List<Paint> ROBOT = List.of(SHELL, PANEL, JOINT_RING, VISOR, FRAME, HOUSING, BARREL, ROD);
     /** The colours what it carries is drawn in: its gun and the strap it hangs from. */

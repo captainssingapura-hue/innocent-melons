@@ -3,9 +3,6 @@ package com.example.fxsuite.life.body;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
-import javafx.scene.paint.Color;
-import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Affine;
 
 import java.util.ArrayList;
@@ -15,19 +12,19 @@ import java.util.Map;
 
 /**
  * A humanoid drawn to be moved: each part drawn once, rigid, in its own frame, and put each frame where its skeleton
- * has it, as a puppet's; an exposed robot's pistons drawn afresh as they slide. A human, or a robot exposed or shelled;
- * or a skeleton, the lab's bones part by part ({@link PartBones}), as finely as asked ({@link #detail}), at first as
- * {@code -Dskeleton.detail} says (mm, the big bones' grid; 8 if not); or a man or a woman, a model's build, their
- * flesh sculpted over their bones ({@link com.example.fxsuite.life.body.flesh.Physique}), as light or dark as
- * {@code -Dskin.tone} says (0 to 1; 0.25 if not); in tights, if {@code -Dwear.tights=true}. Drawn into a scene whose frame is the body's with
- * each way's sign as {@code signs} has it (the game's turns the body up its down; a bench's, round too).
+ * has it, as a puppet's; an exposed robot's pistons drawn afresh as they slide. A robot exposed or shelled; or a
+ * skeleton, the lab's bones part by part ({@link PartBones}), as finely as asked ({@link #detail}), at first as
+ * {@code -Dskeleton.detail} says (mm, the big bones' grid; 8 if not); and its muscles over it, if given them
+ * ({@link #muscles}). Drawn into a scene whose
+ * frame is the body's with each way's sign as {@code signs} has it (the game's turns the body up its down; a bench's,
+ * round too).
  */
 public final class Puppet {
 
     /** What it is drawn as. */
     public enum Kind {
-        EXPOSED("Robot, exposed"), SHELLED("Robot, shelled"), HUMAN("Human"), SKELETON("Skeleton"),
-        MUSCLES("Muscles on the skeleton"), MAN("A man, a model's build"), WOMAN("A woman, a model's build");
+        EXPOSED("Robot, exposed"), SHELLED("Robot, shelled"), SKELETON("Skeleton"),
+        MUSCLES("Muscles on the skeleton");
 
         private final String label;
 
@@ -37,20 +34,6 @@ public final class Puppet {
 
         public String label() {
             return label;
-        }
-
-        /** Whose body it is, sculpted: a man's or a woman's, a model's build; none, if not so. */
-        public com.example.fxsuite.life.body.flesh.Physique physique() {
-            return switch (this) {
-                case MAN -> com.example.fxsuite.life.body.flesh.Physique.MAN;
-                case WOMAN -> com.example.fxsuite.life.body.flesh.Physique.WOMAN;
-                default -> null;
-            };
-        }
-
-        /** How it is proportioned: its physique's, if it has one, else {@code otherwise}. */
-        public Proportions proportions(final Proportions otherwise) {
-            return physique() == null ? otherwise : physique().proportions();
         }
 
         @Override
@@ -72,42 +55,16 @@ public final class Puppet {
     private final Map<Part, Group> parts = new EnumMap<>(Part.class);
     private final Map<Part, Affine> placed = new EnumMap<>(Part.class);
     private final Group pistons = new Group();
-    private final Group skin = new Group();
     private final Group muscled = new Group();
     private com.example.fxsuite.life.body.muscle.MusclesView muscles;
-    private com.example.fxsuite.life.body.flesh.Clothed flesh;
-    private com.example.fxsuite.life.body.flesh.Tights tights = Boolean.getBoolean("wear.tights")
-            ? com.example.fxsuite.life.body.flesh.Tights.BLACK : null;
     private Rig shown;
-    private double definition = Double.NaN;
     private final SkeletonLevels levels = new SkeletonLevels();
     private final Map<Part, Group> bones = new EnumMap<>(Part.class);
     private Detail detail = new Detail(Double.parseDouble(System.getProperty("skeleton.detail", "8")) / 10);
-    private final List<PhongMaterial> skins = new ArrayList<>();
-    private com.example.fxsuite.life.body.flesh.SkinTone tone = new com.example.fxsuite.life.body.flesh.SkinTone(
-            Double.parseDouble(System.getProperty("skin.tone", "0.25")));
     private boolean drawPistons = true;
 
     public Puppet(final Kind kind, final Proportions proportions, final RobotDesign design, final Palette palette,
                   final V3 signs) {
-        this(kind, proportions, design, palette, signs, null);
-    }
-
-    /** Shapes drawn together in the colours of one palette: a layer of someone's skin or of what they wear. */
-    public record Layer(List<Surface> surfaces, Palette palette) {
-    }
-
-    /**
-     * A human drawn as {@code drawn} has each part, in the part's own frame as on the right side (dressed, say), layer
-     * by layer, each in its own colours.
-     */
-    public Puppet(final java.util.function.Function<Part, List<Layer>> drawn, final Proportions proportions,
-                  final V3 signs) {
-        this(Kind.HUMAN, proportions, RobotDesign.DEFAULT, Palette.DEFAULT, signs, drawn);
-    }
-
-    private Puppet(final Kind kind, final Proportions proportions, final RobotDesign design, final Palette palette,
-                   final V3 signs, final java.util.function.Function<Part, List<Layer>> drawn) {
         this.kind = kind;
         this.proportions = proportions;
         this.design = design;
@@ -115,20 +72,17 @@ public final class Puppet {
         this.signs = signs;
         rest = new Rig(proportions, Pose.REST);
         for (final Part p : Part.values()) {
-            final List<Layer> layers = drawn != null ? drawn.apply(p)
-                    : skeletal() ? List.of() : List.of(new Layer(local(p), palette));
             // drawn in the part's own frame; its frame put where it is each frame, into the scene's
             final Group g = new Group();
-            if (drawn == null && skeletal()) {
+            if (skeletal()) {
                 bones.put(p, new Group(skeleton(p, detail)));
                 g.getChildren().add(bones.get(p));
-            }
-            for (final Layer layer : layers) {
+            } else {
                 final List<Surface> baked = new ArrayList<>();
-                for (final Surface s : layer.surfaces()) {
+                for (final Surface s : local(p)) {
                     baked.add(s.moved(v -> bake(p, v)));
                 }
-                g.getChildren().add(FigureModel.meshes(baked, layer.palette(), v -> new Point3D(v.x(), v.y(), v.z())));
+                g.getChildren().add(FigureModel.meshes(baked, palette, v -> new Point3D(v.x(), v.y(), v.z())));
             }
             final Affine a = new Affine();
             g.getTransforms().add(a);
@@ -136,18 +90,7 @@ public final class Puppet {
             placed.put(p, a);
             node.getChildren().add(g);
         }
-        node.getChildren().addAll(skin, muscled, pistons);
-        fleshed(detail);
-    }
-
-    /** {@code layers}, in the body's frame where it stands, drawn into the scene's, each in its own colours. */
-    public Group drawnLayers(final List<Layer> layers) {
-        final Group g = new Group();
-        for (final Layer layer : layers) {
-            g.getChildren().add(FigureModel.meshes(layer.surfaces(), layer.palette(),
-                    v -> new Point3D(signs.x() * v.x(), signs.y() * v.y(), signs.z() * v.z())));
-        }
-        return g;
+        node.getChildren().addAll(muscled, pistons);
     }
 
     public Kind kind() {
@@ -170,9 +113,7 @@ public final class Puppet {
      */
     public void detail(final Detail d) {
         detail = d;
-        skins.clear();
         bones.forEach((p, g) -> g.getChildren().setAll(skeleton(p, d)));
-        fleshed(d);
     }
 
     /** How finely its skeleton is drawn. */
@@ -180,40 +121,9 @@ public final class Puppet {
         return detail;
     }
 
-    /** How defined its torso's muscles are drawn, 0 to 1: as its physique's, unless asked otherwise. */
-    public double definition() {
-        return Double.isNaN(definition) && kind.physique() != null ? kind.physique().torso().definition() : definition;
-    }
-
-    /** Its torso's muscles drawn as defined as {@code d} says, on the scene's thread; found first if not yet. */
-    public void definition(final double d) {
-        definition = d;
-        skins.remove(flesh == null ? null : flesh.skin());
-        fleshed(detail);
-    }
-
-    /** A man or a woman in {@code t}, tights, or none: their flesh drawn afresh, on the scene's thread. */
-    public void tights(final com.example.fxsuite.life.body.flesh.Tights t) {
-        tights = t;
-        skins.remove(flesh == null ? null : flesh.skin());
-        fleshed(detail);
-    }
-
-    /** A man's or a woman's flesh, one surface, drawn as finely as {@code d} says; none for any other kind. */
-    private void fleshed(final Detail d) {
-        if (kind.physique() == null) {
-            return;
-        }
-        flesh = new com.example.fxsuite.life.body.flesh.Clothed(levels.flesh(d, kind.physique(), definition()), tights,
-                kind.physique().proportions().scale(), signs, shown != null ? shown : rest);
-        flesh.skin().setDiffuseColor(Color.web(tone.colour()));
-        skins.add(flesh.skin());
-        skin.getChildren().setAll(flesh.node());
-    }
-
-    /** Whether it is drawn as a skeleton, sculpted or not. */
+    /** Whether it is drawn as a skeleton, its muscles on it or not. */
     private boolean skeletal() {
-        return kind == Kind.SKELETON || kind == Kind.MUSCLES || kind.physique() != null;
+        return kind == Kind.SKELETON || kind == Kind.MUSCLES;
     }
 
     /** Its skeleton's levels of detail, found and kept: to find one on another thread before it is drawn. */
@@ -224,15 +134,9 @@ public final class Puppet {
     /** {@code p}'s bones as finely as {@code d} says, made to the body's size and to its side. */
     private List<Node> skeleton(final Part p, final Detail d) {
         final List<Node> nodes = new ArrayList<>();
-        for (final PartBones.Piece piece : levels.of(p, d, kind.physique())) {
-            final Group g = com.example.fxsuite.life.body.bone.BoneView.INSTANCE.mapped(piece.mesh(), piece.paint(),
-                    v -> bake(p, v), p.side() < 0);
-            if (piece.paint() == Paint.SKIN) {
-                final PhongMaterial skin = (PhongMaterial) ((MeshView) g.getChildren().getFirst()).getMaterial();
-                skin.setDiffuseColor(Color.web(tone.colour()));
-                skins.add(skin);
-            }
-            nodes.add(g);
+        for (final PartBones.Piece piece : levels.of(p, d)) {
+            nodes.add(com.example.fxsuite.life.body.bone.BoneView.INSTANCE.mapped(piece.mesh(), piece.paint(),
+                    v -> bake(p, v), p.side() < 0));
         }
         return nodes;
     }
@@ -248,12 +152,6 @@ public final class Puppet {
         muscled.getChildren().setAll(muscles == null ? List.of() : List.of(muscles.node()));
     }
 
-    /** Its flesh coloured {@code t}, a sculpted skeleton's, as it is: nothing drawn afresh. */
-    public void tone(final com.example.fxsuite.life.body.flesh.SkinTone t) {
-        tone = t;
-        skins.forEach(m -> m.setDiffuseColor(Color.web(t.colour())));
-    }
-
     /** Whether its pistons are drawn, if it has any. */
     public void pistons(final boolean drawn) {
         drawPistons = drawn;
@@ -263,9 +161,6 @@ public final class Puppet {
     /** Every part where {@code rig} has it; an exposed robot's pistons drawn afresh to it. */
     public void show(final Rig rig) {
         shown = rig;
-        if (flesh != null) {
-            flesh.show(rig);
-        }
         if (muscles != null) {
             muscles.show(rig);
         }
@@ -308,8 +203,7 @@ public final class Puppet {
     /** {@code p}'s pieces in its own frame, as on the right side, as its kind draws it. */
     private List<Surface> local(final Part p) {
         return switch (kind) {
-            case HUMAN -> Skin.shapes(p, Muscles.Bulge.REST, TWIST, Skin.HUMAN);
-            case SKELETON, MUSCLES, MAN, WOMAN -> List.of();
+            case SKELETON, MUSCLES -> List.of();
             case SHELLED -> Skin.shell(p, TWIST, design);
             case EXPOSED -> {
                 if (RobotFrame.designed(p)) {

@@ -4,7 +4,7 @@ import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Proportions;
 import com.example.fxsuite.life.body.Rig;
 import com.example.fxsuite.life.body.flesh.Flesh;
-import com.example.fxsuite.life.body.flesh.Fleshing;
+import com.example.fxsuite.life.body.BoundPose;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.ArrayList;
@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * A body's muscles as one surface bound to its bones ({@link Flesh}), to be posed as the body moves: every muscle, or
  * all but the deep ones, both sides, as big as they were measured in a body of its height and mass ({@link Measured}),
- * each found as the body is held to be bound, its arms out from its sides ({@link Fleshing#bind}); each point following
+ * each found as the body is held to be bound, its arms out from its sides ({@link BoundPose}); each point following
  * the parts its muscle's sections' bones move with, as much as it carries of each ({@link MuscleSurface}), the four it
  * follows most; so that a muscle across a joint is drawn out or gathered in as the joint turns. How far each point is
  * tendon kept beside it, to colour it.
@@ -22,8 +22,11 @@ public record MuscleBody() implements StatelessFunctionalObject {
 
     public static final MuscleBody INSTANCE = new MuscleBody();
 
-    /** A body's muscles bound, and how far each point of them is tendon. */
-    public record Bound(Flesh flesh, float[] tendon) {
+    /**
+     * A body's muscles bound; how far each point of them is tendon; the parts they follow, and the one each point
+     * follows most, by its number among them.
+     */
+    public record Bound(Flesh flesh, float[] tendon, List<Part> parts, int[] main) {
     }
 
     /** One muscle on one side, to be found. */
@@ -32,7 +35,7 @@ public record MuscleBody() implements StatelessFunctionalObject {
 
     /** The muscles of a body made as {@code p} says, the deep ones if {@code deep}, smoothed {@code steps} times. */
     public Bound make(final Proportions p, final boolean deep, final int steps) {
-        final Rig bind = new Rig(p, Fleshing.INSTANCE.bind(), false);
+        final Rig bind = new Rig(p, BoundPose.INSTANCE.pose(), false);
         final Measured bulk = new Measured(p.stature() / 100, p.mass());
         final List<Job> jobs = new ArrayList<>();
         for (final Muscle m : Musculature.INSTANCE.muscles()) {
@@ -78,7 +81,12 @@ public record MuscleBody() implements StatelessFunctionalObject {
         }
         final List<Rig.Frame> frames = new ArrayList<>();
         parts.forEach(q -> frames.add(bind.frame(q)));
-        return new Bound(new Flesh(at, normals(at, triangles), triangles, parts, frames, which, shares), tendon);
+        final int[] main = new int[points];
+        for (int i = 0; i < points; i++) {
+            main[i] = Math.max(which[Flesh.PARTS * i], 0);
+        }
+        return new Bound(new Flesh(at, normals(at, triangles), triangles, parts, frames, which, shares), tendon, parts,
+                main);
     }
 
     /** Point {@code i} of {@code s}: the parts it follows most, at most {@link Flesh#PARTS}, made to add to one. */

@@ -3,7 +3,6 @@ package com.example.fxsuite.life.body;
 import com.example.fxsuite.avatar.bench.kit.Bus;
 import com.example.fxsuite.avatar.bench.kit.ModelView;
 import com.example.fxsuite.avatar.bench.kit.Shell;
-import com.example.fxsuite.life.body.flesh.SkinTone;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
@@ -29,12 +28,12 @@ import java.util.Locale;
  * The motion bench: a humanoid walking and running on the spot, over and over, to polish how it moves before the game
  * has it ({@link Gait}, {@link Walker}). The ground goes back under it as far as its feet carry it, so a foot down
  * stands still on the grid; a foot that slides is a gait to put right. At any speed, from standing to a sprint, or
- * round a tour of them all and back; slowed, or stopped at any point of its stride. A human, a skeleton, or a robot
+ * round a tour of them all and back; slowed, or stopped at any point of its stride. A skeleton, its muscles or not, or a robot
  * exposed or shelled, moving the same. With the Gatling gun slung from its strap ({@link GatlingHold}), aimed up or
  * down, the only weapon it holds for now.
  *
- * <p>{@code -Dmotion.look} (exposed, shelled, human, skeleton, muscles, man, woman), {@code -Dskeleton.detail} (mm,
- * a skeleton's grid), {@code -Dmotion.deep=true} (its deep muscles too), {@code -Dskin.tone} (0 to 1),
+ * <p>{@code -Dmotion.look} (exposed, shelled, skeleton, muscles), {@code -Dskeleton.detail} (mm,
+ * a skeleton's grid), {@code -Dmotion.deep=true} (its deep muscles too),
  * {@code -Dmotion.move} (walk, quick, parade), {@code -Dmotion.speed} (cm/s), {@code -Dmotion.tour=true},
  * {@code -Dmotion.gatling=true}, {@code -Dmotion.aim} (degrees), {@code -Dmotion.slow} (a share of real time) what
  * it plays first;
@@ -89,15 +88,12 @@ public final class MotionBench extends Application {
     private final Slider aim = new Slider(-30, 30, 0);
     private final CheckBox treadmill = new CheckBox("The ground going back under it");
     private final CheckBox forces = new CheckBox("The forces on the gun, as arrows");
-    private final CheckBox tights = new CheckBox("In tights");
     private final CheckBox deep = new CheckBox("Its deep muscles too");
     private final Label muscleSaid = new Label();
     private final java.util.Map<String, com.example.fxsuite.life.body.muscle.MuscleBody.Bound> muscleBodies =
             new java.util.concurrent.ConcurrentHashMap<>();
     private final Slider grid = new Slider(2, 16, Double.parseDouble(System.getProperty("skeleton.detail", "8")));
     private final Label gridSaid = new Label();
-    private final Slider tone = new Slider(0, 1, Double.parseDouble(System.getProperty("skin.tone", "0.25")));
-    private final Slider abs = new Slider(0, 1, 0.5);
     private GunStatics.Solved statics;
     private double balance;
 
@@ -129,11 +125,6 @@ public final class MotionBench extends Application {
         speed.valueProperty().addListener((o, was, is) -> said());
         tour.setSelected(Boolean.getBoolean("motion.tour"));
         gatling.setSelected(Boolean.getBoolean("motion.gatling"));
-        tights.setSelected(Boolean.getBoolean("wear.tights"));
-        deep.setSelected(Boolean.getBoolean("motion.deep"));
-        deep.selectedProperty().addListener((o, was, is) -> muscled());
-        tights.selectedProperty().addListener((o, was, is) -> puppet.tights(is
-                ? com.example.fxsuite.life.body.flesh.Tights.BLACK : null));
         gatling.selectedProperty().addListener((o, was, is) -> {
             gun.setVisible(is);
             strap.setVisible(is);
@@ -186,23 +177,6 @@ public final class MotionBench extends Application {
         knobs.add(new Label("A skeleton's grid, mm"), 0, 5);
         knobs.add(grid, 1, 5);
         knobs.add(gridSaid, 1, 6);
-        knobs.add(new Label("Its skin, light to dark"), 0, 7);
-        knobs.add(tone, 1, 7);
-        tone.setPrefWidth(220);
-        tone.valueProperty().addListener((o, was, is) -> puppet.tone(new SkinTone(is.doubleValue())));
-        knobs.add(new Label("Its abs, smooth to defined"), 0, 8);
-        knobs.add(abs, 1, 8);
-        abs.setPrefWidth(220);
-        abs.valueProperty().addListener((o, was, is) -> {
-            if (!abs.isValueChanging()) {
-                define();
-            }
-        });
-        abs.valueChangingProperty().addListener((o, was, is) -> {
-            if (!is) {
-                define();
-            }
-        });
         grid.setPrefWidth(220);
         grid.valueProperty().addListener((o, was, is) -> {
             if (!grid.isValueChanging()) {
@@ -220,7 +194,7 @@ public final class MotionBench extends Application {
                 + " to move it, scroll to come nearer.");
         hint.setWrapText(true);
         final VBox side = new VBox(10, new Label("Drawn as"), look, new Label("How it goes"), how,
-                new Label("How fast"), paces, tour, knobs, new FlowPane(10, 6, play), tights, deep, muscleSaid, gatling,
+                new Label("How fast"), paces, tour, knobs, new FlowPane(10, 6, play), deep, muscleSaid, gatling,
                 forces, treadmill, hint);
         side.setPadding(new Insets(8));
         final ScrollPane scroll = new ScrollPane(side);
@@ -278,25 +252,16 @@ public final class MotionBench extends Application {
         if (s.startsWith("mu")) {
             return Puppet.Kind.MUSCLES;
         }
-        if (s.startsWith("m")) {
-            return Puppet.Kind.MAN;
-        }
-        if (s.startsWith("w")) {
-            return Puppet.Kind.WOMAN;
-        }
-        return s.startsWith("h") ? Puppet.Kind.HUMAN : s.startsWith("s") ? Puppet.Kind.SHELLED : Puppet.Kind.EXPOSED;
+        return s.startsWith("s") ? Puppet.Kind.SHELLED : Puppet.Kind.EXPOSED;
     }
 
     /** Drawn afresh as chosen. */
     private void dress() {
-        proportions = look.getValue().proportions(Proportions.PAPERS);
+        proportions = Proportions.PAPERS;
         walker = new Walker(proportions);
         walker.move(how.getValue());
         hold = new GatlingHold(proportions);
         puppet = new Puppet(look.getValue(), proportions, RobotDesign.DEFAULT, Palette.DEFAULT, new V3(-1, -1, -1));
-        puppet.tone(new SkinTone(tone.getValue()));
-        puppet.tights(tights.isSelected() ? com.example.fxsuite.life.body.flesh.Tights.BLACK : null);
-        abs.setValue(puppet.definition());
         shown.getChildren().setAll(puppet.node(), gun, strap, loads);
         draw(walker.rig(), 0);
         regrid();
@@ -332,28 +297,9 @@ public final class MotionBench extends Application {
         }, "muscles").start();
     }
 
-    /** A man's or a woman's abs drawn as defined as asked: their flesh found away from the screen, then drawn. */
-    private void define() {
-        final com.example.fxsuite.life.body.flesh.Physique physique = puppet.kind().physique();
-        if (physique == null) {
-            return;
-        }
-        final Puppet mine = puppet;
-        final double d = abs.getValue();
-        new Thread(() -> {
-            mine.levels().flesh(mine.detail(), physique, d);
-            javafx.application.Platform.runLater(() -> {
-                if (mine == puppet) {
-                    mine.definition(d);
-                }
-            });
-        }, "abs").start();
-    }
-
     /** A skeleton found afresh on the grid asked for, away from the screen, then drawn; how many triangles, said. */
     private void regrid() {
-        final com.example.fxsuite.life.body.flesh.Physique physique = puppet.kind().physique();
-        if (puppet.kind() != Puppet.Kind.SKELETON && puppet.kind() != Puppet.Kind.MUSCLES && physique == null) {
+        if (puppet.kind() != Puppet.Kind.SKELETON && puppet.kind() != Puppet.Kind.MUSCLES) {
             gridSaid.setText("for a skeleton");
             return;
         }
@@ -361,7 +307,7 @@ public final class MotionBench extends Application {
         final Detail d = new Detail(grid.getValue() / 10);
         gridSaid.setText("finding its bones");
         new Thread(() -> {
-            final long n = mine.levels().triangles(d, physique);
+            final long n = mine.levels().triangles(d);
             javafx.application.Platform.runLater(() -> {
                 if (mine == puppet) {
                     mine.detail(d);
