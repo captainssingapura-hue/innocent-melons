@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example.fxsuite.vulkan</groupId>
+    <artifactId>vulkan</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <description>
+        The Vulkan renderer, a second renderer beside JavaFX's, built for the benches first. A project apart, nested
+        here until it moves out whole: its modules released together at one version, the engine pinned at the version
+        they are built on, never the other way round. Its code keeps CQ's basic rules from its first commit, and its
+        layers are kept apart by a test of its own (vk-qc).
+    </description>
+
+    <properties>
+        <maven.compiler.release>25</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- the engine's release it is built on: the one place it is said -->
+        <engine.version>0.1.0-SNAPSHOT</engine.version>
+        <!-- CQ, whose basic rules its code keeps: a dependency of its tests only -->
+        <cq.version>0.1.0</cq.version>
+        <!-- LWJGL, as the engine has it for sound: here for Vulkan, its window and the shader compiler -->
+        <lwjgl.version>3.4.3</lwjgl.version>
+        <lwjgl.natives>natives-windows</lwjgl.natives>
+        <!-- how tests that open the card are run: LWJGL counting the native memory it is asked for -->
+        <card.counted>-Dorg.lwjgl.util.DebugAllocator=true</card.counted>
+        <card.tests>${card.counted} --enable-native-access=ALL-UNNAMED</card.tests>
+    </properties>
+
+    <modules>
+        <!-- What is drawn, described and worked out with no card: space, forms, the camera, layouts, terms. -->
+        <module>vk-drawing</module>
+        <!-- The device kit: the card opened and owned, and the only code that calls Vulkan. -->
+        <module>vk-device</module>
+        <!-- The renderers: what is described, drawn on the card through the kit. A form with a look first. -->
+        <module>vk-render</module>
+        <!-- The renderer's own bench: its subjects, the watermelon first, and Java's working of their picture. -->
+        <module>vk-bench</module>
+        <!-- The gates: CQ's basic rules and the layers, over every module here. -->
+        <module>vk-qc</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- the engine, for what the bench's subjects are: a fruit's sizes, a building's solids -->
+            <dependency>
+                <groupId>com.example.fxsuite</groupId>
+                <artifactId>fxsuite-avatar-demo</artifactId>
+                <version>${engine.version}</version>
+            </dependency>
+            <!-- its own modules, at its own version -->
+            <dependency>
+                <groupId>com.example.fxsuite.vulkan</groupId>
+                <artifactId>vk-drawing</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example.fxsuite.vulkan</groupId>
+                <artifactId>vk-device</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example.fxsuite.vulkan</groupId>
+                <artifactId>vk-render</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example.fxsuite.vulkan</groupId>
+                <artifactId>vk-bench</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!-- LWJGL: Vulkan, the window it is shown in, and the standard shader compiler -->
+            <dependency>
+                <groupId>org.lwjgl</groupId><artifactId>lwjgl</artifactId><version>${lwjgl.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.lwjgl</groupId><artifactId>lwjgl-vulkan</artifactId><version>${lwjgl.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.lwjgl</groupId><artifactId>lwjgl-glfw</artifactId><version>${lwjgl.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.lwjgl</groupId><artifactId>lwjgl-shaderc</artifactId><version>${lwjgl.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.lwjgl</groupId><artifactId>lwjgl</artifactId><version>${lwjgl.version}</version>
+                <classifier>${lwjgl.natives}</classifier>
+            </dependency>
+            <dependency>
+                <groupId>org.lwjgl</groupId><artifactId>lwjgl-glfw</artifactId><version>${lwjgl.version}</version>
+                <classifier>${lwjgl.natives}</classifier>
+            </dependency>
+            <dependency>
+                <groupId>org.lwjgl</groupId><artifactId>lwjgl-shaderc</artifactId><version>${lwjgl.version}</version>
+                <classifier>${lwjgl.natives}</classifier>
+            </dependency>
+            <!-- every CQ artifact at one version -->
+            <dependency>
+                <groupId>io.github.captainssingapura-hue.homing.cq</groupId>
+                <artifactId>homing-cq-bom</artifactId>
+                <version>${cq.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>5.11.3</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.13.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.5.2</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.example.fxsuite.vulkan</groupId>
+        <artifactId>vulkan</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>vk-bench</artifactId>
+    <packaging>jar</packaging>
+
+    <properties>
+        <!-- which of the bench's windows exec:java opens: Bench, or Forest -->
+        <bench.main>Bench</bench.main>
+    </properties>
+
+    <description>
+        The renderer's own bench: its subjects, each the engine's own thing formed and given its look, the watermelon
+        first, drawn by the card in a window of its own with the bench's controls in a JavaFX window beside it; and
+        its tests, which hold the card's picture of a subject against Java's own working of it.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-drawing</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-render</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>fxsuite-avatar-demo</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <!-- mvn -pl vk-bench exec:java opens the bench; -Dbench.main=Forest opens the wood instead -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.6.3</version>
+                <configuration>
+                    <mainClass>com.example.fxsuite.vulkan.bench.${bench.main}</mainClass>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- LWJGL counting the native memory it is asked for, as in the kit's own tests -->
+                    <argLine>${card.tests}</argLine>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example.fxsuite.texture</groupId>
+    <artifactId>texture-lab</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <description>
+        The fine texture lab: surfaces simulated as finely as they are made (a wall brick by brick, each brick fired its
+        own colour), each a description that is looked at closely on the bench and comes down, a step at a time, to its
+        average far off. A project apart, nested here until it moves out whole. It is built on the terms a shader is
+        written from (vk-drawing), pinned at one version; nothing of the card, of JavaFX or of the engine. Its code
+        keeps CQ's basic rules, and its layers are kept apart by a test of its own (tx-qc).
+    </description>
+
+    <properties>
+        <maven.compiler.release>25</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- the terms it is built on, and Java's working of a picture: the one place their version is said -->
+        <drawing.version>0.1.0-SNAPSHOT</drawing.version>
+        <!-- CQ, whose basic rules its code keeps: a dependency of its tests only -->
+        <cq.version>0.1.0</cq.version>
+    </properties>
+
+    <modules>
+        <!-- The brick wall simulator: bricks laid in a bond, their joints, each brick's firing, its speckle. -->
+        <module>tx-brick</module>
+        <!-- Stone walls: rubble fitted stone by stone, stone laid in courses, and a wall standing on a footing. -->
+        <module>tx-stone</module>
+        <!-- The lab's bench: a swatch of a texture seen from any distance, its picture worked out by Java. -->
+        <module>tx-bench</module>
+        <!-- The gates: CQ's basic rules and the layers, over every module here. -->
+        <module>tx-qc</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.example.fxsuite.vulkan</groupId>
+                <artifactId>vk-drawing</artifactId>
+                <version>${drawing.version}</version>
+            </dependency>
+            <!-- its own modules, at its own version -->
+            <dependency>
+                <groupId>com.example.fxsuite.texture</groupId>
+                <artifactId>tx-brick</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example.fxsuite.texture</groupId>
+                <artifactId>tx-stone</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example.fxsuite.texture</groupId>
+                <artifactId>tx-bench</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!-- every CQ artifact at one version -->
+            <dependency>
+                <groupId>io.github.captainssingapura-hue.homing.cq</groupId>
+                <artifactId>homing-cq-bom</artifactId>
+                <version>${cq.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>5.11.3</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.13.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.5.2</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>

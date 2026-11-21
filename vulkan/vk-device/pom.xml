@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.example.fxsuite.vulkan</groupId>
+        <artifactId>vulkan</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>vk-device</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        The device kit: the card opened and owned, and what is drawn on it. The only code here that calls Vulkan, as
+        only OpenAlSpeakers calls OpenAL in the engine. It knows layouts, shaders as written and meshes as bytes, and
+        nothing of solids, benches or JavaFX. Every handle is held by an owner and closed in order, every answer is
+        checked, one thread makes every call, and the Khronos validation layer is always on.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-drawing</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId><artifactId>lwjgl</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId><artifactId>lwjgl-vulkan</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId><artifactId>lwjgl-glfw</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId><artifactId>lwjgl-shaderc</artifactId>
+        </dependency>
+        <!-- the native libraries; Vulkan's own comes with the card's driver -->
+        <dependency>
+            <groupId>org.lwjgl</groupId><artifactId>lwjgl</artifactId>
+            <classifier>${lwjgl.natives}</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId><artifactId>lwjgl-glfw</artifactId>
+            <classifier>${lwjgl.natives}</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId><artifactId>lwjgl-shaderc</artifactId>
+            <classifier>${lwjgl.natives}</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- LWJGL's allocator that keeps count, so native memory left held is found -->
+                    <argLine>${card.tests}</argLine>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
