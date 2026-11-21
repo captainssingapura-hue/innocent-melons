@@ -17,6 +17,7 @@
     <modules>
         <module>historian</module>
         <module>taxonomy</module>
+        <module>road</module>
         <module>avatar-demo</module>
         <module>lifts-lab</module>
         <module>buildings-lab</module>
