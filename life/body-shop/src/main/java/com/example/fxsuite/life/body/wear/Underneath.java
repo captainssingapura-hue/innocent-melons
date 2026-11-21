@@ -71,8 +71,11 @@ public record Underneath() implements StatelessFunctionalObject {
                     at.add(f.place(new V3(q[i], q[i + 1], q[i + 2])));
                     by.add(p);
                 }
-                for (final int c : piece.mesh().triangles()) {
-                    tri.add(from + c);
+                final int[] t = piece.mesh().triangles();
+                for (int i = 0; i < t.length; i += 3) {
+                    // a left part's a mirror of the right's: each triangle turned round, to face out still
+                    tri.addAll(p.side() < 0 ? List.of(from + t[i], from + t[i + 2], from + t[i + 1])
+                            : List.of(from + t[i], from + t[i + 1], from + t[i + 2]));
                 }
             }
         }
@@ -106,5 +109,17 @@ public record Underneath() implements StatelessFunctionalObject {
         System.arraycopy(a.weights(), 0, w, 0, a.size());
         System.arraycopy(b.weights(), 0, w, a.size(), b.size());
         return new Beneath(points, tri, main, w);
+    }
+
+    /** What of {@code b} goes with {@code parts}: its triangles whose first point does, every point kept. */
+    public Beneath only(final Beneath b, final java.util.Set<Part> parts) {
+        final int[] t = b.triangles();
+        final List<Integer> kept = new ArrayList<>();
+        for (int i = 0; i < t.length; i += 3) {
+            if (parts.contains(b.main()[t[i]])) {
+                kept.addAll(List.of(t[i], t[i + 1], t[i + 2]));
+            }
+        }
+        return new Beneath(b.points(), kept.stream().mapToInt(Integer::intValue).toArray(), b.main(), b.weights());
     }
 }

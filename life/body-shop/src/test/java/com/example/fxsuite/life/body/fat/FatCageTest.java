@@ -1,0 +1,63 @@
+package com.example.fxsuite.life.body.fat;
+
+import com.example.fxsuite.life.body.BoundPose;
+import com.example.fxsuite.life.body.Proportions;
+import com.example.fxsuite.life.body.Rig;
+import com.example.fxsuite.life.body.V3;
+import com.example.fxsuite.life.body.muscle.MuscleBody;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+/**
+ * The fat's cage every body's the same, a lean one's and a fat one's: the same points, the same faces; the fatter
+ * one's points further out; each, but where a line in met nothing, on its fat's outside.
+ */
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class FatCageTest {
+
+    private final Rig bind = new Rig(Proportions.PAPERS, BoundPose.INSTANCE.pose(), false);
+    private final Nearness near = new Nearness(FatBeneath.INSTANCE.of(MuscleBody.INSTANCE.make(Proportions.PAPERS,
+            true, 1), bind));
+    private final FatTarget leanTarget = new FatTarget(near, new FatMap(1.5), bind);
+    private final FatTarget fatTarget = new FatTarget(near, new FatMap(12), bind);
+    private final FatCage.Built lean = FatCage.INSTANCE.of(leanTarget);
+    private final FatCage.Built fat = FatCage.INSTANCE.of(fatTarget);
+
+    @Test
+    void everyBodysCageHasTheSamePointsAndFaces() {
+        assertEquals(lean.cage().size(), fat.cage().size());
+        assertEquals(lean.cage().faces().size(), fat.cage().faces().size());
+        for (int f = 0; f < lean.cage().faces().size(); f++) {
+            assertArrayEquals(lean.cage().faces().get(f), fat.cage().faces().get(f));
+        }
+        assertArrayEquals(lean.regions(), fat.regions());
+    }
+
+    @Test
+    void theFatterOnesPointsLieFurtherOut() {
+        int further = 0;
+        for (int i = 0; i < lean.cage().size(); i++) {
+            further += out(fat.cage().points().get(i)) > out(lean.cage().points().get(i)) ? 1 : 0;
+        }
+        assertTrue(further > 0.9 * lean.cage().size(), further + " of " + lean.cage().size() + " further out");
+    }
+
+    @Test
+    void itsPointsLieOnTheFatsOutside() {
+        int on = 0;
+        for (int i = 0; i < lean.cage().size(); i++) {
+            final V3 p = lean.cage().points().get(i);
+            on += Math.abs(leanTarget.clearance(p, lean.regions()[i], p.x() < 0 ? -1 : 1)) < 0.02 ? 1 : 0;
+        }
+        assertTrue(on > 0.9 * lean.cage().size(), on + " of " + lean.cage().size() + " on the fat's outside");
+    }
+
+    /** How far {@code p} is out from what is beneath it, the muscles, the bones, the belly. */
+    private double out(final V3 p) {
+        return near.nearest(p, 20, i -> true).distance();
+    }
+}
