@@ -13,17 +13,28 @@ import hue.captains.singapura.tao.ontology.Scalar;
  * 3.17, the buttocks 10.72, the upper arms 2.38, the forearms 0.99, the hands 0.29, the thighs 4.87, the shins 2.44,
  * the feet 0.36; over all of them 3.17. A body's fat as thick everywhere as its {@code mean} makes it against theirs.
  * Between parts, as a point follows each ({@link Weights}); the trunk's front and back, and the buttocks under the
- * hips' crests behind, found on the part's own frame.
+ * hips' crests behind, found on the part's own frame. And {@code over} it, cm, as thick everywhere, if anything is,
+ * the skin: for what lies on the fat to be found as far out.
  */
-public record FatMap(double mean) implements Scalar {
+public record FatMap(double mean, double over) implements Scalar {
 
     /** Their mean over all 216 sites, mm. */
     public static final double MEASURED = 3.17;
     /** Their bodies, as measured: as fat as the ten young men were on average. */
     public static final FatMap AS_MEASURED = new FatMap(MEASURED);
 
-    /** How thick the fat is at {@code x}, cm, following the body as {@code w} says, where {@code bind} holds it. */
+    /** The fat as thick on average as {@code mean}, mm, nothing over it. */
+    public FatMap(final double mean) {
+        this(mean, 0);
+    }
+
+    /** How thick the fat is at {@code x} and what is over it, cm, following the body as {@code w} says. */
     public double thickness(final Weights w, final V3 x, final Rig bind) {
+        return fat(w, x, bind) + over;
+    }
+
+    /** How thick the fat alone is at {@code x}, cm, following the body as {@code w} says, where {@code bind} holds it. */
+    public double fat(final Weights w, final V3 x, final Rig bind) {
         double t = 0;
         for (final Part p : Part.values()) {
             final double share = w.by()[p.ordinal()];

@@ -2,11 +2,10 @@ package com.example.fxsuite.life.body.fat;
 
 import com.example.fxsuite.life.body.V3;
 import com.example.fxsuite.life.body.cage.Cage;
-import com.example.fxsuite.life.body.cage.Fitting;
-import com.example.fxsuite.life.body.cage.Subdivision;
 import com.example.fxsuite.life.body.flesh.Around;
 import com.example.fxsuite.life.body.flesh.Flesh;
 import com.example.fxsuite.life.body.wear.Sheet;
+import com.example.fxsuite.life.body.wear.Spread;
 import com.example.fxsuite.life.body.wear.Weights;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
@@ -15,12 +14,12 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 /**
- * A body's fat, every body's the same points and faces: its cage found on its fat's outside ({@link FatCage}), moved so
- * that its smoothed surface passes through them ({@link Fitting}), smoothed {@link #STEPS} times
- * ({@link Subdivision}); then each point of it set on the fat's outside, in along its way out ({@link FatTarget}), so
- * that the muscles' shapes show through it as far as the fat is thin; its points eased toward evenly apart along the
- * surface and set on it again, twice. Each point following the body as what is under it does, bound to the body where
- * it was found, to move with it.
+ * A body's fat as a layer of its own, every body's the same points and faces: wrapped round its fat's outside, its
+ * cage smoothed {@link #STEPS} times, each point set on that outside ({@link Wrap}), so that the muscles' shapes show
+ * through it as far as the fat is thin; its points eased toward evenly apart along the surface and set on it again,
+ * twice; what stands out set back, narrow grooves filled, what cuts under a muscle's edge pushed out. Each point
+ * following the body as what is under it does, spread along the surface ({@link Spread}), bound to the body where it
+ * was found, to move with it.
  */
 public record FatLayer() implements StatelessFunctionalObject {
 
@@ -40,6 +39,8 @@ public record FatLayer() implements StatelessFunctionalObject {
 
     /** How far a point may be set from where its smoothed cage put it, cm: past that, it stays. */
     private static final double FAR = 4;
+    /** How many times how each point follows the body is spread along the surface. */
+    private static final int SPREADING = 30;
 
     /**
      * The fat as found: its cage, its surface bound to the body, where its points found no fat outside, and what of
@@ -50,30 +51,17 @@ public record FatLayer() implements StatelessFunctionalObject {
 
     /** The fat on {@code target}. */
     public Fat of(final FatTarget target) {
-        final FatCage.Built built = FatCage.INSTANCE.of(target);
-        final Cage fitted = Fitting.INSTANCE.fitted(built.cage(), 1);
-        final Subdivision s = Subdivision.INSTANCE;
-        final Subdivision.Level start = s.of(fitted, 1);
-        final Subdivision.Level shape = s.times(start, STEPS);
-        final Subdivision.Level where = s.times(new Subdivision.Level(channels(built.regions()), start.faces(),
-                start.sharp()), STEPS);
-        final int[] t = s.mesh(shape).triangles();
-        final FatTarget.Region[] region = regions(where);
-        final Subdivision.Level wraps = s.times(new Subdivision.Level(flags(built.wrapped()), start.faces(),
-                start.sharp()), STEPS);
-        final V3[] at = new V3[shape.size()];
-        final boolean[] mitten = new boolean[at.length];
-        for (int i = 0; i < at.length; i++) {
-            at[i] = shape.point(i);
-            mitten[i] = wraps.point(i).x() > 0.5;
-        }
+        final Wrap.Shape shape = Wrap.INSTANCE.start(target, STEPS);
+        final V3[] at = shape.at();
+        final int[] t = shape.triangles();
+        final FatTarget.Region[] region = shape.regions();
         final V3[] smooth = at.clone();
         final Weights[] w = new Weights[at.length];
-        boolean[] missed = onto(target, at, smooth, w, t, region, mitten, BACK);
+        boolean[] missed = Wrap.INSTANCE.onto(target, shape, smooth, w, BACK, FAR);
         final int[][] next = Around.INSTANCE.neighbours(at.length, t);
         for (int round = 0; round < EASING; round++) {
             ease(at, t, next);
-            missed = onto(target, at, smooth, w, t, region, mitten, BACK / 2);
+            missed = Wrap.INSTANCE.onto(target, shape, smooth, w, BACK / 2, FAR);
         }
         for (int round = 0; round < EASING; round++) {
             despike(at, t, next);
@@ -82,10 +70,11 @@ public record FatLayer() implements StatelessFunctionalObject {
         for (int round = 0; round < CLEARING; round++) {
             clear(target, at, t, region);
         }
+        final Weights[] spread = Spread.INSTANCE.over(w, next, SPREADING);
         final Sheet sheet = new Sheet();
         final List<V3> misses = new ArrayList<>();
         for (int i = 0; i < at.length; i++) {
-            sheet.add(at[i], w[i]);
+            sheet.add(at[i], spread[i]);
             if (missed[i]) {
                 misses.add(at[i]);
             }
@@ -93,45 +82,7 @@ public record FatLayer() implements StatelessFunctionalObject {
         for (int i = 0; i < t.length; i += 3) {
             sheet.triangle(t[i], t[i + 1], t[i + 2]);
         }
-        return new Fat(fitted, sheet.flesh(target.bind()), misses, region);
-    }
-
-    /**
-     * Every point of {@code at} set on the fat's outside, in along its way out from {@code back} out, no further than
-     * {@link #FAR} from where its smoothed cage put it ({@code smooth}), how it follows the body into {@code w}; which
-     * found none and stayed, following what is nearest under them. A point of a {@code mitten} only ever set out, over
-     * what bulges past it, the thumb's root; never in between the fingers or the toes.
-     */
-    private boolean[] onto(final FatTarget target, final V3[] at, final V3[] smooth, final Weights[] w, final int[] t,
-                           final FatTarget.Region[] region, final boolean[] mitten, final double back) {
-        final V3[] out = Around.INSTANCE.normals(at, t);
-        final boolean[] missed = new boolean[at.length];
-        IntStream.range(0, at.length).parallel().forEach(i -> {
-            final int side = at[i].x() < 0 ? -1 : 1;
-            if (mitten[i]) {
-                final V3 from = at[i].plus(out[i].times(back));
-                target.onto(from, out[i].times(-1), region[i], side, back)
-                        .filter(h -> h.at().minus(at[i]).dot(out[i]) > 0).ifPresent(h -> at[i] = h.at());
-                w[i] = w[i] != null ? w[i] : target.under(at[i]);
-                return;
-            }
-            java.util.Optional<FatTarget.Hit> hit = java.util.Optional.empty();
-            // from further out each time the line starts inside the body, met as soon as it starts
-            for (double b = back; b <= 4 * back && hit.isEmpty(); b *= 2) {
-                final V3 from = at[i].plus(out[i].times(b));
-                hit = target.onto(from, out[i].times(-1), region[i], side, 2 * b)
-                        .filter(h -> h.at().minus(from).length() > 1e-6);
-            }
-            hit = hit.filter(h -> h.at().minus(smooth[i]).length() <= FAR);
-            if (hit.isPresent()) {
-                at[i] = hit.get().at();
-                w[i] = hit.get().weights();
-            } else {
-                missed[i] = true;
-                w[i] = w[i] != null ? w[i] : target.under(at[i]);
-            }
-        });
-        return missed;
+        return new Fat(shape.cage(), sheet.flesh(target.bind()), misses, region);
     }
 
     /**
@@ -214,34 +165,8 @@ public record FatLayer() implements StatelessFunctionalObject {
         System.arraycopy(moved, 0, at, 0, at.length);
     }
 
-    /** Whether each point is wrapped, as a mitten, as the cage's points are: one number of three. */
-    private double[] flags(final boolean[] wrapped) {
-        final double[] c = new double[3 * wrapped.length];
-        for (int i = 0; i < wrapped.length; i++) {
-            c[3 * i] = wrapped[i] ? 1 : 0;
-        }
-        return c;
-    }
 
-    /** What each point is on, one number each for the trunk, an arm and a leg, as the cage's points are. */
-    private double[] channels(final FatTarget.Region[] regions) {
-        final double[] c = new double[3 * regions.length];
-        for (int i = 0; i < regions.length; i++) {
-            c[3 * i + regions[i].ordinal()] = 1;
-        }
-        return c;
-    }
 
-    /** What each point of {@code where} is on most. */
-    private FatTarget.Region[] regions(final Subdivision.Level where) {
-        final FatTarget.Region[] r = new FatTarget.Region[where.size()];
-        for (int i = 0; i < r.length; i++) {
-            final V3 c = where.point(i);
-            r[i] = c.x() >= c.y() && c.x() >= c.z() ? FatTarget.Region.TRUNK
-                    : c.y() >= c.z() ? FatTarget.Region.ARM : FatTarget.Region.LEG;
-        }
-        return r;
-    }
 
 
 }
