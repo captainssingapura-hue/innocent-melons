@@ -12,12 +12,16 @@ import java.util.List;
  * held to be bound ({@link BoundPose}), and how much it follows each of up to four parts, the shares adding to one.
  * Posed, each point is moved by its parts' moves blended by its shares, each move a turn and a shift taken together
  * (dual quaternion skinning, Kavan's), so that the flesh round a bending knee or elbow turns round it, keeping its
- * bulk, rather than its corners pinching in as places blended would; and its way out turned the same.
+ * bulk, rather than its corners pinching in as places blended would; and its way out turned the same. A forearm's
+ * flesh twisted with it as far as each point lies along it from the elbow toward the wrist, as its radius is, not at
+ * the wrist alone, where the hand takes the whole twist; the body bound with its forearms untwisted.
  */
 public final class Flesh {
 
     /** How many parts a point may follow. */
     public static final int PARTS = 4;
+    /** How far the wrist is down a forearm from the elbow, in its own frame, cm. */
+    private static final double FOREARM = 25;
 
     private final float[] points;
     private final float[] normals;
@@ -26,6 +30,8 @@ public final class Flesh {
     private final List<Rig.Frame> bound;
     private final int[] which;
     private final float[] shares;
+    /** How much of its forearm's twist each point feels, by how far along it it lies; none, if it follows no forearm. */
+    private final float[] along;
 
     /**
      * Points and their ways out, as found; its triangles; the parts it follows and where each was as it was bound; for
@@ -40,6 +46,20 @@ public final class Flesh {
         this.bound = List.copyOf(bound);
         this.which = which.clone();
         this.shares = shares.clone();
+        this.along = new float[points.length / 3];
+        for (int i = 0; i < along.length; i++) {
+            for (int k = 0; k < PARTS; k++) {
+                final int q = which[PARTS * i + k];
+                if (q >= 0 && forearm(parts.get(q))) {
+                    final V3 local = bound.get(q).local(point(i));
+                    along[i] = (float) Math.clamp(-local.y() / FOREARM, 0, 1);
+                }
+            }
+        }
+    }
+
+    private boolean forearm(final Part p) {
+        return p == Part.RIGHT_FOREARM || p == Part.LEFT_FOREARM;
     }
 
     /** How many points it has. */
@@ -100,11 +120,16 @@ public final class Flesh {
     /** Every point and its way out posed as {@code rig} holds the body, into {@code at} and {@code out}, three each. */
     public void posed(final Rig rig, final float[] at, final float[] out) {
         final double[][] moves = new double[parts.size()][];
+        final Rot[] turns = new Rot[parts.size()];
+        final V3[] shifts = new V3[parts.size()];
+        final Rig.Twisting[] twists = new Rig.Twisting[parts.size()];
         for (int q = 0; q < moves.length; q++) {
             final Rig.Frame now = rig.frame(parts.get(q));
             final Rig.Frame then = bound.get(q);
-            final Rot turn = now.turn().then(then.turn().back());
-            moves[q] = dual(turn, now.at().minus(turn.apply(then.at())));
+            turns[q] = now.turn().then(then.turn().back());
+            shifts[q] = now.at().minus(turns[q].apply(then.at()));
+            moves[q] = dual(turns[q], shifts[q]);
+            twists[q] = forearm(parts.get(q)) ? rig.twisting(parts.get(q)) : null;
         }
         final double[] b = new double[8];
         for (int i = 0; i < size(); i++) {
@@ -113,7 +138,8 @@ public final class Flesh {
             for (int k = 0; k < PARTS; k++) {
                 final int q = which[PARTS * i + k];
                 if (q >= 0) {
-                    final double[] m = moves[q];
+                    final double[] m = twists[q] != null && along[i] > 0
+                            ? twisted(turns[q], shifts[q], twists[q], along[i]) : moves[q];
                     first = first == null ? m : first;
                     final double dot = m[0] * first[0] + m[1] * first[1] + m[2] * first[2] + m[3] * first[3];
                     final double w = shares[PARTS * i + k] * (dot < 0 ? -1 : 1);
@@ -124,6 +150,15 @@ public final class Flesh {
             }
             moved(b, i, at, out);
         }
+    }
+
+    /**
+     * A forearm's move, {@code turn} then {@code shift}, and then {@code share} of its twist about its line
+     * ({@code t}), as a dual quaternion: what moves a point of it that far along it from the elbow.
+     */
+    private double[] twisted(final Rot turn, final V3 shift, final Rig.Twisting t, final double share) {
+        final Rot about = Rot.about(t.way(), t.degrees() * share);
+        return dual(about.then(turn), about.apply(shift.minus(t.at())).plus(t.at()));
     }
 
     /** Point {@code i} and its way out moved as the blended dual quaternion {@code b} says, into the arrays. */

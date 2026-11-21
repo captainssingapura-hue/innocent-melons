@@ -126,6 +126,20 @@ public final class Rig {
         return pose.get(side > 0 ? Part.RIGHT_FOREARM : Part.LEFT_FOREARM, Dof.FOREARM_TWIST);
     }
 
+    /**
+     * The line forearm {@code p} twists about, where it is, from its radius's top toward its ulna's foot; and how far,
+     * degrees, a point of it feels the whole twist turned about that line in the body, the way it turns it (the left
+     * the other way, a mirror's): what turns a forearm's flesh as far along it as each point lies, as the radius turns.
+     */
+    public Twisting twisting(final Part p) {
+        final Frame f = frame(p);
+        return new Twisting(f.place(RADIUS_TOP), f.way(PRONATION).unit(), f.left() ? -twist(p.side()) : twist(p.side()));
+    }
+
+    /** A line a forearm twists about, in the body, and how far, degrees, about it, the whole twist. */
+    public record Twisting(V3 at, V3 way, double degrees) {
+    }
+
     /** {@code p}, a point of a forearm in its frame, as its twist carries it, {@code share} of the twist felt there. */
     public static V3 twisted(final V3 p, final double degrees, final double share) {
         return RADIUS_TOP.plus(Rot.about(PRONATION, degrees * share).apply(p.minus(RADIUS_TOP)));
