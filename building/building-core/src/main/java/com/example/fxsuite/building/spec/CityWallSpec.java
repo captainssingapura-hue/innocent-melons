@@ -1,7 +1,7 @@
 package com.example.fxsuite.building.spec;
 
+import com.example.fxsuite.existence.Earthworks;
 import com.example.fxsuite.building.Spec;
-import com.example.fxsuite.existence.Buildings;
 import com.example.fxsuite.historian.Civilization;
 import com.example.fxsuite.historian.Era;
 
@@ -15,7 +15,7 @@ import com.example.fxsuite.historian.Era;
  * @param <E>    when
  */
 public record CityWallSpec<C extends Civilization, E extends Era<? super C>>(double length, double high)
-        implements Spec<Buildings.CityWall, C, E> {
+        implements Spec<Earthworks.CityWall, C, E> {
 
     public CityWallSpec {
         if (!(length > 0) || !(high >= 200)) {

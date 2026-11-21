@@ -1,5 +1,6 @@
 package com.example.fxsuite.building.chinese;
 
+import com.example.fxsuite.existence.Earthworks;
 import com.example.fxsuite.avatar.build.Material;
 import com.example.fxsuite.avatar.build.Role;
 import com.example.fxsuite.avatar.sim.Extrusion;
@@ -8,7 +9,6 @@ import com.example.fxsuite.building.Structure;
 import com.example.fxsuite.building.Structure.Part;
 import com.example.fxsuite.building.Timbers;
 import com.example.fxsuite.building.spec.CityWallSpec;
-import com.example.fxsuite.existence.Buildings;
 import com.example.fxsuite.existence.Elements;
 import com.example.fxsuite.existence.Spaces;
 import com.example.fxsuite.existence.Uses;
@@ -25,7 +25,7 @@ import java.util.List;
  * earthen bank. Its length across (x), its outer face toward +z; walked along its top.
  */
 public final class SongCityWall
-        implements NorthernSongImpl<Buildings.CityWall, CityWallSpec<Chinese, ChineseEras.NorthernSong>> {
+        implements NorthernSongImpl<Earthworks.CityWall, CityWallSpec<Chinese, ChineseEras.NorthernSong>> {
 
     private static final Timbers TIMBERS = Timbers.INSTANCE;
 
@@ -36,8 +36,8 @@ public final class SongCityWall
     static final double FOOTING = 40;
 
     @Override
-    public Buildings.CityWall thing() {
-        return new Buildings.CityWall();
+    public Earthworks.CityWall thing() {
+        return new Earthworks.CityWall();
     }
 
     @Override
