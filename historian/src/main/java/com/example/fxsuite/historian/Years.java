@@ -1,5 +1,6 @@
 package com.example.fxsuite.historian;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.time.Year;
 
 /**
@@ -7,16 +8,17 @@ import java.time.Year;
  * Java counts it, with no year 0 between them in the historian's reckoning but year 0 in Java's (1 BCE is Java's year
  * 0, 2 BCE its year -1).
  */
-public final class Years {
+public record Years() implements StatelessFunctionalObject {
 
-    private Years() {
-    }
+    public static final Years INSTANCE = new Years();
 
     /** Still going: the furthest year Java counts. */
-    public static final Year ONGOING = Year.of(Year.MAX_VALUE);
+    public Year ongoing() {
+        return Year.of(Year.MAX_VALUE);
+    }
 
     /** The year {@code year} before the common era. */
-    public static Year bce(final int year) {
+    public Year bce(final int year) {
         if (year < 1) {
             throw new IllegalArgumentException("a year before the common era is 1 BCE or earlier, not " + year);
         }
@@ -24,7 +26,7 @@ public final class Years {
     }
 
     /** The year {@code year} of the common era. */
-    public static Year ce(final int year) {
+    public Year ce(final int year) {
         if (year < 1) {
             throw new IllegalArgumentException("a year of the common era is 1 CE or later, not " + year);
         }
@@ -32,8 +34,8 @@ public final class Years {
     }
 
     /** {@code year} as a historian writes it: 221 BCE, 960, or now for one still going. */
-    public static String said(final Year year) {
-        if (year.equals(ONGOING)) {
+    public String said(final Year year) {
+        if (year.equals(ongoing())) {
             return "now";
         }
         return year.getValue() < 1 ? (1 - year.getValue()) + " BCE" : String.valueOf(year.getValue());

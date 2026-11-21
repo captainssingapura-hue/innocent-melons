@@ -20,6 +20,6 @@ public record ShopHouseSpec<C extends Civilization, E extends Era<? super C>>(in
         implements Framed<Buildings.ShopHouse, C, E> {
 
     public ShopHouseSpec {
-        Framed.check(bays, bay, depth, roofing);
+        Frames.INSTANCE.check(bays, bay, depth, roofing);
     }
 }

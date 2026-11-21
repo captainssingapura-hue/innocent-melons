@@ -34,6 +34,10 @@ import java.util.List;
 public final class SongWineHouse
         implements NorthernSongImpl<Buildings.WineHouse, WineHouseSpec<Chinese, ChineseEras.NorthernSong>> {
 
+    private static final SongFrame FRAME = SongFrame.INSTANCE;
+
+    private static final Timbers TIMBERS = Timbers.INSTANCE;
+
     /** Its floor's boards so thick; a step so high at most and so deep; its stair so wide, so far from the back. */
     static final double BOARDS = 8;
     static final double RISER = 18;
@@ -48,12 +52,12 @@ public final class SongWineHouse
     }
 
     /** How high {@code s}'s rooms' floor is over its hall's: its columns, its beams, its boards. */
-    static double storey(final WineHouseSpec<?, ?> s) {
-        return SongFrame.column(s) + SongFrame.BEAM + BOARDS;
+    double storey(final WineHouseSpec<?, ?> s) {
+        return FRAME.column(s) + SongFrame.BEAM + BOARDS;
     }
 
     /** How many steps its stair has: as few as are each no higher than {@link #RISER}. */
-    static int steps(final WineHouseSpec<?, ?> s) {
+    int steps(final WineHouseSpec<?, ?> s) {
         return (int) Math.ceil(storey(s) / RISER);
     }
 
@@ -73,43 +77,55 @@ public final class SongWineHouse
         final double head = run / 2;
         final double near = -d + FROM_BACK;
         final double far = near + STAIR;
-        SongFrame.platform(parts, s);
-        SongFrame.storey(parts, s, hall, new double[] {foot, head, far});
-        SongFrame.back(parts, s, hall);
-        SongFrame.gables(parts, s, hall);
-        final double riser = storey(s) / steps(s);
-        for (int j = 1; j <= steps(s); j++) {
-            parts.add(new Part(new Elements.Steps(), Timbers.block("step", Role.STRUCTURE, Material.TIMBER,
-                    foot + (j - 1) * TREAD, foot + j * TREAD, near, far, hall, hall + j * riser)));
-        }
+        FRAME.platform(parts, s);
+        FRAME.storey(parts, s, hall, new double[] {foot, head, far});
+        FRAME.back(parts, s, hall);
+        FRAME.gables(parts, s, hall);
+        stair(parts, s, foot, near, far, hall);
         // the rooms' floor, round the well; the well railed along its front and across its foot
         final Leaf<?> floor = new Elements.Floor();
         final double[][] boards = {{-a, foot, -d, d}, {head, a, -d, d}, {foot, head, far, d}, {foot, head, -d, near}};
         for (final double[] b : boards) {
-            parts.add(new Part(floor, Timbers.block("floor", Role.STRUCTURE, Material.TIMBER, b[0], b[1], b[2], b[3],
+            parts.add(new Part(floor, TIMBERS.block("floor", Role.STRUCTURE, Material.TIMBER, b[0], b[1], b[2], b[3],
                     rooms - BOARDS, rooms)));
         }
         final Leaf<?> railing = new Elements.Railing();
-        parts.add(new Part(railing, Timbers.block("well rail", Role.FRAME, Material.TIMBER, foot - 6, head, far,
+        parts.add(new Part(railing, TIMBERS.block("well rail", Role.FRAME, Material.TIMBER, foot - 6, head, far,
                 far + 6, rooms, rooms + RAIL)));
-        parts.add(new Part(railing, Timbers.block("well rail", Role.FRAME, Material.TIMBER, foot - 6, foot, near,
+        parts.add(new Part(railing, TIMBERS.block("well rail", Role.FRAME, Material.TIMBER, foot - 6, foot, near,
                 far, rooms, rooms + RAIL)));
-        SongFrame.storey(parts, s, rooms, null);
-        SongFrame.back(parts, s, rooms);
-        SongFrame.gables(parts, s, rooms);
-        SongFrame.pediments(parts, s, rooms);
-        SongFrame.roofing(parts, s, rooms);
-        // the rooms' front: a railing between the columns, a sill, a middle rail and a top rail
-        for (final double at : new double[] {10, RAIL / 2, RAIL}) {
-            parts.add(new Part(railing, Timbers.block("front rail", Role.FRAME, Material.TIMBER, -a, a, d - 5, d + 5,
-                    rooms + at - 8, rooms + at)));
-        }
+        FRAME.storey(parts, s, rooms, null);
+        FRAME.back(parts, s, rooms);
+        FRAME.gables(parts, s, rooms);
+        FRAME.pediments(parts, s, rooms);
+        FRAME.roofing(parts, s, rooms);
+        front(parts, s, rooms);
         final double middle = (near + far) / 2;
         return new Structure(parts, StandIns.prisms(parts.stream().map(Part::solid).toList()),
-                List.of(new Structure.Room(new Spaces.Hall(), new Uses.Restaurant(), SongFrame.floor(s), hall),
-                        new Structure.Room(new Spaces.Hall(), new Uses.Bar(), SongFrame.floor(s), rooms)),
-                List.of(SongFrame.wayIn(s)),
+                List.of(new Structure.Room(new Spaces.Hall(), new Uses.Restaurant(), FRAME.floor(s), hall),
+                        new Structure.Room(new Spaces.Hall(), new Uses.Bar(), FRAME.floor(s), rooms)),
+                List.of(FRAME.wayIn(s)),
                 List.of(new Structure.Stair(new Structure.WayIn(foot, middle, hall),
                         new Structure.WayIn(head + 30, middle, rooms))));
+    }
+
+    /** Its stair, from {@code foot} across, between {@code near} and {@code far} along, up from the hall's floor. */
+    private void stair(final List<Part> parts, final WineHouseSpec<?, ?> s, final double foot, final double near,
+                       final double far, final double hall) {
+        final double riser = storey(s) / steps(s);
+        for (int j = 1; j <= steps(s); j++) {
+            parts.add(new Part(new Elements.Steps(), TIMBERS.block("step", Role.STRUCTURE, Material.TIMBER,
+                    foot + (j - 1) * TREAD, foot + j * TREAD, near, far, hall, hall + j * riser)));
+        }
+    }
+
+    /** The rooms' front, their floor at {@code rooms}: a railing between its columns, a sill, a middle, a top rail. */
+    private void front(final List<Part> parts, final WineHouseSpec<?, ?> s, final double rooms) {
+        final double a = s.width() / 2;
+        final double d = s.depth() / 2;
+        for (final double at : new double[] {10, RAIL / 2, RAIL}) {
+            parts.add(new Part(new Elements.Railing(), TIMBERS.block("front rail", Role.FRAME, Material.TIMBER, -a, a,
+                    d - 5, d + 5, rooms + at - 8, rooms + at)));
+        }
     }
 }

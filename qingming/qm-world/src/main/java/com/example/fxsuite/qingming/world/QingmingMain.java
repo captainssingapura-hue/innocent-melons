@@ -13,7 +13,7 @@ public final class QingmingMain {
     }
 
     public static void main(final String[] args) {
-        Qingming.tell();
+        Qingming.DEMO.tell();
         if (System.getProperty("avatar.demo") == null) {
             System.setProperty("avatar.demo", Qingming.DEMO.name());
         }

@@ -21,11 +21,11 @@ public interface Mesoamerican extends Civilization {
         }
 
         public Year from() {
-            return Years.bce(1200);
+            return Years.INSTANCE.bce(1200);
         }
 
         public Year to() {
-            return Years.ce(1521);
+            return Years.INSTANCE.ce(1521);
         }
 
         public Civilization parent() {

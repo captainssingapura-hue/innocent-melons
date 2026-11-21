@@ -21,11 +21,11 @@ public interface Korean extends Civilization {
         }
 
         public Year from() {
-            return Years.bce(57);
+            return Years.INSTANCE.bce(57);
         }
 
         public Year to() {
-            return Years.ONGOING;
+            return Years.INSTANCE.ongoing();
         }
 
         public Civilization parent() {

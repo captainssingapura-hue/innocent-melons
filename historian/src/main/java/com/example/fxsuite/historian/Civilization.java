@@ -1,5 +1,6 @@
 package com.example.fxsuite.historian;
 
+import hue.captains.singapura.tao.ontology.Scalar;
 import java.time.Year;
 
 /**
@@ -10,7 +11,7 @@ import java.time.Year;
  *
  * <p>Each is a kind, not an item: one record of it, its {@code IT}, its years fixed in its class.
  */
-public interface Civilization {
+public interface Civilization extends Scalar {
 
     /** What it is called. */
     String name();
@@ -46,11 +47,11 @@ public interface Civilization {
         }
 
         public Year from() {
-            return Years.bce(10_000);
+            return Years.INSTANCE.bce(10_000);
         }
 
         public Year to() {
-            return Years.ONGOING;
+            return Years.INSTANCE.ongoing();
         }
 
         public Civilization parent() {

@@ -21,11 +21,11 @@ public interface Egyptian extends Civilization {
         }
 
         public Year from() {
-            return Years.bce(3100);
+            return Years.INSTANCE.bce(3100);
         }
 
         public Year to() {
-            return Years.bce(30);
+            return Years.INSTANCE.bce(30);
         }
 
         public Civilization parent() {

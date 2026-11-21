@@ -25,6 +25,8 @@ import java.util.List;
  */
 public final class SongFestiveGate implements NorthernSongImpl<Buildings.FestiveGateway, FestiveGate> {
 
+    private static final Timbers TIMBERS = Timbers.INSTANCE;
+
     /** The way through so wide, between the middle poles; the lowest rails so high; a tier so far above the last. */
     static final double WAY = 240;
     static final double LOWEST = 250;
@@ -48,14 +50,14 @@ public final class SongFestiveGate implements NorthernSongImpl<Buildings.Festive
         for (final double x : across) {
             final double top = Math.abs(x) < a ? s.high() : OUTER * s.high();
             for (final double z : new double[] {-d, d}) {
-                parts.add(new Part(pole, Timbers.block("pole", Role.STRUCTURE, Material.TIMBER, x - 5, x + 5, z - 5,
+                parts.add(new Part(pole, TIMBERS.block("pole", Role.STRUCTURE, Material.TIMBER, x - 5, x + 5, z - 5,
                         z + 5, 0, top)));
-                parts.add(new Part(new Elements.Finial(), Timbers.block("finial", Role.DRESSING, Material.LACQUER,
+                parts.add(new Part(new Elements.Finial(), TIMBERS.block("finial", Role.DRESSING, Material.LACQUER,
                         x - 3, x + 3, z - 3, z + 3, top, top + 50)));
             }
             // between the two rows, at every tier this pole reaches
             for (double y = LOWEST; y < top - 20; y += TIER) {
-                parts.add(new Part(beam, Timbers.block("tie", Role.STRUCTURE, Material.TIMBER, x - 3, x + 3, -d, d,
+                parts.add(new Part(beam, TIMBERS.block("tie", Role.STRUCTURE, Material.TIMBER, x - 3, x + 3, -d, d,
                         y - 3, y + 3)));
             }
         }
@@ -63,11 +65,11 @@ public final class SongFestiveGate implements NorthernSongImpl<Buildings.Festive
         for (final double z : new double[] {-d, d}) {
             for (double y = LOWEST; y < s.high() - 20; y += TIER) {
                 final double reach = y < OUTER * s.high() - 20 ? a : WAY / 2;
-                parts.add(new Part(beam, Timbers.block("rail", Role.STRUCTURE, Material.TIMBER, -reach, reach, z - 3,
+                parts.add(new Part(beam, TIMBERS.block("rail", Role.STRUCTURE, Material.TIMBER, -reach, reach, z - 3,
                         z + 3, y + 3, y + 9)));
             }
         }
-        parts.add(new Part(new Elements.Sign(), Timbers.block("board", Role.DRESSING, Material.LACQUER, -WAY / 2,
+        parts.add(new Part(new Elements.Sign(), TIMBERS.block("board", Role.DRESSING, Material.LACQUER, -WAY / 2,
                 WAY / 2, d + 3, d + 7, LOWEST + 15, LOWEST + 65)));
         final List<Part> upright = parts.stream().filter(p -> p.element().equals(pole)).toList();
         return new Structure(parts, StandIns.prisms(upright.stream().map(Part::solid).toList()),

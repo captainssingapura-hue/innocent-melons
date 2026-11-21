@@ -19,13 +19,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class ReachTest {
 
-    private static final Land GROUND = Reach.ground();
+    private static final Land GROUND = Reach.INSTANCE.ground();
 
     @Test
     void theRiverCutIntoThePlainUnderTheBridgeAsDeepAndAsWideAsSaid() {
         assertEquals(-Rivers.DEPTH, GROUND.height(0, 0), 5, "its bed under the bridge");
         assertEquals(2_200, Rivers.TOP, 1, "between its banks' tops, the bridge's span");
-        final River river = Reach.rivers().getFirst();
+        final River river = Reach.INSTANCE.rivers().getFirst();
         assertEquals(186, river.top(), 1, "6 chi of water");
         assertTrue(river.wide() > Rivers.BED && river.wide() < Rivers.TOP,
                 "its water within its banks: " + river.wide());
@@ -34,9 +34,9 @@ class ReachTest {
         // its banks as cut, the towpaths along them throwing nothing down into it
         for (final double x : new double[] {-12_000, 6_000, 30_000}) {
             for (double z = -Rivers.TOP / 2; z <= Rivers.TOP / 2; z += 50) {
-                final Vec2 at = Rivers.line().stream().min(java.util.Comparator.comparingDouble(
+                final Vec2 at = Rivers.INSTANCE.line().stream().min(java.util.Comparator.comparingDouble(
                         p -> Math.abs(p.x() - x))).orElseThrow();
-                assertEquals(GROUND.height(at.x(), at.z() + z), Reach.land().height(at.x(), at.z() + z), 1,
+                assertEquals(GROUND.height(at.x(), at.z() + z), Reach.INSTANCE.land().height(at.x(), at.z() + z), 1,
                         "its bank at " + at.x() + ", " + (at.z() + z));
             }
         }
@@ -44,20 +44,20 @@ class ReachTest {
 
     @Test
     void levelWhereTheBridgesEndsTheWallAndTheGateWillStandNoRiverNearTheGate() {
-        for (final double[] p : Reach.PADS) {
+        for (final double[] p : Reach.INSTANCE.pads()) {
             final double x = (p[0] + p[1]) / 2;
             final double z = (p[2] + p[3]) / 2;
             assertEquals(0, GROUND.height(x, z), 1, "level at " + x + ", " + z);
         }
-        for (final Vec2 at : Rivers.line()) {
-            assertTrue(Math.hypot(at.x() - Reach.GATE.x(), at.z() - Reach.GATE.z()) > 20_000,
+        for (final Vec2 at : Rivers.INSTANCE.line()) {
+            assertTrue(Math.hypot(at.x() - Reach.WALL, at.z() - Reach.GATE_Z) > 20_000,
                     "the river far from the gate");
         }
     }
 
     @Test
     void theRoadToTheBridgesSouthEndTheStreetFromItsNorthEndThroughTheGateTheTowpathsLaid() {
-        final List<Roadway> roads = Reach.roads().roads();
+        final List<Roadway> roads = Reach.INSTANCE.roads().roads();
         assertTrue(roads.size() >= 4, "the road, the street and their towpaths: " + roads.size());
         final Roadway road = roads.stream().filter(r -> r.name().equals("the road to the bridge")).findFirst()
                 .orElseThrow();

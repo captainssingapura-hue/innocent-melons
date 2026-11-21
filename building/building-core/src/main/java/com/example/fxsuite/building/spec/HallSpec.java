@@ -21,6 +21,6 @@ public record HallSpec<T extends Leaf<?>, C extends Civilization, E extends Era<
         implements Framed<T, C, E> {
 
     public HallSpec {
-        Framed.check(bays, bay, depth, roofing);
+        Frames.INSTANCE.check(bays, bay, depth, roofing);
     }
 }

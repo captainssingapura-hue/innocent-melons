@@ -19,13 +19,13 @@ public final class Elements {
     }
 
     /** The tree, read once from its leaves. */
-    public static final Taxonomy TREE = Taxonomy.of("elements", new Element(), List.of(new Column(), new BearingWall(),
+    public static final Taxonomy TREE = new Taxonomy("elements", new Element(), List.of(new Column(), new BearingWall(),
             new Arch(), new Abutment(), new Platform(), new Bracket(), new Beam(), new Floor(), new Decking(),
             new Rib(), new Roof(), new Eave(), new Canopy(), new Crown(), new Wall(), new CurtainWall(), new Spandrel(),
             new Louvre(), new Screen(), new Door(), new Window(), new Shopfront(), new Archway(), new Railing(),
             new Parapet(), new Steps(), new LiftBank(), new Incline(), new Pole(), new Sign(),
             new Finial(), new Counter(),
-            new Bench()), Meanings.beside(Elements.class));
+            new Bench()), Meanings.INSTANCE.beside(Elements.class));
 
     /** The root. A part a building is made of. */
     public record Element() implements L0 {

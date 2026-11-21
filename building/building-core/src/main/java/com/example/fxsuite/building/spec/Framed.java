@@ -32,11 +32,4 @@ public interface Framed<T extends Leaf<?>, C extends Civilization, E extends Era
     default double width() {
         return bays() * bay();
     }
-
-    /** Refuses a frame of no bays, bays under 2 m, less than 3 m deep, or with no roofing. */
-    static void check(final int bays, final double bay, final double depth, final Roofing roofing) {
-        if (bays < 1 || !(bay >= 200) || !(depth >= 300) || roofing == null) {
-            throw new IllegalArgumentException("a frame of a bay or more, each 2 m or more, 3 m deep or more, roofed");
-        }
-    }
 }

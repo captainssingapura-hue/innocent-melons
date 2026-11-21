@@ -16,8 +16,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class TaxonomyTest {
 
-    private static final Map<String, String> MEANINGS = Meanings.beside(Failures.class);
-    private static final Taxonomy TREE = Taxonomy.of("failures", new Failures.Failure(), Failures.LEAVES, MEANINGS);
+    private static final Map<String, String> MEANINGS = Meanings.INSTANCE.beside(Failures.class);
+    private static final Taxonomy TREE = new Taxonomy("failures", new Failures.Failure(), Failures.LEAVES, MEANINGS);
 
     @Test
     void readFromItsLeavesItsBranchesFoundItsNodesNamedEachWithItsMeaning() {
@@ -30,17 +30,17 @@ class TaxonomyTest {
         assertEquals("No answer came in time.", TREE.meaning(new Failures.Timeout()));
         assertEquals(List.of(new Failures.NotFound(), new Failures.Forbidden()), TREE.under(new Failures.Permanent()));
         assertEquals(List.of(new Failures.Timeout(), new Failures.Transient(), new Failures.Failure()),
-                Taxonomy.lineage(new Failures.Timeout()));
+                new Failures.Timeout().lineage());
     }
 
     @Test
     void aQuestionAnsweredByLineageTheNearestAnswerWinning() {
-        assertEquals(3, Taxonomy.answer(new Failures.Timeout(), Failures.Retry.class).orElseThrow().times(),
+        assertEquals(3, new Failures.Timeout().answer(Failures.Retry.class).orElseThrow().times(),
                 "its branch's");
-        assertEquals(1, Taxonomy.answer(new Failures.RateLimited(), Failures.Retry.class).orElseThrow().times(),
+        assertEquals(1, new Failures.RateLimited().answer(Failures.Retry.class).orElseThrow().times(),
                 "its own, nearer");
-        assertEquals(0, Taxonomy.answer(new Failures.Forbidden(), Failures.Retry.class).orElseThrow().times());
-        assertTrue(Taxonomy.answer(new Failures.Failure(), Failures.Retry.class).isEmpty(), "the root says nothing");
+        assertEquals(0, new Failures.Forbidden().answer(Failures.Retry.class).orElseThrow().times());
+        assertTrue(new Failures.Failure().answer(Failures.Retry.class).isEmpty(), "the root says nothing");
     }
 
     @Test
@@ -48,7 +48,7 @@ class TaxonomyTest {
         final Map<String, String> meanings = new HashMap<>(MEANINGS);
         meanings.remove("NotFound");
         meanings.put("Gone", "No longer there.");
-        final Taxonomy broken = Taxonomy.of("broken", new Failures.Failure(), List.of(new Failures.Timeout(),
+        final Taxonomy broken = new Taxonomy("broken", new Failures.Failure(), List.of(new Failures.Timeout(),
                 new Failures.Timeout(), new Failures.NotFound(), new Failures.Stray()), meanings);
         final List<String> problems = broken.problems();
         assertTrue(problems.contains("Timeout: listed twice"), problems.toString());
@@ -61,11 +61,11 @@ class TaxonomyTest {
 
     @Test
     void meaningsReadBySection() {
-        final Map<String, String> read = Meanings.read(
+        final Map<String, String> read = Meanings.INSTANCE.read(
                 "# Title\n\nIntro.\n\n## One\n\nFirst.\nStill.\n\n## Two\nSecond.\n");
         assertEquals(List.of("One", "Two"), List.copyOf(read.keySet()));
         assertEquals("First.\nStill.", read.get("One"));
         assertEquals("Second.", read.get("Two"));
-        assertEquals(Map.of(), Meanings.beside(TaxonomyTest.class), "none beside a class with no such file");
+        assertEquals(Map.of(), Meanings.INSTANCE.beside(TaxonomyTest.class), "none beside a class with no such file");
     }
 }

@@ -20,6 +20,8 @@ import java.util.List;
 public final class SongWarehouse implements NorthernSongImpl<Buildings.Warehouse,
         HallSpec<Buildings.Warehouse, Chinese, ChineseEras.NorthernSong>> {
 
+    private static final SongFrame FRAME = SongFrame.INSTANCE;
+
     @Override
     public Buildings.Warehouse thing() {
         return new Buildings.Warehouse();
@@ -29,15 +31,15 @@ public final class SongWarehouse implements NorthernSongImpl<Buildings.Warehouse
     public Structure build(final HallSpec<Buildings.Warehouse, Chinese, ChineseEras.NorthernSong> s) {
         final List<Part> parts = new ArrayList<>();
         final double floor = SongFrame.PLATFORM;
-        SongFrame.platform(parts, s);
-        SongFrame.storey(parts, s, floor, null);
-        SongFrame.back(parts, s, floor);
-        SongFrame.gables(parts, s, floor);
-        SongFrame.front(parts, s, floor);
-        SongFrame.pediments(parts, s, floor);
-        SongFrame.roofing(parts, s, floor);
+        FRAME.platform(parts, s);
+        FRAME.storey(parts, s, floor, null);
+        FRAME.back(parts, s, floor);
+        FRAME.gables(parts, s, floor);
+        FRAME.front(parts, s, floor);
+        FRAME.pediments(parts, s, floor);
+        FRAME.roofing(parts, s, floor);
         return new Structure(parts, StandIns.prisms(parts.stream().map(Part::solid).toList()),
-                List.of(new Structure.Room(new Spaces.Hall(), new Uses.Storage(), SongFrame.floor(s), floor)),
-                List.of(SongFrame.wayIn(s)));
+                List.of(new Structure.Room(new Spaces.Hall(), new Uses.Storage(), FRAME.floor(s), floor)),
+                List.of(FRAME.wayIn(s)));
     }
 }

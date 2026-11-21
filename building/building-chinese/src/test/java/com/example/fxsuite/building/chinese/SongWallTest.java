@@ -137,7 +137,7 @@ class SongWallTest {
     @Test
     void itsWayUpARampOneInFiveWalkedUpFromTheGroundToItsBasesTop() {
         final Structure gate = new SongGateTower().build(GATE);
-        final double[] up = SongGateTower.wayUp(GATE);
+        final double[] up = new SongGateTower().wayUp(GATE);
         assertEquals(GATE.wide() / 2, up[0], 1e-6, "its head at the base's end, on its right");
         assertEquals(5 * GATE.high(), up[1] - up[0], 1e-6, "a foot up for every five along");
         assertTrue(up[3] < 0 && up[2] == -GATE.deep() / 2, "inside the wall");
@@ -164,7 +164,7 @@ class SongWallTest {
         assertTrue(gate.shape().stream().anyMatch(v -> v.push(up[0], up[2] + 100, BODY, GATE.high() + 20,
                 GATE.high() + 180) != null));
         // on the other side, asked for
-        final double[] left = SongGateTower.wayUp(new GateTowerSpec<>(3_000, 1_930, 960, 560, 5, Ascent.LEFT));
+        final double[] left = new SongGateTower().wayUp(new GateTowerSpec<>(3_000, 1_930, 960, 560, 5, Ascent.LEFT));
         assertEquals(-up[0], left[0], 1e-6);
         assertEquals(-up[1], left[1], 1e-6);
     }

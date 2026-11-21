@@ -30,6 +30,8 @@ import java.util.stream.IntStream;
  */
 public final class SongQuay implements NorthernSongImpl<Buildings.Quay, QuaySpec<Chinese, ChineseEras.NorthernSong>> {
 
+    private static final Timbers TIMBERS = Timbers.INSTANCE;
+
     /** Its face so thick; its deck so far back behind its line, so thick. */
     static final double FACE = 60;
     static final double BACK = 70;
@@ -50,12 +52,12 @@ public final class SongQuay implements NorthernSongImpl<Buildings.Quay, QuaySpec
     }
 
     /** How many steps down to {@code s}'s landings. */
-    static int steps(final QuaySpec<?, ?> s) {
+    int steps(final QuaySpec<?, ?> s) {
         return (int) Math.ceil(s.landing() / RISER);
     }
 
     /** Where flight {@code i} of {@code s}'s starts, at its head, across: each in the middle of its share of it. */
-    static double head(final QuaySpec<?, ?> s, final int i) {
+    double head(final QuaySpec<?, ?> s, final int i) {
         final double run = steps(s) * TREAD + LANDING;
         return -s.length() / 2 + (i + 0.5) * s.length() / s.flights() - run / 2;
     }
@@ -70,9 +72,9 @@ public final class SongQuay implements NorthernSongImpl<Buildings.Quay, QuaySpec
         }
         final List<Part> parts = new ArrayList<>();
         final double foot = -s.bed() - 40;
-        parts.add(new Part(new Elements.Wall(), Timbers.block("quay face", Role.WALL, Material.STONE, -a, a,
+        parts.add(new Part(new Elements.Wall(), TIMBERS.block("quay face", Role.WALL, Material.STONE, -a, a,
                 s.out() - FACE, s.out(), foot, 0)));
-        parts.add(new Part(new Elements.Decking(), Timbers.block("quay deck", Role.BASE, Material.STONE, -a, a, -BACK,
+        parts.add(new Part(new Elements.Decking(), TIMBERS.block("quay deck", Role.BASE, Material.STONE, -a, a, -BACK,
                 s.out() - FACE, -SLAB, 0)));
         final List<Structure.Room> rooms = new ArrayList<>(List.of(new Structure.Room(new Spaces.Deck(),
                 new Uses.Storage(), List.of(new Vec2(-a, -BACK), new Vec2(a, -BACK), new Vec2(a, s.out()),
@@ -83,10 +85,10 @@ public final class SongQuay implements NorthernSongImpl<Buildings.Quay, QuaySpec
         for (int i = 0; i < s.flights(); i++) {
             final double x = head(s, i);
             for (int j = 1; j <= n; j++) {
-                parts.add(new Part(new Elements.Steps(), Timbers.block("step", Role.BASE, Material.STONE,
+                parts.add(new Part(new Elements.Steps(), TIMBERS.block("step", Role.BASE, Material.STONE,
                         x + (j - 1) * TREAD, x + j * TREAD, z0, z1, foot, -j * s.landing() / n)));
             }
-            parts.add(new Part(new Elements.Steps(), Timbers.block("landing", Role.BASE, Material.STONE, x + n * TREAD,
+            parts.add(new Part(new Elements.Steps(), TIMBERS.block("landing", Role.BASE, Material.STONE, x + n * TREAD,
                     x + run, z0, z1, foot, -s.landing())));
             rooms.add(new Structure.Room(new Spaces.Stair(), new Uses.Storage(), List.of(new Vec2(x + n * TREAD, z0),
                     new Vec2(x + run, z0), new Vec2(x + run, z1), new Vec2(x + n * TREAD, z1)), -s.landing()));
@@ -99,7 +101,7 @@ public final class SongQuay implements NorthernSongImpl<Buildings.Quay, QuaySpec
             final boolean clear = IntStream.range(0, s.flights())
                     .allMatch(i -> at < head(s, i) - THICK || at > head(s, i) + run + THICK);
             if (clear) {
-                parts.add(new Part(new Elements.Pole(), Timbers.block("mooring post", Role.FRAME, Material.TIMBER,
+                parts.add(new Part(new Elements.Pole(), TIMBERS.block("mooring post", Role.FRAME, Material.TIMBER,
                         x - THICK / 2, x + THICK / 2, s.out() - FACE / 2 - THICK / 2, s.out() - FACE / 2 + THICK / 2,
                         -SLAB, POST)));
             }

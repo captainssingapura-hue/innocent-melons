@@ -1,5 +1,6 @@
 package com.example.fxsuite.historian;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.time.Year;
 import java.util.List;
 
@@ -7,21 +8,22 @@ import java.util.List;
  * The eras every civilization shares, the root's: steel, concrete and glass built alike the world over. Their years as
  * historians commonly give them; each era a record, its years fixed in its class.
  */
-public final class CommonEras {
+public record CommonEras() implements StatelessFunctionalObject {
 
-    private CommonEras() {
-    }
+    public static final CommonEras INSTANCE = new CommonEras();
 
     /** All of them, oldest first. */
-    public static final List<Era<?>> ALL = List.of(new Modern(), new Contemporary());
+    public List<Era<?>> all() {
+        return List.of(new Modern(), new Contemporary());
+    }
 
     /**
      * Modern: steel and concrete frames, the lift, the curtain wall; the same towers going up everywhere.
      */
     public record Modern() implements Era<Civilization> {
         public String name() { return "Modern"; }
-        public Year from() { return Years.ce(1900); }
-        public Year to() { return Years.ce(1989); }
+        public Year from() { return Years.INSTANCE.ce(1900); }
+        public Year to() { return Years.INSTANCE.ce(1989); }
         public Civilization civilization() { return Civilization.ROOT; }
     }
 
@@ -30,8 +32,8 @@ public final class CommonEras {
      */
     public record Contemporary() implements Era<Civilization> {
         public String name() { return "Contemporary"; }
-        public Year from() { return Years.ce(1990); }
-        public Year to() { return Years.ONGOING; }
+        public Year from() { return Years.INSTANCE.ce(1990); }
+        public Year to() { return Years.INSTANCE.ongoing(); }
         public Civilization civilization() { return Civilization.ROOT; }
     }
 }

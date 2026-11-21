@@ -1,5 +1,6 @@
 package com.example.fxsuite.qingming.land;
 
+import hue.captains.singapura.tao.ontology.FunctionalObject;
 import com.example.fxsuite.avatar.roads.Mapped;
 import com.example.fxsuite.avatar.roads.Profile;
 import com.example.fxsuite.avatar.roads.Roadworks;
@@ -43,10 +44,7 @@ import java.util.Map;
  * the scroll's time, but to get about the reach on.
  * </ul>
  */
-public final class Reach {
-
-    private Reach() {
-    }
+public final class Reach implements FunctionalObject {
 
     /** Its edges: west, east, south, north. */
     public static final double WEST = -60_000;
@@ -55,12 +53,9 @@ public final class Reach {
     public static final double NORTH = 25_000;
     /** Where the city's wall runs, north to south, and the gate in it. */
     public static final double WALL = -54_000;
-    public static final Vec2 GATE = new Vec2(WALL, 3_000);
-    /** Where the avatar starts: on the street north of the bridge, facing it. */
-    public static final Vec3 START = new Vec3(-6_000, 0, 3_600);
+    public static final double GATE_Z = 3_000;
+    /** Which way the avatar faces as it starts ({@link #start}): toward the bridge. */
     public static final double START_YAW = 111;
-    /** The motorcycles parked on the street just ahead of the start, side by side, facing the bridge. */
-    public static final List<Course.Chassis> BIKES = List.of(Course.CRUISER, Course.BOXER);
     private static final double BIKES_AHEAD = 400;
     private static final double BIKES_APART = 240;
 
@@ -68,40 +63,42 @@ public final class Reach {
      * Its level pads, each a rectangle (west, east, south, north): the wall's line, the gate's, the bridge's ends, the
      * quay's and the warehouses' ground on the north bank.
      */
-    static final double[][] PADS = {
-            {WALL - 1_200, WALL + 1_200, SOUTH + 100, NORTH - 100},
-            {WALL - 3_000, WALL + 3_000, GATE.z() - 2_500, GATE.z() + 2_500},
-            {-700, 700, -2_400, -1_200},
-            {-700, 700, 1_200, 2_400},
-            {4_000, 7_600, 1_000, 3_200}};
+    double[][] pads() {
+        return new double[][] {
+                {WALL - 1_200, WALL + 1_200, SOUTH + 100, NORTH - 100},
+                {WALL - 3_000, WALL + 3_000, GATE_Z - 2_500, GATE_Z + 2_500},
+                {-700, 700, -2_400, -1_200},
+                {-700, 700, 1_200, 2_400},
+                {4_000, 7_600, 1_000, 3_200}};
+    }
 
     /** Its plain, its pads level, surveyed every 2 m: a little rough elsewhere, by 20 cm or so, 30 m apart. */
-    public static Terrain terrain() {
-        final List<Contour> pads = java.util.Arrays.stream(PADS).map(p -> new Contour(0, List.of(new Vec2(p[0], p[2]),
+    public Terrain terrain() {
+        final List<Contour> pads = java.util.Arrays.stream(pads()).map(p -> new Contour(0, List.of(new Vec2(p[0], p[2]),
                 new Vec2(p[1], p[2]), new Vec2(p[1], p[3]), new Vec2(p[0], p[3])), true)).toList();
         return new Terrain("the reach", WEST, SOUTH, EAST, NORTH, 200, 0, 1_120,
                 new Terrain.Noise(20, 3_000, 2), pads, List.of());
     }
 
     /** Its ground before its roads: its plain, the river's channel cut into it. Worked out once. */
-    public static Land ground() {
-        return Laid.GROUND;
+    public Land ground() {
+        return ground;
     }
 
     /** Its land: its ground as its roads leave it. */
-    public static Land land() {
-        return Laid.LAND;
+    public Land land() {
+        return land;
     }
 
     /** Its roads, laid over its ground. */
-    public static Roadworks roads() {
-        return Laid.ROADS;
+    public Roadworks roads() {
+        return roads;
     }
 
     /** Its river's water over its channel's bed, as wide as it is where its top meets the banks. */
-    public static List<River> rivers() {
-        final Channel c = Rivers.channel();
-        return List.of(new River(Rivers.line(), 2 * c.across(Rivers.DEPTH - Rivers.WATER), Rivers.WATER));
+    public List<River> rivers() {
+        final Channel c = Rivers.INSTANCE.channel();
+        return List.of(new River(Rivers.INSTANCE.line(), 2 * c.across(Rivers.DEPTH - Rivers.WATER), Rivers.WATER));
     }
 
     /**
@@ -121,34 +118,54 @@ public final class Reach {
               path      2.3m   earth
             """;
 
-    private static final class Laid {
-        static final Land GROUND = new Land(terrain().survey(), List.of(Rivers.channel()));
-        static final Roadworks ROADS = lay();
-        static final Land LAND = GROUND.with(ROADS.land(Double.NaN));
+    /** Its ground before its roads; its roads, laid over it; its land, its ground as its roads leave it. */
+    private final Land ground;
+    private final Roadworks roads;
+    private final Land land;
 
-        private static Roadworks lay() {
-            final Map<String, Section> kinds = Sections.parse(SECTIONS);
-            final Profile raw = (x, z, below) -> GROUND.height(x, z);
-            return Roadworks.design(raw, Mapped.plans(RoadMap.parse(Streets.text()), (way, kind) -> kinds.get(kind),
-                    raw, null));
-        }
+    /** The reach, worked out once: its ground, its roads and its land, the same every time. */
+    public static final Reach INSTANCE = new Reach();
+
+    private Reach() {
+        final Land plain = new Land(terrain().survey(), List.of(Rivers.INSTANCE.channel()));
+        final Map<String, Section> kinds = Sections.parse(SECTIONS);
+        final Profile raw = (x, z, below) -> plain.height(x, z);
+        this.ground = plain;
+        this.roads = Roadworks.design(raw, Mapped.plans(RoadMap.parse(Streets.INSTANCE.text()),
+                (way, kind) -> kinds.get(kind), raw, null));
+        this.land = plain.with(roads.land(Double.NaN));
+    }
+
+    /** Where the gate is: on the wall's line, where the street meets it. */
+    public Vec2 gate() {
+        return new Vec2(WALL, GATE_Z);
+    }
+
+    /** Where the avatar starts: on the street north of the bridge, facing it. */
+    public Vec3 start() {
+        return new Vec3(-6_000, 0, 3_600);
+    }
+
+    /** The motorcycles parked on the street just ahead of the start, side by side, facing the bridge. */
+    public List<Course.Chassis> bikes() {
+        return List.of(Course.CRUISER, Course.BOXER);
     }
 
     /**
-     * Its motorcycles ({@link #BIKES}), each ready to ride: side by side on the street just ahead of the start, facing
+     * Its motorcycles ({@link #bikes}), each ready to ride: side by side on the street just ahead of the start, facing
      * the bridge as the avatar does, standing on the street, each its own colour.
      */
-    public static List<Course.Piece> parked() {
+    public List<Course.Piece> parked() {
         final double r = Math.toRadians(START_YAW);
         // ahead (sin, cos), to the right (cos, -sin), as the game turns a thing
-        final double aheadX = START.x() + Math.sin(r) * BIKES_AHEAD;
-        final double aheadZ = START.z() + Math.cos(r) * BIKES_AHEAD;
+        final double aheadX = start().x() + Math.sin(r) * BIKES_AHEAD;
+        final double aheadZ = start().z() + Math.cos(r) * BIKES_AHEAD;
         final List<Course.Piece> parked = new java.util.ArrayList<>();
-        for (int k = 0; k < BIKES.size(); k++) {
-            final double side = (k - (BIKES.size() - 1) / 2.0) * BIKES_APART;
+        for (int k = 0; k < bikes().size(); k++) {
+            final double side = (k - (bikes().size() - 1) / 2.0) * BIKES_APART;
             final double x = aheadX + Math.cos(r) * side;
             final double z = aheadZ - Math.sin(r) * side;
-            final Course.Chassis bike = BIKES.get(k);
+            final Course.Chassis bike = bikes().get(k);
             parked.add(Course.Piece.vehicle(bike, null, new Place(x, z, land().height(x, z) + bike.ride(), START_YAW),
                     k));
         }
@@ -156,8 +173,8 @@ public final class Reach {
     }
 
     /** Its ground, its river, its roads stood on, its motorcycles; the avatar on the street, facing the bridge. */
-    public static void lay(final Course.Layout world) {
-        world.start(START).land(land()).rivers(rivers()).pieces(parked())
+    public void lay(final Course.Layout world) {
+        world.start(start()).land(land()).rivers(rivers()).pieces(parked())
                 .ways(roads().roads().stream().flatMap(r -> r.pavements().stream()).map(p -> (Volume) p).toList())
                 .ruled(false);
     }

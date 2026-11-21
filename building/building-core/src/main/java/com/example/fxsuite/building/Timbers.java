@@ -1,5 +1,6 @@
 package com.example.fxsuite.building;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import com.example.fxsuite.avatar.build.Material;
 import com.example.fxsuite.avatar.build.Point;
 import com.example.fxsuite.avatar.build.Role;
@@ -13,16 +14,15 @@ import java.util.List;
  * squared member from one point to another in a plane across, a block square to the frame, a board whose top follows a
  * slope, a slab between any two heights at each end, a block battered front and back, a strut across, a wedge.
  */
-public final class Timbers {
+public record Timbers() implements StatelessFunctionalObject {
 
-    private Timbers() {
-    }
+    public static final Timbers INSTANCE = new Timbers();
 
     /**
      * A squared member {@code side} thick, its middle line from ({@code z0}, {@code y0}) to ({@code z1}, {@code y1})
      * along and up, at {@code x} across: its sides square to its line.
      */
-    public static Solid member(final String name, final Role role, final Material material, final double x,
+    public Solid member(final String name, final Role role, final Material material, final double x,
                                final double z0, final double y0, final double z1, final double y1, final double side) {
         final double l = Math.hypot(z1 - z0, y1 - y0);
         // square to its line in the plane along and up
@@ -39,7 +39,7 @@ public final class Timbers {
     }
 
     /** A block square to the frame: x0 to x1 across, z0 to z1 along, y0 up to y1. */
-    public static Solid block(final String name, final Role role, final Material material, final double x0,
+    public Solid block(final String name, final Role role, final Material material, final double x0,
                               final double x1, final double z0, final double z1, final double y0, final double y1) {
         return slab(name, role, material, x0, x1, z0, z1, y0, y0, y1, y1);
     }
@@ -48,7 +48,7 @@ public final class Timbers {
      * A board across from {@code x0} to {@code x1}, along from {@code z0} to {@code z1}, its top at {@code top0} at
      * the one end and {@code top1} at the other, {@code thick} under it: a deck's plank or a roof's tiles on a slope.
      */
-    public static Solid board(final String name, final Role role, final Material material, final double x0,
+    public Solid board(final String name, final Role role, final Material material, final double x0,
                               final double x1, final double z0, final double z1, final double top0, final double top1,
                               final double thick) {
         return slab(name, role, material, x0, x1, z0, z1, top0 - thick, top1 - thick, top0, top1);
@@ -59,7 +59,7 @@ public final class Timbers {
      * {@code bottom0} up to {@code top0}, at the other from {@code bottom1} to {@code top1}: a gable's wall under a
      * roof's slope.
      */
-    public static Solid slab(final String name, final Role role, final Material material, final double x0,
+    public Solid slab(final String name, final Role role, final Material material, final double x0,
                              final double x1, final double z0, final double z1, final double bottom0,
                              final double bottom1, final double top0, final double top1) {
         final List<Point> corners = new ArrayList<>();
@@ -76,7 +76,7 @@ public final class Timbers {
      * A block across from {@code x0} to {@code x1}, from {@code y0} up to {@code y1}, battered front and back: at its
      * foot reaching {@code foot} either way along from its middle, at its top {@code top}: a rampart, a gate's base.
      */
-    public static Solid battered(final String name, final Role role, final Material material, final double x0,
+    public Solid battered(final String name, final Role role, final Material material, final double x0,
                                  final double x1, final double foot, final double top, final double y0,
                                  final double y1) {
         final List<Point> corners = new ArrayList<>();
@@ -91,7 +91,7 @@ public final class Timbers {
      * A squared member {@code side} thick, its middle line from ({@code x0}, {@code y0}) to ({@code x1}, {@code y1})
      * across and up, at {@code z} along: a strut or a beam across a passage.
      */
-    public static Solid strut(final String name, final Role role, final Material material, final double z,
+    public Solid strut(final String name, final Role role, final Material material, final double z,
                               final double x0, final double y0, final double x1, final double y1, final double side) {
         final double l = Math.hypot(x1 - x0, y1 - y0);
         final double nx = -(y1 - y0) / l * side / 2;
@@ -110,7 +110,7 @@ public final class Timbers {
      * A block across from {@code x0} to {@code x1}, along from {@code z0} to {@code z1}, up from {@code y}, its top
      * sloping across: {@code top0} high at {@code x0}, {@code top1} at {@code x1}. A ramp.
      */
-    public static Solid wedge(final String name, final Role role, final Material material, final double x0,
+    public Solid wedge(final String name, final Role role, final Material material, final double x0,
                               final double x1, final double z0, final double z1, final double y, final double top0,
                               final double top1) {
         final List<Point> corners = new ArrayList<>();

@@ -50,8 +50,8 @@ class SongCountryTest {
         assertEquals(farm.rooms(), farm.reached(), "its yard by its gateway, its house by its door");
         final double d = FARM.depth() / 2;
         final double floor = SongFrame.PLATFORM;
-        assertTrue(clear(farm, SongFrame.door(FARM), d, floor), "its doorway");
-        assertFalse(clear(farm, SongFrame.door(FARM) + 250, d, floor), "its front wall beside it");
+        assertTrue(clear(farm, SongFrame.INSTANCE.door(FARM), d, floor), "its doorway");
+        assertFalse(clear(farm, SongFrame.INSTANCE.door(FARM) + 250, d, floor), "its front wall beside it");
         assertFalse(clear(farm, 0, -d, floor), "its back wall");
         assertTrue(farm.solids(new Elements.Roof()).stream().allMatch(r -> r.material().name().equals("THATCH")));
         assertEquals(1, farm.solids(new Elements.Counter()).size());
@@ -61,12 +61,12 @@ class SongCountryTest {
     @Test
     void itAndItsYardClosedRoundByItsFenceGoneIntoByItsGatewayOnly() {
         final Structure farm = new SongFarmhouse().build(FARM);
-        final double[] f = SongFarmhouse.fence(FARM);
-        assertTrue(clear(farm, SongFrame.door(FARM), f[2], 0), "its gateway");
+        final double[] f = new SongFarmhouse().fence(FARM);
+        assertTrue(clear(farm, SongFrame.INSTANCE.door(FARM), f[2], 0), "its gateway");
         // walked round outside it: its fence in the way all round but at its gateway
         for (double x = -f[0]; x <= f[0]; x += 50) {
             assertFalse(clear(farm, x, f[1], 0), "its fence behind, at " + x);
-            final boolean gateway = Math.abs(x - SongFrame.door(FARM)) < SongFarmhouse.GATE / 2 - BODY - 6;
+            final boolean gateway = Math.abs(x - SongFrame.INSTANCE.door(FARM)) < SongFarmhouse.GATE / 2 - BODY - 6;
             assertEquals(gateway, clear(farm, x, f[2], 0),
                     "its fence before, at " + x);
         }
@@ -98,8 +98,8 @@ class SongCountryTest {
     @Test
     void itsStepsWalkedDownFromItsDeckToItsLandingNoneHigherThanIsStepped() {
         final Structure quay = new SongQuay().build(QUAY);
-        final double x0 = SongQuay.head(QUAY, 0);
-        final int n = SongQuay.steps(QUAY);
+        final double x0 = new SongQuay().head(QUAY, 0);
+        final int n = new SongQuay().steps(QUAY);
         final double z = QUAY.out() + SongQuay.WIDE / 2;
         // stepped off the deck's edge onto the first step, then down along the flight
         double at = 0;

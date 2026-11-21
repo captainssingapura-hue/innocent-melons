@@ -21,7 +21,7 @@ public record FarmhouseSpec<C extends Civilization, E extends Era<? super C>>(in
         implements Framed<Buildings.Farmhouse, C, E> {
 
     public FarmhouseSpec {
-        Framed.check(bays, bay, depth, roofing);
+        Frames.INSTANCE.check(bays, bay, depth, roofing);
         if (!(yard >= 300)) {
             throw new IllegalArgumentException("a yard 3 m deep or more");
         }

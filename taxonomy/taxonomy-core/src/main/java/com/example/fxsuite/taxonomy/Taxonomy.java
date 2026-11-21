@@ -1,5 +1,6 @@
 package com.example.fxsuite.taxonomy;
 
+import hue.captains.singapura.tao.ontology.FunctionalObject;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -13,10 +14,7 @@ import java.util.Set;
  * parents, and what each node means. Read once; everything wrong with it that the compiler could not refuse is found
  * all at once ({@link #problems}). Nothing is found by scanning: what is in it is what is listed.
  */
-public final class Taxonomy {
-
-    /** As deep as a lineage may go before it is taken to go round. */
-    private static final int DEEPEST = 16;
+public final class Taxonomy implements FunctionalObject {
 
     private final String name;
     private final L0 root;
@@ -25,22 +23,12 @@ public final class Taxonomy {
     private final Map<String, String> meanings;
     private final List<String> problems;
 
-    private Taxonomy(final String name, final L0 root, final List<Node> nodes, final List<Leaf<?>> leaves,
-                     final Map<String, String> meanings, final List<String> problems) {
-        this.name = name;
-        this.root = root;
-        this.nodes = List.copyOf(nodes);
-        this.leaves = List.copyOf(leaves);
-        this.meanings = Map.copyOf(meanings);
-        this.problems = List.copyOf(problems);
-    }
-
     /**
      * The tree called {@code name} under {@code root}: its {@code leaves} as listed, its branches those their parents
      * lead through, its nodes' {@code meanings} by their titles ({@link Meanings}).
      */
-    public static Taxonomy of(final String name, final L0 root, final List<? extends Leaf<?>> leaves,
-                              final Map<String, String> meanings) {
+    public Taxonomy(final String name, final L0 root, final List<? extends Leaf<?>> leaves,
+                    final Map<String, String> meanings) {
         final List<String> problems = new ArrayList<>();
         final Set<Node> branches = new LinkedHashSet<>(List.of(root));
         final Set<Leaf<?>> listed = new LinkedHashSet<>();
@@ -49,7 +37,7 @@ public final class Taxonomy {
                 problems.add(leaf.title() + ": listed twice");
                 continue;
             }
-            final List<Node> lineage = lineage(leaf);
+            final List<Node> lineage = leaf.lineage();
             final Node top = lineage.getLast();
             if (!top.equals(root)) {
                 problems.add(leaf.title() + ": its lineage ends at " + (top instanceof L0 ? top.title() + ", another"
@@ -61,6 +49,18 @@ public final class Taxonomy {
         }
         final List<Node> nodes = new ArrayList<>(branches);
         nodes.addAll(listed);
+        problems.addAll(unsaid(nodes, meanings));
+        this.name = name;
+        this.root = root;
+        this.nodes = List.copyOf(nodes);
+        this.leaves = List.copyOf(listed);
+        this.meanings = Map.copyOf(meanings);
+        this.problems = List.copyOf(problems);
+    }
+
+    /** What is wrong with {@code nodes}' names and meanings: a name used twice, a node or a meaning on its own. */
+    private List<String> unsaid(final List<Node> nodes, final Map<String, String> meanings) {
+        final List<String> problems = new ArrayList<>();
         final Map<String, Node> named = new LinkedHashMap<>();
         for (final Node node : nodes) {
             final Node other = named.putIfAbsent(node.name(), node);
@@ -75,21 +75,7 @@ public final class Taxonomy {
         final Set<String> titles = new LinkedHashSet<>(nodes.stream().map(Node::title).toList());
         meanings.keySet().stream().filter(title -> !titles.contains(title))
                 .forEach(title -> problems.add("a meaning for " + title + ", which is no node of this tree"));
-        return new Taxonomy(name, root, nodes, new ArrayList<>(listed), meanings, problems);
-    }
-
-    /** {@code node} and its parents in turn, as far as they go: to its root, if it is well made. */
-    public static List<Node> lineage(final Node node) {
-        final List<Node> lineage = new ArrayList<>(List.of(node));
-        Node at = node;
-        while (at instanceof Child<?> child && lineage.size() < DEEPEST) {
-            at = child.parent();
-            if (at == null) {
-                break;
-            }
-            lineage.add(at);
-        }
-        return lineage;
+        return problems;
     }
 
     /** What it is called. */
@@ -118,7 +104,7 @@ public final class Taxonomy {
 
     /** The leaves under {@code branch}, however far under. */
     public List<Leaf<?>> under(final Branch branch) {
-        return leaves.stream().filter(leaf -> lineage(leaf).contains(branch)).toList();
+        return leaves.stream().filter(leaf -> leaf.lineage().contains(branch)).toList();
     }
 
     /** Whether {@code node} is one of its nodes. */
@@ -136,13 +122,6 @@ public final class Taxonomy {
         return meanings.getOrDefault(node.title(), "");
     }
 
-    /**
-     * A question of {@code node} answered by its lineage: the first of it and its parents in turn that is of
-     * {@code kind}, a branch's answer holding for everything under it unless a nearer one says otherwise.
-     */
-    public static <A> Optional<A> answer(final Node node, final Class<A> kind) {
-        return lineage(node).stream().filter(kind::isInstance).map(kind::cast).findFirst();
-    }
 
     /** Everything wrong with it, all of it; none if nothing is. */
     public List<String> problems() {

@@ -1,5 +1,6 @@
 package com.example.fxsuite.qingming.land;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import com.example.fxsuite.avatar.sim.Vec2;
 
 import java.util.ArrayList;
@@ -12,26 +13,31 @@ import java.util.Locale;
  * them; a towpath along each bank either side of the bridge, each stopping short of it and of the world's edges. Of
  * earth, all of them.
  */
-final class Streets {
+record Streets() implements StatelessFunctionalObject {
 
-    private Streets() {
-    }
+    static final Streets INSTANCE = new Streets();
 
     /**
      * The road, in from the east on the south bank, square onto the bridge's south end; the street from its north,
      * straight for 40 m before the gate, square through it and on to the reach's edge.
      */
-    private static final double[][] ROAD = {
-            {500, -60}, {300, -48}, {150, -40}, {60, -36}, {10, -32}, {0, -26}, {0, -16}};
-    private static final double[][] STREET = {
-            {0, 16}, {0, 24}, {-12, 34}, {-100, 42}, {-300, 42}, {-440, 36},
-            {Reach.WALL / 100 + 40, Reach.GATE.z() / 100}, {-598, Reach.GATE.z() / 100}};
+    private double[][] road() {
+        return new double[][] {
+                {500, -60}, {300, -48}, {150, -40}, {60, -36}, {10, -32}, {0, -26}, {0, -16}};
+    }
+    private double[][] street() {
+        return new double[][] {
+                {0, 16}, {0, 24}, {-12, 34}, {-100, 42}, {-300, 42}, {-440, 36},
+                {Reach.WALL / 100 + 40, Reach.GATE_Z / 100}, {-598, Reach.GATE_Z / 100}};
+    }
     /** How far from the bridge's middle a towpath stops, and from the world's edges. */
     private static final double SHORT = 2_500;
     private static final double EDGE = 200;
 
     /** Its kinds; the road; its towpaths. */
-    static String text() {
+    String text() {
+        final double[][] road = road();
+        final double[][] street = street();
         final StringBuilder text = new StringBuilder("""
                 kind road width=8m surface=earth grade=8% curve=1/10m corners slope=1:2 camber=2% \
                 transition=6m vertical=30m
@@ -39,18 +45,18 @@ final class Streets {
                 transition=6m vertical=20m
                 road "the road to the bridge" kind=road
                 """);
-        point(text, "from", ROAD[0][0], ROAD[0][1], "");
-        for (int k = 1; k < ROAD.length; k++) {
-            point(text, "to", ROAD[k][0], ROAD[k][1], "");
+        point(text, "from", road[0][0], road[0][1], "");
+        for (int k = 1; k < road.length; k++) {
+            point(text, "to", road[k][0], road[k][1], "");
         }
         text.append("road \"the street from the bridge\" kind=road\n");
-        point(text, "from", STREET[0][0], STREET[0][1], "");
-        for (int k = 1; k < STREET.length; k++) {
-            point(text, "to", STREET[k][0], STREET[k][1], "");
+        point(text, "from", street[0][0], street[0][1], "");
+        for (int k = 1; k < street.length; k++) {
+            point(text, "to", street[k][0], street[k][1], "");
         }
         int n = 0;
         for (final boolean right : new boolean[] {true, false}) {
-            for (final List<Vec2> stretch : stretches(Rivers.beside(right, Rivers.TOWPATH))) {
+            for (final List<Vec2> stretch : stretches(Rivers.INSTANCE.beside(right, Rivers.TOWPATH))) {
                 text.append("road \"towpath ").append(++n).append("\" kind=towpath\n");
                 for (int k = 0; k < stretch.size(); k += 2) {
                     point(text, k == 0 ? "from" : "to", stretch.get(k).x() / 100, stretch.get(k).z() / 100, "");
@@ -61,7 +67,7 @@ final class Streets {
     }
 
     /** {@code line} cut where it comes near the bridge or the world's edges: its stretches, each two points or more. */
-    private static List<List<Vec2>> stretches(final List<Vec2> line) {
+    private List<List<Vec2>> stretches(final List<Vec2> line) {
         final List<List<Vec2>> stretches = new ArrayList<>();
         List<Vec2> stretch = new ArrayList<>();
         for (final Vec2 p : line) {
@@ -78,7 +84,7 @@ final class Streets {
         return stretches.stream().filter(s -> s.size() >= 4).toList();
     }
 
-    private static void point(final StringBuilder text, final String word, final double x, final double z,
+    private void point(final StringBuilder text, final String word, final double x, final double z,
                               final String more) {
         text.append(String.format(Locale.ROOT, "  %s %.1f,%.1f%s%n", word, x, z, more));
     }

@@ -21,11 +21,11 @@ public interface Islamic extends Civilization {
         }
 
         public Year from() {
-            return Years.ce(610);
+            return Years.INSTANCE.ce(610);
         }
 
         public Year to() {
-            return Years.ONGOING;
+            return Years.INSTANCE.ongoing();
         }
 
         public Civilization parent() {
