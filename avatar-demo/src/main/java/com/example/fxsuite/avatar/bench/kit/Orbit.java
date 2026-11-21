@@ -1,5 +1,6 @@
 package com.example.fxsuite.avatar.bench.kit;
 
+import javafx.geometry.Point3D;
 import javafx.scene.AmbientLight;
 import javafx.scene.DirectionalLight;
 import javafx.scene.Group;
@@ -131,12 +132,49 @@ public final class Orbit {
         furthest = furthestCm;
     }
 
+    /** What takes hold of what is shown, if anything does; whether it holds something now. */
+    private Grip grip;
+    private boolean holding;
+
+    /**
+     * {@code grip} given what is pressed on with the left button, to take hold of and move, instead of the view
+     * turning ({@link Grip}).
+     */
+    public void grip(final Grip grip) {
+        this.grip = grip;
+    }
+
+    /**
+     * The line from the eye through ({@code x}, {@code y}) of the view as it is {@code width} by {@code height}, in
+     * the view's frame: the camera's field of view upright, its eye at its own origin looking along its z.
+     */
+    Grip.Ray ray(final double x, final double y, final double width, final double height) {
+        final double t = Math.tan(Math.toRadians(eye.getFieldOfView()) / 2);
+        final Point3D way = new Point3D((x - width / 2) / (height / 2) * t, (y - height / 2) / (height / 2) * t, 1);
+        final javafx.scene.transform.Transform toView = eye.getLocalToParentTransform();
+        return new Grip.Ray(toView.transform(Point3D.ZERO), toView.deltaTransform(way).normalize());
+    }
+
     private void handle(final SubScene view) {
         view.setOnMousePressed(e -> {
             lastX = e.getSceneX();
             lastY = e.getSceneY();
+            holding = grip != null && e.getButton() == MouseButton.PRIMARY && !e.isShiftDown()
+                    && e.getPickResult().getIntersectedNode() != null
+                    && grip.take(e.getPickResult(), ray(e.getX(), e.getY(), view.getWidth(), view.getHeight()),
+                            e.isControlDown());
+        });
+        view.setOnMouseReleased(e -> {
+            if (holding) {
+                holding = false;
+                grip.letGo();
+            }
         });
         view.setOnMouseDragged(e -> {
+            if (holding) {
+                grip.move(ray(e.getX(), e.getY(), view.getWidth(), view.getHeight()), e.isControlDown());
+                return;
+            }
             final double dx = e.getSceneX() - lastX;
             final double dy = e.getSceneY() - lastY;
             lastX = e.getSceneX();

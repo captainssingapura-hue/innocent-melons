@@ -49,6 +49,29 @@ public final class ModelView {
             drawn.setMouseTransparent(true);
             return new Model(drawn);
         }
+
+        /**
+         * {@code drawn}, made afresh as {@link #of(Node)} is, but to be taken hold of: pressed on, what it is made of
+         * is picked, for the view's grip ({@link ModelView#grip}) to take; whatever of it is not to be, made mouse
+         * transparent by whoever made it.
+         */
+        public static Model touchable(final Node drawn) {
+            return new Model(drawn);
+        }
+
+        /**
+         * {@code drawn}, which its maker goes on moving, frame by frame, as a motion bench plays a figure moving on the
+         * spot: the one kind of model that does not stand still, looked at, never picked.
+         */
+        public static Model moving(final Node drawn) {
+            drawn.setMouseTransparent(true);
+            return new Model(drawn);
+        }
+    }
+
+    /** {@code grip} given what is pressed on in a touchable model, to take hold of and move ({@link Grip}). */
+    public void grip(final Grip grip) {
+        orbit.grip(grip);
     }
 
     private final Orbit orbit;
@@ -84,6 +107,44 @@ public final class ModelView {
     /** {@code models} shown in place of whatever was. */
     public void show(final List<Model> models) {
         shown.getChildren().setAll(models.stream().map(m -> m.drawn).toList());
+    }
+
+    /**
+     * Level ground seen through, in place of grass: a grid of lines only, {@code size} cm square, its middle at
+     * ({@code x}, {@code z}), at {@code y} up; a line every {@code step} cm, every {@code every}th darker and broader.
+     * What stands on it is seen from below as from above.
+     */
+    public void grid(final double x, final double y, final double z, final double size, final double step,
+                     final int every) {
+        final PhongMaterial fine = new PhongMaterial(Color.web("#8c949b"));
+        final PhongMaterial bold = new PhongMaterial(Color.web("#4d555c"));
+        final Group lines = new Group();
+        final int n = (int) Math.round(size / step / 2);
+        for (int k = -n; k <= n; k++) {
+            final boolean major = k % every == 0;
+            final double wide = major ? 0.6 : 0.25;
+            final Box across = new Box(2 * n * step, 0.1, wide);
+            across.setTranslateX(x);
+            across.setTranslateZ(z + k * step);
+            final Box along = new Box(wide, 0.1, 2 * n * step);
+            along.setTranslateX(x + k * step);
+            along.setTranslateZ(z);
+            for (final Box line : new Box[] {across, along}) {
+                line.setTranslateY(-y);
+                line.setMaterial(major ? bold : fine);
+                lines.getChildren().add(line);
+            }
+        }
+        ground.getChildren().setAll(lines);
+    }
+
+    /**
+     * The ground moved so far across, under what is shown: a treadmill's, for a bench whose figure walks on the spot
+     * ({@link Model#moving}).
+     */
+    public void groundAt(final double x, final double z) {
+        ground.setTranslateX(x);
+        ground.setTranslateZ(z);
     }
 
     /** Level ground, grass, {@code size} cm square, its middle at ({@code x}, {@code z}), its top at {@code y} up. */
