@@ -10,8 +10,8 @@ import java.util.Arrays;
 /**
  * The body shop's jar, run: its bench ({@link BodyShopBench}); with {@code parts}, the robot parts bench
  * ({@link RobotPartsBench}); with {@code motion}, the motion bench ({@link MotionBench}); with {@code wardrobe},
- * what is worn ({@link com.example.fxsuite.life.body.wear.WardrobeBench}); with {@code fat}, the fat
- * ({@link com.example.fxsuite.life.body.fat.FatBench});
+ * what is worn ({@link com.example.fxsuite.life.body.wear.WardrobeBench}); with {@code skin} or {@code fat}, the skin
+ * and the fat under it ({@link com.example.fxsuite.life.body.skin.SkinBench});
  * with {@code bones}, the bone bench, each bone on its own; with {@code assembly},
  * the skeleton put together from its joints, as far as the groups asked; with {@code muscles}, the muscles on the
  * bones ({@link MuscleBench}); with {@code play}, the game, its humanoids offered as the avatar
@@ -36,7 +36,8 @@ public final class BodyShopMain {
             }
             case "parts" -> javafx.application.Application.launch(RobotPartsBench.class, args);
             case "motion" -> javafx.application.Application.launch(MotionBench.class, args);
-            case "fat" -> javafx.application.Application.launch(com.example.fxsuite.life.body.fat.FatBench.class, args);
+            case "skin", "fat" -> javafx.application.Application.launch(
+                    com.example.fxsuite.life.body.skin.SkinBench.class, args);
             case "wardrobe" -> javafx.application.Application.launch(
                     com.example.fxsuite.life.body.wear.WardrobeBench.class, args);
             case "bones" -> javafx.application.Application.launch(BoneBench.class, args);

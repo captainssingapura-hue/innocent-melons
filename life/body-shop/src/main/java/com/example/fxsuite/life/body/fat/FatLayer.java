@@ -4,6 +4,7 @@ import com.example.fxsuite.life.body.V3;
 import com.example.fxsuite.life.body.cage.Cage;
 import com.example.fxsuite.life.body.cage.Fitting;
 import com.example.fxsuite.life.body.cage.Subdivision;
+import com.example.fxsuite.life.body.flesh.Around;
 import com.example.fxsuite.life.body.flesh.Flesh;
 import com.example.fxsuite.life.body.wear.Sheet;
 import com.example.fxsuite.life.body.wear.Weights;
@@ -40,8 +41,11 @@ public record FatLayer() implements StatelessFunctionalObject {
     /** How far a point may be set from where its smoothed cage put it, cm: past that, it stays. */
     private static final double FAR = 4;
 
-    /** The fat as found: its cage, its surface bound to the body, and where its points found no fat outside. */
-    public record Fat(Cage cage, Flesh flesh, List<V3> missed) {
+    /**
+     * The fat as found: its cage, its surface bound to the body, where its points found no fat outside, and what of
+     * the body each point is on.
+     */
+    public record Fat(Cage cage, Flesh flesh, List<V3> missed, FatTarget.Region[] regions) {
     }
 
     /** The fat on {@code target}. */
@@ -66,7 +70,7 @@ public record FatLayer() implements StatelessFunctionalObject {
         final V3[] smooth = at.clone();
         final Weights[] w = new Weights[at.length];
         boolean[] missed = onto(target, at, smooth, w, t, region, mitten, BACK);
-        final int[][] next = neighbours(at.length, t);
+        final int[][] next = Around.INSTANCE.neighbours(at.length, t);
         for (int round = 0; round < EASING; round++) {
             ease(at, t, next);
             missed = onto(target, at, smooth, w, t, region, mitten, BACK / 2);
@@ -89,7 +93,7 @@ public record FatLayer() implements StatelessFunctionalObject {
         for (int i = 0; i < t.length; i += 3) {
             sheet.triangle(t[i], t[i + 1], t[i + 2]);
         }
-        return new Fat(fitted, sheet.flesh(target.bind()), misses);
+        return new Fat(fitted, sheet.flesh(target.bind()), misses, region);
     }
 
     /**
@@ -100,7 +104,7 @@ public record FatLayer() implements StatelessFunctionalObject {
      */
     private boolean[] onto(final FatTarget target, final V3[] at, final V3[] smooth, final Weights[] w, final int[] t,
                            final FatTarget.Region[] region, final boolean[] mitten, final double back) {
-        final V3[] out = normals(at, t);
+        final V3[] out = Around.INSTANCE.normals(at, t);
         final boolean[] missed = new boolean[at.length];
         IntStream.range(0, at.length).parallel().forEach(i -> {
             final int side = at[i].x() < 0 ? -1 : 1;
@@ -136,7 +140,7 @@ public record FatLayer() implements StatelessFunctionalObject {
      */
     private void fill(final V3[] at, final int[] t, final int[][] next) {
         for (int round = 0; round < FILL; round++) {
-            final V3[] out = normals(at, t);
+            final V3[] out = Around.INSTANCE.normals(at, t);
             final V3[] moved = new V3[at.length];
             for (int i = 0; i < at.length; i++) {
                 V3 m = V3.ZERO;
@@ -158,7 +162,7 @@ public record FatLayer() implements StatelessFunctionalObject {
      * edge but near what is not its own, the other thigh by the crotch, and is left.
      */
     private void clear(final FatTarget target, final V3[] at, final int[] t, final FatTarget.Region[] region) {
-        final V3[] out = normals(at, t);
+        final V3[] out = Around.INSTANCE.normals(at, t);
         final double[] push = new double[at.length];
         final double[] wanting = IntStream.range(0, t.length / 3).parallel().mapToDouble(k -> {
             final V3 c = at[t[3 * k]].plus(at[t[3 * k + 1]]).plus(at[t[3 * k + 2]]).times(1.0 / 3);
@@ -181,7 +185,7 @@ public record FatLayer() implements StatelessFunctionalObject {
      * gently than that between points so near.
      */
     private void despike(final V3[] at, final int[] t, final int[][] next) {
-        final V3[] out = normals(at, t);
+        final V3[] out = Around.INSTANCE.normals(at, t);
         final V3[] moved = at.clone();
         for (int i = 0; i < at.length; i++) {
             V3 m = V3.ZERO;
@@ -197,7 +201,7 @@ public record FatLayer() implements StatelessFunctionalObject {
 
     /** Every point moved half way toward its neighbours' middle, along the surface only. */
     private void ease(final V3[] at, final int[] t, final int[][] next) {
-        final V3[] out = normals(at, t);
+        final V3[] out = Around.INSTANCE.normals(at, t);
         final V3[] moved = new V3[at.length];
         for (int i = 0; i < at.length; i++) {
             V3 m = V3.ZERO;
@@ -239,34 +243,5 @@ public record FatLayer() implements StatelessFunctionalObject {
         return r;
     }
 
-    /** Each point's way out: its triangles', by their size. */
-    private V3[] normals(final V3[] at, final int[] t) {
-        final V3[] n = new V3[at.length];
-        java.util.Arrays.fill(n, V3.ZERO);
-        for (int i = 0; i < t.length; i += 3) {
-            final V3 f = at[t[i + 1]].minus(at[t[i]]).cross(at[t[i + 2]].minus(at[t[i]]));
-            for (int k = 0; k < 3; k++) {
-                n[t[i + k]] = n[t[i + k]].plus(f);
-            }
-        }
-        for (int i = 0; i < n.length; i++) {
-            n[i] = n[i].length() > 0 ? n[i].unit() : V3.Y;
-        }
-        return n;
-    }
 
-    /** Each point's neighbours, by the triangles' sides. */
-    private int[][] neighbours(final int size, final int[] t) {
-        final List<java.util.Set<Integer>> by = new ArrayList<>();
-        for (int i = 0; i < size; i++) {
-            by.add(new java.util.TreeSet<>());
-        }
-        for (int i = 0; i < t.length; i += 3) {
-            for (int k = 0; k < 3; k++) {
-                by.get(t[i + k]).add(t[i + (k + 1) % 3]);
-                by.get(t[i + (k + 1) % 3]).add(t[i + k]);
-            }
-        }
-        return by.stream().map(x -> x.stream().mapToInt(Integer::intValue).toArray()).toArray(int[][]::new);
-    }
 }

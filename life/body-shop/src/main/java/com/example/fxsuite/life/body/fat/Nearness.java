@@ -97,6 +97,19 @@ public final class Nearness {
         return b;
     }
 
+    /**
+     * Whether {@code p}, nearest {@code n}, lies behind the triangle it is nearest, the way it faces out: inside what
+     * is beneath, if that is one closed surface facing out.
+     */
+    public boolean inside(final Near n, final V3 p) {
+        final int[] t = beneath.triangles();
+        final V3 a = beneath.point(t[3 * n.triangle()]);
+        final V3 b = beneath.point(t[3 * n.triangle() + 1]);
+        final V3 c = beneath.point(t[3 * n.triangle() + 2]);
+        final V3 q = a.times(n.a()).plus(b.times(n.b())).plus(c.times(n.c()));
+        return p.minus(q).dot(b.minus(a).cross(c.minus(a))) < 0;
+    }
+
     /** How the point {@code n} is on follows the body: its corners', as much as it is each. */
     public Weights weights(final Near n) {
         final int[] t = beneath.triangles();

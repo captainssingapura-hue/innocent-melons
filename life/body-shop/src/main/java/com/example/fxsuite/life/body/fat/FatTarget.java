@@ -136,6 +136,16 @@ public final class FatTarget {
         return top;
     }
 
+    /**
+     * How far {@code x} is from the muscles and bones beneath, among what counts for {@code r} on side {@code side},
+     * and how thick the fat should be there, cm: no further than {@code within}, at {@code within} if nothing is.
+     */
+    public double[] depth(final V3 x, final Region r, final int side, final double within) {
+        final Nearness.Near n = near.nearest(x, within, counts(r, side));
+        return n.triangle() < 0 ? new double[] {within, 0}
+                : new double[] {n.distance(), map.thickness(near.weights(n), x, bind)};
+    }
+
     /** How the body under {@code x} moves: the nearest point beneath's, whatever it is. */
     public Weights under(final V3 x) {
         return near.weights(near.nearest(x, 60, i -> true));
