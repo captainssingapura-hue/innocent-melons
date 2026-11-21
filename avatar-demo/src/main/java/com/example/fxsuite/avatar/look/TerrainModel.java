@@ -80,10 +80,10 @@ public final class TerrainModel {
      * How far the camera moves before a piece's haze is worked out again: at least so far, and so much of how far
      * off the piece is, since far off the haze changes so little with a few metres more or less.
      */
-    static final double MOVED = 2_500;
-    static final double SHARE = 0.05;
+    public static final double MOVED = 2_500;
+    public static final double SHARE = 0.05;
     /** How many heights' haze a frame works out again and sends to be drawn, at most (or one piece's, if more). */
-    static final int BUDGET = 3_000;
+    public static final int BUDGET = 3_000;
     /** How many tints, low to high, and how many shades of the haze, none to all, the land's picture has. */
     private static final int TINTS = 512;
     private static final int HAZES = 64;

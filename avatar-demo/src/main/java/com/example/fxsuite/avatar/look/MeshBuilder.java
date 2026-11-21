@@ -7,7 +7,7 @@ import javafx.scene.shape.MeshView;
 import javafx.scene.shape.TriangleMesh;
 
 /** A mesh put together a piece at a time. */
-final class MeshBuilder {
+public final class MeshBuilder {
     private float[] points = new float[3 * 1024];
     private int[] faces = new int[6 * 1024];
     private int pointCount;
@@ -19,7 +19,7 @@ final class MeshBuilder {
     private int[] groups = new int[1024];
     private int quads;
 
-    boolean empty() {
+    public boolean empty() {
         return faceCount == 0;
     }
 
@@ -64,7 +64,7 @@ final class MeshBuilder {
      * smooth across it: its points shared between the quads round each, a ring all at one point (a
      * nose, a tail) one point, so it is shaded smooth there too.
      */
-    void skin(final java.util.List<Point3D[]> rings) {
+    public void skin(final java.util.List<Point3D[]> rings) {
         skin(rings, false);
     }
 
@@ -72,7 +72,7 @@ final class MeshBuilder {
      * The same, or {@code faceted}: each quad shaded flat, its smoothing group unlike each of its
      * neighbours', round its ring and along to the next.
      */
-    void skin(final java.util.List<Point3D[]> rings, final boolean faceted) {
+    public void skin(final java.util.List<Point3D[]> rings, final boolean faceted) {
         smooth = !faceted;
         int[] last = null;
         int band = 0;
@@ -111,7 +111,7 @@ final class MeshBuilder {
     private int facet;
 
     /** A flat face through {@code corners} (three or four, round it), shaded flat, its points its own. */
-    void face(final Point3D[] corners) {
+    public void face(final Point3D[] corners) {
         final int[] at = new int[corners.length];
         for (int k = 0; k < corners.length; k++) {
             at[k] = point(corners[k]);
@@ -125,7 +125,7 @@ final class MeshBuilder {
     }
 
     /** A square rod {@code width} across from {@code a} to {@code b}. */
-    void rod(final Point3D a, final Point3D b, final double width) {
+    public void rod(final Point3D a, final Point3D b, final double width) {
         final Point3D run = b.subtract(a).normalize();
         // two directions square to the run, and to each other
         final Point3D other = Math.abs(run.getY()) < 0.9 ? new Point3D(0, 1, 0) : new Point3D(1, 0, 0);
@@ -146,7 +146,7 @@ final class MeshBuilder {
     }
 
     /** A cube {@code size} across about {@code middle}. */
-    void cube(final Point3D middle, final double size) {
+    public void cube(final Point3D middle, final double size) {
         final double h = size / 2;
         final Point3D[] corners = new Point3D[8];
         for (int k = 0; k < 8; k++) {
@@ -159,7 +159,7 @@ final class MeshBuilder {
      * A box by its eight corners: corner k at the low or high end of its first edge as bit 0 of k
      * says, of its second as bit 1, of its third as bit 2.
      */
-    void box(final Point3D[] corners) {
+    public void box(final Point3D[] corners) {
         final int[] at = new int[8];
         for (int k = 0; k < 8; k++) {
             at[k] = point(corners[k]);
@@ -172,7 +172,7 @@ final class MeshBuilder {
         quad(at[1], at[5], at[7], at[3]);
     }
 
-    MeshView view(final PhongMaterial material) {
+    public MeshView view(final PhongMaterial material) {
         final TriangleMesh mesh = new TriangleMesh();
         mesh.getPoints().setAll(points, 0, 3 * pointCount);
         mesh.getTexCoords().setAll(0, 0);

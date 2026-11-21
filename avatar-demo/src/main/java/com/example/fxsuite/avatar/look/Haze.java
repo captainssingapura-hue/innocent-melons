@@ -17,12 +17,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * down it as there is haze there: a picture whose diffuse half fades from white to black down it, and whose glow comes
  * up from nothing to the haze's colour ({@link Horizon#HAZY}).
  */
-final class Haze {
+public final class Haze {
 
     /** How many steps of haze, top to bottom of its pictures. */
-    static final int LEVELS = 64;
+    public static final int LEVELS = 64;
     /** The corner of its pictures where there is none. */
-    static final double CLEAR = corner(0);
+    public static final double CLEAR = corner(0);
 
     private static final Map<PhongMaterial, PhongMaterial> HAZED = new ConcurrentHashMap<>();
 
@@ -30,12 +30,12 @@ final class Haze {
     }
 
     /** The corner of its pictures as far down as {@code haze} is. */
-    static double corner(final double haze) {
+    public static double corner(final double haze) {
         return (haze * (LEVELS - 1) + 0.5) / LEVELS;
     }
 
     /** {@code material} fading into the haze as its points' corners say: made once for each. */
-    static PhongMaterial of(final PhongMaterial material) {
+    public static PhongMaterial of(final PhongMaterial material) {
         return HAZED.computeIfAbsent(material, m -> {
             final PhongMaterial hazed = new PhongMaterial(m.getDiffuseColor());
             hazed.setSpecularColor(m.getSpecularColor());
@@ -50,7 +50,7 @@ final class Haze {
      * Each of {@code mesh}'s points' corners as far into the haze as {@code view} has its point: as each point is far
      * off across the ground. Whether any of it is hazed at all.
      */
-    static boolean haze(final TriangleMesh mesh, final View view) {
+    public static boolean haze(final TriangleMesh mesh, final View view) {
         final Vec3 eye = view.eye();
         final float[] points = mesh.getPoints().toArray(null);
         final float[] coords = new float[2 * (points.length / 3)];
@@ -70,7 +70,8 @@ final class Haze {
      * from {@code from} seeing {@code reach}, is to be hazed again as {@code view} sees: as the land's would be, once
      * the camera has moved far enough for it to show.
      */
-    static boolean stale(final double[] box, final boolean hazed, final Vec3 from, final double reach, final View view) {
+    public static boolean stale(final double[] box, final boolean hazed, final Vec3 from, final double reach,
+                                final View view) {
         final Vec3 eye = view.eye();
         final double far = Math.hypot(Math.max(Math.abs(eye.x() - box[0]), Math.abs(eye.x() - box[2])),
                 Math.max(Math.abs(eye.z() - box[1]), Math.abs(eye.z() - box[3])));
@@ -86,7 +87,7 @@ final class Haze {
     }
 
     /** How near {@code eye} {@code box} is across the ground, at its nearest. */
-    static double near(final double[] box, final Vec3 eye) {
+    public static double near(final double[] box, final Vec3 eye) {
         return Math.hypot(Math.max(0, Math.max(box[0] - eye.x(), eye.x() - box[2])),
                 Math.max(0, Math.max(box[1] - eye.z(), eye.z() - box[3])));
     }
