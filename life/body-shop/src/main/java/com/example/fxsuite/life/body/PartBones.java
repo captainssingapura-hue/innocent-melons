@@ -30,12 +30,36 @@ public record PartBones() implements StatelessFunctionalObject {
 
     /** {@code p}'s bones (as on the right side, {@code p} a right part or one down the middle), as finely as asked. */
     public List<Piece> pieces(final Part p, final Detail detail) {
+        return pieces(p, detail, 0);
+    }
+
+    /** As {@link #pieces(Part, Detail)}, its bones as far a woman's as {@code female} says. */
+    public List<Piece> pieces(final Part p, final Detail detail, final double female) {
+        final List<Piece> pieces = new ArrayList<>();
+        elements(p, detail.swell(p), female).forEach((paint, elements) ->
+                pieces.add(new Piece(paint, Mesher.of(new Field(elements), detail.cell(p)))));
+        return pieces;
+    }
+
+    /** {@code p}'s bones as one shape, as they stand in it, not swollen: what its flesh is laid over. */
+    public Field.Shape shape(final Part p) {
+        return shape(p, 0);
+    }
+
+    /** As {@link #shape(Part)}, its bones as far a woman's as {@code female} says. */
+    public Field.Shape shape(final Part p, final double female) {
+        final List<Field.Element> all = new ArrayList<>();
+        elements(p, 0, female).values().forEach(all::addAll);
+        return Field.Compound.of(all);
+    }
+
+    /** {@code p}'s bones by their colour, as far a woman's as said, each placed in it and swollen {@code swell}. */
+    private Map<Paint, List<Field.Element>> elements(final Part p, final double swell, final double female) {
         final Map<Paint, List<Field.Element>> by = new LinkedHashMap<>();
-        final double swell = detail.swell(p);
         for (final Bone b : Skeleton.INSTANCE.bones()) {
             if (b.part() == p && b.region() != Region.EAR) {
                 final List<Field.Element> mine = by.computeIfAbsent(b.paint(), k -> new ArrayList<>());
-                final Field.Shape shape = Drawn.INSTANCE.shape(b, 0);
+                final Field.Shape shape = Drawn.INSTANCE.shape(b, female);
                 mine.add(new Field.Element(b.name(), placed(b, shape, swell), Field.Op.ADD, 0));
                 if (p.side() == 0 && b.paired()) {
                     mine.add(new Field.Element("left " + b.name(),
@@ -43,9 +67,7 @@ public record PartBones() implements StatelessFunctionalObject {
                 }
             }
         }
-        final List<Piece> pieces = new ArrayList<>();
-        by.forEach((paint, elements) -> pieces.add(new Piece(paint, Mesher.of(new Field(elements), detail.cell(p)))));
-        return pieces;
+        return by;
     }
 
     /** {@code shape}, bone {@code b}'s, where it stands in its part at rest, swollen {@code swell}. */

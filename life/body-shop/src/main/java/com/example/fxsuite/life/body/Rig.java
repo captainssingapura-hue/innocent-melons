@@ -127,7 +127,7 @@ public final class Rig {
     }
 
     /** {@code p}, a point of a forearm in its frame, as its twist carries it, {@code share} of the twist felt there. */
-    static V3 twisted(final V3 p, final double degrees, final double share) {
+    public static V3 twisted(final V3 p, final double degrees, final double share) {
         return RADIUS_TOP.plus(Rot.about(PRONATION, degrees * share).apply(p.minus(RADIUS_TOP)));
     }
 
