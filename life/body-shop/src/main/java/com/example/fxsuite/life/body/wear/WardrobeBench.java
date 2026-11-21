@@ -12,6 +12,7 @@ import com.example.fxsuite.life.body.Proportions;
 import com.example.fxsuite.life.body.Rig;
 import com.example.fxsuite.life.body.V3;
 import com.example.fxsuite.life.body.cage.CageView;
+import com.example.fxsuite.life.body.flesh.FleshView;
 import com.example.fxsuite.life.body.muscle.MuscleBody;
 import com.example.fxsuite.life.body.muscle.MusclesView;
 import javafx.application.Application;
@@ -142,10 +143,10 @@ public final class WardrobeBench extends Application {
             nodes.add(CageView.INSTANCE.bones(rig, 0, new Detail(0.6), p -> true));
         }
         if (tights.isSelected()) {
-            nodes.add(new GarmentView(made.tights(), SIGNS, rig).node());
+            nodes.add(new FleshView(made.tights().cloth(), made.tights().colour(), SIGNS, rig).node());
         }
         if (briefs.isSelected()) {
-            nodes.add(new GarmentView(made.briefs(), SIGNS, rig).node());
+            nodes.add(new FleshView(made.briefs().cloth(), made.briefs().colour(), SIGNS, rig).node());
         }
         final Group world = new Group(nodes);
         final double ground = rig.contacts().stream().mapToDouble(V3::y).min().orElse(0);

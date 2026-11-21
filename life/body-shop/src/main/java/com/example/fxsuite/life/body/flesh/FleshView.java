@@ -1,8 +1,7 @@
-package com.example.fxsuite.life.body.wear;
+package com.example.fxsuite.life.body.flesh;
 
 import com.example.fxsuite.life.body.Rig;
 import com.example.fxsuite.life.body.V3;
-import com.example.fxsuite.life.body.flesh.Flesh;
 import javafx.scene.Node;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
@@ -12,12 +11,12 @@ import javafx.scene.shape.TriangleMesh;
 import javafx.scene.shape.VertexFormat;
 
 /**
- * A garment drawn as the body moves ({@link Garment}): its cloth's points and their ways out found afresh as the body
- * is posed, into a scene whose frame is the body's with each way's sign as {@code signs} has it, its triangles turned
- * round if that is a mirror's; in its colour, matte, a knit's faint sheen; both its faces, its inside seen through an
- * opening.
+ * Something bound to the body drawn as it moves ({@link Flesh}), in one colour, a garment or the fat: its points and
+ * their ways out found afresh as the body is posed, into a scene whose frame is the body's with each way's sign as
+ * {@code signs} has it, its triangles turned round if that is a mirror's; matte, a faint sheen; both its faces, its
+ * inside seen through an opening.
  */
-public final class GarmentView {
+public final class FleshView {
 
     private final Flesh cloth;
     private final V3 signs;
@@ -26,9 +25,12 @@ public final class GarmentView {
     private final float[] at;
     private final float[] out;
 
-    /** {@code g} drawn with each way's sign as {@code signs} has it, posed at first as {@code rig} holds it. */
-    public GarmentView(final Garment g, final V3 signs, final Rig rig) {
-        this.cloth = g.cloth();
+    /**
+     * {@code cloth} drawn in {@code colour} with each way's sign as {@code signs} has it, posed at first as {@code rig}
+     * holds it.
+     */
+    public FleshView(final Flesh cloth, final String colour, final V3 signs, final Rig rig) {
+        this.cloth = cloth;
         this.signs = signs;
         at = new float[cloth.size() * 3];
         out = new float[cloth.size() * 3];
@@ -47,7 +49,7 @@ public final class GarmentView {
         show(rig);
         mesh.getFaces().setAll(faces);
         view.setCullFace(CullFace.NONE);
-        final Color c = Color.web(g.colour());
+        final Color c = Color.web(colour);
         final PhongMaterial m = new PhongMaterial(c);
         m.setSpecularColor(c.interpolate(Color.WHITE, 0.25).deriveColor(0, 1, 0.35, 1));
         m.setSpecularPower(12);
