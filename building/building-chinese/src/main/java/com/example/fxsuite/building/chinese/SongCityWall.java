@@ -27,6 +27,8 @@ import java.util.List;
 public final class SongCityWall
         implements NorthernSongImpl<Buildings.CityWall, CityWallSpec<Chinese, ChineseEras.NorthernSong>> {
 
+    private static final Timbers TIMBERS = Timbers.INSTANCE;
+
     /** How thick it is at its foot and at its top, for each of its height; a length rammed at a time; its footing. */
     static final double FOOT = 1.5;
     static final double TOP = 1.0;
@@ -46,7 +48,7 @@ public final class SongCityWall
         final List<Part> parts = new ArrayList<>();
         final int lifts = (int) Math.ceil(s.length() / LIFT);
         for (int k = 0; k < lifts; k++) {
-            parts.add(new Part(new Elements.Wall(), Timbers.battered("rampart", Role.WALL, Material.RAMMED_EARTH,
+            parts.add(new Part(new Elements.Wall(), TIMBERS.battered("rampart", Role.WALL, Material.RAMMED_EARTH,
                     -half + k * s.length() / lifts, -half + (k + 1) * s.length() / lifts, foot, top, -FOOTING,
                     s.high())));
         }

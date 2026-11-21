@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class FixturesTest {
 
-    private static final List<Atlas.Fixture> ALL = Fixtures.atlas().fixtures();
+    private static final List<Atlas.Fixture> ALL = Fixtures.INSTANCE.fixtures();
 
     private static long count(final Leaf<?> thing) {
         return ALL.stream().filter(f -> f.thing().equals(thing)).count();
@@ -58,13 +58,13 @@ class FixturesTest {
 
     @Test
     void nothingWrongWithItsMapTheBridgeAtItsOriginLandingOnTheStreet() {
-        assertEquals(List.of(), Fixtures.atlas().problems());
+        assertEquals(List.of(), Fixtures.INSTANCE.problems());
         final Atlas.Fixture bridge = ALL.getFirst();
         assertEquals("the Rainbow Bridge", bridge.name());
         assertEquals(new Buildings.Bridge(), bridge.thing());
         assertEquals(0, Math.hypot(bridge.x(), bridge.z()));
-        assertEquals(0, Reach.ground().height(0, 1_250), 30, "the street where it lands, north");
-        assertEquals(0, Reach.ground().height(0, -1_250), 30, "and south");
+        assertEquals(0, Reach.INSTANCE.ground().height(0, 1_250), 30, "the street where it lands, north");
+        assertEquals(0, Reach.INSTANCE.ground().height(0, -1_250), 30, "and south");
     }
 
     @Test
@@ -104,12 +104,12 @@ class FixturesTest {
     void theGateWhereTheStreetMeetsTheWallTheWallEitherSideOfIt() {
         final Atlas.Fixture gate = ALL.stream().filter(f -> f.thing().equals(new Buildings.GateTower())).findFirst()
                 .orElseThrow();
-        assertEquals(Reach.GATE, new Vec2(gate.x(), gate.z()));
+        assertEquals(Reach.INSTANCE.gate(), new Vec2(gate.x(), gate.z()));
         assertEquals(90, gate.yaw(), "its outer face east, toward the bridge");
         // the street through its passage: level, and no more than a step from the ground the gate stands on
         for (double x = Reach.WALL - 1_500; x <= Reach.WALL + 1_500; x += 100) {
             for (final double z : new double[] {-200, 0, 200}) {
-                assertEquals(0, Reach.land().height(x, gate.z() + z), 20, "the street at " + x + ", " + z);
+                assertEquals(0, Reach.INSTANCE.land().height(x, gate.z() + z), 20, "the street at " + x + ", " + z);
             }
         }
         final List<Atlas.Fixture> wall = ALL.stream().filter(f -> f.thing().equals(new Buildings.CityWall())).toList();
@@ -158,10 +158,10 @@ class FixturesTest {
         assertEquals(2, quay.size());
         for (final Atlas.Fixture q : quay) {
             assertEquals(180, q.yaw(), 10, q.name() + " facing the river, south");
-            assertEquals(0, Reach.land().height(q.x(), q.z()), 2, q.name() + " on the bank's top, level");
-            final double face = from(world(q, 0, 200), Rivers.line());
+            assertEquals(0, Reach.INSTANCE.land().height(q.x(), q.z()), 2, q.name() + " on the bank's top, level");
+            final double face = from(world(q, 0, 200), Rivers.INSTANCE.line());
             // the water's edge so far from the river's middle, up its bank from its bed's edge
-            final double edge = Rivers.channel().across(Rivers.DEPTH - Rivers.WATER);
+            final double edge = Rivers.INSTANCE.channel().across(Rivers.DEPTH - Rivers.WATER);
             assertTrue(face > edge - 60 && face < edge, q.name() + " its face at " + face);
             final double landing = q.structure().rooms().get(1).level();
             assertTrue(landing > Rivers.WATER - Rivers.DEPTH && landing < Rivers.WATER - Rivers.DEPTH + 30,
@@ -169,8 +169,8 @@ class FixturesTest {
         }
         final double[] east = reach(quay.get(0));
         final double[] west = reach(quay.get(1));
-        assertEquals(Fixtures.QUAY[0], east[1], 30, "its east end");
-        assertEquals(Fixtures.QUAY[2], west[0], 30, "its west end");
+        assertEquals(Fixtures.QUAY_EAST, east[1], 30, "its east end");
+        assertEquals(Fixtures.QUAY_WEST, west[0], 30, "its west end");
         assertEquals(east[0], west[1], 30, "its stretches meeting");
     }
 
@@ -180,7 +180,7 @@ class FixturesTest {
                 .toList();
         assertEquals(4, farms.size());
         final List<Vec2> road = new java.util.ArrayList<>();
-        final var way = Reach.roads().roads().stream().filter(r -> r.name().equals("the road to the bridge"))
+        final var way = Reach.INSTANCE.roads().roads().stream().filter(r -> r.name().equals("the road to the bridge"))
                 .findFirst().orElseThrow();
         for (int k = 0; k < way.size(); k++) {
             road.add(way.point(k));
@@ -222,7 +222,7 @@ class FixturesTest {
             // all but the bridge and the quay on the plain: no corner of its floor down the river's bank
             for (final double x : new double[] {a[0], a[1]}) {
                 for (final double z : new double[] {a[2], a[3]}) {
-                    assertTrue(Reach.ground().height(x, z) > -60,
+                    assertTrue(Reach.INSTANCE.ground().height(x, z) > -60,
                             ALL.get(i).name() + " on the plain at " + x + ", " + z);
                 }
             }
@@ -231,6 +231,6 @@ class FixturesTest {
 
     @Test
     void eachAPieceOfTheWorld() {
-        assertEquals(38, Fixtures.pieces().size());
+        assertEquals(38, Fixtures.INSTANCE.pieces().size());
     }
 }

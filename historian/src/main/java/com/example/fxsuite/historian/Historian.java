@@ -1,5 +1,6 @@
 package com.example.fxsuite.historian;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.time.Year;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -13,20 +14,24 @@ import java.util.stream.Stream;
  * open to it, what ran in a year, what ran at the same time as an era elsewhere. Nothing is found by scanning: what is
  * here is what is listed.
  */
-public final class Historian {
+public record Historian() implements StatelessFunctionalObject {
 
-    private Historian() {
-    }
+    public static final Historian INSTANCE = new Historian();
 
     /** Every civilization, the root first. */
-    public static final List<Civilization> CIVILIZATIONS = List.of(Civilization.ROOT, Chinese.IT, StraitsChinese.IT,
-            Japanese.IT, Korean.IT, Malay.IT, Indian.IT, Islamic.IT, European.IT, British.IT, Egyptian.IT,
-            Mesoamerican.IT);
+    public List<Civilization> civilizations() {
+        return List.of(Civilization.ROOT, Chinese.IT, StraitsChinese.IT, Japanese.IT, Korean.IT, Malay.IT, Indian.IT,
+                Islamic.IT, European.IT, British.IT, Egyptian.IT, Mesoamerican.IT);
+    }
 
     /** Every era, by civilization, each civilization's oldest first. */
-    public static final List<Era<?>> ERAS = Stream.of(CommonEras.ALL, ChineseEras.ALL, StraitsChineseEras.ALL,
-            JapaneseEras.ALL, KoreanEras.ALL, MalayEras.ALL, IndianEras.ALL, IslamicEras.ALL, EuropeanEras.ALL,
-            BritishEras.ALL, EgyptianEras.ALL, MesoamericanEras.ALL).flatMap(List::stream).toList();
+    public List<Era<?>> eras() {
+        return Stream.of(CommonEras.INSTANCE.all(), ChineseEras.INSTANCE.all(), StraitsChineseEras.INSTANCE.all(),
+                JapaneseEras.INSTANCE.all(), KoreanEras.INSTANCE.all(), MalayEras.INSTANCE.all(),
+                IndianEras.INSTANCE.all(), IslamicEras.INSTANCE.all(), EuropeanEras.INSTANCE.all(),
+                BritishEras.INSTANCE.all(), EgyptianEras.INSTANCE.all(), MesoamericanEras.INSTANCE.all())
+                .flatMap(List::stream).toList();
+    }
 
     /**
      * Everything wrong with them, all of it, none if nothing is: a name used twice; a civilization whose parent is not
@@ -35,17 +40,17 @@ public final class Historian {
      * civilization is not listed, that runs outside its civilization's years, or that is part of an era not listed,
      * of another civilization, or whose years it does not lie within.
      */
-    public static List<String> problems() {
+    public List<String> problems() {
         final List<String> problems = new ArrayList<>();
         final Set<String> names = new HashSet<>();
-        for (final Civilization c : CIVILIZATIONS) {
+        for (final Civilization c : civilizations()) {
             if (!names.add("civilization " + c.name())) {
                 problems.add("two civilizations called " + c.name());
             }
             if (c == Civilization.ROOT) {
                 continue;
             }
-            if (!CIVILIZATIONS.contains(c.parent())) {
+            if (!civilizations().contains(c.parent())) {
                 problems.add(c.name() + ": its parent " + c.parent().name() + " is not listed");
             } else if (lineage(c).getLast() != Civilization.ROOT) {
                 problems.add(c.name() + ": its lineage does not reach the root");
@@ -57,7 +62,7 @@ public final class Historian {
                 problems.add(c.name() + ": begins before " + c.parent().name() + " did");
             }
         }
-        for (final Era<?> e : ERAS) {
+        for (final Era<?> e : eras()) {
             final Civilization c = e.civilization();
             if (!names.add("era " + c.name() + " " + e.name())) {
                 problems.add("two eras of " + c.name() + " called " + e.name());
@@ -65,14 +70,14 @@ public final class Historian {
             if (e.to().isBefore(e.from())) {
                 problems.add(e.name() + ": ends before it begins");
             }
-            if (!CIVILIZATIONS.contains(c)) {
+            if (!civilizations().contains(c)) {
                 problems.add(e.name() + ": its civilization " + c.name() + " is not listed");
             } else if (e.from().isBefore(c.from()) || e.to().isAfter(c.to())) {
                 problems.add(e.name() + ": runs outside " + c.name() + "'s years");
             }
             final Era<?> within = e.within();
             if (within != null) {
-                if (!ERAS.contains(within)) {
+                if (!eras().contains(within)) {
                     problems.add(e.name() + ": part of " + within.name() + ", which is not listed");
                 } else if (!within.civilization().equals(c)) {
                     problems.add(e.name() + ": part of " + within.name() + ", another civilization's");
@@ -85,10 +90,10 @@ public final class Historian {
     }
 
     /** {@code c} and what it grew from, in turn, to the root. */
-    public static List<Civilization> lineage(final Civilization c) {
+    public List<Civilization> lineage(final Civilization c) {
         final List<Civilization> lineage = new ArrayList<>(List.of(c));
         Civilization at = c;
-        while (at != Civilization.ROOT && lineage.size() <= CIVILIZATIONS.size()) {
+        while (at != Civilization.ROOT && lineage.size() <= civilizations().size()) {
             at = at.parent();
             lineage.add(at);
         }
@@ -96,21 +101,21 @@ public final class Historian {
     }
 
     /** The eras open to {@code c}: its own, then each of its ancestors' in turn, the root's (everyone's) last. */
-    public static List<Era<?>> erasOf(final Civilization c) {
+    public List<Era<?>> erasOf(final Civilization c) {
         final List<Era<?>> eras = new ArrayList<>();
         for (final Civilization at : lineage(c)) {
-            ERAS.stream().filter(e -> e.civilization().equals(at)).forEach(eras::add);
+            eras().stream().filter(e -> e.civilization().equals(at)).forEach(eras::add);
         }
         return eras;
     }
 
     /** The eras running in {@code year}, every civilization's. */
-    public static List<Era<?>> at(final Year year) {
-        return ERAS.stream().filter(e -> e.spans(year)).toList();
+    public List<Era<?>> at(final Year year) {
+        return eras().stream().filter(e -> e.spans(year)).toList();
     }
 
     /** The eras of other civilizations running at some time in {@code era}'s years: its contemporaries. */
-    public static List<Era<?>> contemporaries(final Era<?> era) {
-        return ERAS.stream().filter(e -> !e.civilization().equals(era.civilization()) && e.overlaps(era)).toList();
+    public List<Era<?>> contemporaries(final Era<?> era) {
+        return eras().stream().filter(e -> !e.civilization().equals(era.civilization()) && e.overlaps(era)).toList();
     }
 }

@@ -21,12 +21,12 @@ public final class Uses {
     }
 
     /** The tree, read once from its leaves. */
-    public static final Taxonomy TREE = Taxonomy.of("uses", new Use(), List.of(new Homes(), new Penthouses(),
+    public static final Taxonomy TREE = new Taxonomy("uses", new Use(), List.of(new Homes(), new Penthouses(),
             new ServicedHomes(), new Offices(), new CoWorking(), new Studios(), new MedicalSuites(), new Shops(),
             new Market(), new Banking(), new HotelRooms(), new Restaurant(), new Bar(), new Club(), new Gym(),
             new Pool(), new Garden(), new Observation(), new Gallery(), new Auditorium(), new EventSpace(),
             new Courts(), new Worship(), new Plant(), new Parking(), new Technical(), new Storage(), new Lobby(),
-            new SkyLobby(), new Crossing(), new Passage(), new Watch()), Meanings.beside(Uses.class));
+            new SkyLobby(), new Crossing(), new Passage(), new Watch()), Meanings.INSTANCE.beside(Uses.class));
 
     /** The root. What a storey or a space is for. */
     public record Use() implements L0 {

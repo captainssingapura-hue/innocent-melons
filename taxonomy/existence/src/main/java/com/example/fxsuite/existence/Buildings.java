@@ -19,11 +19,11 @@ public final class Buildings {
     }
 
     /** The tree, read once from its leaves. */
-    public static final Taxonomy TREE = Taxonomy.of("buildings", new Building(), List.of(new House(), new Farmhouse(),
+    public static final Taxonomy TREE = new Taxonomy("buildings", new Building(), List.of(new House(), new Farmhouse(),
             new CourtyardHouse(), new HomesTower(), new ShopHouse(), new WineHouse(), new TeaHouse(), new Stall(),
             new Warehouse(), new FestiveGateway(), new OfficeTower(), new HotelTower(), new MixedTower(), new Temple(),
             new Church(), new Pavilion(), new Courthouse(), new Bridge(), new Quay(), new GateTower(),
-            new CityWall()), Meanings.beside(Buildings.class));
+            new CityWall()), Meanings.INSTANCE.beside(Buildings.class));
 
     /** The root. A thing built to stand: for people to be in, or to carry, bar or mark. */
     public record Building() implements L0 {

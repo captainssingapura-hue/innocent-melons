@@ -126,10 +126,10 @@ public final class Atlas<C extends Civilization, E extends Era<? super C>> {
     public List<String> problems() {
         final List<String> problems = new ArrayList<>();
         if (!era.spans(year)) {
-            problems.add(name + ": " + Years.said(year) + " is not in the " + era.name());
+            problems.add(name + ": " + Years.INSTANCE.said(year) + " is not in the " + era.name());
         }
         if (!civilization.during(year)) {
-            problems.add(name + ": " + civilization.name() + " was not there in " + Years.said(year));
+            problems.add(name + ": " + civilization.name() + " was not there in " + Years.INSTANCE.said(year));
         }
         final Set<String> names = new HashSet<>();
         for (final Fixture f : fixtures) {
@@ -140,10 +140,11 @@ public final class Atlas<C extends Civilization, E extends Era<? super C>> {
                 problems.add(f.name() + ": " + f.thing().title() + " is no kind of building");
             }
             if (f.era().from().isAfter(year)) {
-                problems.add(f.name() + ": the " + f.era().name() + " had not begun by " + Years.said(year));
+                problems.add(f.name() + ": the " + f.era().name() + " had not begun by " + Years.INSTANCE.said(year));
             }
             if (f.civilization().from().isAfter(year)) {
-                problems.add(f.name() + ": " + f.civilization().name() + " was not there by " + Years.said(year));
+                problems.add(f.name() + ": " + f.civilization().name() + " was not there by "
+                        + Years.INSTANCE.said(year));
             }
             f.structure().problems().forEach(p -> problems.add(f.name() + ": " + p));
         }

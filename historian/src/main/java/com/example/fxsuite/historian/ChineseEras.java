@@ -1,5 +1,6 @@
 package com.example.fxsuite.historian;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.time.Year;
 import java.util.List;
 
@@ -7,23 +8,24 @@ import java.util.List;
  * The eras of the Chinese, by their dynasties. Their years as historians commonly give them; each era a record, its
  * years fixed in its class.
  */
-public final class ChineseEras {
+public record ChineseEras() implements StatelessFunctionalObject {
 
-    private ChineseEras() {
-    }
+    public static final ChineseEras INSTANCE = new ChineseEras();
 
     /** All of them, oldest first. */
-    public static final List<Era<?>> ALL = List.of(new Shang(), new Zhou(), new Qin(), new Han(), new SixDynasties(),
-            new Sui(), new Tang(), new FiveDynasties(), new Song(), new NorthernSong(), new SouthernSong(), new Yuan(),
-            new Ming(), new Qing(), new Republic());
+    public List<Era<?>> all() {
+        return List.of(new Shang(), new Zhou(), new Qin(), new Han(), new SixDynasties(), new Sui(), new Tang(),
+                new FiveDynasties(), new Song(), new NorthernSong(), new SouthernSong(), new Yuan(), new Ming(),
+                new Qing(), new Republic());
+    }
 
     /**
      * The Shang: bronze, oracle bones, the first walled capitals.
      */
     public record Shang() implements Era<Chinese> {
         public String name() { return "Shang"; }
-        public Year from() { return Years.bce(1600); }
-        public Year to() { return Years.bce(1046); }
+        public Year from() { return Years.INSTANCE.bce(1600); }
+        public Year to() { return Years.INSTANCE.bce(1046); }
         public Chinese civilization() { return Chinese.IT; }
     }
 
@@ -32,8 +34,8 @@ public final class ChineseEras {
      */
     public record Zhou() implements Era<Chinese> {
         public String name() { return "Zhou"; }
-        public Year from() { return Years.bce(1046); }
-        public Year to() { return Years.bce(256); }
+        public Year from() { return Years.INSTANCE.bce(1046); }
+        public Year to() { return Years.INSTANCE.bce(256); }
         public Chinese civilization() { return Chinese.IT; }
     }
 
@@ -42,8 +44,8 @@ public final class ChineseEras {
      */
     public record Qin() implements Era<Chinese> {
         public String name() { return "Qin"; }
-        public Year from() { return Years.bce(221); }
-        public Year to() { return Years.bce(206); }
+        public Year from() { return Years.INSTANCE.bce(221); }
+        public Year to() { return Years.INSTANCE.bce(206); }
         public Chinese civilization() { return Chinese.IT; }
     }
 
@@ -52,8 +54,8 @@ public final class ChineseEras {
      */
     public record Han() implements Era<Chinese> {
         public String name() { return "Han"; }
-        public Year from() { return Years.bce(206); }
-        public Year to() { return Years.ce(220); }
+        public Year from() { return Years.INSTANCE.bce(206); }
+        public Year to() { return Years.INSTANCE.ce(220); }
         public Chinese civilization() { return Chinese.IT; }
     }
 
@@ -62,8 +64,8 @@ public final class ChineseEras {
      */
     public record SixDynasties() implements Era<Chinese> {
         public String name() { return "Six Dynasties"; }
-        public Year from() { return Years.ce(220); }
-        public Year to() { return Years.ce(589); }
+        public Year from() { return Years.INSTANCE.ce(220); }
+        public Year to() { return Years.INSTANCE.ce(589); }
         public Chinese civilization() { return Chinese.IT; }
     }
 
@@ -72,8 +74,8 @@ public final class ChineseEras {
      */
     public record Sui() implements Era<Chinese> {
         public String name() { return "Sui"; }
-        public Year from() { return Years.ce(581); }
-        public Year to() { return Years.ce(618); }
+        public Year from() { return Years.INSTANCE.ce(581); }
+        public Year to() { return Years.INSTANCE.ce(618); }
         public Chinese civilization() { return Chinese.IT; }
     }
 
@@ -82,8 +84,8 @@ public final class ChineseEras {
      */
     public record Tang() implements Era<Chinese> {
         public String name() { return "Tang"; }
-        public Year from() { return Years.ce(618); }
-        public Year to() { return Years.ce(907); }
+        public Year from() { return Years.INSTANCE.ce(618); }
+        public Year to() { return Years.INSTANCE.ce(907); }
         public Chinese civilization() { return Chinese.IT; }
     }
 
@@ -92,8 +94,8 @@ public final class ChineseEras {
      */
     public record FiveDynasties() implements Era<Chinese> {
         public String name() { return "Five Dynasties"; }
-        public Year from() { return Years.ce(907); }
-        public Year to() { return Years.ce(960); }
+        public Year from() { return Years.INSTANCE.ce(907); }
+        public Year to() { return Years.INSTANCE.ce(960); }
         public Chinese civilization() { return Chinese.IT; }
     }
 
@@ -102,8 +104,8 @@ public final class ChineseEras {
      */
     public record Song() implements Era<Chinese> {
         public String name() { return "Song"; }
-        public Year from() { return Years.ce(960); }
-        public Year to() { return Years.ce(1279); }
+        public Year from() { return Years.INSTANCE.ce(960); }
+        public Year to() { return Years.INSTANCE.ce(1279); }
         public Chinese civilization() { return Chinese.IT; }
     }
 
@@ -112,8 +114,8 @@ public final class ChineseEras {
      */
     public record NorthernSong() implements Era<Chinese> {
         public String name() { return "Northern Song"; }
-        public Year from() { return Years.ce(960); }
-        public Year to() { return Years.ce(1127); }
+        public Year from() { return Years.INSTANCE.ce(960); }
+        public Year to() { return Years.INSTANCE.ce(1127); }
         public Chinese civilization() { return Chinese.IT; }
         public Era<?> within() { return new Song(); }
     }
@@ -123,8 +125,8 @@ public final class ChineseEras {
      */
     public record SouthernSong() implements Era<Chinese> {
         public String name() { return "Southern Song"; }
-        public Year from() { return Years.ce(1127); }
-        public Year to() { return Years.ce(1279); }
+        public Year from() { return Years.INSTANCE.ce(1127); }
+        public Year to() { return Years.INSTANCE.ce(1279); }
         public Chinese civilization() { return Chinese.IT; }
         public Era<?> within() { return new Song(); }
     }
@@ -134,8 +136,8 @@ public final class ChineseEras {
      */
     public record Yuan() implements Era<Chinese> {
         public String name() { return "Yuan"; }
-        public Year from() { return Years.ce(1271); }
-        public Year to() { return Years.ce(1368); }
+        public Year from() { return Years.INSTANCE.ce(1271); }
+        public Year to() { return Years.INSTANCE.ce(1368); }
         public Chinese civilization() { return Chinese.IT; }
     }
 
@@ -144,8 +146,8 @@ public final class ChineseEras {
      */
     public record Ming() implements Era<Chinese> {
         public String name() { return "Ming"; }
-        public Year from() { return Years.ce(1368); }
-        public Year to() { return Years.ce(1644); }
+        public Year from() { return Years.INSTANCE.ce(1368); }
+        public Year to() { return Years.INSTANCE.ce(1644); }
         public Chinese civilization() { return Chinese.IT; }
     }
 
@@ -154,8 +156,8 @@ public final class ChineseEras {
      */
     public record Qing() implements Era<Chinese> {
         public String name() { return "Qing"; }
-        public Year from() { return Years.ce(1644); }
-        public Year to() { return Years.ce(1912); }
+        public Year from() { return Years.INSTANCE.ce(1644); }
+        public Year to() { return Years.INSTANCE.ce(1912); }
         public Chinese civilization() { return Chinese.IT; }
     }
 
@@ -164,8 +166,8 @@ public final class ChineseEras {
      */
     public record Republic() implements Era<Chinese> {
         public String name() { return "Republic"; }
-        public Year from() { return Years.ce(1912); }
-        public Year to() { return Years.ce(1949); }
+        public Year from() { return Years.INSTANCE.ce(1912); }
+        public Year to() { return Years.INSTANCE.ce(1949); }
         public Chinese civilization() { return Chinese.IT; }
     }
 }

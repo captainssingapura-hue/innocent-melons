@@ -20,6 +20,6 @@ public record WineHouseSpec<C extends Civilization, E extends Era<? super C>>(in
         implements Framed<Buildings.WineHouse, C, E> {
 
     public WineHouseSpec {
-        Framed.check(bays, bay, depth, roofing);
+        Frames.INSTANCE.check(bays, bay, depth, roofing);
     }
 }

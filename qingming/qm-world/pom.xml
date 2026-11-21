@@ -19,6 +19,12 @@
     </description>
 
     <dependencies>
+        <!-- the ontology's markers: what is a value, what is a stateless function -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.lang.ontology</groupId>
+            <artifactId>core</artifactId>
+            <version>0.1.0</version>
+        </dependency>
         <dependency>
             <groupId>com.example.fxsuite.qingming</groupId>
             <artifactId>qm-structures</artifactId>

@@ -9,7 +9,6 @@ import com.example.fxsuite.existence.Spaces;
 import com.example.fxsuite.existence.Through;
 import com.example.fxsuite.existence.Uses;
 import com.example.fxsuite.taxonomy.Leaf;
-import com.example.fxsuite.taxonomy.Taxonomy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -100,10 +99,10 @@ public record Structure(List<Part> parts, List<Volume> shape, List<Room> rooms, 
                 problems.add(room.use().title() + " is no use");
             }
             final long ways = waysIn.stream().filter(w -> into(w, room)).count();
-            if (Taxonomy.answer(room.use(), Occupied.class).isPresent() && !reached.contains(room)) {
+            if (room.use().answer(Occupied.class).isPresent() && !reached.contains(room)) {
                 problems.add(what + ": people spend their time there, and there is no way in");
             }
-            if (Taxonomy.answer(room.use(), Through.class).isPresent() && ways < 2) {
+            if (room.use().answer(Through.class).isPresent() && ways < 2) {
                 problems.add(what + ": gone through, and it has " + ways + " of its two ends");
             }
         }
@@ -133,7 +132,7 @@ public record Structure(List<Part> parts, List<Volume> shape, List<Room> rooms, 
     }
 
     /** Whether {@code way} leads into {@code room}: at its floor's height, inside its outline or at its edge. */
-    private static boolean into(final WayIn way, final Room room) {
+    private boolean into(final WayIn way, final Room room) {
         if (Math.abs(way.level() - room.level()) > NEAR) {
             return false;
         }

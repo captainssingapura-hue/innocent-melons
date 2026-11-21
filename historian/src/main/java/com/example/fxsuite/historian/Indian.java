@@ -21,11 +21,11 @@ public interface Indian extends Civilization {
         }
 
         public Year from() {
-            return Years.bce(3300);
+            return Years.INSTANCE.bce(3300);
         }
 
         public Year to() {
-            return Years.ONGOING;
+            return Years.INSTANCE.ongoing();
         }
 
         public Civilization parent() {

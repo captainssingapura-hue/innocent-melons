@@ -19,10 +19,10 @@ public final class Spaces {
     }
 
     /** The tree, read once from its leaves. */
-    public static final Taxonomy TREE = Taxonomy.of("spaces", new Space(), List.of(new Room(), new Hall(),
+    public static final Taxonomy TREE = new Taxonomy("spaces", new Space(), List.of(new Room(), new Hall(),
             new ShopFloor(), new OfficeFloor(), new Unit(), new Courtyard(), new Terrace(), new Deck(), new Grounds(),
             new CoveredWay(), new Entrance(), new Stair(), new LiftLobby(), new Corridor(), new Gateway(), new Ramp(),
-            new Core(), new Shaft(), new PlantRoom(), new Washroom()), Meanings.beside(Spaces.class));
+            new Core(), new Shaft(), new PlantRoom(), new Washroom()), Meanings.INSTANCE.beside(Spaces.class));
 
     /** The root. A part of a building one can be in. */
     public record Space() implements L0 {

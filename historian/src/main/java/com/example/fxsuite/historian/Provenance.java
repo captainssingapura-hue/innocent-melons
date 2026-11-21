@@ -18,7 +18,7 @@ public record Provenance<C extends Civilization, E extends Era<? super C>>(C civ
         }
         if (civilization.to().isBefore(era.from()) || era.to().isBefore(civilization.from())) {
             throw new IllegalArgumentException(civilization.name() + " was not there in the " + era.name() + " ("
-                    + Years.said(era.from()) + " to " + Years.said(era.to()) + ")");
+                    + Years.INSTANCE.said(era.from()) + " to " + Years.INSTANCE.said(era.to()) + ")");
         }
     }
 }

@@ -42,7 +42,7 @@ class SongBuildingTest {
         assertEquals(2, BRIDGE.solids(new Elements.Abutment()).size());
         assertEquals(2 * 23 + 2 * 22 * 3, BRIDGE.solids(new Elements.Railing()).size(), "23 posts a side, their rails");
         assertEquals(4 * 3, BRIDGE.solids(new Elements.Pole()).size(), "four poles, a cross-bar of two on each");
-        final double soffit = SongWovenArch.deck(RAINBOW, 0) - SongWovenArch.BOARD - RAINBOW.log() - WATER;
+        final double soffit = new SongWovenArch().deck(RAINBOW, 0) - SongWovenArch.BOARD - RAINBOW.log() - WATER;
         assertTrue(soffit > 480 && soffit < 560, "its arch's crown over the water: " + soffit);
     }
 
@@ -50,13 +50,13 @@ class SongBuildingTest {
     void theWovenArchWalkedUpAndOverTheRiversPassageOpenUnderIt() {
         final Volume deck = BRIDGE.shape().getFirst();
         assertEquals(RAINBOW.crown(), deck.topAt(0, 0, 20), 5, "its crown walked on");
-        assertEquals(SongWovenArch.deck(RAINBOW, 600), deck.topAt(0, 600, 20), 30, "its slope walked up");
+        assertEquals(new SongWovenArch().deck(RAINBOW, 600), deck.topAt(0, 600, 20), 30, "its slope walked up");
         assertTrue(deck.topAt(0, 0, 20, WATER + 100) < WATER, "the passage's floor under the water");
         assertTrue(deck.undersideAt(0, 0, 20, WATER + 100) > WATER + 400, "4 m clear over the water");
         double steepest = 0;
         for (double z = -RAINBOW.landing(); z < RAINBOW.landing(); z += 10) {
-            steepest = Math.max(steepest, Math.abs(SongWovenArch.deck(RAINBOW, z + 10) - SongWovenArch.deck(RAINBOW, z))
-                    / 10);
+            final SongWovenArch arch = new SongWovenArch();
+            steepest = Math.max(steepest, Math.abs(arch.deck(RAINBOW, z + 10) - arch.deck(RAINBOW, z)) / 10);
         }
         assertTrue(steepest < Math.tan(Math.toRadians(35)), "its deck's steepest: " + steepest);
     }
@@ -64,20 +64,20 @@ class SongBuildingTest {
     @Test
     void theShophousesFrameAndItsRoofAsTheBookHasThem() {
         assertEquals(List.of(), HOUSE.problems());
-        assertEquals(320, SongFrame.column(SHOP), "no taller than a bay is wide, 3.2 m at most");
-        assertEquals(300, SongFrame.column(new ShopHouseSpec<>(2, 300, 500, Roofing.THATCH)));
+        assertEquals(320, SongFrame.INSTANCE.column(SHOP), "no taller than a bay is wide, 3.2 m at most");
+        assertEquals(300, SongFrame.INSTANCE.column(new ShopHouseSpec<>(2, 300, 500, Roofing.THATCH)));
         // 4 lines of 2 columns, and their posts under the three purlins
         assertEquals(4 * 2 + 4 * 3, HOUSE.solids(new Elements.Column()).size());
         assertEquals(4 + 2 + 3, HOUSE.solids(new Elements.Beam()).size(), "four beams, two lintels, three purlins");
         final double span = SHOP.depth() + 2 * SongFrame.EAVE;
-        final double eave = SongFrame.roof(SHOP, SongFrame.PLATFORM, span / 2);
-        final double ridge = SongFrame.roof(SHOP, SongFrame.PLATFORM, 0);
+        final double eave = SongFrame.INSTANCE.roof(SHOP, SongFrame.PLATFORM, span / 2);
+        final double ridge = SongFrame.INSTANCE.roof(SHOP, SongFrame.PLATFORM, 0);
         assertEquals(span / 4, ridge - eave, 1e-9, "its ridge a quarter of its span over its eaves");
         final double straight = eave + (ridge - eave) / 2;
-        assertEquals((ridge - eave) / 10, straight - SongFrame.roof(SHOP, SongFrame.PLATFORM, span / 4), 1e-9,
+        assertEquals((ridge - eave) / 10, straight - SongFrame.INSTANCE.roof(SHOP, SongFrame.PLATFORM, span / 4), 1e-9,
                 "folded: the middle purlin a tenth of the rise under the straight line");
-        assertEquals(SongFrame.roof(SHOP, SongFrame.PLATFORM, 123), SongFrame.roof(SHOP, SongFrame.PLATFORM, -123),
-                1e-9, "the same front and back");
+        assertEquals(SongFrame.INSTANCE.roof(SHOP, SongFrame.PLATFORM, 123),
+                SongFrame.INSTANCE.roof(SHOP, SongFrame.PLATFORM, -123), 1e-9, "the same front and back");
     }
 
     @Test

@@ -22,11 +22,11 @@ public interface Japanese extends Civilization {
         }
 
         public Year from() {
-            return Years.ce(250);
+            return Years.INSTANCE.ce(250);
         }
 
         public Year to() {
-            return Years.ONGOING;
+            return Years.INSTANCE.ongoing();
         }
 
         public Civilization parent() {

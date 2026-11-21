@@ -22,11 +22,11 @@ public interface Malay extends Civilization {
         }
 
         public Year from() {
-            return Years.ce(200);
+            return Years.INSTANCE.ce(200);
         }
 
         public Year to() {
-            return Years.ONGOING;
+            return Years.INSTANCE.ongoing();
         }
 
         public Civilization parent() {

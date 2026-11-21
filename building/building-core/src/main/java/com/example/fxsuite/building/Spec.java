@@ -1,5 +1,6 @@
 package com.example.fxsuite.building;
 
+import hue.captains.singapura.tao.ontology.Scalar;
 import com.example.fxsuite.historian.Civilization;
 import com.example.fxsuite.historian.Era;
 import com.example.fxsuite.taxonomy.Leaf;
@@ -14,5 +15,5 @@ import com.example.fxsuite.taxonomy.Leaf;
  * @param <C> whose
  * @param <E> when: an era of its civilization's lineage, or everyone's
  */
-public interface Spec<T extends Leaf<?>, C extends Civilization, E extends Era<? super C>> {
+public interface Spec<T extends Leaf<?>, C extends Civilization, E extends Era<? super C>> extends Scalar {
 }

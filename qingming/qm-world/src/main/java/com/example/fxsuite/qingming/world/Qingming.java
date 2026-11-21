@@ -1,5 +1,6 @@
 package com.example.fxsuite.qingming.world;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import com.example.fxsuite.avatar.look.DrawnDemo;
 import com.example.fxsuite.avatar.look.RoadScenery;
 import com.example.fxsuite.avatar.look.Scenery;
@@ -14,7 +15,7 @@ import com.example.fxsuite.qingming.structures.Fixtures;
  * its gate will stand on. Its boats and its people are to come. Known by its name, {@code QINGMING}, its runs kept and
  * replayed.
  */
-public final class Qingming implements DrawnDemo {
+public final class Qingming implements DrawnDemo, StatelessFunctionalObject {
 
     /** The reach. */
     public static final Qingming DEMO = new Qingming();
@@ -26,7 +27,7 @@ public final class Qingming implements DrawnDemo {
      * The reach told to the engine, by the world itself, being a project of its own: the engine's own worlds first,
      * then this demo by its name, to be found and offered. As often as asked; told once.
      */
-    public static void tell() {
+    public void tell() {
         com.example.fxsuite.avatar.Game.tellWorlds();
         com.example.fxsuite.avatar.sim.Demos.register(DEMO);
     }
@@ -60,13 +61,13 @@ public final class Qingming implements DrawnDemo {
 
     @Override
     public void lay(final Course.Layout world) {
-        Reach.lay(world);
-        world.pieces(Fixtures.pieces());
+        Reach.INSTANCE.lay(world);
+        world.pieces(Fixtures.INSTANCE.pieces());
     }
 
     /** Its streets' surfaces, drawn in stretches as they are seen. */
     @Override
     public Scenery scenery() {
-        return RoadScenery.of(Reach.roads());
+        return RoadScenery.of(Reach.INSTANCE.roads());
     }
 }

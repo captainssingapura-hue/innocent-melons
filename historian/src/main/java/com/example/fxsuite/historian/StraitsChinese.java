@@ -22,11 +22,11 @@ public interface StraitsChinese extends Chinese {
         }
 
         public Year from() {
-            return Years.ce(1400);
+            return Years.INSTANCE.ce(1400);
         }
 
         public Year to() {
-            return Years.ONGOING;
+            return Years.INSTANCE.ongoing();
         }
 
         public Civilization parent() {

@@ -1,5 +1,6 @@
 package com.example.fxsuite.historian;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.time.Year;
 import java.util.List;
 
@@ -7,21 +8,22 @@ import java.util.List;
  * The eras of Mesoamerica. Their years as historians commonly give them; each era a record, its years fixed in its
  * class.
  */
-public final class MesoamericanEras {
+public record MesoamericanEras() implements StatelessFunctionalObject {
 
-    private MesoamericanEras() {
-    }
+    public static final MesoamericanEras INSTANCE = new MesoamericanEras();
 
     /** All of them, oldest first. */
-    public static final List<Era<?>> ALL = List.of(new Olmec(), new ClassicMaya(), new Aztec());
+    public List<Era<?>> all() {
+        return List.of(new Olmec(), new ClassicMaya(), new Aztec());
+    }
 
     /**
      * Olmec: the first ceremonial centres, the colossal heads.
      */
     public record Olmec() implements Era<Mesoamerican> {
         public String name() { return "Olmec"; }
-        public Year from() { return Years.bce(1200); }
-        public Year to() { return Years.bce(400); }
+        public Year from() { return Years.INSTANCE.bce(1200); }
+        public Year to() { return Years.INSTANCE.bce(400); }
         public Mesoamerican civilization() { return Mesoamerican.IT; }
     }
 
@@ -30,8 +32,8 @@ public final class MesoamericanEras {
      */
     public record ClassicMaya() implements Era<Mesoamerican> {
         public String name() { return "Classic Maya"; }
-        public Year from() { return Years.ce(250); }
-        public Year to() { return Years.ce(900); }
+        public Year from() { return Years.INSTANCE.ce(250); }
+        public Year to() { return Years.INSTANCE.ce(900); }
         public Mesoamerican civilization() { return Mesoamerican.IT; }
     }
 
@@ -40,8 +42,8 @@ public final class MesoamericanEras {
      */
     public record Aztec() implements Era<Mesoamerican> {
         public String name() { return "Aztec"; }
-        public Year from() { return Years.ce(1325); }
-        public Year to() { return Years.ce(1521); }
+        public Year from() { return Years.INSTANCE.ce(1325); }
+        public Year to() { return Years.INSTANCE.ce(1521); }
         public Mesoamerican civilization() { return Mesoamerican.IT; }
     }
 }

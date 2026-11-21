@@ -1,5 +1,6 @@
 package com.example.fxsuite.qingming.world;
 
+import com.example.fxsuite.avatar.sim.Vec3;
 import com.example.fxsuite.avatar.sim.Course;
 import com.example.fxsuite.avatar.sim.Demos;
 import com.example.fxsuite.avatar.sim.Play;
@@ -19,7 +20,7 @@ class QingmingTest {
 
     @Test
     void toldAndFoundByItsName() {
-        Qingming.tell();
+        Qingming.DEMO.tell();
         assertSame(Qingming.DEMO, Demos.named("QINGMING"));
     }
 
@@ -31,15 +32,17 @@ class QingmingTest {
         assertFalse(course.grid());
         assertEquals(1, course.rivers().size(), "the Bian");
         assertFalse(course.pieces().isEmpty(), "the bridge's deck");
-        assertEquals(Reach.START, course.start());
-        assertTrue(Math.abs(course.land().height(Reach.START.x(), Reach.START.z())) < 100, "the street level");
+        assertEquals(Reach.INSTANCE.start(), course.start());
+        final Vec3 start = Reach.INSTANCE.start();
+        assertTrue(Math.abs(course.land().height(start.x(), start.z())) < 100, "the street level");
     }
 
     @Test
     void itsCruiserAndItsBoxerParkedOnTheStreetEachToRide() {
         Demos.register(Qingming.DEMO);
         final Play play = Play.start(Qingming.DEMO, true);
-        assertEquals(Reach.BIKES.size(), play.lifts().stream().filter(l -> l.craft() instanceof Course.Chassis c
+        assertEquals(Reach.INSTANCE.bikes().size(),
+                play.lifts().stream().filter(l -> l.craft() instanceof Course.Chassis c
                 && c.twoWheels()).count(), "each one to ride");
         assertTrue(play.lifts().stream().anyMatch(l -> l.craft() == Course.CRUISER), "the cruiser");
         assertTrue(play.lifts().stream().anyMatch(l -> l.craft() == Course.BOXER), "the boxer");

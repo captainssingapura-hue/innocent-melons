@@ -42,7 +42,7 @@ class AtlasTest {
             final double a = spec.width() / 2;
             final double d = spec.depth() / 2;
             final List<Structure.Part> parts = List.of(new Structure.Part(new Elements.Floor(),
-                    Timbers.block("floor", Role.BASE, Material.STONE, -a, a, -d, d, 0, 18)));
+                    Timbers.INSTANCE.block("floor", Role.BASE, Material.STONE, -a, a, -d, d, 0, 18)));
             return new Structure(parts, StandIns.prisms(parts.stream().map(Structure.Part::solid).toList()),
                     List.of(new Structure.Room(new Spaces.ShopFloor(), new Uses.Shops(), List.of(new Vec2(-a, -d),
                             new Vec2(a, -d), new Vec2(a, d), new Vec2(-a, d)), 18)),
@@ -51,7 +51,7 @@ class AtlasTest {
     }
 
     private static Atlas<Chinese, ChineseEras.NorthernSong> reach() {
-        return new Atlas<>("the reach", Chinese.IT, new ChineseEras.NorthernSong(), Years.ce(1120));
+        return new Atlas<>("the reach", Chinese.IT, new ChineseEras.NorthernSong(), Years.INSTANCE.ce(1120));
     }
 
     @Test
@@ -84,8 +84,8 @@ class AtlasTest {
                 problems.toString());
         assertTrue(problems.contains("two things called a shop to come"), problems.toString());
         // and a map whose year is not in its era
-        final List<String> wrong = new Atlas<>("wrong", Chinese.IT, new ChineseEras.NorthernSong(), Years.ce(1200))
-                .problems();
+        final List<String> wrong = new Atlas<>("wrong", Chinese.IT, new ChineseEras.NorthernSong(),
+                Years.INSTANCE.ce(1200)).problems();
         assertEquals(List.of("wrong: 1200 is not in the Northern Song"), wrong);
     }
 
@@ -100,7 +100,8 @@ class AtlasTest {
         final List<Vec2> square = List.of(new Vec2(-100, -100), new Vec2(100, -100), new Vec2(100, 100),
                 new Vec2(-100, 100));
         final Structure bridge = new Structure(List.of(new Structure.Part(new Uses.Shops(),
-                Timbers.block("deck", Role.STRUCTURE, Material.TIMBER, -100, 100, -100, 100, 0, 10))), List.of(),
+                Timbers.INSTANCE.block("deck", Role.STRUCTURE, Material.TIMBER, -100, 100, -100, 100, 0, 10))),
+                List.of(),
                 List.of(new Structure.Room(new Spaces.Deck(), new Uses.Crossing(), square, 10),
                         new Structure.Room(new Elements.Roof(), new Spaces.Hall(), square, 10)),
                 List.of(new Structure.WayIn(0, 100, 10)));

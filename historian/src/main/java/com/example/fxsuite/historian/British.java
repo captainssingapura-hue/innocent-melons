@@ -22,11 +22,11 @@ public interface British extends European {
         }
 
         public Year from() {
-            return Years.ce(410);
+            return Years.INSTANCE.ce(410);
         }
 
         public Year to() {
-            return Years.ONGOING;
+            return Years.INSTANCE.ongoing();
         }
 
         public Civilization parent() {

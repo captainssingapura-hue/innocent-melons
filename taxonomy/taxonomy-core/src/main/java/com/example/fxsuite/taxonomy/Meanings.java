@@ -1,5 +1,6 @@
 package com.example.fxsuite.taxonomy;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -17,16 +18,15 @@ import java.util.Map;
  * Rooms let by the night, served from a lobby.
  * </pre>
  */
-public final class Meanings {
+public record Meanings() implements StatelessFunctionalObject {
 
-    private Meanings() {
-    }
+    public static final Meanings INSTANCE = new Meanings();
 
     /**
      * The meanings beside {@code holder}: its resource of its own name, {@code Uses.md} beside {@code Uses}; each
      * section's title and its text. None, if there is no such file: every node is then reported as meaning nothing.
      */
-    public static Map<String, String> beside(final Class<?> holder) {
+    public Map<String, String> beside(final Class<?> holder) {
         try (InputStream in = holder.getResourceAsStream(holder.getSimpleName() + ".md")) {
             return in == null ? Map.of() : read(new String(in.readAllBytes(), StandardCharsets.UTF_8));
         } catch (final IOException e) {
@@ -35,7 +35,7 @@ public final class Meanings {
     }
 
     /** The sections of {@code markdown}, in order: each one's title (after {@code ## }) and its text, trimmed. */
-    public static Map<String, String> read(final String markdown) {
+    public Map<String, String> read(final String markdown) {
         final Map<String, String> meanings = new LinkedHashMap<>();
         String title = null;
         StringBuilder text = new StringBuilder();

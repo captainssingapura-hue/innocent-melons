@@ -1,5 +1,6 @@
 package com.example.fxsuite.historian;
 
+import hue.captains.singapura.tao.ontology.Scalar;
 import java.time.Year;
 
 /**
@@ -9,7 +10,7 @@ import java.time.Year;
  *
  * @param <C> the civilization whose era it is
  */
-public interface Era<C extends Civilization> {
+public interface Era<C extends Civilization> extends Scalar {
 
     /** What it is called. */
     String name();

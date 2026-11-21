@@ -67,9 +67,9 @@ class SongStreetTest {
         assertEquals(List.of(), store.problems());
         final double a = STORE.width() / 2;
         final double d = STORE.depth() / 2;
-        assertTrue(clear(store, SongFrame.door(STORE), d, FLOOR), "its doorway");
+        assertTrue(clear(store, SongFrame.INSTANCE.door(STORE), d, FLOOR), "its doorway");
         assertTrue(clear(store, 0, 0, FLOOR), "inside");
-        assertFalse(clear(store, SongFrame.door(STORE) + 200, d, FLOOR), "its front beside the doorway");
+        assertFalse(clear(store, SongFrame.INSTANCE.door(STORE) + 200, d, FLOOR), "its front beside the doorway");
         assertFalse(clear(store, 0, -d, FLOOR) || clear(store, -a, 0, FLOOR) || clear(store, a, 0, FLOOR));
     }
 
@@ -79,10 +79,10 @@ class SongStreetTest {
         assertEquals(List.of(), wine.problems());
         assertEquals(2, wine.rooms().size());
         assertEquals(wine.rooms(), wine.reached(), "its hall by its front, its rooms by its stair");
-        final double rooms = FLOOR + SongWineHouse.storey(WINE);
+        final double rooms = FLOOR + new SongWineHouse().storey(WINE);
         assertEquals(rooms, wine.rooms().get(1).level(), 1e-9);
         // climbed: each step no higher than is stepped, from the hall's floor to the rooms'
-        final int steps = SongWineHouse.steps(WINE);
+        final int steps = new SongWineHouse().steps(WINE);
         final double foot = -steps * SongWineHouse.TREAD / 2;
         final double z = -WINE.depth() / 2 + SongWineHouse.FROM_BACK + SongWineHouse.STAIR / 2;
         double at = FLOOR;

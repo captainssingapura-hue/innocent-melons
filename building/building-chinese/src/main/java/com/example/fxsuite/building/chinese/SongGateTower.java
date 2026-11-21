@@ -48,6 +48,10 @@ import java.util.List;
 public final class SongGateTower
         implements NorthernSongImpl<Buildings.GateTower, GateTowerSpec<Chinese, ChineseEras.NorthernSong>> {
 
+    private static final SongFrame FRAME = SongFrame.INSTANCE;
+
+    private static final Timbers TIMBERS = Timbers.INSTANCE;
+
     /** Its passage so high to its head, its posts so high and so thick, a frame of them so far from the next. */
     static final double HEAD = 600;
     static final double POST = 420;
@@ -69,7 +73,7 @@ public final class SongGateTower
     }
 
     /** How far {@code s}'s base reaches along from its middle at its top: in from its foot by a quarter its height. */
-    static double top(final GateTowerSpec<?, ?> s) {
+    double top(final GateTowerSpec<?, ?> s) {
         return s.deep() / 2 - s.high() / 4;
     }
 
@@ -77,13 +81,13 @@ public final class SongGateTower
      * Where {@code s}'s way up is: across, its head at the base's end and its foot; along, its open edge at the base's
      * foot and its other, in from the base's top's edge by its landing.
      */
-    static double[] wayUp(final GateTowerSpec<?, ?> s) {
+    double[] wayUp(final GateTowerSpec<?, ?> s) {
         final int side = s.ascent() == GateTowerSpec.Ascent.RIGHT ? 1 : -1;
         return new double[] {side * s.wide() / 2, side * (s.wide() / 2 + SLOW * s.high()), -s.deep() / 2,
             -top(s) + LANDING};
     }
 
-    private static List<Vec2> floor(final double x0, final double x1, final double z0, final double z1) {
+    private List<Vec2> floor(final double x0, final double x1, final double z0, final double z1) {
         return List.of(new Vec2(Math.min(x0, x1), z0), new Vec2(Math.max(x0, x1), z0), new Vec2(Math.max(x0, x1), z1),
                 new Vec2(Math.min(x0, x1), z1));
     }
@@ -101,11 +105,11 @@ public final class SongGateTower
         final double p = s.passage() / 2;
         final double d = s.deep() / 2;
         final Leaf<?> base = new Elements.Platform();
-        parts.add(new Part(base, Timbers.battered("gate base", Role.BASE, Material.BRICK, -a, -p, d, top(s),
+        parts.add(new Part(base, TIMBERS.battered("gate base", Role.BASE, Material.BRICK, -a, -p, d, top(s),
                 -FOOTING, s.high())));
-        parts.add(new Part(base, Timbers.battered("gate base", Role.BASE, Material.BRICK, p, a, d, top(s), -FOOTING,
+        parts.add(new Part(base, TIMBERS.battered("gate base", Role.BASE, Material.BRICK, p, a, d, top(s), -FOOTING,
                 s.high())));
-        parts.add(new Part(base, Timbers.battered("over the passage", Role.BASE, Material.BRICK, -p, p,
+        parts.add(new Part(base, TIMBERS.battered("over the passage", Role.BASE, Material.BRICK, -p, p,
                 d - HEAD / 4, top(s), HEAD, s.high())));
         passage(s, parts);
         // a railing along the base's front and back edges
@@ -115,22 +119,22 @@ public final class SongGateTower
         // its way up: the ramp, its top at the base's at its head; the curb along its open edge
         final double[] up = wayUp(s);
         final boolean right = up[1] > up[0];
-        parts.add(new Part(new Elements.Incline(), Timbers.wedge("way up", Role.BASE, Material.BRICK,
+        parts.add(new Part(new Elements.Incline(), TIMBERS.wedge("way up", Role.BASE, Material.BRICK,
                 Math.min(up[0], up[1]), Math.max(up[0], up[1]), up[2], up[3], -FOOTING, right ? s.high() : 0,
                 right ? 0 : s.high())));
-        parts.add(new Part(new Elements.Parapet(), Timbers.strut("curb", Role.BASE, Material.STONE,
+        parts.add(new Part(new Elements.Parapet(), TIMBERS.strut("curb", Role.BASE, Material.STONE,
                 up[2] + CURB / 2, up[1], CURB / 2, up[0], s.high() + CURB / 2, CURB)));
         // a railing across what of its head is past the base's top's edge, where there is nothing to go on to
         railing(parts, up[0], -d + 10, up[0], -top(s) - 6, s.high());
         final double middle = (up[2] + up[3]) / 2;
         final Structure.WayIn foot = new Structure.WayIn(up[1], middle, 0);
-        SongFrame.storey(parts, tower, s.high(), null);
-        SongFrame.pediments(parts, tower, s.high());
-        SongFrame.roofing(parts, tower, s.high());
+        FRAME.storey(parts, tower, s.high(), null);
+        FRAME.pediments(parts, tower, s.high());
+        FRAME.roofing(parts, tower, s.high());
         return new Structure(parts, shape(s, parts),
                 List.of(new Structure.Room(new Spaces.Gateway(), new Uses.Passage(), List.of(new Vec2(-p, -d),
                                 new Vec2(p, -d), new Vec2(p, d), new Vec2(-p, d)), 0),
-                        new Structure.Room(new Spaces.Hall(), new Uses.Watch(), SongFrame.floor(tower), s.high()),
+                        new Structure.Room(new Spaces.Hall(), new Uses.Watch(), FRAME.floor(tower), s.high()),
                         new Structure.Room(new Spaces.Terrace(), new Uses.Watch(), floor(-a, a, -top(s), top(s)),
                                 s.high()),
                         new Structure.Room(new Spaces.Ramp(), new Uses.Watch(), floor(up[0], up[1], up[2], up[3]), 0)),
@@ -139,24 +143,24 @@ public final class SongGateTower
     }
 
     /** A railing from one place to another, level, square to the base, its foot at {@code y}: posts and three rails. */
-    private static void railing(final List<Part> parts, final double x0, final double z0, final double x1,
+    private void railing(final List<Part> parts, final double x0, final double z0, final double x1,
                                 final double z1, final double y) {
         final Leaf<?> railing = new Elements.Railing();
         final int posts = (int) Math.ceil(Math.hypot(x1 - x0, z1 - z0) / 250);
         for (int k = 0; k <= posts; k++) {
             final double x = x0 + (x1 - x0) * k / posts;
             final double z = z0 + (z1 - z0) * k / posts;
-            parts.add(new Part(railing, Timbers.block("post", Role.FRAME, Material.TIMBER, x - 6, x + 6, z - 6, z + 6,
+            parts.add(new Part(railing, TIMBERS.block("post", Role.FRAME, Material.TIMBER, x - 6, x + 6, z - 6, z + 6,
                     y, y + RAIL + 10)));
         }
         for (final double at : new double[] {12, RAIL / 2, RAIL}) {
-            parts.add(new Part(railing, Timbers.block("rail", Role.FRAME, Material.TIMBER, Math.min(x0, x1) - 4,
+            parts.add(new Part(railing, TIMBERS.block("rail", Role.FRAME, Material.TIMBER, Math.min(x0, x1) - 4,
                     Math.max(x0, x1) + 4, Math.min(z0, z1) - 4, Math.max(z0, z1) + 4, y + at - 8, y + at)));
         }
     }
 
     /** Its passage's timber: a frame every so far along it, two posts, two struts and a beam; its two leaves, open. */
-    private static void passage(final GateTowerSpec<?, ?> s, final List<Part> parts) {
+    private void passage(final GateTowerSpec<?, ?> s, final List<Part> parts) {
         final double p = s.passage() / 2;
         final double d = s.deep() / 2;
         final double in = p - THICK / 2;
@@ -165,17 +169,17 @@ public final class SongGateTower
         for (int k = 0; k <= frames; k++) {
             final double z = -d + 60 + k * (s.deep() - 120) / frames;
             for (final int side : new int[] {-1, 1}) {
-                parts.add(new Part(new Elements.Column(), Timbers.block("passage post", Role.STRUCTURE,
+                parts.add(new Part(new Elements.Column(), TIMBERS.block("passage post", Role.STRUCTURE,
                         Material.TIMBER, side * in - THICK / 2, side * in + THICK / 2, z - THICK / 2, z + THICK / 2, 0,
                         POST)));
-                parts.add(new Part(beam, Timbers.strut("passage strut", Role.STRUCTURE, Material.TIMBER, z, side * in,
+                parts.add(new Part(beam, TIMBERS.strut("passage strut", Role.STRUCTURE, Material.TIMBER, z, side * in,
                         POST, side * p / 2, HEAD - THICK / 2, THICK - 6)));
             }
-            parts.add(new Part(beam, Timbers.strut("passage beam", Role.STRUCTURE, Material.TIMBER, z, -p / 2,
+            parts.add(new Part(beam, TIMBERS.strut("passage beam", Role.STRUCTURE, Material.TIMBER, z, -p / 2,
                     HEAD - THICK / 2, p / 2, HEAD - THICK / 2, THICK - 6)));
         }
         for (final int side : new int[] {-1, 1}) {
-            parts.add(new Part(new Elements.Door(), Timbers.block("gate leaf", Role.DRESSING, Material.LACQUER,
+            parts.add(new Part(new Elements.Door(), TIMBERS.block("gate leaf", Role.DRESSING, Material.LACQUER,
                     side * (p - THICK - 4) - 4, side * (p - THICK - 4) + 4, d - 50 - p, d - 50, 0, POST - 20)));
         }
     }
@@ -186,7 +190,7 @@ public final class SongGateTower
      * walked up; everything else, its passage's posts and leaves, its railings, its tower, each what it covers seen
      * from above.
      */
-    private static List<Volume> shape(final GateTowerSpec<?, ?> s, final List<Part> parts) {
+    private List<Volume> shape(final GateTowerSpec<?, ?> s, final List<Part> parts) {
         final double a = s.wide() / 2;
         final double p = s.passage() / 2;
         final double d = s.deep() / 2;

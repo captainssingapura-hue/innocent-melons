@@ -22,11 +22,11 @@ public interface Chinese extends Civilization {
         }
 
         public Year from() {
-            return Years.bce(1600);
+            return Years.INSTANCE.bce(1600);
         }
 
         public Year to() {
-            return Years.ONGOING;
+            return Years.INSTANCE.ongoing();
         }
 
         public Civilization parent() {

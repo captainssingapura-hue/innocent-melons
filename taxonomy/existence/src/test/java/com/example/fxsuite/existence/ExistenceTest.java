@@ -17,14 +17,15 @@ class ExistenceTest {
 
     @Test
     void nothingWrongWithItsFourTreesEveryNodeWithItsMeaning() {
-        assertEquals(List.of(), Existence.problems());
-        assertEquals(List.of("buildings", "uses", "spaces", "elements"), Existence.TREES.stream().map(Taxonomy::name)
+        assertEquals(List.of(), Existence.INSTANCE.problems());
+        assertEquals(List.of("buildings", "uses", "spaces", "elements"),
+                Existence.INSTANCE.trees().stream().map(Taxonomy::name)
                 .toList());
         assertEquals(21, Buildings.TREE.leaves().size());
         assertEquals(32, Uses.TREE.leaves().size());
         assertEquals(20, Spaces.TREE.leaves().size());
         assertEquals(33, Elements.TREE.leaves().size());
-        assertEquals(138, Existence.TREES.stream().mapToInt(tree -> tree.nodes().size()).sum());
+        assertEquals(138, Existence.INSTANCE.trees().stream().mapToInt(tree -> tree.nodes().size()).sum());
         assertEquals("Rooms let by the night, served from a lobby.", Uses.TREE.meaning(new Uses.HotelRooms()));
     }
 
@@ -33,14 +34,14 @@ class ExistenceTest {
         // what a tower's lifts must serve: the bay's offices, homes and hotel rooms, and all else people stay in
         for (final var use : List.of(new Uses.Offices(), new Uses.Homes(), new Uses.HotelRooms(), new Uses.Restaurant(),
                 new Uses.Garden(), new Uses.Courts())) {
-            assertTrue(Taxonomy.answer(use, Occupied.class).isPresent(), use.title());
+            assertTrue(use.answer(Occupied.class).isPresent(), use.title());
         }
         for (final var use : List.of(new Uses.Plant(), new Uses.Parking(), new Uses.Lobby(), new Uses.Crossing())) {
-            assertFalse(Taxonomy.answer(use, Occupied.class).isPresent(), use.title());
+            assertFalse(use.answer(Occupied.class).isPresent(), use.title());
         }
         assertEquals(List.of(new Uses.Plant(), new Uses.Parking(), new Uses.Technical()),
                 Uses.TREE.leaves().stream().filter(Louvred.class::isInstance).toList());
-        assertEquals(23, Uses.TREE.leaves().stream().filter(use -> Taxonomy.answer(use, Occupied.class).isPresent())
+        assertEquals(23, Uses.TREE.leaves().stream().filter(use -> use.answer(Occupied.class).isPresent())
                 .count());
     }
 
@@ -48,7 +49,7 @@ class ExistenceTest {
     void theKindsTheWorldsHaveBuiltSoFarEachInTheirTree() {
         // the bay's towers; the reach's bridge, and what is to stand in it
         assertEquals(List.of(new Buildings.OfficeTower(), new Buildings.Commerce(), new Buildings.Building()),
-                Taxonomy.lineage(new Buildings.OfficeTower()));
+                new Buildings.OfficeTower().lineage());
         for (final String name : List.of("homes-tower", "hotel-tower", "mixed-tower", "bridge", "shop-house",
                 "wine-house", "festive-gateway", "gate-tower", "city-wall")) {
             assertTrue(Buildings.TREE.named(name).isPresent(), name);
