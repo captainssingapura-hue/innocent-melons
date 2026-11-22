@@ -41,6 +41,8 @@ public final class BodyShopMain {
             case "wardrobe" -> javafx.application.Application.launch(
                     com.example.fxsuite.life.body.wear.WardrobeBench.class, args);
             case "bones" -> javafx.application.Application.launch(BoneBench.class, args);
+            case "head" -> javafx.application.Application.launch(
+                    com.example.fxsuite.life.body.head.HeadBench.class, args);
             case "assembly" -> javafx.application.Application.launch(AssemblyBench.class, args);
             case "muscles" -> javafx.application.Application.launch(MuscleBench.class, args);
             default -> javafx.application.Application.launch(BodyShopBench.class, args);

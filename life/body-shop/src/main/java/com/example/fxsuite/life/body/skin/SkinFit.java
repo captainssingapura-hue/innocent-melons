@@ -51,15 +51,7 @@ public record SkinFit() implements StatelessFunctionalObject {
      */
     public Flesh of(final FatTarget target, final double skin, final int tension, final int base) {
         final Wrap.Shape shape = Wrap.INSTANCE.start(target, STEPS);
-        final V3[] at = shape.at();
-        final Weights[] w = new Weights[at.length];
-        Wrap.INSTANCE.onto(target, shape, at.clone(), w, BACK, FAR);
-        final int[][] next = Around.INSTANCE.neighbours(at.length, shape.triangles());
-        for (int round = 0; round < tension; round++) {
-            taut(at, next, shape.held());
-            settle(target, shape, skin);
-        }
-        final Flesh scan = finer(shape, Spread.INSTANCE.over(w, next, SPREADING), target);
+        final Flesh scan = finer(shape, taut(target, shape, skin, tension), target);
         if (base < 0) {
             return scan;
         }
@@ -69,6 +61,45 @@ public record SkinFit() implements StatelessFunctionalObject {
             points[i] = scan.point(i);
         }
         return scan.reshaped(ScanFit.INSTANCE.fitted(s.times(s.of(shape.cage(), 1), base), STEPS + 1 - base, points));
+    }
+
+    /**
+     * As {@link #of(FatTarget, double, int)}, but not smoothed once more to be drawn: a quarter the points, as many as
+     * the muscles have, for a body drawn as it moves, each point moved afresh every frame.
+     */
+    public Flesh coarse(final FatTarget target, final double skin, final int tension) {
+        final Wrap.Shape shape = Wrap.INSTANCE.start(target, STEPS);
+        final Weights[] w = taut(target, shape, skin, tension);
+        final Sheet sheet = new Sheet();
+        for (int i = 0; i < w.length; i++) {
+            sheet.add(shape.at()[i], w[i]);
+        }
+        final int[] t = shape.triangles();
+        for (int i = 0; i < t.length; i += 3) {
+            sheet.triangle(t[i], t[i + 1], t[i + 2]);
+        }
+        final int[] of = Subdivision.INSTANCE.triangleFaces(shape.level());
+        final Part[] patches = new Part[of.length];
+        for (int i = 0; i < of.length; i++) {
+            patches[i] = shape.parts()[of[i]];
+        }
+        return sheet.flesh(target.bind()).patched(patches);
+    }
+
+    /**
+     * {@code shape}'s points set on what {@code target} finds, then drawn taut {@code tension} times, in place; how
+     * each follows the body, spread along it.
+     */
+    private Weights[] taut(final FatTarget target, final Wrap.Shape shape, final double skin, final int tension) {
+        final V3[] at = shape.at();
+        final Weights[] w = new Weights[at.length];
+        Wrap.INSTANCE.onto(target, shape, at.clone(), w, BACK, FAR);
+        final int[][] next = Around.INSTANCE.neighbours(at.length, shape.triangles());
+        for (int round = 0; round < tension; round++) {
+            taut(at, next, shape.held());
+            settle(target, shape, skin);
+        }
+        return Spread.INSTANCE.over(w, next, SPREADING);
     }
 
     /** Every point moved half way toward its neighbours' middle, as far as it is free. */

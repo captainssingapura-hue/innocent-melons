@@ -4,6 +4,8 @@ import com.example.fxsuite.life.body.V3;
 import com.example.fxsuite.life.body.cage.Subdivision;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
+import java.util.function.UnaryOperator;
+
 /**
  * A smooth surface fitted to a scan of one: a base, a cage's points and faces, moved so that, smoothed so many times
  * ({@link Subdivision}), it passes as near as it may through the scan's points, the scan having the same points and
@@ -22,17 +24,30 @@ public record ScanFit() implements StatelessFunctionalObject {
 
     /** {@code base} fitted so that, smoothed {@code steps} times, it passes through {@code scan}: its points so. */
     public V3[] fitted(final Subdivision.Level base, final int steps, final V3[] scan) {
+        return fitted(base, steps, fine -> scan, ROUNDS);
+    }
+
+    /**
+     * {@code base} fitted, {@code rounds} times, so that, smoothed {@code steps} times, it passes as near as it may
+     * through what {@code onto} finds for its smoothed points as they are each round, one for each, by number: a scan
+     * of its own points, or the nearest points of another surface, found afresh as it moves. Its smoothed points so.
+     */
+    public V3[] fitted(final Subdivision.Level base, final int steps, final UnaryOperator<V3[]> onto,
+                       final int rounds) {
         final Subdivision s = Subdivision.INSTANCE;
         final int[] root = roots(base, steps);
         double[] at = base.points().clone();
-        for (int round = 0; round < ROUNDS; round++) {
+        for (int round = 0; round < rounds; round++) {
             final Subdivision.Level fine = s.times(new Subdivision.Level(at, base.faces(), base.sharp()), steps);
-            at = moved(at, base, fine, scan, root);
+            at = moved(at, base, fine, onto.apply(points(fine)), root);
         }
-        final Subdivision.Level fine = s.times(new Subdivision.Level(at, base.faces(), base.sharp()), steps);
-        final V3[] out = new V3[fine.size()];
+        return points(s.times(new Subdivision.Level(at, base.faces(), base.sharp()), steps));
+    }
+
+    private V3[] points(final Subdivision.Level l) {
+        final V3[] out = new V3[l.size()];
         for (int i = 0; i < out.length; i++) {
-            out[i] = fine.point(i);
+            out[i] = l.point(i);
         }
         return out;
     }

@@ -16,7 +16,8 @@ import java.util.List;
 public final class Field {
 
     /** A shape: how far outside it a point is, near enough; the box round it. */
-    public sealed interface Shape permits Ellipsoid, Cone, Plate, Cylinder, Torus, Plane, Squash, Compound, Moved {
+    public sealed interface Shape permits Ellipsoid, Cone, Plate, Cylinder, Torus, Plane, Squash, Compound, Moved,
+            Sampled {
 
         double at(double x, double y, double z);
 
@@ -325,6 +326,53 @@ public final class Field {
                 d = apply(d, e, e.shape().at(x, y, z));
             }
             return d;
+        }
+    }
+
+    /**
+     * A shape sampled once on a grid {@code cell} apart over its box, grown two cells each way: between the grid's
+     * points, as the eight round a point make it; outside the grid, as its edge is, and as far again as the point is
+     * from it. For a shape costly to find again and again, a skull, say, its surface as true as the grid is fine.
+     */
+    public record Sampled(double[] lo, double cell, int[] n, float[] values, double[] box) implements Shape {
+
+        public static Sampled of(final Shape s, final double cell) {
+            final double[] b = grown(s.box(), 2 * cell);
+            final int[] n = {(int) Math.ceil((b[3] - b[0]) / cell) + 1, (int) Math.ceil((b[4] - b[1]) / cell) + 1,
+                (int) Math.ceil((b[5] - b[2]) / cell) + 1};
+            final float[] v = new float[n[0] * n[1] * n[2]];
+            java.util.stream.IntStream.range(0, n[2]).parallel().forEach(k -> {
+                for (int j = 0; j < n[1]; j++) {
+                    for (int i = 0; i < n[0]; i++) {
+                        v[(k * n[1] + j) * n[0] + i] = (float) s.at(b[0] + i * cell, b[1] + j * cell, b[2] + k * cell);
+                    }
+                }
+            });
+            return new Sampled(new double[] {b[0], b[1], b[2]}, cell, n, v, b);
+        }
+
+        @Override
+        public double at(final double x, final double y, final double z) {
+            final double[] p = {x, y, z};
+            final int[] c = new int[3];
+            final double[] f = new double[3];
+            double beyond = 0;
+            for (int a = 0; a < 3; a++) {
+                final double g = Math.clamp((p[a] - lo[a]) / cell, 0, n[a] - 1.000001);
+                beyond += Math.pow(p[a] - (lo[a] + g * cell), 2);
+                c[a] = (int) g;
+                f[a] = g - c[a];
+            }
+            double d = 0;
+            for (int corner = 0; corner < 8; corner++) {
+                final int i = c[0] + (corner & 1);
+                final int j = c[1] + (corner >> 1 & 1);
+                final int k = c[2] + (corner >> 2 & 1);
+                final double w = ((corner & 1) == 0 ? 1 - f[0] : f[0]) * ((corner >> 1 & 1) == 0 ? 1 - f[1] : f[1])
+                        * ((corner >> 2 & 1) == 0 ? 1 - f[2] : f[2]);
+                d += w * values[(k * n[1] + j) * n[0] + i];
+            }
+            return d + Math.sqrt(beyond);
         }
     }
 

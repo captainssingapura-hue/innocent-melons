@@ -32,7 +32,7 @@ import java.util.Locale;
  * exposed or shelled, moving the same. With the Gatling gun slung from its strap ({@link GatlingHold}), aimed up or
  * down, the only weapon it holds for now.
  *
- * <p>{@code -Dmotion.look} (exposed, shelled, skeleton, muscles), {@code -Dskeleton.detail} (mm,
+ * <p>{@code -Dmotion.look} (exposed, shelled, skeleton, muscles, skin), {@code -Dskeleton.detail} (mm,
  * a skeleton's grid), {@code -Dmotion.deep=true} (its deep muscles too),
  * {@code -Dmotion.move} (walk, quick, parade), {@code -Dmotion.speed} (cm/s), {@code -Dmotion.tour=true},
  * {@code -Dmotion.gatling=true}, {@code -Dmotion.aim} (degrees), {@code -Dmotion.slow} (a share of real time) what
@@ -90,6 +90,7 @@ public final class MotionBench extends Application {
     private final CheckBox forces = new CheckBox("The forces on the gun, as arrows");
     private final CheckBox deep = new CheckBox("Its deep muscles too");
     private final Label muscleSaid = new Label();
+    private final com.example.fxsuite.life.body.skin.Skins skins = new com.example.fxsuite.life.body.skin.Skins();
     private final java.util.Map<String, com.example.fxsuite.life.body.muscle.MuscleBody.Bound> muscleBodies =
             new java.util.concurrent.ConcurrentHashMap<>();
     private final Slider grid = new Slider(2, 16, Double.parseDouble(System.getProperty("skeleton.detail", "8")));
@@ -246,6 +247,9 @@ public final class MotionBench extends Application {
 
     private static Puppet.Kind kind(final String said) {
         final String s = said.toLowerCase(Locale.ROOT);
+        if (s.startsWith("ski")) {
+            return Puppet.Kind.SKIN;
+        }
         if (s.startsWith("sk")) {
             return Puppet.Kind.SKELETON;
         }
@@ -266,6 +270,7 @@ public final class MotionBench extends Application {
         draw(walker.rig(), 0);
         regrid();
         muscled();
+        skinned();
     }
 
     /**
@@ -295,6 +300,28 @@ public final class MotionBench extends Application {
                 }
             });
         }, "muscles").start();
+    }
+
+    /** Its skin found away from the screen, if it is drawn as one, then drawn; kept, to be drawn again at once. */
+    private void skinned() {
+        if (puppet.kind() != Puppet.Kind.SKIN) {
+            return;
+        }
+        final Puppet mine = puppet;
+        final Proportions p = proportions;
+        muscleSaid.setText("finding its skin");
+        new Thread(() -> {
+            final long t0 = System.nanoTime();
+            final com.example.fxsuite.life.body.flesh.Flesh skin = skins.moving(p);
+            final long ms = (System.nanoTime() - t0) / 1_000_000;
+            javafx.application.Platform.runLater(() -> {
+                if (mine == puppet) {
+                    mine.skin(skin);
+                    muscleSaid.setText(String.format(Locale.ROOT, "Skin: %,d points, %,d triangles, found in %,d ms",
+                            skin.size(), skin.triangleCount(), ms));
+                }
+            });
+        }, "skin").start();
     }
 
     /** A skeleton found afresh on the grid asked for, away from the screen, then drawn; how many triangles, said. */

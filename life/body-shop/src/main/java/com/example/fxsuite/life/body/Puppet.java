@@ -1,5 +1,8 @@
 package com.example.fxsuite.life.body;
 
+import com.example.fxsuite.life.body.flesh.Flesh;
+import com.example.fxsuite.life.body.flesh.FleshView;
+import com.example.fxsuite.life.body.skin.Skins;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -15,16 +18,16 @@ import java.util.Map;
  * has it, as a puppet's; an exposed robot's pistons drawn afresh as they slide. A robot exposed or shelled; or a
  * skeleton, the lab's bones part by part ({@link PartBones}), as finely as asked ({@link #detail}), at first as
  * {@code -Dskeleton.detail} says (mm, the big bones' grid; 8 if not); and its muscles over it, if given them
- * ({@link #muscles}). Drawn into a scene whose
- * frame is the body's with each way's sign as {@code signs} has it (the game's turns the body up its down; a bench's,
- * round too).
+ * ({@link #muscles}). Or its skin, one surface moving with it, once given it ({@link #skin}). Drawn into a scene
+ * whose frame is the body's with each way's sign as {@code signs} has it (the game's turns the body up its down;
+ * a bench's, round too).
  */
 public final class Puppet {
 
     /** What it is drawn as. */
     public enum Kind {
         EXPOSED("Robot, exposed"), SHELLED("Robot, shelled"), SKELETON("Skeleton"),
-        MUSCLES("Muscles on the skeleton");
+        MUSCLES("Muscles on the skeleton"), SKIN("Skin");
 
         private final String label;
 
@@ -57,6 +60,8 @@ public final class Puppet {
     private final Group pistons = new Group();
     private final Group muscled = new Group();
     private com.example.fxsuite.life.body.muscle.MusclesView muscles;
+    private final Group skinned = new Group();
+    private FleshView skin;
     private Rig shown;
     private final SkeletonLevels levels = new SkeletonLevels();
     private final Map<Part, Group> bones = new EnumMap<>(Part.class);
@@ -90,7 +95,7 @@ public final class Puppet {
             placed.put(p, a);
             node.getChildren().add(g);
         }
-        node.getChildren().addAll(muscled, pistons);
+        node.getChildren().addAll(muscled, skinned, pistons);
     }
 
     public Kind kind() {
@@ -152,6 +157,12 @@ public final class Puppet {
         muscled.getChildren().setAll(muscles == null ? List.of() : List.of(muscles.node()));
     }
 
+    /** Its skin, {@code flesh}, found away from the screen ({@link Skins}), drawn from now on. */
+    public void skin(final Flesh flesh) {
+        skin = new FleshView(flesh, Skins.COLOUR, signs, shown != null ? shown : rest);
+        skinned.getChildren().setAll(skin.node());
+    }
+
     /** Whether its pistons are drawn, if it has any. */
     public void pistons(final boolean drawn) {
         drawPistons = drawn;
@@ -163,6 +174,9 @@ public final class Puppet {
         shown = rig;
         if (muscles != null) {
             muscles.show(rig);
+        }
+        if (skin != null) {
+            skin.show(rig);
         }
         for (final Part p : Part.values()) {
             final Rig.Frame f = rig.frame(p);
@@ -203,7 +217,7 @@ public final class Puppet {
     /** {@code p}'s pieces in its own frame, as on the right side, as its kind draws it. */
     private List<Surface> local(final Part p) {
         return switch (kind) {
-            case SKELETON, MUSCLES -> List.of();
+            case SKELETON, MUSCLES, SKIN -> List.of();
             case SHELLED -> Skin.shell(p, TWIST, design);
             case EXPOSED -> {
                 if (RobotFrame.designed(p)) {

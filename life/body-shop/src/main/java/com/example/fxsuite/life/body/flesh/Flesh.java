@@ -211,25 +211,34 @@ public final class Flesh {
             moves[q] = dual(turns[q], shifts[q]);
             twists[q] = forearm(parts.get(q)) ? rig.twisting(parts.get(q)) : null;
         }
+        // each point on its own, so all of them at once, as many at a time as there are threads
+        IntStream.range(0, size()).parallel()
+                .forEach(i -> moved(blended(i, moves, turns, shifts, twists), i, at, out));
+    }
+
+    /**
+     * Point {@code i}'s parts' moves ({@code moves}, or, a forearm's, {@code turns} and {@code shifts} twisted by
+     * {@code twists}) blended by its shares, as one dual quaternion: each turned the way of the first, so as not to go
+     * the long way round.
+     */
+    private double[] blended(final int i, final double[][] moves, final Rot[] turns, final V3[] shifts,
+                             final Rig.Twisting[] twists) {
         final double[] b = new double[8];
-        for (int i = 0; i < size(); i++) {
-            java.util.Arrays.fill(b, 0);
-            double[] first = null;
-            for (int k = 0; k < PARTS; k++) {
-                final int q = which[PARTS * i + k];
-                if (q >= 0) {
-                    final double[] m = twists[q] != null && along[i] > 0
-                            ? twisted(turns[q], shifts[q], twists[q], along[i]) : moves[q];
-                    first = first == null ? m : first;
-                    final double dot = m[0] * first[0] + m[1] * first[1] + m[2] * first[2] + m[3] * first[3];
-                    final double w = shares[PARTS * i + k] * (dot < 0 ? -1 : 1);
-                    for (int c = 0; c < 8; c++) {
-                        b[c] += w * m[c];
-                    }
+        double[] first = null;
+        for (int k = 0; k < PARTS; k++) {
+            final int q = which[PARTS * i + k];
+            if (q >= 0) {
+                final double[] m = twists[q] != null && along[i] > 0
+                        ? twisted(turns[q], shifts[q], twists[q], along[i]) : moves[q];
+                first = first == null ? m : first;
+                final double dot = m[0] * first[0] + m[1] * first[1] + m[2] * first[2] + m[3] * first[3];
+                final double w = shares[PARTS * i + k] * (dot < 0 ? -1 : 1);
+                for (int c = 0; c < 8; c++) {
+                    b[c] += w * m[c];
                 }
             }
-            moved(b, i, at, out);
         }
+        return b;
     }
 
     /**
