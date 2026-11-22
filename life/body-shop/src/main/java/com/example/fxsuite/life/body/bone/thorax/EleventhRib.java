@@ -73,6 +73,6 @@ public record EleventhRib() implements Bone {
 
     @Override
     public void draw(final Sketch s, final double female) {
-        Ribs.INSTANCE.draw(s, Rib.ELEVENTH, 1 - 0.05 * female, 1 - 0.12 * female);
+        Ribs.INSTANCE.draw(s, Rib.ELEVENTH, female, 1 - 0.12 * female);
     }
 }

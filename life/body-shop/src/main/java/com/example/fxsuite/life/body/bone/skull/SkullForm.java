@@ -2,6 +2,7 @@ package com.example.fxsuite.life.body.bone.skull;
 
 import com.example.fxsuite.life.body.Field;
 import com.example.fxsuite.life.body.V3;
+import com.example.fxsuite.life.body.bone.Bend;
 import com.example.fxsuite.life.body.head.SkullUnder;
 
 import java.io.IOException;
@@ -11,7 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * The skull and its jaw as the body has them ({@link SkullBend}): as men's are measured ({@link SkullLandmarks}); or,
+ * The skull and its jaw as the body has them ({@link Bend}): as men's are measured ({@link SkullLandmarks}); or,
  * a clay head put on the body from the reference head {@code -Dhead.reference} names, fitted under it, its bone as far
  * under its skin as men's is ({@link SkullUnder}), the measures shaping the rest. What is drawn on the head, and what
  * is held on it, bent alike, so that a muscle held on the skull stays on it. Found once.
@@ -19,7 +20,7 @@ import java.util.Optional;
 public enum SkullForm {
     INSTANCE;
 
-    private final SkullBend bend;
+    private final Bend bend;
     private final Optional<SkullUnder.Fit> under;
 
     SkullForm() {

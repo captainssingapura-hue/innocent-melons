@@ -1,4 +1,4 @@
-package com.example.fxsuite.life.body.bone.skull;
+package com.example.fxsuite.life.body.bone;
 
 import com.example.fxsuite.life.body.Field;
 import com.example.fxsuite.life.body.V3;
@@ -8,25 +8,24 @@ import com.example.fxsuite.life.body.Warped;
 import java.util.List;
 
 /**
- * The skull and its jaw as drawn bent smoothly ({@link SkullBending}) through their landmarks to where they are to be,
- * each on the left as its fellow on the right; held where they are, the landmarks held and the joint the head nods on,
- * the jaw's condyles, the inner ears' windows. {@code forward} taking a point as drawn to where it is bent to,
- * {@code back} the other way.
+ * Bones as drawn bent smoothly ({@link com.example.fxsuite.life.body.ThinPlate}) through points to where they are to
+ * be: the skull through its landmarks ({@code SkullBending}), the chest where its ribs are measured to reach
+ * ({@code ThoraxForm}). {@code forward} taking a point as drawn to where it is bent to, {@code back} the other way.
  *
  * @param forward from as drawn to as bent
  * @param back    from as bent to as drawn
  */
-public record SkullBend(Warp forward, Warp back) {
+public record Bend(Warp forward, Warp back) {
 
     /** How much further round a bent shape its box is taken, cm, the bending not quite straight between corners. */
     private static final double ROOM = 1;
 
-    /** Where {@code p}, as drawn in the head's frame, is bent to. */
+    /** Where {@code p}, as drawn, is bent to. */
     public V3 apply(final V3 p) {
         return forward.apply(p);
     }
 
-    /** {@code drawn}, a shape drawn in the head's frame, bent. */
+    /** {@code drawn}, a shape as drawn, bent. */
     public Field.Compound shaped(final Field.Compound drawn) {
         final double[] b = drawn.box();
         final double[] box = {1e9, 1e9, 1e9, -1e9, -1e9, -1e9};

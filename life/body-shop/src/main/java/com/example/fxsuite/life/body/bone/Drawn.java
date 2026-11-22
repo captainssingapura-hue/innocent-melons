@@ -7,13 +7,17 @@ import com.example.fxsuite.life.body.Proportions;
 import com.example.fxsuite.life.body.Rig;
 import com.example.fxsuite.life.body.Sketch;
 import com.example.fxsuite.life.body.V3;
+import com.example.fxsuite.life.body.bone.arm.Clavicle;
 import com.example.fxsuite.life.body.bone.skull.SkullForm;
+import com.example.fxsuite.life.body.bone.thorax.Sternum;
+import com.example.fxsuite.life.body.bone.thorax.ThoraxForm;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 /**
  * A bone's shape as it draws itself: in its part's frame as on the right side, a bone drawn in the body's frame taken
  * there by where its part stands at rest, the papers' figure's, hanging free. A bone of the head bent as the skull is
- * to be as men's are measured ({@link SkullForm}).
+ * to be as men's are measured ({@link SkullForm}); the sternum and the clavicles moved as the chest is, its ribs
+ * measured ({@link ThoraxForm}).
  */
 public record Drawn() implements StatelessFunctionalObject {
 
@@ -25,6 +29,14 @@ public record Drawn() implements StatelessFunctionalObject {
                 ? new Rig(Proportions.DRAWN, Pose.REST, false).frame(bone.part()).at() : V3.ZERO;
         final Sketch s = new Sketch(origin, 1);
         bone.draw(s, female);
-        return bone.part() == Part.HEAD ? SkullForm.INSTANCE.shaped(s.done()) : s.done();
+        if (bone.part() == Part.HEAD) {
+            return SkullForm.INSTANCE.shaped(s.done());
+        }
+        return moved(bone) ? ThoraxForm.INSTANCE.shaped(s.done(), origin) : s.done();
+    }
+
+    /** Whether {@code bone} is moved with the chest as its ribs are measured: the sternum, a clavicle. */
+    private boolean moved(final Bone bone) {
+        return bone == Sternum.INSTANCE || bone == Clavicle.INSTANCE;
     }
 }

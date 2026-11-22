@@ -5,6 +5,7 @@ import com.example.fxsuite.life.body.Rot;
 import com.example.fxsuite.life.body.V3;
 import com.example.fxsuite.life.body.bone.hand.HandContacts;
 import com.example.fxsuite.life.body.bone.spine.Discs;
+import com.example.fxsuite.life.body.bone.thorax.ThoraxForm;
 import com.example.fxsuite.life.body.joint.Axes;
 import com.example.fxsuite.life.body.joint.Place;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
@@ -36,9 +37,9 @@ public record ArmContacts() implements StatelessFunctionalObject {
     /** How far down the twist's axis from the capitulum the radius's head turns in the ulna's notch. */
     private static final double NOTCH = 1.4;
 
-    /** The clavicle on the sternum: along it, out, raised up. */
+    /** The clavicle on the sternum, moved with it as the chest is ({@link ThoraxForm}): along it, out, raised up. */
     public Place sternoclavicular(final Part on) {
-        return Discs.INSTANCE.inPart(new Place(STERNAL, clavicle()), on);
+        return Discs.INSTANCE.inPart(new Place(ThoraxForm.INSTANCE.apply(STERNAL), clavicle()), on);
     }
 
     /** The clavicle on the acromion, along it the same. */
@@ -89,7 +90,7 @@ public record ArmContacts() implements StatelessFunctionalObject {
 
     /** The clavicle's frame: along it, out from the sternum, raised up. */
     private Rot clavicle() {
-        return Axes.INSTANCE.flexing(ACROMIAL.minus(STERNAL), V3.Y);
+        return Axes.INSTANCE.flexing(ACROMIAL.minus(ThoraxForm.INSTANCE.apply(STERNAL)), V3.Y);
     }
 
     /**
