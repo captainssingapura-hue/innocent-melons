@@ -48,7 +48,7 @@ public record Cranium() implements StatelessFunctionalObject {
         for (final int side : new int[] {1, -1}) {
             s.egg(v(side * 1.3, 0.05, -0.6), 0.55, 0.45, 1.05, 0, side * 20, 0);
         }
-        s.ball(v(0, 3.6, -8.9), 0.55 * brow);
+        s.ball(v(0, 3.6, -8.55), 0.55 * brow);
         s.blend(1.4).egg(v(0, 2.6, 6.6), 4.2, 3.0, 3.3);
     }
 

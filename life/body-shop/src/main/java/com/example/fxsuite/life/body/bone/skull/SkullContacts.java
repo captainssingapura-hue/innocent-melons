@@ -29,9 +29,9 @@ public record SkullContacts() implements StatelessFunctionalObject {
     /** The jaw's condyle in its hollow. */
     public static final V3 CONDYLE = new V3(5.15, 1.05, -0.15);
 
-    /** Where two bones meet, midway between their middles {@code a} and {@code b}. */
+    /** Where two bones meet, midway between their middles {@code a} and {@code b}, as the skull is bent. */
     public Place between(final V3 a, final V3 b) {
-        return new Place(a.plus(b).times(0.5), Axes.UPRIGHT);
+        return new Place(SkullForm.INSTANCE.apply(a.plus(b).times(0.5)), Axes.UPRIGHT);
     }
 
     /** Where the head nods on the atlas: the head's own frame. */
@@ -41,6 +41,6 @@ public record SkullContacts() implements StatelessFunctionalObject {
 
     /** The jaw in its hollow: upright, so that its turn about x, both sides alike, opens it. */
     public Place jaw() {
-        return new Place(CONDYLE, Axes.UPRIGHT);
+        return new Place(SkullForm.INSTANCE.apply(CONDYLE), Axes.UPRIGHT);
     }
 }

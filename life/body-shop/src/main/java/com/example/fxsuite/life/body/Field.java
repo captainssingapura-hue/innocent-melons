@@ -17,7 +17,7 @@ public final class Field {
 
     /** A shape: how far outside it a point is, near enough; the box round it. */
     public sealed interface Shape permits Ellipsoid, Cone, Plate, Cylinder, Torus, Plane, Squash, Compound, Moved,
-            Graft, Reshaped, Sampled {
+            Graft, Reshaped, Warped, Sampled {
 
         double at(double x, double y, double z);
 
