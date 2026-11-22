@@ -41,6 +41,12 @@ public record Shades() {
             case Materials.Flame flame -> Tone.FLAME.surface();
             case Materials.Rind rind -> new Watermelon().rind();
             case Materials.Water water -> new StillWater().surface();
+            case Materials.Turf turf -> Grounds.TURF.surface();
+            case Materials.Topsoil soil -> Grounds.TOPSOIL.surface();
+            case Materials.Sand sand -> Grounds.SAND.surface();
+            case Materials.Gravel gravel -> Grounds.GRAVEL.surface();
+            case Materials.Bedrock rock -> Grounds.BEDROCK.surface();
+            case Materials.Mud mud -> Grounds.MUD.surface();
             default -> throw new IllegalArgumentException(material.title() + " is in no tree of materials that is"
                     + " shaded here");
         };

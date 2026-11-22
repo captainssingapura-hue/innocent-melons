@@ -22,7 +22,7 @@ class ShadesTest {
 
     @Test
     void everyLeafOfTheTreeHasASurfaceAndALookIsWrittenFromIt() {
-        assertEquals(20, new Materials().tree().leaves().size());
+        assertEquals(26, new Materials().tree().leaves().size());
         for (final Leaf<?> leaf : new Materials().tree().leaves()) {
             final Surface surface = shades.of((Material) leaf);
             final Look look = new Look(new Laid(), surface);

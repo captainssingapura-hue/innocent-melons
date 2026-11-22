@@ -64,8 +64,8 @@ class MaterialViewOnTheCardTest {
             assertEquals(List.of(), card.heard(), "by night and without shadows: nothing said either");
             assertEquals(0xff0b1026, new Picture(canvas.width(), canvas.pixels()).at(4, 4), "the night's sky");
         }
-        assertEquals(20, seen.size());
-        assertTrue(seen.values().stream().distinct().count() >= 18, "the materials are told apart: " + seen);
+        assertEquals(26, seen.size());
+        assertTrue(seen.values().stream().distinct().count() >= 24, "the materials are told apart: " + seen);
     }
 
     @Test
@@ -225,6 +225,33 @@ class MaterialViewOnTheCardTest {
             assertTrue(shaded > 300, "the steel ball shades the ground: " + shaded);
             assertTrue(unshaded > shaded / 2, "where it did, the glass ball leaves the ground in the sun: " + unshaded);
             assertEquals(List.of(), card.heard(), "the validation layer has nothing to say of any of it");
+        }
+    }
+
+    @Test
+    void eachKindOfGroundIsPicturedOnTheKnollFromAPacesHeightAndFromTheSkyAndNoTwoAreAlike() throws IOException {
+        Files.createDirectories(folder);
+        final List<Shape> knoll = List.of(Shape.KNOLL);
+        final List<Material> grounds = List.of(new Materials.Turf(), new Materials.Topsoil(), new Materials.Sand(),
+                new Materials.Gravel(), new Materials.Bedrock(), new Materials.Mud());
+        try (Card card = new Card();
+             Canvas canvas = card.canvas(1200, 750);
+             MaterialView view = new MaterialView(card, laid)) {
+            // standing a few paces off, the eye a person's height up; and from well above, the whole knoll
+            final Camera afoot = new Orbit(new Vec3(0, 110, 0), 200, 9, 620).camera(48, 10);
+            final Camera above = new Orbit(new Vec3(0, 60, 0), 215, 42, 1500).camera(48, 10);
+            final Map<String, Integer> seen = new LinkedHashMap<>();
+            for (final Material ground : grounds) {
+                final Picture near = pictured(view, canvas, afoot, new OnShow(ground, 1, knoll));
+                ImageIO.write(near.image(), "png",
+                        folder.resolve("ground-" + ((Leaf<?>) ground).name() + "-afoot.png").toFile());
+                final Picture far = pictured(view, canvas, above, new OnShow(ground, 1, knoll));
+                ImageIO.write(far.image(), "png",
+                        folder.resolve("ground-" + ((Leaf<?>) ground).name() + "-from-above.png").toFile());
+                seen.put(ground.title(), far.at(600, 420));
+            }
+            assertEquals(List.of(), card.heard(), "the validation layer has nothing to say of any of it");
+            assertEquals(6, seen.values().stream().distinct().count(), "no two kinds of ground alike: " + seen);
         }
     }
 
