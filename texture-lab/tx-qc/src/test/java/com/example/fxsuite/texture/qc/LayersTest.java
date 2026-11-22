@@ -17,8 +17,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * Keeps the lab's layers apart, by what each file imports. A texture is a description: it touches no card, no JavaFX,
  * no engine, and nothing of the Vulkan renderer but what is worked out with no card (its terms, forms and Java's
- * working of a picture). A texture does not know the bench it is looked at on. And every package is in a layer: one
- * added without a place here fails.
+ * working of a picture). A texture does not know the bench it is looked at on. The tree of materials and the
+ * surfaces bound to its leaves touch no card either, and are the lab's own, not taken from the shared trees of what
+ * exists. And every package is in a layer: one added without a place here fails.
  */
 class LayersTest {
 
@@ -28,7 +29,9 @@ class LayersTest {
     private final Map<String, List<String>> layers = Map.of(
             "tx-brick", List.of("brick"),
             "tx-stone", List.of("stone"),
-            "tx-bench", List.of("bench"));
+            "tx-bench", List.of("bench"),
+            "tx-materials", List.of("materials"),
+            "tx-lab", List.of("lab"));
 
     @Test
     void aTextureTouchesNoCardNoJavaFxNoEngineAndNoBench() throws IOException {
@@ -48,6 +51,21 @@ class LayersTest {
         final List<String> wrong = new ArrayList<>();
         forbid(wrong, "tx-bench", "bench", "org.lwjgl", "com.example.fxsuite.avatar",
                 "com.example.fxsuite.vulkan.bench", "com.example.fxsuite.vulkan.device");
+        assertEquals(List.of(), wrong);
+    }
+
+    @Test
+    void theMaterialsTouchNoCardNoJavaFxAndNoEngine() throws IOException {
+        final List<String> wrong = new ArrayList<>();
+        forbid(wrong, "tx-materials", "materials", "org.lwjgl", "javafx.", "com.example.fxsuite.avatar",
+                "com.example.fxsuite.vulkan.device", "com.example.fxsuite.existence");
+        assertEquals(List.of(), wrong);
+    }
+
+    @Test
+    void theMaterialBenchDrawsThroughTheRendererAndNeverCallsTheCardsOwnLibrary() throws IOException {
+        final List<String> wrong = new ArrayList<>();
+        forbid(wrong, "tx-lab", "lab", "org.lwjgl", "java.awt", "com.example.fxsuite.existence");
         assertEquals(List.of(), wrong);
     }
 

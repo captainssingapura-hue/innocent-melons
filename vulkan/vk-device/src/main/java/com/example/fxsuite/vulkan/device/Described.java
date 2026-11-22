@@ -1,8 +1,10 @@
 package com.example.fxsuite.vulkan.device;
 
 import com.example.fxsuite.vulkan.layout.Layout;
+import com.example.fxsuite.vulkan.shade.Laid;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkDescriptorBufferInfo;
+import org.lwjgl.vulkan.VkDescriptorImageInfo;
 import org.lwjgl.vulkan.VkDescriptorPoolCreateInfo;
 import org.lwjgl.vulkan.VkDescriptorPoolSize;
 import org.lwjgl.vulkan.VkDescriptorSetAllocateInfo;
@@ -19,26 +21,27 @@ import static org.lwjgl.vulkan.VK13.*;
 
 /**
  * What a look is told, as the card has it described, made from the layouts and from nothing else: a block told once
- * a frame, bound where the shaders' declarations say it is; and what is pushed with each thing drawn. Both of its
- * shaders read both.
+ * a frame, and a picture of depths to look things up in, each bound where {@code laid} says the shaders'
+ * declarations have it; and what is pushed with each thing drawn. Both of its shaders read the block and what is
+ * pushed; the picture is looked up by the shader run for each pixel.
  */
-record Described(Reach reach) {
+record Described(Reach reach, Laid laid) {
 
-    /** Where the frame's block is bound: what {@code Declared.block} is asked for by a look. */
-    private static final int BLOCK = 0;
     /** Which shaders read what is pushed with each thing drawn: both. */
     static final int PUSHED = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 
-    /** The frame's block, described: one block, read by both shaders. */
+    /** The frame's block and the picture of depths, described. */
     Kept<Of.Told> told() {
         final VkDevice device = reach.device();
         try (MemoryStack stack = MemoryStack.stackPush()) {
-            final VkDescriptorSetLayoutBinding.Buffer block = VkDescriptorSetLayoutBinding.calloc(1, stack)
-                    .binding(BLOCK).descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER).descriptorCount(1)
-                    .stageFlags(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+            final VkDescriptorSetLayoutBinding.Buffer both = VkDescriptorSetLayoutBinding.calloc(2, stack);
+            both.get(0).binding(laid.frameBound()).descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+                    .descriptorCount(1).stageFlags(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+            both.get(1).binding(laid.depthsBound()).descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+                    .descriptorCount(1).stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT);
             final LongBuffer made = stack.mallocLong(1);
             new Checked("vkCreateDescriptorSetLayout").of(vkCreateDescriptorSetLayout(device,
-                    VkDescriptorSetLayoutCreateInfo.calloc(stack).sType$Default().pBindings(block), null, made));
+                    VkDescriptorSetLayoutCreateInfo.calloc(stack).sType$Default().pBindings(both), null, made));
             return reach.owner().kept("a look's frame, described", made.get(0),
                     raw -> vkDestroyDescriptorSetLayout(device, raw, null));
         }
@@ -63,11 +66,12 @@ record Described(Reach reach) {
     Kept<Of.Tellings> tellings() {
         final VkDevice device = reach.device();
         try (MemoryStack stack = MemoryStack.stackPush()) {
-            final VkDescriptorPoolSize.Buffer one = VkDescriptorPoolSize.calloc(1, stack)
-                    .type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER).descriptorCount(1);
+            final VkDescriptorPoolSize.Buffer each = VkDescriptorPoolSize.calloc(2, stack);
+            each.get(0).type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER).descriptorCount(1);
+            each.get(1).type(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER).descriptorCount(1);
             final LongBuffer made = stack.mallocLong(1);
             new Checked("vkCreateDescriptorPool").of(vkCreateDescriptorPool(device,
-                    VkDescriptorPoolCreateInfo.calloc(stack).sType$Default().maxSets(1).pPoolSizes(one), null, made));
+                    VkDescriptorPoolCreateInfo.calloc(stack).sType$Default().maxSets(1).pPoolSizes(each), null, made));
             return reach.owner().kept("a look's frame, kept", made.get(0),
                     raw -> vkDestroyDescriptorPool(device, raw, null));
         }
@@ -87,10 +91,26 @@ record Described(Reach reach) {
             final VkDescriptorBufferInfo.Buffer read = VkDescriptorBufferInfo.calloc(1, stack)
                     .buffer(frame.buffer().raw()).offset(0).range(frame.size());
             final VkWriteDescriptorSet.Buffer written = VkWriteDescriptorSet.calloc(1, stack).sType$Default()
-                    .dstSet(made.get(0)).dstBinding(BLOCK).descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
-                    .descriptorCount(1).pBufferInfo(read);
+                    .dstSet(made.get(0)).dstBinding(laid.frameBound())
+                    .descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER).descriptorCount(1).pBufferInfo(read);
             vkUpdateDescriptorSets(device, written, null);
             return reach.owner().kept("a look's frame, bound", made.get(0), raw -> { });
+        }
+    }
+
+    /**
+     * {@code bound} set to look things up in the picture of depths seen as {@code view}, the way {@code sampler}
+     * looks them up: for the frames drawn from now on, until it is set to another.
+     */
+    void looked(final Kept<Of.Bound> bound, final Kept<Of.View> view, final Kept<Of.Sampler> sampler) {
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            final VkDescriptorImageInfo.Buffer read = VkDescriptorImageInfo.calloc(1, stack)
+                    .sampler(sampler.raw()).imageView(view.raw())
+                    .imageLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
+            final VkWriteDescriptorSet.Buffer written = VkWriteDescriptorSet.calloc(1, stack).sType$Default()
+                    .dstSet(bound.raw()).dstBinding(laid.depthsBound())
+                    .descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER).descriptorCount(1).pImageInfo(read);
+            vkUpdateDescriptorSets(reach.device(), written, null);
         }
     }
 }

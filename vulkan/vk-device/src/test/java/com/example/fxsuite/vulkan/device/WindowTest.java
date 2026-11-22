@@ -47,6 +47,7 @@ class WindowTest {
                     window.drawn(sky, frame(320.0 / 240), pass -> pass.draw(drawing, mesh, told()));
                 }
                 assertTrue(window.open(), "nobody closed it");
+                assertTrue(window.plainKeys(), "its keys come as they are pressed, with no input method between");
                 final Moved mouse = window.mouse();
                 assertEquals(new Moved(0, 0, false, false, 0), mouse, "and nobody touched it");
             }
@@ -80,11 +81,12 @@ class WindowTest {
 
     private Filling frame(final double aspect) {
         return new Filling(laid.frame()).with("seen", camera.seen(aspect).columns())
-                .with("sunTowards", 0, 1, 0).with("sun", 0, 0, 0).with("ambient", 1, 1, 1);
+                .with("sunTowards", 0, 1, 0).with("sun", 0, 0, 0).with("ambient", 1, 1, 1)
+                .with("sky", 0, 0, 0).with("ground", 0, 0, 0).with("beam", new double[16]).with("eased", 0, 0);
     }
 
     private Filling told() {
         return new Filling(laid.draw()).with("placed", camera.placed(new Vec3(0, 0, 0)).columns())
-                .with("coarsened", 1);
+                .with("coarsened", 1).with("tint", 1, 1, 1);
     }
 }

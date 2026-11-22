@@ -62,13 +62,30 @@ public final class Driven {
      */
     public Controls controls(final long step, final double turn, final double aim) {
         if (script.isPresent()) {
-            return script.get().controls(step);
+            // as the script's own controls, but for F: taking off and landing are done here, on its jets
+            final Script written = script.get();
+            return Keys.controls(written.held(step),
+                    written.pressed(step).stream().filter(key -> !key.equals(Key.F.name())).toList(),
+                    written.turn(step), written.trigger(step), written.aim(step), written.bomb(step));
         }
         final Set<String> names = new HashSet<>();
         held.forEach(key -> names.add(key.name()));
         final Controls controls = Keys.controls(names, List.copyOf(pressed), turn, false, aim);
         pressed.clear();
         return controls;
+    }
+
+    /**
+     * Whether the avatar is asked, at the step numbered {@code step}, to take off or to land: F pressed in the
+     * card's window, or tapped in the script. Asked of the keys, it is told once and not again.
+     */
+    public boolean flies(final long step) {
+        return script.map(written -> written.pressed(step).contains(Key.F.name())).orElseGet(() -> taken(Key.F));
+    }
+
+    /** How far the script tilts the view up during the step numbered {@code step}, in degrees; nothing, by the keys. */
+    public double tilt(final long step) {
+        return script.map(written -> written.tilt(step)).orElse(0.0);
     }
 
     /** Whether a script was given. */

@@ -5,6 +5,7 @@ import com.example.fxsuite.avatar.sim.Body;
 import com.example.fxsuite.avatar.sim.Vec3;
 import com.example.fxsuite.vulkan.bench.Cast;
 import com.example.fxsuite.vulkan.bench.subject.Courier;
+import com.example.fxsuite.vulkan.bench.subject.Finish;
 import com.example.fxsuite.vulkan.device.Canvas;
 import com.example.fxsuite.vulkan.device.Card;
 import com.example.fxsuite.vulkan.render.Framed;
@@ -45,7 +46,7 @@ class CourierOnTheCardTest {
 
     @Test
     void byDayItsBodyIsTealAgainstTheSkyAndItsFeetAreOnTheGround() throws IOException {
-        final Picture picture = drawn(day.light());
+        final Picture picture = drawn(courier, day.light());
         final Path folder = Path.of("target", "card");
         Files.createDirectories(folder);
         ImageIO.write(picture.image(), "png", folder.resolve("courier.png").toFile());
@@ -57,20 +58,48 @@ class CourierOnTheCardTest {
 
     @Test
     void inNoLightAtAllOnlyItsVisorShowsAndShowsItsOwnColour() {
-        final Picture picture = drawn(new Light(day.light().sunTowards(), day.sky().times(0), day.sky().times(0)));
+        final Picture picture = drawn(courier,
+                new Light(day.light().sunTowards(), day.sky().times(0), day.sky().times(0)));
         final int middle = SIZE / 2;
         assertEquals(0xff000000, picture.at(middle, middle), "its chest, black");
         // its visor is 33 cm above its chest, and the picture is some 290 cm tall
         assertEquals(0xff7df9ff, picture.at(middle, middle - 23), "its visor, lit from within");
     }
 
-    private Picture drawn(final Light light) {
+    @Test
+    void byNightItsChestIsDimAndBlueAndItsVisorStandsOutBright() {
+        final Picture picture = drawn(courier, day.night().light());
+        final int middle = SIZE / 2;
+        final int chest = picture.part(middle, middle, 0) + picture.part(middle, middle, 1)
+                + picture.part(middle, middle, 2);
+        final int visor = picture.part(middle, middle - 23, 0) + picture.part(middle, middle - 23, 1)
+                + picture.part(middle, middle - 23, 2);
+        assertTrue(chest > 0 && chest < 150, "its chest, dim but seen: " + chest);
+        assertTrue(picture.part(middle, middle, 2) > picture.part(middle, middle, 0), "and blue");
+        assertTrue(visor > 600, "its visor, lit from within, as bright as by day: " + visor);
+    }
+
+    @Test
+    void finishedInMetalItsChestIsGoldByDayAndItsLegsGrey() {
+        final Picture picture = drawn(new Courier(190, Finish.GILT), day.light());
+        final int middle = SIZE / 2;
+        final int chest = picture.at(middle, middle + 15);
+        assertTrue(picture.part(middle, middle + 15, 0) > 170 && picture.part(middle, middle + 15, 0)
+                > picture.part(middle, middle + 15, 1) + 25 && picture.part(middle, middle + 15, 1)
+                > picture.part(middle, middle + 15, 2) + 60, "its chest, gold: " + Integer.toHexString(chest));
+        // a leg, 10 cm to one side of its middle and 55 cm up
+        final int leg = picture.at(middle + 7, middle + 65);
+        assertTrue(Math.abs(picture.part(middle + 7, middle + 65, 0) - picture.part(middle + 7, middle + 65, 2)) < 30,
+                "a leg, grey: " + Integer.toHexString(leg));
+    }
+
+    private Picture drawn(final Courier of, final Light light) {
         try (Card card = new Card();
              Canvas canvas = card.canvas(SIZE, SIZE);
              Cast cast = new Cast(card, laid)) {
             canvas.drawn(day.sky(), new Framed(laid, camera, light).filling(1), pass -> {
                 cast.ground(pass, camera);
-                cast.figure(pass, courier.placed(body, still), camera);
+                cast.figure(pass, of.placed(body, still), camera);
             });
             assertEquals(List.of(), card.heard(), "the validation layer has nothing to say");
             return new Picture(canvas.width(), canvas.pixels());

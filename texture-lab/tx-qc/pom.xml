@@ -35,6 +35,16 @@
             <artifactId>tx-bench</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite.texture</groupId>
+            <artifactId>tx-materials</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite.texture</groupId>
+            <artifactId>tx-lab</artifactId>
+            <scope>test</scope>
+        </dependency>
         <!-- CQ: the scan and its basic rules -->
         <dependency>
             <groupId>io.github.captainssingapura-hue.homing.cq</groupId>

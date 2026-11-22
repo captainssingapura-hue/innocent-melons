@@ -16,8 +16,9 @@ import static org.lwjgl.vulkan.VK13.*;
 /**
  * How every look draws, whatever it looks like, said once: triangles, three corners each; only those wound
  * clockwise in the picture drawn, which are the ones facing the camera; the nearer of two things kept, depth running
- * backwards; colours written over what was there; one sample to a pixel; and the picture's size left to be said as
- * each frame begins. Each is set down in {@code stack}'s memory, for the one call that builds a look.
+ * backwards; colours written over what was there, or mixed with it; one sample to a pixel; and the picture's size
+ * left to be said as each frame begins. Each is set down in {@code stack}'s memory, for the one call that builds a
+ * look.
  */
 record Fixed(MemoryStack stack) {
 
@@ -48,24 +49,46 @@ record Fixed(MemoryStack stack) {
                 .rasterizationSamples(VK_SAMPLE_COUNT_1_BIT);
     }
 
-    /** The nearer kept: depth runs backwards, so the nearer is the greater. */
-    VkPipelineDepthStencilStateCreateInfo nearest() {
+    /**
+     * The nearer kept: depth runs backwards, so the nearer is the greater. What is {@code mixed} with what is
+     * already drawn is still hidden by anything nearer, but leaves no depth of its own, so that whatever is
+     * drawn after it and behind it is not hidden by it.
+     */
+    VkPipelineDepthStencilStateCreateInfo nearest(final boolean mixed) {
         return VkPipelineDepthStencilStateCreateInfo.calloc(stack).sType$Default()
-                .depthTestEnable(true).depthWriteEnable(true).depthCompareOp(VK_COMPARE_OP_GREATER);
+                .depthTestEnable(true).depthWriteEnable(!mixed).depthCompareOp(VK_COMPARE_OP_GREATER);
     }
 
-    /** Colours written over what was there, nothing mixed. */
-    VkPipelineColorBlendStateCreateInfo written() {
+    /**
+     * Colours written over what was there, nothing mixed; or, where {@code mixed}, a colour added to as much of
+     * what was there as its own fourth number does not hide (1 hides all of it, 0 none); or, where no colours are
+     * drawn, nothing written.
+     */
+    VkPipelineColorBlendStateCreateInfo written(final boolean colours, final boolean mixed) {
+        final VkPipelineColorBlendStateCreateInfo written = VkPipelineColorBlendStateCreateInfo.calloc(stack)
+                .sType$Default();
+        if (!colours) {
+            return written;
+        }
         final VkPipelineColorBlendAttachmentState.Buffer whole = VkPipelineColorBlendAttachmentState.calloc(1, stack)
                 .colorWriteMask(VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT
                         | VK_COLOR_COMPONENT_A_BIT);
-        return VkPipelineColorBlendStateCreateInfo.calloc(stack).sType$Default().pAttachments(whole);
+        if (mixed) {
+            whole.blendEnable(true).colorBlendOp(VK_BLEND_OP_ADD).alphaBlendOp(VK_BLEND_OP_ADD)
+                    .srcColorBlendFactor(VK_BLEND_FACTOR_ONE).srcAlphaBlendFactor(VK_BLEND_FACTOR_ONE)
+                    .dstColorBlendFactor(VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
+                    .dstAlphaBlendFactor(VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
+        }
+        return written.pAttachments(whole);
     }
 
-    /** What is drawn on: one picture of colours and one of depths, as the kit keeps them. */
-    VkPipelineRenderingCreateInfo drawnOn() {
-        return VkPipelineRenderingCreateInfo.calloc(stack).sType$Default()
-                .pColorAttachmentFormats(stack.ints(Paper.COLOUR.format()))
+    /**
+     * What is drawn on: one picture of colours and one of depths, as the kit keeps them; or, where no colours are
+     * drawn, the picture of depths alone.
+     */
+    VkPipelineRenderingCreateInfo drawnOn(final boolean colours) {
+        final VkPipelineRenderingCreateInfo on = VkPipelineRenderingCreateInfo.calloc(stack).sType$Default()
                 .depthAttachmentFormat(Paper.DEPTH.format());
+        return colours ? on.pColorAttachmentFormats(stack.ints(Paper.COLOUR.format())) : on;
     }
 }

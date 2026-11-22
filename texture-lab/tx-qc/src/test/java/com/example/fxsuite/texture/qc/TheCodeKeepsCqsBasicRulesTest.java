@@ -3,6 +3,8 @@ package com.example.fxsuite.texture.qc;
 import com.example.fxsuite.texture.bench.Swatch;
 import com.example.fxsuite.texture.brick.BrickWall;
 import com.example.fxsuite.texture.stone.RubbleWall;
+import com.example.fxsuite.texture.lab.Stand;
+import com.example.fxsuite.texture.materials.Shades;
 import com.homing_labs.cq.rules.basic.BasicRules;
 import com.homing_labs.cq.scan.Declaration;
 import com.homing_labs.cq.scan.Gate;
@@ -36,12 +38,15 @@ class TheCodeKeepsCqsBasicRulesTest {
         public List<Path> sources() {
             return List.of(Path.of("..", "tx-brick", "src", "main", "java").toAbsolutePath().normalize(),
                     Path.of("..", "tx-stone", "src", "main", "java").toAbsolutePath().normalize(),
-                    Path.of("..", "tx-bench", "src", "main", "java").toAbsolutePath().normalize());
+                    Path.of("..", "tx-bench", "src", "main", "java").toAbsolutePath().normalize(),
+                    Path.of("..", "tx-materials", "src", "main", "java").toAbsolutePath().normalize(),
+                    Path.of("..", "tx-lab", "src", "main", "java").toAbsolutePath().normalize());
         }
     }
 
     /** One class of each module the scan must read. */
-    private final List<Class<?>> modules = List.of(BrickWall.class, RubbleWall.class, Swatch.class);
+    private final List<Class<?>> modules = List.of(BrickWall.class, RubbleWall.class, Swatch.class, Shades.class,
+            Stand.class);
 
     private final ScanResult result = Scanner.INSTANCE.scan(new Checked().and(BasicRules.INSTANCE),
             getClass().getClassLoader());

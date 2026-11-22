@@ -20,6 +20,9 @@ import static org.lwjgl.vulkan.VK13.*;
  * larger it has more pixels than that, and its width and height here are its pixels. Drawn on exactly as a picture
  * with no window is. When its size changes, its pictures are made again at the new size before the next frame;
  * while it has no size at all, as when it is put away, nothing is drawn.
+ *
+ * <p>Its keys come as they are pressed: the system's input method, which would gather key presses to compose the
+ * characters of some scripts, is parted from it when it is made ({@link PlainKeys}).
  */
 public final class Window implements Target, AutoCloseable {
 
@@ -28,6 +31,7 @@ public final class Window implements Target, AutoCloseable {
 
     private final Reach reach;
     private final Recording recording;
+    private final Depths nothing;
     private final Kept<Of.Glass> glass;
     private final Pointed pointed;
     private final Kept<Of.Surface> surface;
@@ -35,11 +39,13 @@ public final class Window implements Target, AutoCloseable {
     private Shown shown;
     private boolean stale;
 
-    Window(final Reach reach, final Recording recording, final Desk desk, final String title, final int width,
-           final int height) {
+    /** A window on {@code desk}; a frame drawn to it with nothing to look up looks things up in {@code nothing}. */
+    Window(final Reach reach, final Recording recording, final Depths nothing, final Desk desk, final String title,
+           final int width, final int height) {
         desk.mine();
         this.reach = reach;
         this.recording = recording;
+        this.nothing = nothing;
         glfwDefaultWindowHints();
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
@@ -52,6 +58,7 @@ public final class Window implements Target, AutoCloseable {
             glfwFreeCallbacks(raw);
             glfwDestroyWindow(raw);
         });
+        new PlainKeys(glass).kept();
         this.pointed = new Pointed(glass);
         this.surface = new Surfaced(reach).of(glass);
         this.ready = new Signalled(reach).by("a window's picture being ready");
@@ -96,6 +103,11 @@ public final class Window implements Target, AutoCloseable {
         return glfwGetKey(glass.raw(), key.one()) == GLFW_PRESS || glfwGetKey(glass.raw(), key.other()) == GLFW_PRESS;
     }
 
+    /** Whether its keys come as they are pressed, no input method of the system's gathering them first. */
+    boolean plainKeys() {
+        return new PlainKeys(glass).plain();
+    }
+
     /** Whether it is still wanted: true until whoever sits at the desk closes it. */
     public boolean open() {
         return !glfwWindowShouldClose(glass.raw());
@@ -114,6 +126,12 @@ public final class Window implements Target, AutoCloseable {
     /** A frame drawn and handed to the screen, which shows it when it next draws itself. */
     @Override
     public void drawn(final Vec3 sky, final Filling frame, final Consumer<Pass> drawing) {
+        drawn(sky, frame, nothing, drawing);
+    }
+
+    /** The same, its looks looking things up in {@code looked}. */
+    @Override
+    public void drawn(final Vec3 sky, final Filling frame, final Depths looked, final Consumer<Pass> drawing) {
         if (!fitted()) {
             return;
         }
@@ -128,7 +146,7 @@ public final class Window implements Target, AutoCloseable {
             }
             final Ground ground = shown.ground(which.get(0));
             final Strokes strokes = recording.begun();
-            strokes.drawn(ground, sky, frame, drawing);
+            strokes.drawn(ground, sky, frame, looked, drawing);
             strokes.moved(ground.colours(), Move.TO_BE_SHOWN);
             final Kept<Of.Signal> done = shown.drawn(which.get(0));
             recording.sent(ready, done);
