@@ -3,11 +3,13 @@ package com.example.fxsuite.life.body;
 import com.example.fxsuite.avatar.bench.kit.Bus;
 import com.example.fxsuite.avatar.bench.kit.ModelView;
 import com.example.fxsuite.avatar.bench.kit.Shell;
+import com.example.fxsuite.life.body.head.ClayHead;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
@@ -38,7 +40,9 @@ import java.util.Locale;
  * {@code -Dmotion.gatling=true}, {@code -Dmotion.aim} (degrees), {@code -Dmotion.slow} (a share of real time) what
  * it plays first;
  * {@code -Dmotion.at} (0 to 1) stops it at that point of its stride; {@code -Dmotion.yaw}, {@code -Dmotion.pitch},
- * {@code -Dmotion.distance} (m) where it is seen from; {@code -Dbench.snapshot=out.png} saves the window after
+ * {@code -Dmotion.distance} (m), {@code -Dmotion.height} (cm) where it is seen from and looks at;
+ * {@code -Dhead.reference} (a reference head's path: its skin with the clay head made from it, {@link ClayHead});
+ * {@code -Dbench.snapshot=out.png} saves the window after
  * {@code -Dbench.settle} ms and exits.
  */
 public final class MotionBench extends Application {
@@ -205,7 +209,7 @@ public final class MotionBench extends Application {
         shell.middle(view.node());
         view.grid(0, 0, 0, 1_200, 10, 5);
         view.zoom(60, 2_000);
-        view.lookAt(0, 95, 0);
+        view.lookAt(0, Double.parseDouble(System.getProperty("motion.height", "95")), 0);
         view.from("motion", Double.parseDouble(System.getProperty("motion.yaw", "70")),
                 Double.parseDouble(System.getProperty("motion.pitch", "8")),
                 Double.parseDouble(System.getProperty("motion.distance", "4")));
@@ -313,15 +317,45 @@ public final class MotionBench extends Application {
         new Thread(() -> {
             final long t0 = System.nanoTime();
             final com.example.fxsuite.life.body.flesh.Flesh skin = skins.moving(p);
+            final Node clay = clay(skin);
             final long ms = (System.nanoTime() - t0) / 1_000_000;
             javafx.application.Platform.runLater(() -> {
                 if (mine == puppet) {
-                    mine.skin(skin);
+                    mine.skin(clay == null ? skin : ClayHead.INSTANCE.headless(skin));
+                    if (clay != null) {
+                        mine.part(Part.HEAD).getChildren().add(clay);
+                    }
                     muscleSaid.setText(String.format(Locale.ROOT, "Skin: %,d points, %,d triangles, found in %,d ms",
                             skin.size(), skin.triangleCount(), ms));
                 }
             });
         }, "skin").start();
+    }
+
+    /**
+     * The clay head made from the reference head {@code -Dhead.reference} names, if it does, as big as the head of the
+     * body {@code skin} is, drawn in the head's frame in the skin's colour, to take the place of the skin's own head;
+     * none, if it names none or it cannot be read.
+     */
+    private Node clay(final com.example.fxsuite.life.body.flesh.Flesh skin) {
+        final String path = System.getProperty("head.reference");
+        if (path == null) {
+            return null;
+        }
+        try {
+            final Mesher.Mesh head = ClayHead.INSTANCE.of(java.nio.file.Path.of(path));
+            final double k = ClayHead.INSTANCE.scale(head, skin);
+            final javafx.scene.Group g = com.example.fxsuite.life.body.bone.BoneView.INSTANCE.mapped(head, Paint.SKIN,
+                    v -> v.times(k), false);
+            final javafx.scene.paint.PhongMaterial m = new javafx.scene.paint.PhongMaterial(
+                    javafx.scene.paint.Color.web(com.example.fxsuite.life.body.skin.Skins.COLOUR));
+            g.getChildren().forEach(n -> ((javafx.scene.shape.Shape3D) n).setMaterial(m));
+            System.out.printf(Locale.ROOT, "clay head made %.3f times as big%n", k);
+            return g;
+        } catch (final java.io.IOException e) {
+            System.out.println("the clay head not made: " + e.getMessage());
+            return null;
+        }
     }
 
     /** A skeleton found afresh on the grid asked for, away from the screen, then drawn; how many triangles, said. */
