@@ -12,11 +12,18 @@ import com.example.fxsuite.taxonomy.Leaf;
  * @param shore the waterline, the sea on its right
  * @param level how high its top lies, in centimetres
  */
-public record Sea(String label, Leaf<?> kind, Hue hue, Path shore, double level) implements Feature {
+public record Sea(String label, Leaf<?> kind, Hue hue, Path shore, double level) implements WaterBody {
 
     @Override
     public Coverage coverage(final Terrain terrain) {
         final Traced traced = new Traced(shore, terrain.map());
         return at -> at.height() < level && traced.near(at.x(), at.z()).side() < 0;
+    }
+
+    /** Its level, everywhere to the right of its shore, whether the ground there is under it or not. */
+    @Override
+    public Level level(final Terrain terrain) {
+        final Traced traced = new Traced(shore, terrain.map());
+        return (x, z) -> traced.near(x, z).side() < 0 ? level : Double.NaN;
     }
 }

@@ -29,6 +29,7 @@
     <modules>
         <module>terrain-core</module>
         <module>melon-country</module>
+        <module>terrain-tiles</module>
         <module>terrain-bench</module>
     </modules>
 
@@ -37,6 +38,11 @@
             <dependency>
                 <groupId>melons.innocent.terrain</groupId>
                 <artifactId>terrain-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.terrain</groupId>
+                <artifactId>terrain-tiles</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

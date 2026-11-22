@@ -16,7 +16,7 @@ import melons.innocent.math.curves.CurveImpl;
  * @param spread  how far from its course it may lie, at most, in centimetres
  */
 public record Watercourse(String label, Leaf<?> kind, Hue hue, Path course, CurveImpl<?> surface, double spread)
-        implements Feature {
+        implements WaterBody {
 
     @Override
     public Coverage coverage(final Terrain terrain) {
@@ -27,6 +27,19 @@ public record Watercourse(String label, Leaf<?> kind, Hue hue, Path course, Curv
             }
             final Traced.Near near = traced.near(at.x(), at.z());
             return near.distance() <= spread && at.height() < surface.held(near.station());
+        };
+    }
+
+    /** How high its top is at the nearest point of its course, anywhere within its spread of it. */
+    @Override
+    public Level level(final Terrain terrain) {
+        final Traced traced = new Traced(course, terrain.map());
+        return (x, z) -> {
+            if (traced.outside(x, z) > spread) {
+                return Double.NaN;
+            }
+            final Traced.Near near = traced.near(x, z);
+            return near.distance() <= spread ? surface.held(near.station()) : Double.NaN;
         };
     }
 }

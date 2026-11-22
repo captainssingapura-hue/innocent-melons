@@ -9,7 +9,7 @@ import hue.captains.singapura.tao.ontology.Scalar;
  * to be shown in; where it lies is worked out from the ground and the map's lines, the same every time. Features are
  * laid one over another, the later over the earlier, so water lies over the meadow it floods.
  */
-public sealed interface Feature extends Scalar permits Band, Steep, Area, Sea, Watercourse {
+public sealed interface Feature extends Scalar permits Band, Steep, Area, WaterBody {
 
     /** What it is labelled. */
     String label();

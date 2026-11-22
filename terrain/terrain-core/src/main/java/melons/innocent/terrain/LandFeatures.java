@@ -18,6 +18,7 @@ public final class LandFeatures {
     private final Terrain terrain;
     private final List<Feature> laid;
     private final List<Feature.Coverage> coverages;
+    private final List<WaterBody.Level> levels;
 
     /** {@code laid} over {@code terrain}'s ground, in turn. */
     public LandFeatures(final Terrain terrain, final List<Feature> laid) {
@@ -31,6 +32,13 @@ public final class LandFeatures {
             covered.add(feature.coverage(terrain));
         }
         this.coverages = List.copyOf(covered);
+        final List<WaterBody.Level> water = new ArrayList<>();
+        for (final Feature feature : this.laid) {
+            if (feature instanceof WaterBody body) {
+                water.add(body.level(terrain));
+            }
+        }
+        this.levels = List.copyOf(water);
     }
 
     /** The terrain they lie on. */
@@ -46,6 +54,21 @@ public final class LandFeatures {
     /** Where each lies, in the order they are laid. */
     public List<Feature.Coverage> coverages() {
         return coverages;
+    }
+
+    /**
+     * How high the water's top is at ({@code x}, {@code z}), of whichever of its water bodies reaches there, the
+     * highest if more than one does, whether the ground there is under it or not: not a number if none reaches there.
+     */
+    public double water(final double x, final double z) {
+        double top = Double.NaN;
+        for (final WaterBody.Level level : levels) {
+            final double at = level.at(x, z);
+            if (!Double.isNaN(at) && (Double.isNaN(top) || at > top)) {
+                top = at;
+            }
+        }
+        return top;
     }
 
     /** What lies at ({@code x}, {@code z}): the last of them laid that lies there, or none. */

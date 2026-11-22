@@ -37,7 +37,8 @@ import java.util.List;
  *
  * <p>{@code -Dbench.terrain=} says which ground: {@code melon}, the Melon country (the first), or {@code rolling}, the
  * rolling country it began with; for the Melon country, {@code -Dbench.paint=} how it is painted: {@code features},
- * each land feature in its colour (the first), or {@code dry}, its dry ground in concrete. {@code -Dbench.every=}
+ * each land feature in its colour (the first), {@code materials}, each in the lab's material for its kind, plain where
+ * it has none, or {@code dry}, its dry ground in concrete. {@code -Dbench.every=}
  * says how far apart the sheet's points are, in metres; {@code -Dbench.across=} and {@code -Dbench.along=} (metres)
  * where over the map the eye starts, {@code -Dbench.height=} (metres) how high, {@code -Dbench.yaw=} and
  * {@code -Dbench.pitch=} (degrees, degrees down) which way it looks, and {@code -Dbench.scale=} how many times as big
@@ -97,6 +98,10 @@ public final class TerrainBench {
         } else if ("dry".equals(System.getProperty("bench.paint", "features"))) {
             final Terrain melon = MelonCountry.INSTANCE.terrain();
             new TerrainBench(melon, concrete).run(melon.name() + ", its dry ground, in concrete");
+        } else if ("materials".equals(System.getProperty("bench.paint", "features"))) {
+            final LandFeatures features = MelonFeatures.INSTANCE.features();
+            new TerrainBench(features.terrain(), new ByMaterials(features)).run(features.terrain().name()
+                    + ", its land features in the lab's materials, plain where it has none");
         } else {
             final LandFeatures features = MelonFeatures.INSTANCE.features();
             new TerrainBench(features.terrain(), new ByFeatures(features))

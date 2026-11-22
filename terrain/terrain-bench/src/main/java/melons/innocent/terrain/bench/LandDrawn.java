@@ -35,7 +35,7 @@ public final class LandDrawn implements AutoCloseable {
 
     /** Drawn in {@code pass}, as {@code flight} has it, seen by {@code camera}. */
     public void drawn(final Pass pass, final Flight flight, final Camera camera) {
-        parts.forEach(part -> part.drawn(pass, flight.land(), camera, flight.coarsened()));
+        parts.forEach(part -> part.drawn(pass, flight.land(), camera, 1));
     }
 
     @Override

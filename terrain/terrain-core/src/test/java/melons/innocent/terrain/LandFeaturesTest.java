@@ -16,6 +16,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Land features laid over the ground, the later over the earlier: a band by how high the ground is, a steep slope's
@@ -80,6 +81,18 @@ class LandFeaturesTest {
         assertEquals(Optional.of("meadow"), at(1_000, 5_000), "beyond its banks, the meadow: nothing flooded");
         assertEquals(Optional.empty(), at(5_000, -9_000).filter(label -> !label.equals("sea")),
                 "deep under the sea, nothing but the sea");
+    }
+
+    @Test
+    void theWatersTopLevelAcrossItsReachWhetherTheGroundIsUnderItOrNot() {
+        final LandFeatures features = features();
+        assertEquals(0, features.water(5_000, -3_000), 1e-9, "the sea's top, out at sea");
+        assertEquals(0, features.water(5_000, -10), 1e-9, "at the shore, its ground just under");
+        assertTrue(Double.isNaN(features.water(5_000, 3_000)), "inland, beyond the sea's reach and the river's");
+        // along the river, its top falling as its curve says; across it, level, banks and all, as far as it reaches
+        assertEquals(315, features.water(0, 5_000), 1e-9);
+        assertEquals(315, features.water(300, 5_000), 1e-9);
+        assertTrue(Double.isNaN(features.water(500, 5_000)), "past its spread");
     }
 
     @Test
