@@ -27,15 +27,17 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.EnumMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
  * The head bench, a head made as clay is: its blank first, the head's shape with nothing on it ({@link BlankFit}),
  * fitted to a reference head read from a file on the machine, never kept in the code ({@link ReferenceReading}), its
- * features masked out of the fit ({@link FeatureMasks}); then its pieces pressed on it, its nose from the reference
- * ({@link Pieces}); the reference beside it or over it as lines, its features in
+ * features masked out of the fit ({@link FeatureMasks}); then its pieces pressed on it, its nose and its mouth from the
+ * reference, each put on or not ({@link Pieces}); the reference beside it or over it as lines, its features in
  * a colour of their own, to see what was left out; the blank as lines, to see the reference through it.
  *
  * <p>{@code -Dhead.reference} (the reference's path), {@code -Dhead.compare} (beside, over), {@code -Dhead.show}
@@ -57,6 +59,7 @@ public final class HeadBench extends Application {
     private final CheckBox reference = new CheckBox("The reference");
     private final CheckBox features = new CheckBox("Its features, masked, in their own colour");
     private final CheckBox nose = new CheckBox("Put on: its nose");
+    private final CheckBox mouth = new CheckBox("Put on: its mouth");
     private final ChoiceBox<String> compare = new ChoiceBox<>();
     private final Label about = new Label("Reading the reference");
     private final ExecutorService worker = Executors.newSingleThreadExecutor(r -> {
@@ -67,8 +70,11 @@ public final class HeadBench extends Application {
     private ReferenceHead referred;
     private Feature[] masks;
     private Mesher.Mesh fitted;
-    /** The blank made a solid, the reference's nose pressed on it. */
-    private Mesher.Mesh withNose;
+    /** The blank made a solid; the reference's pieces, to be put on it; the head with those chosen on it. */
+    private Field.Shape solid;
+    private Map<Feature, Field.Shape> pieces = Map.of();
+    private Mesher.Mesh shaped;
+    private int asked;
     private double lowest;
 
     @Override
@@ -98,22 +104,25 @@ public final class HeadBench extends Application {
             final Mesher.Mesh b = BlankFit.INSTANCE.of(r, m);
             final long ms = (System.nanoTime() - t0) / 1_000_000;
             final long t1 = System.nanoTime();
-            final Field.Shape solid = MeshSolid.INSTANCE.closed(b, BLANK_CELL);
-            final Mesher.Mesh n = Mesher.of(Pieces.INSTANCE.head(solid,
-                    List.of(Pieces.INSTANCE.of(r, Feature.NOSE, solid))), HEAD_CELL);
-            final long put = (System.nanoTime() - t1) / 1_000_000;
+            final Field.Shape s = MeshSolid.INSTANCE.closed(b, BLANK_CELL);
+            final Map<Feature, Field.Shape> found = new EnumMap<>(Feature.class);
+            for (final Feature f : List.of(Feature.NOSE, Feature.MOUTH)) {
+                found.put(f, Pieces.INSTANCE.of(r, f, s));
+            }
+            final long cut = (System.nanoTime() - t1) / 1_000_000;
             Platform.runLater(() -> {
                 referred = r;
                 masks = m;
                 fitted = b;
-                withNose = n;
+                solid = s;
+                pieces = found;
                 lowest = lowest(r.mesh());
                 view.lookAt(0, (highest(r.mesh()) - lowest) / 2, 0);
                 bus.publish(new Bus.Working(false, "head"));
                 about.setText(String.format(Locale.ROOT, "The reference, %s: %,d triangles. Its blank fitted in %,d"
-                        + " ms: %,d points. Made a solid, its nose put on, in %,d ms: %,d points.", path.getFileName(),
-                        r.mesh().triangleCount(), ms, b.size(), put, n.size()));
-                draw();
+                        + " ms: %,d points. Made a solid, its pieces cut from the reference, in %,d ms.",
+                        path.getFileName(), r.mesh().triangleCount(), ms, b.size(), cut));
+                put();
             });
         } catch (final IOException | RuntimeException e) {
             Platform.runLater(() -> {
@@ -121,6 +130,41 @@ public final class HeadBench extends Application {
                 about.setText("The reference not read: " + e.getMessage());
             });
         }
+    }
+
+    /**
+     * The head with the pieces chosen put on its blank, meshed afresh away from the screen; drawn, if nothing was asked
+     * since; the bare blank, if none is chosen.
+     */
+    private void put() {
+        if (solid == null) {
+            return;
+        }
+        final List<Field.Shape> on = new ArrayList<>();
+        if (nose.isSelected()) {
+            on.add(pieces.get(Feature.NOSE));
+        }
+        if (mouth.isSelected()) {
+            on.add(pieces.get(Feature.MOUTH));
+        }
+        final int n = ++asked;
+        if (on.isEmpty()) {
+            shaped = null;
+            draw();
+            return;
+        }
+        final Field.Shape s = solid;
+        bus.publish(new Bus.Working(true, "put"));
+        worker.submit(() -> {
+            final Mesher.Mesh m = n == asked ? Mesher.of(Pieces.INSTANCE.head(s, on), HEAD_CELL) : null;
+            Platform.runLater(() -> {
+                bus.publish(new Bus.Working(false, "put"));
+                if (m != null && n == asked) {
+                    shaped = m;
+                    draw();
+                }
+            });
+        });
     }
 
     /** The bench's side: what is shown, and how the reference is. */
@@ -131,14 +175,18 @@ public final class HeadBench extends Application {
         reference.setSelected(show.contains("reference"));
         features.setSelected(show.contains("features"));
         nose.setSelected(!show.contains("bare"));
+        mouth.setSelected(!show.contains("bare"));
+        nose.setOnAction(e -> put());
+        mouth.setOnAction(e -> put());
         compare.getItems().setAll("Beside it", "Over it, as lines");
         compare.getSelectionModel().select(System.getProperty("head.compare", "beside").startsWith("o") ? 1 : 0);
         compare.setOnAction(e -> draw());
-        for (final CheckBox c : List.of(blank, lines, reference, features, nose)) {
+        for (final CheckBox c : List.of(blank, lines, reference, features)) {
             c.setOnAction(e -> draw());
         }
         about.setWrapText(true);
-        final VBox side = new VBox(8, new Label("Shown"), blank, nose, lines, reference, compare, features, about,
+        final VBox side = new VBox(8, new Label("Shown"), blank, nose, mouth, lines, reference, compare, features,
+                about,
                 shell.problems());
         side.setPadding(new Insets(10));
         return side;
@@ -151,7 +199,7 @@ public final class HeadBench extends Application {
         }
         final List<Node> nodes = new ArrayList<>();
         if (blank.isSelected()) {
-            nodes.add(lined(BoneView.INSTANCE.mapped(nose.isSelected() ? withNose : fitted, Paint.SKIN,
+            nodes.add(lined(BoneView.INSTANCE.mapped(shaped != null ? shaped : fitted, Paint.SKIN,
                     CageView.INSTANCE::scene, true), lines.isSelected()));
         }
         if (reference.isSelected()) {
