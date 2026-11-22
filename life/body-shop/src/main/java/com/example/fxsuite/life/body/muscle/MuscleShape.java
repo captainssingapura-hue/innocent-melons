@@ -4,6 +4,7 @@ import com.example.fxsuite.life.body.Mesher;
 import com.example.fxsuite.life.body.Rig;
 import com.example.fxsuite.life.body.V3;
 import com.example.fxsuite.life.body.cage.Cage;
+import com.example.fxsuite.life.body.cage.Crease;
 import com.example.fxsuite.life.body.cage.Fitting;
 import com.example.fxsuite.life.body.cage.Subdivision;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
@@ -27,6 +28,8 @@ public record MuscleShape() implements StatelessFunctionalObject {
 
     /** How many points round each ring. */
     public static final int ROUND = 8;
+    /** How sharp a muscle's ends are kept, as a crease is. */
+    private static final double END = 2;
 
     /** {@code m}'s surface as drawn, on the body {@code rig} holds, on the right or the left, smoothed so often. */
     public Mesher.Mesh mesh(final Muscle m, final Rig rig, final boolean left, final int steps) {
@@ -105,7 +108,24 @@ public record MuscleShape() implements StatelessFunctionalObject {
                 names.add(m.name() + ", section " + (i + 1) + ", " + q);
             }
         }
-        return new Cage(points, names, faces(n, m.ring(), outward(points, n, m.ring())), List.of());
+        return new Cage(points, names, faces(n, m.ring(), outward(points, n, m.ring())), ends(m, n));
+    }
+
+    /**
+     * Its ends kept where their sections are: each end's ring a crease as sharp as {@link #END} says, so that, smoothed,
+     * it does not round out past its attachment; a ring's, none.
+     */
+    private List<Crease> ends(final Muscle m, final int n) {
+        if (m.ring()) {
+            return List.of();
+        }
+        final List<Integer> first = new ArrayList<>();
+        final List<Integer> last = new ArrayList<>();
+        for (int q = 0; q <= ROUND; q++) {
+            first.add(q % ROUND);
+            last.add((n - 1) * ROUND + q % ROUND);
+        }
+        return List.of(new Crease("its origin", first, END, false), new Crease("its insertion", last, END, false));
     }
 
     /**
