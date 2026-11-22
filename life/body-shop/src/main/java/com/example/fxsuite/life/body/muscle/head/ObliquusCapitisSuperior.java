@@ -1,6 +1,6 @@
 package com.example.fxsuite.life.body.muscle.head;
 
-import com.example.fxsuite.life.body.bone.skull.Occipital;
+import com.example.fxsuite.life.body.bone.skull.Skull;
 import com.example.fxsuite.life.body.bone.spine.Atlas;
 import com.example.fxsuite.life.body.muscle.Layer;
 import com.example.fxsuite.life.body.muscle.Muscle;
@@ -38,6 +38,6 @@ public record ObliquusCapitisSuperior() implements Muscle {
         final Sections s = Sections.INSTANCE;
         return List.of(
                 s.at(Atlas.INSTANCE, 3.728, 60.4, -1.561, 0.8, 0.5, 0.3, 0, -1),
-                s.at(Occipital.INSTANCE, 2.928, 2.2, -5.361, 0.8, 0.5, 0.3, 0, -1));
+                s.at(Skull.INSTANCE, 2.928, 2.2, -5.361, 0.8, 0.5, 0.3, 0, -1));
     }
 }

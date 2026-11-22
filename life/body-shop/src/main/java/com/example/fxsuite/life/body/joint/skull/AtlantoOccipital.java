@@ -1,6 +1,6 @@
 package com.example.fxsuite.life.body.joint.skull;
 
-import com.example.fxsuite.life.body.bone.skull.Occipital;
+import com.example.fxsuite.life.body.bone.skull.Skull;
 import com.example.fxsuite.life.body.bone.spine.Atlas;
 import com.example.fxsuite.life.body.joint.Motion;
 import com.example.fxsuite.life.body.joint.Point;
@@ -10,7 +10,7 @@ import com.example.fxsuite.life.body.joint.Simple;
 /**
  * The skull's condyles on the atlas: nodding forward as far as 15 degrees and back 25, a little to either side.
  */
-public record AtlantoOccipital() implements Simple<Atlas, Occipital> {
+public record AtlantoOccipital() implements Simple<Atlas, Skull> {
 
     public static final AtlantoOccipital INSTANCE = new AtlantoOccipital();
 
@@ -30,13 +30,13 @@ public record AtlantoOccipital() implements Simple<Atlas, Occipital> {
     }
 
     @Override
-    public Occipital to() {
-        return Occipital.INSTANCE;
+    public Skull to() {
+        return Skull.INSTANCE;
     }
 
     @Override
-    public Point<Occipital> toPoint() {
-        return Occipital.Points.ATLAS;
+    public Point<Skull> toPoint() {
+        return Skull.Points.ATLAS;
     }
 
     @Override

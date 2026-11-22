@@ -1,6 +1,6 @@
 package com.example.fxsuite.life.body.muscle.head;
 
-import com.example.fxsuite.life.body.bone.skull.Occipital;
+import com.example.fxsuite.life.body.bone.skull.Skull;
 import com.example.fxsuite.life.body.bone.spine.C4;
 import com.example.fxsuite.life.body.bone.spine.T1;
 import com.example.fxsuite.life.body.muscle.Layer;
@@ -40,6 +40,6 @@ public record SpleniusCapitis() implements Muscle {
         return List.of(
                 s.at(T1.INSTANCE, 0.8, 51, -9.1, 2.0, 0.6, 0, 0, -1),
                 s.at(C4.INSTANCE, 2.428, 56.6, -4.425, 3.0, 1.2, 0.3, 0, -1),
-                s.at(Occipital.INSTANCE, 4.241, 4, -5.146, 2.2, 0.6, 0.5, 0, -0.8));
+                s.at(Skull.INSTANCE, 4.241, 4, -5.146, 2.2, 0.6, 0.5, 0, -0.8));
     }
 }

@@ -11,8 +11,7 @@ import static com.example.fxsuite.life.body.Sketch.v;
  * atlas, z ahead), its lower jaw apart: the vault, a shell of bone round the brain, hollow, broad low at the ears; its
  * base pierced by the foramen magnum, the condyles beside it; the face before it, its orbits, its cheekbones and their
  * arches back to the ears, its nose's bones over its opening and cavity, its upper teeth's arch and the hard palate.
- * Each bone of the skull is this, cut along its sutures ({@link Cuts}). A woman's lighter: her brow and her mastoids
- * less.
+ * The skull is this whole, its bones knit into one ({@link Skull}). A woman's lighter: her brow and her mastoids less.
  */
 public record Cranium() implements StatelessFunctionalObject {
 

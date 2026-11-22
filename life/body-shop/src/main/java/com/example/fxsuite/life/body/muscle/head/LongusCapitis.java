@@ -1,6 +1,6 @@
 package com.example.fxsuite.life.body.muscle.head;
 
-import com.example.fxsuite.life.body.bone.skull.Occipital;
+import com.example.fxsuite.life.body.bone.skull.Skull;
 import com.example.fxsuite.life.body.bone.spine.C3;
 import com.example.fxsuite.life.body.bone.spine.C6;
 import com.example.fxsuite.life.body.muscle.Layer;
@@ -40,6 +40,6 @@ public record LongusCapitis() implements Muscle {
         return List.of(
                 s.at(C6.INSTANCE, 2.2, 54.2, -0.45, 1.0, 0.5, 0, 0, 1),
                 s.at(C3.INSTANCE, 1.6, 57.4, 0, 1.4, 0.8, 0, 0, 1),
-                s.at(Occipital.INSTANCE, 0.9, -0.4, 1.1, 1.0, 0.6, 0, 0, 1));
+                s.at(Skull.INSTANCE, 0.9, -0.4, 1.1, 1.0, 0.6, 0, 0, 1));
     }
 }

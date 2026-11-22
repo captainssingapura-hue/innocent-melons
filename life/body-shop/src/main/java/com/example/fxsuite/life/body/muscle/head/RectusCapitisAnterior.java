@@ -1,6 +1,6 @@
 package com.example.fxsuite.life.body.muscle.head;
 
-import com.example.fxsuite.life.body.bone.skull.Occipital;
+import com.example.fxsuite.life.body.bone.skull.Skull;
 import com.example.fxsuite.life.body.bone.spine.Atlas;
 import com.example.fxsuite.life.body.muscle.Layer;
 import com.example.fxsuite.life.body.muscle.Muscle;
@@ -38,6 +38,6 @@ public record RectusCapitisAnterior() implements Muscle {
         final Sections s = Sections.INSTANCE;
         return List.of(
                 s.at(Atlas.INSTANCE, 1.6, 60.2, 0.15, 0.8, 0.5, 0, 0, 1),
-                s.at(Occipital.INSTANCE, 1.2, -0.2, 0.75, 0.8, 0.5, 0, 0, 1));
+                s.at(Skull.INSTANCE, 1.2, -0.2, 0.75, 0.8, 0.5, 0, 0, 1));
     }
 }

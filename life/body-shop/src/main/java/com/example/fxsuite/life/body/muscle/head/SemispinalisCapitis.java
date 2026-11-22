@@ -1,6 +1,6 @@
 package com.example.fxsuite.life.body.muscle.head;
 
-import com.example.fxsuite.life.body.bone.skull.Occipital;
+import com.example.fxsuite.life.body.bone.skull.Skull;
 import com.example.fxsuite.life.body.bone.spine.C3;
 import com.example.fxsuite.life.body.bone.spine.C7;
 import com.example.fxsuite.life.body.bone.spine.T4;
@@ -42,6 +42,6 @@ public record SemispinalisCapitis() implements Muscle {
                 s.at(T4.INSTANCE, 2.2, 45, -8.4, 1.6, 0.8, 0, 0, -1),
                 s.at(C7.INSTANCE, 2, 52.6, -5.3, 2.2, 1.4, 0, 0, -1),
                 s.at(C3.INSTANCE, 1.8, 57.2, -4.1, 2.4, 1.4, 0, 0, -1),
-                s.at(Occipital.INSTANCE, 1.8, 3.6, -7.1, 2.4, 0.6, 0, 0, -1));
+                s.at(Skull.INSTANCE, 1.8, 3.6, -7.1, 2.4, 0.6, 0, 0, -1));
     }
 }

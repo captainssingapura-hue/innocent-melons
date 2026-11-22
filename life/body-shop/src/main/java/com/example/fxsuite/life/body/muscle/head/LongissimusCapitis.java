@@ -1,6 +1,6 @@
 package com.example.fxsuite.life.body.muscle.head;
 
-import com.example.fxsuite.life.body.bone.skull.Temporal;
+import com.example.fxsuite.life.body.bone.skull.Skull;
 import com.example.fxsuite.life.body.bone.spine.C5;
 import com.example.fxsuite.life.body.bone.spine.T4;
 import com.example.fxsuite.life.body.muscle.Layer;
@@ -40,6 +40,6 @@ public record LongissimusCapitis() implements Muscle {
         return List.of(
                 s.at(T4.INSTANCE, 3.4, 46, -7.1, 1.0, 0.6, 0, 0, -1),
                 s.at(C5.INSTANCE, 3.114, 55, -2.913, 1.0, 0.6, 0.3, 0, -1),
-                s.at(Temporal.INSTANCE, 4.466, -0.8, -1.732, 1.0, 0.6, 0.5, 0, -1));
+                s.at(Skull.INSTANCE, 4.466, -0.8, -1.732, 1.0, 0.6, 0.5, 0, -1));
     }
 }

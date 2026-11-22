@@ -6,29 +6,17 @@ import com.example.fxsuite.life.body.joint.Place;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 /**
- * Where the skull's bones meet, as on the right, in the head's frame (x to its right, y up from the joint it nods on, z
- * ahead): along each suture, midway between the middles of the two bones it joins, or down the middle between two of a
- * pair; where it nods on the atlas; the jaw turning in its hollows by the ears, both on one axis; the teeth in their
- * sockets; the middle ear's bones one on the next, the stirrup in the inner ear's window.
+ * Where the head's bones meet, as on the right, in the head's frame (x to its right, y up from the joint it nods on, z
+ * ahead): where the skull nods on the atlas; the jaw turning in its hollows by the ears, both on one axis; the teeth in
+ * their sockets, midway between the middles of the jaw and its teeth; the middle ear's bones one on the next, the
+ * stirrup in the inner ear's window.
  */
 public record SkullContacts() implements StatelessFunctionalObject {
 
     public static final SkullContacts INSTANCE = new SkullContacts();
 
-    /** The bones' middles, the right one of a pair. */
-    public static final V3 FRONTAL = new V3(0, 11.5, 6.5);
-    public static final V3 PARIETAL = new V3(4.5, 12.5, -2.0);
-    public static final V3 OCCIPITAL = new V3(0, 5.5, -6.5);
-    public static final V3 TEMPORAL = new V3(5.8, 3.5, -0.5);
-    public static final V3 SPHENOID = new V3(0, 3.5, 2.5);
-    public static final V3 ETHMOID = new V3(0, 4.5, 6.5);
-    public static final V3 NASAL = new V3(0.4, 5.4, 9.85);
-    public static final V3 LACRIMAL = new V3(1.6, 4.5, 8.4);
-    public static final V3 ZYGOMATIC = new V3(4.8, 3.2, 6.9);
+    /** The upper jaw's middle on the right, and the lower jaw's. */
     public static final V3 MAXILLA = new V3(2.2, 1.5, 7.5);
-    public static final V3 PALATINE = new V3(1.0, 0.3, 4.0);
-    public static final V3 CONCHA = new V3(0.8, 1.8, 7.0);
-    public static final V3 VOMER = new V3(0, 2.0, 5.5);
     public static final V3 MANDIBLE = new V3(3.0, -4.35, 5.6);
     /** The middles of the right half of each row of teeth. */
     public static final V3 UPPER_TEETH = new V3(2.6, 0.15, 6.3);
@@ -44,11 +32,6 @@ public record SkullContacts() implements StatelessFunctionalObject {
     /** Where two bones meet, midway between their middles {@code a} and {@code b}. */
     public Place between(final V3 a, final V3 b) {
         return new Place(a.plus(b).times(0.5), Axes.UPRIGHT);
-    }
-
-    /** Where a bone of a pair meets its fellow, its middle {@code a}: down the middle, beside it. */
-    public Place middle(final V3 a) {
-        return new Place(new V3(0, a.y(), a.z()), Axes.UPRIGHT);
     }
 
     /** Where the head nods on the atlas: the head's own frame. */

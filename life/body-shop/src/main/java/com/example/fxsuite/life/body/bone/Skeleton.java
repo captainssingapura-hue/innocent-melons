@@ -31,6 +31,6 @@ public record Skeleton() implements StatelessFunctionalObject {
 
     /** How many of the body's bones they are: a paired one two. */
     public int counted() {
-        return bones().stream().filter(b -> b.kind() == Kind.BONE).mapToInt(b -> b.paired() ? 2 : 1).sum();
+        return bones().stream().filter(b -> b.kind() == Kind.BONE).mapToInt(Bone::count).sum();
     }
 }
