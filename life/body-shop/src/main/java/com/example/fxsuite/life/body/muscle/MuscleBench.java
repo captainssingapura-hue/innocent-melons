@@ -238,7 +238,9 @@ public final class MuscleBench extends Application {
 
     /** How big {@code m} was measured in a body the drawn figure's height and mass, if it was. */
     private String measure(final Muscle m) {
-        final String by = LegVolumes.INSTANCE.volume(m.name(), 1).isPresent() ? "Handsfield" : "Holzbaur";
+        final String by = LegVolumes.INSTANCE.volume(m.name(), 1).isPresent() ? "Handsfield"
+                : com.example.fxsuite.life.body.muscle.arm.ArmVolumes.INSTANCE.volume(m.name(), 1).isPresent()
+                ? "Holzbaur" : "Zheng";
         return asMeasured.measured(m)
                 .map(x -> String.format(Locale.ROOT, "Measured %.0f cm3 in a body %.0f cm tall and %.0f kg"
                         + " (%s).", x, Proportions.DRAWN.stature(), Proportions.DRAWN.mass(), by))
