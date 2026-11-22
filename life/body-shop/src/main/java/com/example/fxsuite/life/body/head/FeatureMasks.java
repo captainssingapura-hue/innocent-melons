@@ -10,13 +10,17 @@ import java.util.Map;
  * Where a reference head's features are ({@link Feature}), each the inside of an ellipsoid placed by its landmarks:
  * each eye about its middle, a little ahead, its lids with it; the mouth about its line, back from its lips' front;
  * the nose from the eyes to its foot, back from its tip, the tip, the foot, the upper lip and the mouth's line found
- * down the middle of the face, where it reaches furthest ahead and least, in turn; each ear about the head's furthest
- * out at the height of the eyes and below, a little in. Which feature each of its triangles is of, by where its middle
- * is: the first whose region it is in, the eyes, the mouth, the nose, the ears in turn; none, the blank's.
+ * down the middle of the face, where it reaches furthest ahead and least, in turn; each ear round what of the head
+ * is furthest out beside it, about the height of the eyes. Which feature each of its triangles is of, by where its
+ * middle is: the first whose region it is in, the eyes, the mouth, the nose, the ears in turn; none, the blank's.
  */
 public record FeatureMasks() implements StatelessFunctionalObject {
 
     public static final FeatureMasks INSTANCE = new FeatureMasks();
+
+    /** How far in from its furthest an ear's points are, cm; how far round them its region reaches, cm. */
+    private static final double EAR = 1.2;
+    private static final double ROUND = 1.5;
 
     /** A feature's region: its middle and its half axes along x, y and z. */
     public record Region(V3 middle, V3 half) {
@@ -65,9 +69,8 @@ public record FeatureMasks() implements StatelessFunctionalObject {
         m.put(Feature.MOUTH, new Region(new V3(0, mouth, lips - 0.8), new V3(2.7, 1.3, 1.5)));
         m.put(Feature.NOSE, new Region(new V3(0, (eyes + foot) / 2, ahead(p, tip - 0.25, tip + 0.25) - 1),
                 new V3(1.9, (eyes - foot) / 2 + 0.1, 2)));
-        final V3 ear = new V3(2.2, 3.4, 2.6);
-        m.put(Feature.RIGHT_EAR, new Region(furthestOut(p, eyes, 1).minus(new V3(1, 0, 0)), ear));
-        m.put(Feature.LEFT_EAR, new Region(furthestOut(p, eyes, -1).plus(new V3(1, 0, 0)), ear));
+        m.put(Feature.RIGHT_EAR, ear(p, eyes, 1));
+        m.put(Feature.LEFT_EAR, ear(p, eyes, -1));
         return m;
     }
 
@@ -97,6 +100,26 @@ public record FeatureMasks() implements StatelessFunctionalObject {
             }
         }
         return z;
+    }
+
+    /**
+     * The ear on side {@code side} (1 the right): round the points of {@code p} beside the head, from below the eyes'
+     * height {@code eyes} to a little above, as far out as its furthest but {@link #EAR}, its lobe and its rim
+     * with it, {@link #ROUND} more each way, room for it to go over into the blank; a centimetre in from its furthest.
+     */
+    private Region ear(final float[] p, final double eyes, final int side) {
+        final V3 far = furthestOut(p, eyes, side);
+        final double[] b = {1e9, 1e9, -1e9, -1e9};
+        for (int i = 0; i < p.length; i += 3) {
+            if (p[i + 1] > eyes - 7 && p[i + 1] < eyes + 2 && p[i] * side > far.x() * side - EAR) {
+                b[0] = Math.min(b[0], p[i + 1]);
+                b[1] = Math.min(b[1], p[i + 2]);
+                b[2] = Math.max(b[2], p[i + 1]);
+                b[3] = Math.max(b[3], p[i + 2]);
+            }
+        }
+        return new Region(new V3(far.x() - side, (b[0] + b[2]) / 2, (b[1] + b[3]) / 2),
+                new V3(2.2, (b[2] - b[0]) / 2 + ROUND, (b[3] - b[1]) / 2 + ROUND));
     }
 
     /** The point of {@code p} furthest out on side {@code side} (1 the right), from the eyes' height {@code eyes}. */

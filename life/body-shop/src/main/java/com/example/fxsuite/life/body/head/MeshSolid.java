@@ -87,18 +87,20 @@ public record MeshSolid() implements StatelessFunctionalObject {
         final Grid g = new Grid(new double[] {box[0], box[1], box[2]}, cell, n, new float[n[0] * n[1] * n[2]],
                 new boolean[n[0] * n[1] * n[2]]);
         final Beneath b = beneath(m);
-        final double way = facing(b);
+        final V3[] normals = normals(b);
+        final double way = facing(b, normals);
         final List<List<Integer>> slabs = slabs(b, g);
         IntStream.range(0, n[2]).parallel().forEach(k -> {
             for (final int tri : slabs.get(k)) {
-                near(g, b, tri, k, way);
+                near(g, b, normals, tri, k, way);
             }
         });
         return g;
     }
 
     /** The points of slab {@code k} near triangle {@code tri} given their distance from it, if nearer than before. */
-    private void near(final Grid g, final Beneath b, final int tri, final int k, final double way) {
+    private void near(final Grid g, final Beneath b, final V3[] normals, final int tri, final int k,
+            final double way) {
         final int[] lo = new int[2];
         final int[] hi = new int[2];
         for (int a = 0; a < 2; a++) {
@@ -118,7 +120,7 @@ public record MeshSolid() implements StatelessFunctionalObject {
                 final Nearness.Near n = Closest.INSTANCE.on(b, tri, p);
                 final int at = g.at(i, j, k);
                 if (n.distance() < BAND && (!g.found()[at] || n.distance() < Math.abs(g.v()[at]))) {
-                    g.v()[at] = (float) (side(b, n, p) * way < 0 ? -n.distance() : n.distance());
+                    g.v()[at] = (float) (side(b, normals, n, p) * way < 0 ? -n.distance() : n.distance());
                     g.found()[at] = true;
                 }
             }
@@ -149,23 +151,42 @@ public record MeshSolid() implements StatelessFunctionalObject {
     }
 
     /**
-     * Which side {@code p} is of the triangle it is nearest, {@code n}: ahead of it, the way its corners go round, more
-     * than nothing.
+     * Which side {@code p} is of the triangle it is nearest, {@code n}: ahead of it, more than nothing, the way the
+     * surface faces there, its corners' {@code normals} taken as much as the nearest point is near each, so that a
+     * point off a sharp edge, as near the triangles either side of it, is not taken now for one's and now the other's.
      */
-    private double side(final Beneath b, final Nearness.Near n, final V3 p) {
+    private double side(final Beneath b, final V3[] normals, final Nearness.Near n, final V3 p) {
         final int[] t = b.triangles();
-        final V3 a = b.point(t[3 * n.triangle()]);
-        final V3 c1 = b.point(t[3 * n.triangle() + 1]);
-        final V3 c2 = b.point(t[3 * n.triangle() + 2]);
-        final V3 q = a.times(n.a()).plus(c1.times(n.b())).plus(c2.times(n.c()));
-        return p.minus(q).dot(c1.minus(a).cross(c2.minus(a)));
+        final int i = t[3 * n.triangle()];
+        final int j = t[3 * n.triangle() + 1];
+        final int k = t[3 * n.triangle() + 2];
+        final V3 q = b.point(i).times(n.a()).plus(b.point(j).times(n.b())).plus(b.point(k).times(n.c()));
+        return p.minus(q).dot(normals[i].times(n.a()).plus(normals[j].times(n.b())).plus(normals[k].times(n.c())));
+    }
+
+    /** The way the surface faces at each of its points, the way its corners go round: its triangles' there, by area. */
+    private V3[] normals(final Beneath b) {
+        final V3[] n = new V3[b.size()];
+        Arrays.fill(n, V3.ZERO);
+        final int[] t = b.triangles();
+        for (int k = 0; k < t.length; k += 3) {
+            final V3 a = b.point(t[k]);
+            final V3 f = b.point(t[k + 1]).minus(a).cross(b.point(t[k + 2]).minus(a));
+            for (int c = 0; c < 3; c++) {
+                n[t[k + c]] = n[t[k + c]].plus(f);
+            }
+        }
+        for (int i = 0; i < n.length; i++) {
+            n[i] = n[i].length() > 0 ? n[i].unit() : n[i];
+        }
+        return n;
     }
 
     /**
      * Which way the surface's triangles face out: one, if the middle of its points is behind its triangle nearest it,
      * as a closed surface facing out has it; less than nothing, if not.
      */
-    private double facing(final Beneath b) {
+    private double facing(final Beneath b, final V3[] normals) {
         V3 mid = V3.ZERO;
         for (int i = 0; i < b.size(); i++) {
             mid = mid.plus(b.point(i));
@@ -176,7 +197,7 @@ public record MeshSolid() implements StatelessFunctionalObject {
             final Nearness.Near n = Closest.INSTANCE.on(b, tri, mid);
             best = best == null || n.distance() < best.distance() ? n : best;
         }
-        return side(b, best, mid) < 0 ? 1 : -1;
+        return side(b, normals, best, mid) < 0 ? 1 : -1;
     }
 
     /** What is reached from the grid's sides and top, through what is not behind the surface, made outside. */

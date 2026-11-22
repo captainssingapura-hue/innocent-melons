@@ -36,14 +36,14 @@ import java.util.concurrent.Executors;
 /**
  * The head bench, a head made as clay is: its blank first, the head's shape with nothing on it ({@link BlankFit}),
  * fitted to a reference head read from a file on the machine, never kept in the code ({@link ReferenceReading}), its
- * features masked out of the fit ({@link FeatureMasks}); then its pieces pressed on it, its nose and its mouth
- * from the reference, each put on or not ({@link Pieces}), and its eyes ({@link Eyes}); the reference beside it or
- * over it as lines, its features in a colour of their own, to see what was left out; the blank as lines, to see the
- * reference through it.
+ * features masked out of the fit ({@link FeatureMasks}); then its pieces pressed on it, its nose and its mouth,
+ * its ears grafted in, from the reference, each put on or not ({@link Pieces}), and its eyes ({@link Eyes}); the
+ * reference beside it or over it as lines, its features in a colour of their own, to see what was left out; the blank
+ * as lines, to see the reference through it.
  *
  * <p>{@code -Dhead.reference} (the reference's path), {@code -Dhead.compare} (beside, over), {@code -Dhead.show}
- * (blank, lines, reference, features, bare: its nose not put on, by commas); {@code -Dhead.yaw}, {@code
- * -Dhead.pitch}, {@code -Dhead.distance} where it is seen from.</p>
+ * (blank, lines, reference, features; bare: nothing put on; earless: its ears not; by commas); {@code -Dhead.yaw},
+ * {@code -Dhead.pitch}, {@code -Dhead.distance} where it is seen from.</p>
  */
 public final class HeadBench extends Application {
 
@@ -62,6 +62,7 @@ public final class HeadBench extends Application {
     private final CheckBox nose = new CheckBox("Put on: its nose");
     private final CheckBox mouth = new CheckBox("Put on: its mouth");
     private final CheckBox eyes = new CheckBox("Put on: its eyes");
+    private final CheckBox ears = new CheckBox("Put on: its ears");
     private final ChoiceBox<String> compare = new ChoiceBox<>();
     private final Label about = new Label("Reading the reference");
     private final ExecutorService worker = Executors.newSingleThreadExecutor(r -> {
@@ -74,6 +75,8 @@ public final class HeadBench extends Application {
     private Mesher.Mesh fitted;
     /** The blank made a solid; the reference's pieces, to be put on it; the head with those chosen on it. */
     private Field.Shape solid;
+    /** The blank with its ears grafted in. */
+    private Field.Shape eared;
     private Map<Feature, Field.Shape> pieces = Map.of();
     private Mesher.Mesh shaped;
     private List<Field.Element> eyeLayers = List.of();
@@ -112,6 +115,8 @@ public final class HeadBench extends Application {
             for (final Feature f : List.of(Feature.NOSE, Feature.MOUTH)) {
                 found.put(f, Pieces.INSTANCE.of(r, f, s));
             }
+            final Field.Shape right = Pieces.INSTANCE.grafted(r, Feature.RIGHT_EAR, s, s);
+            final Field.Shape both = Pieces.INSTANCE.grafted(r, Feature.LEFT_EAR, s, right);
             final List<Field.Element> sockets = Eyes.INSTANCE.of(r, s);
             final long cut = (System.nanoTime() - t1) / 1_000_000;
             Platform.runLater(() -> {
@@ -119,6 +124,7 @@ public final class HeadBench extends Application {
                 masks = m;
                 fitted = b;
                 solid = s;
+                eared = both;
                 pieces = found;
                 eyeLayers = sockets;
                 lowest = lowest(r.mesh());
@@ -154,12 +160,12 @@ public final class HeadBench extends Application {
         }
         final int n = ++asked;
         final List<Field.Element> then = eyes.isSelected() ? eyeLayers : List.of();
-        if (on.isEmpty() && then.isEmpty()) {
+        if (on.isEmpty() && then.isEmpty() && !ears.isSelected()) {
             shaped = null;
             draw();
             return;
         }
-        final Field.Shape s = solid;
+        final Field.Shape s = ears.isSelected() ? eared : solid;
         bus.publish(new Bus.Working(true, "put"));
         worker.submit(() -> {
             final Mesher.Mesh m = n == asked ? Mesher.of(Pieces.INSTANCE.head(s, on, then), HEAD_CELL) : null;
@@ -183,9 +189,10 @@ public final class HeadBench extends Application {
         nose.setSelected(!show.contains("bare"));
         mouth.setSelected(!show.contains("bare"));
         eyes.setSelected(!show.contains("bare"));
-        eyes.setOnAction(e -> put());
-        nose.setOnAction(e -> put());
-        mouth.setOnAction(e -> put());
+        ears.setSelected(!show.contains("bare") && !show.contains("earless"));
+        for (final CheckBox c : List.of(nose, mouth, eyes, ears)) {
+            c.setOnAction(e -> put());
+        }
         compare.getItems().setAll("Beside it", "Over it, as lines");
         compare.getSelectionModel().select(System.getProperty("head.compare", "beside").startsWith("o") ? 1 : 0);
         compare.setOnAction(e -> draw());
@@ -193,9 +200,8 @@ public final class HeadBench extends Application {
             c.setOnAction(e -> draw());
         }
         about.setWrapText(true);
-        final VBox side = new VBox(8, new Label("Shown"), blank, nose, mouth, eyes, lines, reference, compare, features,
-                about,
-                shell.problems());
+        final VBox side = new VBox(8, new Label("Shown"), blank, nose, mouth, eyes, ears, lines, reference, compare,
+                features, about, shell.problems());
         side.setPadding(new Insets(10));
         return side;
     }
