@@ -100,15 +100,15 @@ final class Limb {
         for (final int p : loop) {
             mid = mid.plus(b.point(p).times(1.0 / n));
         }
+        V3 across = V3.ZERO;
         for (int k = 0; k < n; k++) {
             final V3 v = b.point(loop[k]).minus(mid);
             round[k] = Math.atan2(v.dot(first.u()), v.dot(first.w()));
+            across = across.plus(v.cross(b.point(loop[(k + 1) % n]).minus(mid)));
         }
-        double turned = 0;
-        for (int k = 0; k < n; k++) {
-            turned += Math.IEEEremainder(round[(k + 1) % n] - round[k], 2 * Math.PI);
-        }
-        return turned;
+        // the way they go round told by the area they span, not by how far round they wind seen in the ring's plane,
+        // which a loop seen nearly edge on, folded over, may make nothing
+        return 2 * Math.PI * Math.signum(across.dot(first.w().cross(first.u())));
     }
 
 
