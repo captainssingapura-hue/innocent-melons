@@ -1,4 +1,4 @@
-package com.example.fxsuite.places.yard;
+package melons.innocent.demos.village;
 
 import com.example.fxsuite.avatar.sim.Block;
 import com.example.fxsuite.avatar.sim.Fruit;

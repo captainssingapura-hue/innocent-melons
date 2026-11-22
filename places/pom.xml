@@ -12,7 +12,7 @@
     <description>
         Places to walk round and fly over, drawn by the card: what is built of the material lab's surfaces and stood
         on the ground at its true size, for the engine's avatar to go round and look at close to. A house with no
-        roof, a village with its lake, a car's parts spread out apart. Each place gives, from one description, what
+        roof, a car's parts spread out apart, and the walls a yard is walled with, which the demos use. Each place gives, from one description, what
         is drawn of it and what is in the avatar's way. A place makes no material of its own: it asks the lab for
         one. Its code keeps CQ's basic rules, and its layers are kept by a test of its own (pl-qc).
     </description>
@@ -28,7 +28,7 @@
     </properties>
 
     <modules>
-        <!-- The yard: the house, the village and its lake, and the car's parts, each a place to walk. -->
+        <!-- The yard: the house and the car's parts, each a place to walk, and the walls of any yard. -->
         <module>pl-yard</module>
         <!-- The gates: CQ's basic rules and the layers, over every module here. -->
         <module>pl-qc</module>
@@ -61,12 +61,6 @@
             <dependency>
                 <groupId>com.example.fxsuite.texture</groupId>
                 <artifactId>tx-stone</artifactId>
-                <version>${lab.version}</version>
-            </dependency>
-            <!-- the lab's bench, for the plain car body it shows paint and glass on: taken from there until it has a home -->
-            <dependency>
-                <groupId>com.example.fxsuite.texture</groupId>
-                <artifactId>tx-lab</artifactId>
                 <version>${lab.version}</version>
             </dependency>
             <!-- its own modules, at its own version -->

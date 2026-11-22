@@ -1,4 +1,4 @@
-package com.example.fxsuite.places.yard;
+package melons.innocent.demos.village;
 
 import com.example.fxsuite.texture.lab.Called;
 import com.example.fxsuite.vulkan.space.Vec3;

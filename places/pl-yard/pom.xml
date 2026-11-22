@@ -14,14 +14,14 @@
     <packaging>jar</packaging>
 
     <properties>
-        <!-- which of the yard's windows exec:java opens: Yard (the house), VillageWalk or PartsWalk -->
+        <!-- which of the yard's windows exec:java opens: Yard (the house) or PartsWalk -->
         <yard.main>Yard</yard.main>
     </properties>
 
     <description>
         The yard: places built of the material lab's surfaces, stood on the ground at their true size and walked
-        round by the avatar, drawn by the card. A house of four walls and a doorway, with no roof; a village of
-        walled yards with a small lake before it; and a car's parts spread out apart. What a place is drawn with and
+        round by the avatar, drawn by the card. A house of four walls and a doorway, with no roof; the walls of
+        any walled yard; and a car's parts spread out apart. What a place is drawn with and
         what is in the avatar's way are made from the one description of it.
     </description>
 
@@ -47,10 +47,6 @@
             <artifactId>tx-stone</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.example.fxsuite.texture</groupId>
-            <artifactId>tx-lab</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
@@ -60,7 +56,7 @@
     <build>
         <plugins>
             <plugin>
-                <!-- mvn -pl pl-yard exec:java opens the house; -Dyard.main=VillageWalk opens the village -->
+                <!-- mvn -pl pl-yard exec:java opens the house; -Dyard.main=PartsWalk opens the car's parts -->
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.6.3</version>
