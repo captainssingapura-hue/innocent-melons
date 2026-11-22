@@ -112,8 +112,8 @@ public record MuscleShape() implements StatelessFunctionalObject {
     }
 
     /**
-     * Its ends kept where their sections are: each end's ring a crease as sharp as {@link #END} says, so that, smoothed,
-     * it does not round out past its attachment; a ring's, none.
+     * Its ends kept where their sections are: each end's ring a crease as sharp as {@link #END} says, so that,
+     * smoothed, it does not round out past its attachment; a ring's, none.
      */
     private List<Crease> ends(final Muscle m, final int n) {
         if (m.ring()) {

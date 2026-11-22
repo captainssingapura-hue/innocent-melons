@@ -1,6 +1,7 @@
 package com.example.fxsuite.life.body.skin;
 
 import com.example.fxsuite.life.body.BoundPose;
+import com.example.fxsuite.life.body.Detail;
 import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Proportions;
 import com.example.fxsuite.life.body.Rig;
@@ -12,9 +13,11 @@ import com.example.fxsuite.life.body.fat.SheetBed;
 import com.example.fxsuite.life.body.flesh.Flesh;
 import com.example.fxsuite.life.body.muscle.MuscleBody;
 import com.example.fxsuite.life.body.wear.Beneath;
+import com.example.fxsuite.life.body.wear.Underneath;
 import com.example.fxsuite.life.body.wear.Weights;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -47,11 +50,15 @@ public final class Skins {
         return moving.computeIfAbsent(p, x -> SkinFit.INSTANCE.coarse(target(x), SKIN, TENSION));
     }
 
-    /** What a skin over a body of {@code p}'s size is found over: its muscles, its deep ones too, and its bones. */
+    /**
+     * What a skin over a body of {@code p}'s size is found over: its muscles, its deep ones too, and its bones; its
+     * bones alone too, for it to be kept off them.
+     */
     private FatTarget target(final Proportions p) {
         final Rig bind = new Rig(p, BoundPose.INSTANCE.pose(), false);
         final Nearness near = new Nearness(FatBeneath.INSTANCE.of(SheetBed.INSTANCE.body(p, true, 1), bind));
-        return new FatTarget(near, new FatMap(FatMap.MEASURED, SKIN), bind);
+        final Nearness bones = new Nearness(Underneath.INSTANCE.bones(bind, new Detail(0.6)));
+        return new FatTarget(near, new FatMap(FatMap.MEASURED, SKIN), bind, Optional.of(bones));
     }
 
     /** {@code skin} as what is worn over it is fitted to: its points, its triangles, how each follows the body. */

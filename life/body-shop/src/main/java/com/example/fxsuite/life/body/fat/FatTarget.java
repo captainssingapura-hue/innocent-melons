@@ -34,8 +34,15 @@ public final class FatTarget {
     private final Rig bind;
     private final Part[] mainOf;
     private final boolean[] onArm;
+    private final Optional<Nearness> bones;
 
     public FatTarget(final Nearness near, final FatMap map, final Rig bind) {
+        this(near, map, bind, Optional.empty());
+    }
+
+    /** The same, knowing the bones alone, {@code bones}, for a skin to be kept off them ({@link #shortOfBones}). */
+    public FatTarget(final Nearness near, final FatMap map, final Rig bind, final Optional<Nearness> bones) {
+        this.bones = bones;
         this.near = near;
         this.map = map;
         this.bind = bind;
@@ -136,6 +143,24 @@ public final class FatTarget {
         final Nearness.Near n = near.nearest(x, within, counts(r, side));
         return n.triangle() < 0 ? new double[] {within, 0}
                 : new double[] {n.distance(), map.thickness(near.weights(n), x, bind)};
+    }
+
+    /**
+     * How far short {@code x} is of lying {@code clear} off the bones, cm: inside one, as far in as it is and that
+     * much more; nearer one than that, the rest; nothing, if it is clear of them, or the bones are not known. Each bone
+     * one closed surface facing out, so that inside one is inside it, as among muscles crossing each other it need not
+     * be.
+     */
+    public double shortOfBones(final V3 x, final double clear) {
+        if (bones.isEmpty()) {
+            return 0;
+        }
+        final Nearness b = bones.get();
+        final Nearness.Near n = b.nearest(x, clear + 1, i -> true);
+        if (n.triangle() < 0) {
+            return 0;
+        }
+        return Math.max(0, clear - (b.inside(n, x) ? -n.distance() : n.distance()));
     }
 
     /** How the body under {@code x} moves: the nearest point beneath's, whatever it is. */

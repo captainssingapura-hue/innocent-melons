@@ -51,7 +51,7 @@ public record SkinFit() implements StatelessFunctionalObject {
      */
     public Flesh of(final FatTarget target, final double skin, final int tension, final int base) {
         final Wrap.Shape shape = Wrap.INSTANCE.start(target, STEPS);
-        final Flesh scan = finer(shape, taut(target, shape, skin, tension), target);
+        final Flesh scan = cleared(finer(shape, taut(target, shape, skin, tension), target), target, skin);
         if (base < 0) {
             return scan;
         }
@@ -87,6 +87,26 @@ public record SkinFit() implements StatelessFunctionalObject {
     }
 
     /**
+     * {@code f} kept off the bones {@code target} knows by the skin's thickness, {@code skin}, at least, each point
+     * set out along its own way out as far as it falls short: smoothed once more, its ridges drawn in, the skin over a
+     * bone's ridge, the clavicle's, say, would pass into it; as it was, if none would.
+     */
+    private Flesh cleared(final Flesh f, final FatTarget target, final double skin) {
+        final V3[] at = new V3[f.size()];
+        final boolean[] moved = new boolean[1];
+        final float[] n = f.normals();
+        IntStream.range(0, at.length).parallel().forEach(i -> {
+            final V3 p = f.point(i);
+            final double shortBy = target.shortOfBones(p, skin);
+            at[i] = p.plus(new V3(n[3 * i], n[3 * i + 1], n[3 * i + 2]).times(shortBy));
+            if (shortBy > 0) {
+                moved[0] = true;
+            }
+        });
+        return moved[0] ? f.reshaped(at) : f;
+    }
+
+    /**
      * {@code shape}'s points set on what {@code target} finds, then drawn taut {@code tension} times, in place; how
      * each follows the body, spread along it.
      */
@@ -113,7 +133,9 @@ public record SkinFit() implements StatelessFunctionalObject {
 
     /**
      * Every point moved a third of the way to lying as far out as the fat and the skin are thick, and set out to no
-     * nearer than the skin and {@link #KEPT} of the fat; each as far as it is free.
+     * nearer than the skin and {@link #KEPT} of the fat; each as far as it is free; and further, if it would lie in a
+     * bone, or nearer one than that ({@link FatTarget#shortOfBones}): the skin over the clavicle, say, not drawn
+     * through it as it is drawn taut across.
      */
     private void settle(final FatTarget target, final Wrap.Shape s, final double skin) {
         final V3[] at = s.at();
@@ -123,7 +145,8 @@ public record SkinFit() implements StatelessFunctionalObject {
             final double floor = skin + KEPT * (d[1] - skin);
             final double toward = (d[1] - d[0]) / 3;
             final double by = Math.max(toward, floor - d[0]);
-            at[i] = at[i].plus(out[i].times(by));
+            final V3 settled = at[i].plus(out[i].times(by));
+            at[i] = settled.plus(out[i].times(target.shortOfBones(settled, floor)));
         });
     }
 
