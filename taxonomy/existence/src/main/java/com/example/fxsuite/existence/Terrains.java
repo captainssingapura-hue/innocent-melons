@@ -25,7 +25,7 @@ public final class Terrains {
     public static final Taxonomy TREE = new Taxonomy("terrains", new Terrain(), List.of(new Plain(), new Floodplain(),
             new Plateau(), new Hill(), new Ridge(), new Dune(), new Valley(), new Hollow(), new Gorge(), new Slope(),
             new Cliff(), new Earth(), new Sand(), new Clay(), new Rock(), new Grass(), new Meadow(), new Moss(),
-            new Scrub()), Meanings.INSTANCE.beside(Terrains.class));
+            new Scrub(), new Forest()), Meanings.INSTANCE.beside(Terrains.class));
 
     /** The root: the land as it lies. */
     public record Terrain() implements L0 {
@@ -67,4 +67,5 @@ public final class Terrains {
     public record Meadow() implements Leaf<Grown> { public Grown parent() { return new Grown(); } }
     public record Moss() implements Leaf<Grown> { public Grown parent() { return new Grown(); } }
     public record Scrub() implements Leaf<Grown> { public Grown parent() { return new Grown(); } }
+    public record Forest() implements Leaf<Grown> { public Grown parent() { return new Grown(); } }
 }

@@ -15,10 +15,25 @@
 
     <description>
         The land, as data: the ground over a stretch of the map and how high it is at any point of it, the same every
-        time, in centimetres, across (x) and along (z) the map, up (y). Plain Java, knowing no engine.
+        time, in centimetres, across (x) and along (z) the map, up (y); made from its map, lines joining spots on it
+        (a graph), each line straight or bowed along a curve, and its landforms laid over one another in turn, each
+        shaped by curves; and over it, its land features, each labelled, of a kind of what exists, in a colour of its
+        own, and lying where it says. Plain Java, knowing no engine.
     </description>
 
     <dependencies>
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>fxsuite-existence</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.math</groupId>
+            <artifactId>math-curves</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>fxsuite-math-graph</artifactId>
+        </dependency>
         <dependency>
             <groupId>io.github.captainssingapura-hue.lang.ontology</groupId>
             <artifactId>core</artifactId>

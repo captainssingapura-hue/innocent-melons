@@ -14,8 +14,8 @@
     <packaging>jar</packaging>
 
     <description>
-        The terrain's bench: any ground drawn on the card as a sheet of triangles, lit by the day and tinted by how
-        high it is, looked round, carried across and flown over with the mouse, its controls in a JavaFX window
+        The terrain's bench: any ground drawn on the card as a sheet of triangles, lit by the day, in one of the
+        lab's materials, looked round, carried across and flown over with the mouse, its controls in a JavaFX window
         beside it. No game engine: nothing walks here, nothing is in anyone's way.
     </description>
 
@@ -25,8 +25,24 @@
             <artifactId>terrain-core</artifactId>
         </dependency>
         <dependency>
+            <groupId>melons.innocent.terrain</groupId>
+            <artifactId>melon-country</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.example.fxsuite.vulkan</groupId>
             <artifactId>vk-render</artifactId>
+        </dependency>
+        <!-- the lab's materials: what the land is drawn in; the lab reaches the engine through the renderer's bench,
+             for the avatar's tones, which no material the land is drawn in needs, so the engine is left out -->
+        <dependency>
+            <groupId>com.example.fxsuite.texture</groupId>
+            <artifactId>tx-materials</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.example.fxsuite</groupId>
+                    <artifactId>fxsuite-avatar-demo</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>

@@ -12,7 +12,8 @@
     <description>
         The land, as data: what the ground is, how high it is at any point on the map, and what lies on it, depending
         on no engine, neither the game's nor the card's; and its bench, which draws any ground on the card to be
-        looked round and flown over. The core is plain Java (terrain-core); the bench is the one module here that
+        looked round and flown over. The core is plain Java (terrain-core); the Melon country is a terrain made in it
+        (melon-country), as data; the bench is the one module here that
         knows the renderer (terrain-bench).
     </description>
 
@@ -27,6 +28,7 @@
 
     <modules>
         <module>terrain-core</module>
+        <module>melon-country</module>
         <module>terrain-bench</module>
     </modules>
 
@@ -36,6 +38,31 @@
                 <groupId>melons.innocent.terrain</groupId>
                 <artifactId>terrain-core</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.terrain</groupId>
+                <artifactId>melon-country</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example.fxsuite.texture</groupId>
+                <artifactId>tx-materials</artifactId>
+                <version>0.1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example.fxsuite</groupId>
+                <artifactId>fxsuite-existence</artifactId>
+                <version>0.1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.math</groupId>
+                <artifactId>math-curves</artifactId>
+                <version>0.1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example.fxsuite</groupId>
+                <artifactId>fxsuite-math-graph</artifactId>
+                <version>0.1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>io.github.captainssingapura-hue.lang.ontology</groupId>
