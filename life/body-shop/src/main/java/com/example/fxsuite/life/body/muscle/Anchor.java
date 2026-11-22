@@ -9,6 +9,7 @@ import com.example.fxsuite.life.body.V3;
 import com.example.fxsuite.life.body.bone.Bone;
 import com.example.fxsuite.life.body.bone.Moves;
 import com.example.fxsuite.life.body.bone.skull.SkullForm;
+import com.example.fxsuite.life.body.bone.spine.SpineForm;
 import com.example.fxsuite.life.body.bone.thorax.ThoraxForm;
 import hue.captains.singapura.tao.ontology.Scalar;
 
@@ -28,7 +29,8 @@ public record Anchor(Bone bone, V3 at) implements Scalar {
      * ({@link ThoraxForm}).
      */
     public V3 local() {
-        final V3 drawn = ThoraxForm.INSTANCE.bends(bone) ? ThoraxForm.INSTANCE.apply(at) : at;
+        final V3 drawn = ThoraxForm.INSTANCE.bends(bone) ? ThoraxForm.INSTANCE.apply(at)
+                : SpineForm.INSTANCE.bends(bone) ? SpineForm.INSTANCE.apply(at) : at;
         V3 v = bone.inBody()
                 ? drawn.minus(new Rig(Proportions.DRAWN, Pose.REST, false).frame(bone.part()).at()) : drawn;
         if (bone.part() == Part.HEAD) {

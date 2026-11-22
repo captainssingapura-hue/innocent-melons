@@ -123,28 +123,61 @@ public enum Level {
         return slope;
     }
 
-    /** Its body's middle, in the body's frame. */
-    public V3 middle() {
+    /** Its body's middle as it was drawn, in the body's frame, before the spine's curves were measured. */
+    public V3 drawn() {
         return new V3(0, up, ahead);
+    }
+
+    /** Its body's middle, in the body's frame, the spine curved as men's are measured ({@link SpineCurves}). */
+    public V3 middle() {
+        return SpineForm.INSTANCE.middle(this);
     }
 
     /** Its frame: its body's middle; up along the spine, from the level below to the one above; ahead square to it. */
     public V3[] frame() {
-        final Level[] all = values();
-        final V3 above = ordinal() > 0 ? all[ordinal() - 1].middle() : middle().plus(V3.Y);
-        final V3 below = ordinal() < all.length - 1 ? all[ordinal() + 1].middle() : SACRUM;
-        final V3 upward = above.minus(below).unit();
-        return new V3[] {middle(), upward, V3.X.cross(upward).unit()};
+        return frame(SpineForm.INSTANCE.middles());
+    }
+
+    /** Up along the spine at it, its vertebrae's middles {@code m}: from the one below to the one above. */
+    public V3 up(final V3[] m) {
+        final V3 above = ordinal() > 0 ? m[ordinal() - 1] : m[ordinal()].plus(V3.Y);
+        final V3 below = ordinal() < m.length - 1 ? m[ordinal() + 1] : SACRUM;
+        return above.minus(below).unit();
+    }
+
+    private V3[] frame(final V3[] m) {
+        final V3 upward = up(m);
+        return new V3[] {m[ordinal()], upward, V3.X.cross(upward).unit()};
     }
 
     /** A point given across, up and ahead in its own frame, in the body's. */
     public V3 at(final double x, final double y, final double z) {
-        final V3[] f = frame();
+        return among(SpineForm.INSTANCE.middles(), x, y, z);
+    }
+
+    /** The same, the spine as it was drawn. */
+    public V3 drawnAt(final double x, final double y, final double z) {
+        final Level[] all = values();
+        final V3[] m = new V3[all.length];
+        for (final Level l : all) {
+            m[l.ordinal()] = l.drawn();
+        }
+        return among(m, x, y, z);
+    }
+
+    /** The same, its vertebrae's middles {@code m}, by their order. */
+    public V3 among(final V3[] m, final double x, final double y, final double z) {
+        final V3[] f = frame(m);
         return f[0].plus(V3.X.times(x)).plus(f[1].times(y)).plus(f[2].times(z));
     }
 
     /** Where its transverse process ends on the right, a rib's tubercle meeting it there. */
     public V3 transverseTip() {
         return at(transverse, 0.15 * high, -(deep / 2 + pedicle + transverseBack));
+    }
+
+    /** The same, the spine as it was drawn. */
+    public V3 drawnTransverseTip() {
+        return drawnAt(transverse, 0.15 * high, -(deep / 2 + pedicle + transverseBack));
     }
 }

@@ -105,6 +105,12 @@ public enum Rib {
         return l.at(l.wide() / 2 + 0.25, l.high() * 0.35, -l.deep() * 0.2);
     }
 
+    /** Its head as the spine was drawn, before it was curved. */
+    public V3 drawnHead() {
+        final Level l = vertebra;
+        return l.drawnAt(l.wide() / 2 + 0.25, l.high() * 0.35, -l.deep() * 0.2);
+    }
+
     /** Where its bone ends in front, a man's. */
     public V3 end() {
         return RibLine.INSTANCE.end(this, 0);

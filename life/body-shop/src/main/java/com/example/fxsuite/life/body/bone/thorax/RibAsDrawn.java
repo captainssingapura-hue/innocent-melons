@@ -51,9 +51,9 @@ public enum RibAsDrawn {
     public List<V3> line() {
         final Rib rib = Rib.values()[ordinal()];
         final Level l = rib.vertebra();
-        final V3 tip = l.transverseTip();
+        final V3 tip = l.drawnTransverseTip();
         final List<V3> keys = new ArrayList<>();
-        keys.add(rib.head());
+        keys.add(rib.drawnHead());
         keys.add(rib.floating() ? new V3(tip.x() * 0.9, tip.y() - 0.4, tip.z() + 0.3)
                 : tip.plus(new V3(0.15, -0.2, 0.25)));
         keys.add(new V3(tip.x() + 1.6 + 0.16 * ordinal(), tip.y() - 0.8, tip.z() - 0.25));
