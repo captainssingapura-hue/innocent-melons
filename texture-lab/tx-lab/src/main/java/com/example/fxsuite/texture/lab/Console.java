@@ -102,7 +102,13 @@ public final class Console {
             far.setText(further(now.further()));
             bus.publish(now);
         };
-        material.setOnAction(chosen -> changed.run());
+        // a material chosen brings the shapes that suit it and the colour it begins in; either can then be changed
+        material.setOnAction(chosen -> {
+            final Suited suited = new Suited(new Called(material.getValue()).material());
+            ticked.forEach((shape, box) -> box.setSelected(suited.shapes().contains(shape)));
+            painted.setValue(Color.color(suited.colour().x(), suited.colour().y(), suited.colour().z()));
+            changed.run();
+        });
         doubled.valueProperty().addListener((moved, was, set) -> changed.run());
         ticked.values().forEach(box -> box.setOnAction(set -> changed.run()));
         painted.setOnAction(set -> changed.run());
@@ -115,7 +121,7 @@ public final class Console {
         lit.setPrefWidth(LIGHT_WIDE);
         final VBox middle = new VBox(GAP, new Label("The material on show"), material,
                 new Label("The shapes it is looked at on"), shapes,
-                new Label("Their colour, which paint takes"), painted, far, doubled,
+                new Label("Their colour, where the material takes it"), painted, far, doubled,
                 new Label("Java's own working of the wall's face:"), worked, shell.working(), shell.figures(),
                 shell.problems());
         middle.setPadding(new Insets(GAP));

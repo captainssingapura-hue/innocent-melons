@@ -1,11 +1,9 @@
 package com.example.fxsuite.texture.materials;
 
-import com.example.fxsuite.vulkan.term.Blurred;
 import com.example.fxsuite.vulkan.term.Colour;
 import com.example.fxsuite.vulkan.term.Patches;
 import com.example.fxsuite.vulkan.term.Point;
 import com.example.fxsuite.vulkan.term.Real;
-import com.example.fxsuite.vulkan.term.Scatter;
 import com.example.fxsuite.vulkan.term.Seen;
 import com.example.fxsuite.vulkan.term.Surface;
 import com.example.fxsuite.vulkan.term.Term;
@@ -55,8 +53,6 @@ public enum Grounds {
     private static final int MIDDLES = 31;
     private static final int SHADE = 33;
     private static final int GRAIN = 34;
-    /** How the cells one above another are told apart, in the one number a scatter takes for how high a cell is. */
-    private static final double STOREY = 57;
     private static final double MIDDLE = 0.5;
 
     private final String base;
@@ -97,8 +93,8 @@ public enum Grounds {
                 .times(MIDDLE).plus(new Real(MIDDLE)).held(0, 1);
         final Real patches = edged
                 ? new Patches(at.across(), at.along(), patch, MIDDLES).scatter(SHADE).settling(seen.covers())
-                : soft(at, seen.covers());
-        final Real grains = cell(at, grain, GRAIN, 0, 0, 0).some(few, seen.covers());
+                : new Mottle(patch, SHADE).soft(at, seen.covers());
+        final Real grains = new Mottle(grain, GRAIN).cell(at, 0, 0, 0).some(few, seen.covers());
         return new Surface(new Colour(base), List.of(
                 new Term("drifts", new Colour(drifted), drifts.times(DRIFTED), drift / 2),
                 new Term("patches", new Colour(dark), patches.times(darkest), patch / 2),
@@ -106,43 +102,4 @@ public enum Grounds {
                 new Colour(shine, shine, shine), 40);
     }
 
-    /**
-     * A number from nothing to one that goes over smoothly from place to place: each corner of a cell has its own,
-     * and a point within the cell has something of all eight, most of the nearest. Further off, as a pixel comes
-     * to cover several cells, it settles to the middle.
-     */
-    private Real soft(final Point at, final Real covers) {
-        final Real across = eased(at.across().over(patch).part());
-        final Real up = eased(at.up().over(patch).part());
-        final Real along = eased(at.along().over(patch).part());
-        Real[] corners = new Real[8];
-        for (int corner = 0; corner < corners.length; corner++) {
-            corners[corner] = cell(at, patch, SHADE, corner & 1, corner >> 1 & 1, corner >> 2 & 1).number();
-        }
-        // across first, then up, then along: eight corners to four, to two, to one
-        for (final Real share : List.of(across, up, along)) {
-            final Real[] fewer = new Real[corners.length / 2];
-            for (int pair = 0; pair < fewer.length; pair++) {
-                fewer[pair] = corners[2 * pair].mixed(corners[2 * pair + 1], share);
-            }
-            corners = fewer;
-        }
-        return corners[0].mixed(new Real(MIDDLE), new Blurred(covers, patch).share());
-    }
-
-    /** {@code part} of the way across a cell, eased: slow at each side, so nothing shows where cells meet. */
-    private Real eased(final Real part) {
-        return part.times(part).times(new Real(3).less(part.times(2)));
-    }
-
-    /**
-     * The scatter over the cells of the space the ground lies in, each {@code size} every way: the cell a point is
-     * in, or the one so many cells further {@code across}, {@code up} and {@code along}.
-     */
-    private Scatter cell(final Point at, final double size, final int use, final int across, final int up,
-                         final int along) {
-        return new Scatter(at.across().over(size).floored().plus(new Real(across)),
-                at.along().over(size).floored().plus(new Real(along))
-                        .plus(at.up().over(size).floored().plus(new Real(up)).times(STOREY)), use, size);
-    }
 }

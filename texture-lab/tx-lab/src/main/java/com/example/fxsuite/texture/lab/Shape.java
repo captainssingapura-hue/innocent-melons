@@ -23,6 +23,8 @@ import java.util.stream.Stream;
  *   <li>the curved sheet, a low dome 1.8 m long, for a sheet that bends both ways at once as a car's bonnet does,
  *       and is seen at every angle from square on to glancing;</li>
  *   <li>the pane, a thin upright sheet 1.6 m long, for what is flat and thin, as glass is;</li>
+ *   <li>the limb, a long rounded form as thick as a thigh and as long as one and a half, for what a body is
+ *       made of;</li>
  *   <li>the knoll, a piece of rolling ground eight metres long ({@link Knoll}), for what covers the land: level,
  *       on a gentle slope and on a steep bank;</li>
  *   <li>the car body, a plain saloon 4.5 m long on its four wheels ({@link CarBody}), for paint on a body's sheets:
@@ -39,6 +41,7 @@ public enum Shape {
     CURVED("Curved sheet", 180, 0, () -> new Dome(180, 90, 130).formed(64, 24)),
     PANE("Pane", 160, 55, () -> new Cuboid(160, 110, 1.2).formed()),
     KNOLL("Knoll", 800, 0, () -> new Knoll().formed()),
+    LIMB("Limb", 34, 55, () -> new Ellipsoid(34, 110, 34).formed(32, 24)),
     CAR("Car body", 454.5, 0, () -> new Sheeted(new CarFaces(new CarBody().skeleton()).body()).formed(),
             () -> Optional.of(new Sheeted(new CarFaces(new CarBody().skeleton()).glass()).formed()),
             () -> Optional.of(new Sheeted(new CarFaces(new CarBody().skeleton()).body())

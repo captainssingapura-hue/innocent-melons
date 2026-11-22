@@ -1,6 +1,7 @@
 package com.example.fxsuite.texture.lab;
 
 import com.example.fxsuite.avatar.bench.kit.Bus;
+import com.example.fxsuite.texture.materials.Material;
 import com.example.fxsuite.vulkan.bench.Asked;
 import com.example.fxsuite.vulkan.bench.Skies;
 import com.example.fxsuite.vulkan.device.Canvas;
@@ -70,10 +71,7 @@ public final class MaterialBench {
     private final Skies skies = new Skies(asked);
     private final Bus bus = new Bus();
     /** What is on show: the newest said on the bus, taken up by the card's thread as each frame begins. */
-    private final AtomicReference<OnShow> shown = new AtomicReference<>(new OnShow(
-            new Called(System.getProperty("bench.material", "ChineseGreyBrick")).material(),
-            said("bench.further", 1), new Called(System.getProperty("bench.shapes", "wall, ball, block")).shapes(),
-            new Called(System.getProperty("bench.tint", "#a3151c")).colour()));
+    private final AtomicReference<OnShow> shown = new AtomicReference<>(first());
     /** The way the stand is looked at: the card's thread's own, moved by the mouse in the card's window. */
     private Orbit orbit = new Orbit(new Stand(shown.get().shapes()).middle(), said("bench.yaw", 18),
             said("bench.pitch", 12), METRE * said("bench.distance", 9));
@@ -164,6 +162,20 @@ public final class MaterialBench {
     /** One frame of what is on show, looked at as it is now, drawn on {@code target}. */
     private void frame(final Target target, final MaterialView view) {
         view.drawn(target, shown.get(), orbit.camera(48, 10), skies.lit(), asked.shadowed());
+    }
+
+    /**
+     * What is on show to begin with: the material the run was told, on the shapes and in the colour it was told;
+     * where it was told no shapes or no colour, on those that suit the material ({@link Suited}).
+     */
+    private OnShow first() {
+        final Material material = new Called(System.getProperty("bench.material", "ChineseGreyBrick")).material();
+        final Suited suited = new Suited(material);
+        final String shapes = System.getProperty("bench.shapes");
+        final String tint = System.getProperty("bench.tint");
+        return new OnShow(material, said("bench.further", 1),
+                shapes == null ? suited.shapes() : new Called(shapes).shapes(),
+                tint == null ? suited.colour() : new Called(tint).colour());
     }
 
     /** The number the run was told as {@code name}, or {@code otherwise} where it was told none. */

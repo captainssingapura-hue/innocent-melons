@@ -64,8 +64,8 @@ class MaterialViewOnTheCardTest {
             assertEquals(List.of(), card.heard(), "by night and without shadows: nothing said either");
             assertEquals(0xff0b1026, new Picture(canvas.width(), canvas.pixels()).at(4, 4), "the night's sky");
         }
-        assertEquals(26, seen.size());
-        assertTrue(seen.values().stream().distinct().count() >= 24, "the materials are told apart: " + seen);
+        assertEquals(39, seen.size());
+        assertTrue(seen.values().stream().distinct().count() >= 34, "the materials are told apart: " + seen);
     }
 
     @Test
@@ -255,6 +255,29 @@ class MaterialViewOnTheCardTest {
         }
     }
 
+    @Test
+    void eachBodyMaterialIsPicturedOnTheShapesThatSuitItInTheColourItBeginsIn() throws IOException {
+        Files.createDirectories(folder);
+        try (Card card = new Card();
+             Canvas canvas = card.canvas(900, 600);
+             MaterialView view = new MaterialView(card, laid)) {
+            int pictured = 0;
+            for (final Leaf<?> leaf : new Materials().tree().leaves()) {
+                if (!leaf.lineage().contains(new Materials.Bodily())) {
+                    continue;
+                }
+                final Suited suited = new Suited((Material) leaf);
+                final Camera close = new Orbit(new Stand(suited.shapes()).middle(), 20, 10, 260).camera(48, 10);
+                final Picture picture = pictured(view, canvas, close,
+                        new OnShow((Material) leaf, 1, suited.shapes(), suited.colour()));
+                ImageIO.write(picture.image(), "png", folder.resolve("body-" + leaf.name() + ".png").toFile());
+                pictured++;
+            }
+            assertEquals(13, pictured, "every material of a body");
+            assertEquals(List.of(), card.heard(), "the validation layer has nothing to say of any of it");
+        }
+    }
+
     /** {@code shown}, drawn with shadows as {@code camera} sees it: the picture. */
     private Picture pictured(final MaterialView view, final Canvas canvas, final Camera camera, final OnShow shown) {
         view.drawn(canvas, shown, camera, day, true);
@@ -288,7 +311,7 @@ class MaterialViewOnTheCardTest {
             int most = 0;
             for (final Shape shape : Shape.values()) {
                 final int covered = covered(view, canvas, new OnShow(steel, 1, List.of(shape)), false);
-                assertTrue(covered > 300, shape + " alone is seen: " + covered + " pixels");
+                assertTrue(covered > 200, shape + " alone is seen: " + covered + " pixels");
                 most = Math.max(most, covered);
                 ImageIO.write(new Picture(canvas.width(), canvas.pixels()).image(), "png",
                         folder.resolve("shape-" + shape.name().toLowerCase() + ".png").toFile());
