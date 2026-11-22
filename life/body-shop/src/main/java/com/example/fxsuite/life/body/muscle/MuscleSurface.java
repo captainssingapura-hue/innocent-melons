@@ -48,15 +48,17 @@ public record MuscleSurface() implements StatelessFunctionalObject {
             partOf[i] = parts.indexOf(p);
         }
         // the channels carried: how far tendon, then each part's share, three to a pass
+        final int[] sectionOf = MuscleRings.INSTANCE.sectionOf(m, rig, left);
+        final boolean[] tendon = MuscleRings.INSTANCE.tendonOf(m, rig, left);
         final int channels = 1 + parts.size();
         final float[][] carried = new float[channels][];
         for (int from = 0; from < channels; from += 3) {
             final double[] values = new double[shape.points().length];
             for (int i = 0; i < shape.size(); i++) {
-                final int section = i / MuscleShape.ROUND;
+                final int section = sectionOf[i / MuscleShape.ROUND];
                 for (int c = 0; c < 3 && from + c < channels; c++) {
                     final int channel = from + c;
-                    values[3 * i + c] = channel == 0 ? (MuscleShape.INSTANCE.tendon(m, section) ? 1 : 0)
+                    values[3 * i + c] = channel == 0 ? (tendon[i / MuscleShape.ROUND] ? 1 : 0)
                             : partOf[section] == channel - 1 ? 1 : 0;
                 }
             }

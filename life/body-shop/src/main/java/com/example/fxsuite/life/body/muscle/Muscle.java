@@ -6,9 +6,10 @@ import java.util.List;
 
 /**
  * A muscle, or a tendon or a band that goes with them: each its own stateless object, saying what it is, where in the
- * body, how deep it lies, and its shape: its sections from its origin to its insertion ({@link Section}), each held to a
- * point on a bone, so that it goes where the bones go; or, a ring round an eye, the mouth, its sections round it, the
- * last joined to the first. As on the right, its fellow on the left the mirror; or one, down the middle.
+ * body, how deep it lies, and its shape ({@link MuscleForm}): its sections from its origin to its insertion
+ * ({@link Section}), each held to a point on a bone, so that it goes where the bones go; or, a ring round an eye, the
+ * mouth, its sections round it, the last joined to the first; or a sheet spread from a line to a line. As on the right,
+ * its fellow on the left the mirror; or one, down the middle.
  */
 public interface Muscle extends StatelessFunctionalObject {
 
@@ -34,6 +35,11 @@ public interface Muscle extends StatelessFunctionalObject {
 
     /** Its sections, from its origin to its insertion; or round it, if a ring. */
     List<Section> sections();
+
+    /** The form it takes: a strap of its sections, as most are drawn; or a spread from a line to a line. */
+    default MuscleForm form() {
+        return new MuscleForm.Strap();
+    }
 
     /** Whether it is a ring, its last section joined to its first, ends it has none. */
     default boolean ring() {

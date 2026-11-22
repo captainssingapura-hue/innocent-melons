@@ -129,6 +129,7 @@ public final class MotionBench extends Application {
         speed.setPrefWidth(220);
         speed.valueProperty().addListener((o, was, is) -> said());
         tour.setSelected(Boolean.getBoolean("motion.tour"));
+        deep.setSelected(Boolean.getBoolean("motion.deep"));
         gatling.setSelected(Boolean.getBoolean("motion.gatling"));
         gatling.selectedProperty().addListener((o, was, is) -> {
             gun.setVisible(is);
