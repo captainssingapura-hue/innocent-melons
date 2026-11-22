@@ -35,7 +35,8 @@ public record Materials() {
                 new Adobe(), new Rubble(), new DressedStone(), new Concrete(),
                 new Enamel(), new Rubber(), new GlossPaint(), new MetallicPaint(), new Glass(), new LitGlass(),
                 new Flame(),
-                new Rind(), new Water()),
+                new Rind(), new Water(),
+                new Turf(), new Topsoil(), new Sand(), new Gravel(), new Bedrock(), new Mud()),
                 Meanings.INSTANCE.beside(Materials.class));
     }
 
@@ -98,4 +99,13 @@ public record Materials() {
     // Liquid: what flows, and lies level
     public record Liquid() implements L1<Matter>, Mirroring { public Matter parent() { return new Matter(); } }
     public record Water() implements Leaf<Liquid>, Material { public Liquid parent() { return new Liquid(); } }
+
+    // Ground: what the land is covered with
+    public record Ground() implements L1<Matter> { public Matter parent() { return new Matter(); } }
+    public record Turf() implements Leaf<Ground>, Material { public Ground parent() { return new Ground(); } }
+    public record Topsoil() implements Leaf<Ground>, Material { public Ground parent() { return new Ground(); } }
+    public record Sand() implements Leaf<Ground>, Material { public Ground parent() { return new Ground(); } }
+    public record Gravel() implements Leaf<Ground>, Material { public Ground parent() { return new Ground(); } }
+    public record Bedrock() implements Leaf<Ground>, Material { public Ground parent() { return new Ground(); } }
+    public record Mud() implements Leaf<Ground>, Material { public Ground parent() { return new Ground(); } }
 }

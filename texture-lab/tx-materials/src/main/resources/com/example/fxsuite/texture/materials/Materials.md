@@ -114,3 +114,31 @@ What flows, and lies level where it is held.
 ## Water
 
 What rain is, lying still where the ground or a rim holds it.
+
+## Ground
+
+What the land is covered with, where nothing is built on it.
+
+## Turf
+
+Grass kept short, by grazing or by mowing, and the mat of roots it grows in.
+
+## Topsoil
+
+Bare earth: the dark upper soil things grow in, with nothing growing on it.
+
+## Sand
+
+Rock worn to grains, loose and dry.
+
+## Gravel
+
+Small stones, loose, as a river leaves them or a track is laid with them.
+
+## Bedrock
+
+Rock as it lies in the ground, where the soil has gone from it.
+
+## Mud
+
+Earth and water together, soft, at a water's edge or in a hollow.
