@@ -17,6 +17,7 @@
     <modules>
         <module>historian</module>
         <module>taxonomy</module>
+        <module>math</module>
         <module>road</module>
         <module>avatar-demo</module>
         <module>vulkan</module>
