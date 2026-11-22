@@ -1,11 +1,11 @@
 package melons.innocent.terrain.bench;
 
-import com.example.fxsuite.vulkan.view.Orbit;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -29,6 +29,9 @@ public final class Controls {
     private static final double METRE = 100;
     /** How big a legend's swatch is, each way. */
     private static final double SWATCH = 14;
+    /** How many times ten slower and faster than at first the eye may be made to fly. */
+    private static final double SLOWEST = -1;
+    private static final double FASTEST = 3;
 
     private final Wanted wanted;
     private final String about;
@@ -56,14 +59,15 @@ public final class Controls {
         frame.set(took);
         final Button first = new Button("First view");
         first.setOnAction(event -> wanted.first());
-        final Label how = new Label("Drag to turn; right-drag or Shift-drag to carry across; scroll to come nearer.");
+        final Label how = new Label("In the card's window: W, A, S and D to fly ahead, aside and back; Space up, Ctrl "
+                + "down; Shift faster. Drag to look round; scroll to draw the land bigger or smaller.");
         how.setWrapText(true);
         final VBox key = new VBox(GAP / 2);
         for (final Painting.Shown shown : legend) {
             key.getChildren().add(new HBox(GAP, new Rectangle(SWATCH, SWATCH,
                     Color.color(shown.red(), shown.green(), shown.blue())), new Label(shown.label())));
         }
-        final VBox box = new VBox(GAP, what, seen, took, coloured, first, how, key);
+        final VBox box = new VBox(GAP, what, seen, took, coloured, first, speed(), how, key);
         box.setPadding(new Insets(GAP * 2));
         final Stage stage = new Stage();
         stage.setTitle("Terrain bench");
@@ -74,12 +78,31 @@ public final class Controls {
         stage.show();
     }
 
-    /** Where the land is looked at from now, and what lies where it is looked at, told on the card's thread. */
-    public void seen(final Orbit orbit, final String on) {
-        final String said = String.format(Locale.ROOT, "Looking at %.0f m across, %.0f m along, %.0f m up%n"
-                + "on %s,%nfrom %.0f m off, turned %.0f°, %.0f° down", orbit.round().x() / METRE,
-                orbit.round().z() / METRE, orbit.round().y() / METRE, on, orbit.distance() / METRE, orbit.yaw(),
-                orbit.pitch());
+    /**
+     * A slider for how fast the eye flies, from a tenth as fast to a thousand times, evenly by how many times ten:
+     * as fast as at first in the middle of its left half. What it says is wanted at once, as it is moved.
+     */
+    private VBox speed() {
+        final Label said = new Label("Speed: as at first");
+        final Slider tens = new Slider(SLOWEST, FASTEST, Math.log10(wanted.speed()));
+        tens.setMajorTickUnit(1);
+        tens.setShowTickMarks(true);
+        tens.valueProperty().addListener((property, was, now) -> {
+            final double times = Math.pow(10, now.doubleValue());
+            wanted.speed(times);
+            said.setText(String.format(Locale.ROOT, times < 1 ? "Speed: %.2f times as at first"
+                    : "Speed: %.0f times as at first", times));
+        });
+        return new VBox(GAP / 2, said, tens);
+    }
+
+    /** Where the eye is now, and what lies on the land under it, told on the card's thread. */
+    public void seen(final Flight flight, final String on) {
+        final String said = String.format(Locale.ROOT, "Over %.0f m across, %.0f m along, on %s;%n"
+                + "the eye %.0f m up as drawn, turned %.0f°, %.0f° down;%nthe land drawn %s", flight.x() / METRE,
+                flight.z() / METRE, on, flight.height() / METRE, flight.yaw(), flight.pitch(),
+                flight.scale() >= 1 ? String.format(Locale.ROOT, "%.2f times as big", flight.scale())
+                        : String.format(Locale.ROOT, "a %.0fth as big", 1 / flight.scale()));
         Platform.runLater(() -> shown(view, said));
     }
 
