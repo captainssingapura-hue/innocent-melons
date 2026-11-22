@@ -344,9 +344,12 @@ public final class MotionBench extends Application {
         }
         try {
             final Mesher.Mesh head = ClayHead.INSTANCE.of(java.nio.file.Path.of(path));
-            final double k = ClayHead.INSTANCE.scale(head, skin);
+            // set where the skull fitted under it sets it, at its own size; else as big as the skin's head
+            final V3 at = com.example.fxsuite.life.body.bone.skull.SkullForm.INSTANCE.headAt().orElse(V3.ZERO);
+            final double k = com.example.fxsuite.life.body.bone.skull.SkullForm.INSTANCE.headAt().isPresent() ? 1
+                    : ClayHead.INSTANCE.scale(head, skin);
             final javafx.scene.Group g = com.example.fxsuite.life.body.bone.BoneView.INSTANCE.mapped(head, Paint.SKIN,
-                    v -> v.times(k), false);
+                    v -> v.times(k).plus(at), false);
             final javafx.scene.paint.PhongMaterial m = new javafx.scene.paint.PhongMaterial(
                     javafx.scene.paint.Color.web(com.example.fxsuite.life.body.skin.Skins.COLOUR));
             g.getChildren().forEach(n -> ((javafx.scene.shape.Shape3D) n).setMaterial(m));

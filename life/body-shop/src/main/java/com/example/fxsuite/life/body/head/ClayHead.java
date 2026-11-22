@@ -11,6 +11,7 @@ import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.EnumSet;
+import java.util.Set;
 
 /**
  * The clay head on a body, to see how it suits it: made from a reference head on the machine ({@link Pieces}), every
@@ -27,11 +28,15 @@ public record ClayHead() implements StatelessFunctionalObject {
 
     /** The head of the reference at {@code reference}, in its head's frame, cm. */
     public Mesher.Mesh of(final Path reference) throws IOException {
-        final ReferenceHead r = ReferenceReading.INSTANCE.of(reference);
+        return Mesher.of(field(ReferenceReading.INSTANCE.of(reference), EnumSet.allOf(Piece.class)), CELL);
+    }
+
+    /** The head of the reference {@code r} with the pieces {@code on}, each as the reference has it, as a field. */
+    public Field field(final ReferenceHead r, final Set<Piece> on) {
         final Mesher.Mesh blank = BlankFit.INSTANCE.of(r, FeatureMasks.INSTANCE.of(r));
         final Field.Shape solid = MeshSolid.INSTANCE.closed(blank, BLANK_CELL);
         final Adjust plain = new Adjust(V3.ZERO, 0, 0, 1, new V3(1, 1, 1), 0);
-        return Mesher.of(Pieces.INSTANCE.clay(r, solid).head(EnumSet.allOf(Piece.class), p -> plain), CELL);
+        return Pieces.INSTANCE.clay(r, solid).head(on, p -> plain);
     }
 
     /**

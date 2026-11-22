@@ -22,6 +22,11 @@ public record SkullLandmarks() implements StatelessFunctionalObject {
 
     /** How far from where it is drawn a landmark is let go as readily as a measure a spread off its mean, cm. */
     private static final double NEAR = 3;
+    /**
+     * How far from where it is asked to be a landmark is let go as readily as a measure a spread off its mean, cm: as
+     * far as the soft over the bone differs from one man to the next, so that a head asks and the measures weigh in.
+     */
+    private static final double ASKED = 0.3;
     /** How many steps, and how long each. */
     private static final int STEPS = 40_000;
     private static final double STEP = 0.002;
@@ -71,6 +76,15 @@ public record SkullLandmarks() implements StatelessFunctionalObject {
 
     /** Where each landmark is to be, on the right if one of a pair. */
     public Map<Landmark, V3> targets() {
+        return targets(Map.of());
+    }
+
+    /**
+     * Where each landmark is to be, on the right if one of a pair, those {@code asked} as near as {@link #ASKED} to
+     * where they are asked to be, a head over the skull saying where its bone lies, say ({@code SkullUnder}); the
+     * measures shaping the rest.
+     */
+    public Map<Landmark, V3> targets(final Map<Landmark, V3> asked) {
         final Landmark[] all = Landmark.values();
         final double[][] p = new double[all.length][];
         for (final Landmark l : all) {
@@ -84,7 +98,7 @@ public record SkullLandmarks() implements StatelessFunctionalObject {
             }
             for (final Landmark l : all) {
                 if (!l.held()) {
-                    move(p[l.ordinal()], g[l.ordinal()], l);
+                    move(p[l.ordinal()], g[l.ordinal()], l, asked.get(l));
                 }
             }
         }
@@ -114,11 +128,16 @@ public record SkullLandmarks() implements StatelessFunctionalObject {
         gb[2] -= e * dz;
     }
 
-    /** {@code p} a step down its slope {@code g} and toward where {@code l} is drawn; down the middle, kept there. */
-    private void move(final double[] p, final double[] g, final Landmark l) {
-        final double[] d = {l.drawn().x(), l.drawn().y(), l.drawn().z()};
+    /**
+     * {@code p} a step down its slope {@code g} and toward where {@code l} is drawn, or toward where it is
+     * {@code asked} to be, if it is; down the middle, kept there.
+     */
+    private void move(final double[] p, final double[] g, final Landmark l, final V3 asked) {
+        final V3 to = asked != null ? asked : l.drawn();
+        final double near = asked != null ? ASKED : NEAR;
+        final double[] d = {to.x(), to.y(), to.z()};
         for (int c = 0; c < 3; c++) {
-            p[c] -= STEP * (g[c] + (p[c] - d[c]) / (NEAR * NEAR));
+            p[c] -= STEP * (g[c] + (p[c] - d[c]) / (near * near));
         }
         if (l.middle()) {
             p[0] = 0;
