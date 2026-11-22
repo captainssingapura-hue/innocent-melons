@@ -29,4 +29,10 @@ public interface Target {
      * with none, as above, a look that looks anything up finds the furthest there is everywhere.
      */
     void drawn(Vec3 sky, Filling frame, Depths looked, Consumer<Pass> drawing);
+
+    /**
+     * The same, with what stands in the frame gathered beforehand for its looks to ask rays of: {@code stood}. Drawn
+     * with none, as above, a look that asks a ray finds nothing standing anywhere.
+     */
+    void drawn(Vec3 sky, Filling frame, Standing stood, Consumer<Pass> drawing);
 }

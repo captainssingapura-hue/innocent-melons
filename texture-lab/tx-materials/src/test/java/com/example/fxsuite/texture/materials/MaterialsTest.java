@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The tree of materials, which the lab owns: thirty-nine leaves under eight branches, one of them in two parts, every node with its meaning; each
+ * The tree of materials, which the lab owns: forty leaves under eight branches, one of them in two parts, every node with its meaning; each
  * leaf under the branch it is of, and its line going up to what all things are made of; every leaf to be asked for
  * as a material, and nothing that is not a leaf; the metals, both paints, glass and water mirroring, and only what
  * gives light glowing.
@@ -21,11 +21,11 @@ class MaterialsTest {
     private final Taxonomy tree = new Materials().tree();
 
     @Test
-    void thirtyNineLeavesUnderEightBranchesEveryNodeWithItsMeaning() {
+    void fortyLeavesUnderEightBranchesEveryNodeWithItsMeaning() {
         assertEquals(List.of(), tree.problems());
         assertEquals("materials", tree.name());
-        assertEquals(39, tree.leaves().size());
-        assertEquals(50, tree.nodes().size(), "the leaves, their eight branches, the two parts of one, and the root");
+        assertEquals(40, tree.leaves().size());
+        assertEquals(51, tree.nodes().size(), "the leaves, their eight branches, the two parts of one, and the root");
         for (final Node node : tree.nodes()) {
             assertFalse(tree.meaning(node).isBlank(), node.title() + " has its meaning");
         }

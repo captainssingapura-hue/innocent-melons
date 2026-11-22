@@ -1,10 +1,13 @@
 package com.example.fxsuite.vulkan.bench;
 
+import com.example.fxsuite.vulkan.render.Shadowing;
 import com.example.fxsuite.vulkan.sky.Site;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -21,6 +24,9 @@ public final class Asked {
     private final AtomicReference<Double> further;
     private final AtomicBoolean shadowed;
     private final AtomicReference<Sun> sun;
+    private final AtomicReference<Shadowing> shadowing = new AtomicReference<>(Shadowing.RAYS);
+    /** The ways of finding shadows there are to choose from: every way, until the card's thread says which. */
+    private final AtomicReference<List<Shadowing>> offered = new AtomicReference<>(List.of(Shadowing.values()));
     private final AtomicBoolean night = new AtomicBoolean();
     private final AtomicBoolean clocked = new AtomicBoolean();
     private final AtomicReference<Double> quickened = new AtomicReference<>(60.0);
@@ -123,6 +129,39 @@ public final class Asked {
     /** What the clock was last asked to begin from. Each asking is a new one, even when it says the same. */
     public Almanac almanac() {
         return almanac.get();
+    }
+
+    /** Asks for shadows to be found {@code by} that way, from the next frame on. */
+    public void shadowing(final Shadowing by) {
+        shadowing.set(by);
+    }
+
+    /**
+     * The same, the way said in a word as a run is told it ({@code picture}, {@code rays}); a blank leaves it as
+     * it is, and a word that is no way is refused.
+     */
+    public void shadowing(final String said) {
+        if (!said.isBlank()) {
+            shadowing.set(Shadowing.valueOf(said.trim().toUpperCase(Locale.ROOT)));
+        }
+    }
+
+    /**
+     * The way shadows were last asked to be found: by rays, until another is asked for. On a card that answers
+     * no rays they are found from the sun's picture all the same, and the window offers only that.
+     */
+    public Shadowing shadowing() {
+        return shadowing.get();
+    }
+
+    /** Says which ways of finding shadows there are to choose from, on the card that draws. */
+    public void offered(final List<Shadowing> ways) {
+        offered.set(List.copyOf(ways));
+    }
+
+    /** The ways of finding shadows there are to choose from. */
+    public List<Shadowing> offered() {
+        return offered.get();
     }
 
     /** Asks for shadows to be drawn, or not, from the next frame on. */

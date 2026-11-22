@@ -107,6 +107,10 @@ What grew, and was not made.
 
 The tough outer skin of a fruit.
 
+## Bark
+
+The rough outer skin of a tree's trunk and boughs.
+
 ## Liquid
 
 What flows, and lies level where it is held.

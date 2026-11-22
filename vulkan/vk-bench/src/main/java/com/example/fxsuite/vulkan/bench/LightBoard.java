@@ -1,11 +1,17 @@
 package com.example.fxsuite.vulkan.bench;
 
+import com.example.fxsuite.vulkan.render.Shadowing;
+import javafx.beans.binding.Bindings;
+import javafx.collections.FXCollections;
 import javafx.scene.Node;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.control.Slider;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.util.StringConverter;
 
 import java.util.List;
 
@@ -42,6 +48,8 @@ public final class LightBoard {
         final CheckBox shadows = new CheckBox("Shadows");
         shadows.setSelected(asked.shadowed());
         shadows.setOnAction(ticked -> asked.shadowed(shadows.isSelected()));
+        final ChoiceBox<Shadowing> by = found();
+        by.disableProperty().bind(shadows.selectedProperty().not().or(Bindings.size(by.getItems()).lessThan(2)));
         final CheckBox night = new CheckBox("Night");
         night.setSelected(asked.night());
         night.setOnAction(ticked -> asked.night(night.isSelected()));
@@ -59,8 +67,31 @@ public final class LightBoard {
         for (final Node byHand : List.of(night, high, round)) {
             byHand.disableProperty().bind(sky.clocked().selectedProperty());
         }
-        return new VBox(GAP, shadows, night, stands, new Label("How high the sun is, or by night the moon:"), high,
+        return new VBox(GAP, shadows, new HBox(GAP, new Label("found by"), by), night, stands,
+                new Label("How high the sun is, or by night the moon:"), high,
                 new Label("Which way round it stands:"), round, new Separator(), sky.all());
+    }
+
+    /**
+     * The choice of how shadows are found: of the ways the card that draws has, the one last asked for; or, where
+     * the card has not that one, the first it has.
+     */
+    private ChoiceBox<Shadowing> found() {
+        final ChoiceBox<Shadowing> by = new ChoiceBox<>(FXCollections.observableArrayList(asked.offered()));
+        by.setConverter(new StringConverter<>() {
+            @Override
+            public String toString(final Shadowing way) {
+                return way == null ? "" : way.said();
+            }
+
+            @Override
+            public Shadowing fromString(final String said) {
+                return asked.offered().stream().filter(way -> way.said().equals(said)).findFirst().orElse(null);
+            }
+        });
+        by.setValue(asked.offered().contains(asked.shadowing()) ? asked.shadowing() : asked.offered().getFirst());
+        by.setOnAction(chosen -> asked.shadowing(by.getValue()));
+        return by;
     }
 
     /** Where the sun stands, said in a line. */

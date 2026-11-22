@@ -19,7 +19,7 @@ import com.example.fxsuite.vulkan.device.Refused;
 import com.example.fxsuite.vulkan.device.Target;
 import com.example.fxsuite.vulkan.device.Window;
 import com.example.fxsuite.vulkan.render.Framed;
-import com.example.fxsuite.vulkan.render.Shadows;
+import com.example.fxsuite.vulkan.render.Shaded;
 import com.example.fxsuite.vulkan.shade.Laid;
 import com.example.fxsuite.vulkan.shade.Light;
 import com.example.fxsuite.vulkan.space.Vec3;
@@ -90,7 +90,8 @@ public final class Walk {
 
     private final String title;
     private final BiFunction<Card, Laid, Place> placing;
-    private final Laid laid = new Laid();
+    /** The layouts of every look: asking rays, once the card is open, where the card answers them. */
+    private Laid laid = new Laid();
     /** The avatar as it is drawn here: 1.9 m to the top of its head, its body gold and its arms and legs titanium. */
     private final Courier courier = new Courier(190, Finish.GILT);
     /** The bench's day, for where its sun stands: where the sliders begin unless the run is told otherwise. */
@@ -136,19 +137,21 @@ public final class Walk {
         asked.night(Boolean.getBoolean("bench.night"));
         asked.clocked(Boolean.getBoolean("bench.sky"));
         asked.quickened(said("bench.sky.speed", asked.quickened()));
+        asked.shadowing(System.getProperty("bench.shadows.mode", ""));
         asked.almanac(asked.almanac().told(System.getProperty("bench.sky.at", ""),
                 System.getProperty("bench.sky.when", ""), System.getProperty("bench.sky.zone", "")));
         try (Desk desk = new Desk();
              Card card = new Card(desk);
              Window window = card.window(title + ", drawn on " + card.name(), WIDTH, HEIGHT);
-             Place place = placing.apply(card, laid);
+             Place place = placing.apply(card, laid = new Laid().asking(card.rays()));
              Cast cast = new Cast(card, laid);
-             Shadows shadows = new Shadows(card, laid, Integer.getInteger("bench.shadows.pixels", 4096));
+             Shaded shadows = new Shaded(card, laid, Integer.getInteger("bench.shadows.pixels", 4096));
              Hearing hearing = Hearing.open(driven.scripted() || settle >= 0)) {
             final Guide guide = new Guide(asked, card.name(), List.of("In the card's window:",
                     "  mouse: turn (Esc lets it go)", "  W, S: ahead and back", "  A, D: sideways", "  Shift: walk",
                     "  Space: jump", "  F: fly, or land; flying, Space climbs and Ctrl sinks",
                     "  Q, E: swing the view round; C: back behind", "  scroll: nearer or further"));
+            asked.offered(shadows.offered());
             Platform.startup(() -> guide.shown(LEFT, TOP));
             window.shown(LEFT + BESIDE, TOP);
             final Staged staged = new Staged(place, cast, shadows);
@@ -236,8 +239,8 @@ public final class Walk {
 
     /**
      * One frame: the ground, the place, and the avatar where {@code shown} has it, drawn on {@code target}. With
-     * shadows, the place and the avatar are drawn first into the sun's picture of the ground round the avatar, and
-     * the frame is drawn reading it; the ground casts none.
+     * shadows, the place and the avatar cast them and the ground casts none; they are found the way last asked
+     * for: from the sun's picture of the ground round the avatar, drawn first, or by rays toward the sun.
      */
     private void frame(final Target target, final Staged staged, final Avatar shown) {
         final Camera camera = following.camera(inTheWay);
@@ -258,11 +261,9 @@ public final class Walk {
             standing.accept(pass);
         };
         if (asked.shadowed()) {
-            final int pixels = staged.shadows().pixels();
             final Beam beam = new Beam(new Vec3(shown.body().position().x(), 0, shown.body().position().z()),
-                    lit.sunTowards(), shaded, shaded).settled(pixels);
-            target.drawn(time.sky(), framed.filling(aspect, beam, pixels),
-                    staged.shadows().cast(framed, beam, standing), all);
+                    lit.sunTowards(), shaded, shaded);
+            staged.shadows().drawn(target, time.sky(), framed, asked.shadowing(), beam, standing, all);
         } else {
             target.drawn(time.sky(), framed.filling(aspect), all);
         }
@@ -274,6 +275,6 @@ public final class Walk {
     }
 
     /** What a frame is drawn of, on the card: the place, the avatar's boxes and the ground, and the shadows. */
-    private record Staged(Place place, Cast cast, Shadows shadows) {
+    private record Staged(Place place, Cast cast, Shaded shadows) {
     }
 }

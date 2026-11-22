@@ -74,14 +74,22 @@ public record Village(int homes) {
         return new CarPark(new Vec3(9600, 0, -3400));
     }
 
+    /**
+     * The small wood beside the lake: off the lake's left-hand end as the avatar faces the village, across the
+     * water from the car park, thirty oaks with no leaves on some fifty metres by forty-five of ground.
+     */
+    public Grove grove() {
+        return new Grove(new Vec3(-9700, 0, -3400), 5000, 4500, 30);
+    }
+
     /** Where each house stands, for the one half melon that is drawn once for each. */
     public List<Mat4> houses() {
         return homesteads().stream().map(home -> home.house().placed()).toList();
     }
 
     /**
-     * Everything of the village that is in the way: every yard's wall, every house, the lake's kerb, and every car
-     * in the car park.
+     * Everything of the village that is in the way: every yard's wall, every house, the lake's kerb, every car
+     * in the car park, and the trunk of every tree in the wood.
      */
     public Obstacles inTheWay() {
         final List<Block> blocks = new ArrayList<>();
@@ -91,6 +99,7 @@ public record Village(int homes) {
         }
         blocks.addAll(lake().inTheWay());
         blocks.addAll(carPark().inTheWay());
+        blocks.addAll(grove().inTheWay());
         return new Obstacles(blocks);
     }
 }

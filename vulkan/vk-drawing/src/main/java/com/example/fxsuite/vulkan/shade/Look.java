@@ -22,6 +22,9 @@ public record Look(Laid laid, Surface surface) {
     private static final String FRAME = "frame";
     private static final String DRAW = "draw";
     private static final String DEPTHS = "depths";
+    /** What a look that asks rays is written in: the version and the extension that have them. */
+    private static final String RAYED = "#version 460\n#extension GL_EXT_ray_query : require";
+    private static final String STANDING = "standing";
 
     public Look {
         // asked now: the vertex shader's own lines name these, so a layout without one is refused here
@@ -35,6 +38,7 @@ public record Look(Laid laid, Surface surface) {
         laid.draw().field("tint");
         laid.frame().field("beam");
         laid.frame().field("eased");
+        laid.frame().field("rays");
     }
 
     /** The light on the surface at a point, as an expression: what the fragment shader is written from. */
@@ -86,11 +90,15 @@ public record Look(Laid laid, Surface surface) {
         final Seen seen = new Seen();
         final Writing writing = new Writing();
         final String lit = writing.named(lit());
-        final List<String> lines = new ArrayList<>(List.of(VERSION));
+        final List<String> lines = new ArrayList<>(List.of(laid.rays() ? RAYED : VERSION));
         lines.addAll(new Declared(laid.passed()).handedIn());
         lines.addAll(new Declared(laid.frame()).block(laid.frameBound(), FRAME));
         lines.addAll(new Declared(laid.draw()).pushed(DRAW));
         lines.add("layout(set = 0, binding = " + laid.depthsBound() + ") uniform sampler2DShadow " + DEPTHS + ";");
+        if (laid.rays()) {
+            lines.add("layout(set = 0, binding = " + laid.standingBound() + ") uniform accelerationStructureEXT "
+                    + STANDING + ";");
+        }
         lines.add("layout(location = 0) out vec4 shown;");
         lines.addAll(writing.declared());
         lines.add("void main() {");
@@ -99,12 +107,37 @@ public record Look(Laid laid, Surface surface) {
         lines.add("    vec4 inBeam = frame.beam * vec4(from + normalize(faces) * frame.eased.x, 1.0);");
         lines.add("    float " + lighting().sunlit() + " = texture(" + DEPTHS
                 + ", vec3(inBeam.xy * 0.5 + 0.5, clamp(inBeam.z + frame.eased.y, 0.0, 1.0)));");
+        lines.addAll(rayed());
         // laid over what is already drawn as far as it hides it: wholly, unless its surface is seen through
         final String hidden = mixed() ? "clamp(" + writing.named(hides()) + ", 0.0, 1.0)" : "1.0";
         writing.lines().forEach(line -> lines.add("    " + line));
         lines.add("    shown = vec4(clamp(" + lit + ", 0.0, 1.0), " + hidden + ");");
         lines.add("}");
         return new Shader(Stage.FRAGMENT, String.join("\n", lines) + "\n");
+    }
+
+    /**
+     * The fragment shader's lines for a frame whose shadows are found by rays, where the look asks any: a frame
+     * that says how far a ray reaches has the point's share of the sun found by one, sent from the point, eased a
+     * little the way its surface faces, toward the sun. Anything standing along it within reach leaves the point
+     * in shadow. A frame that says no reach leaves what the sun's picture said.
+     */
+    private List<String> rayed() {
+        if (!laid.rays()) {
+            return List.of();
+        }
+        final String sunlit = lighting().sunlit();
+        return List.of(
+                "    if (frame.rays.y > 0.0) {",
+                "        rayQueryEXT asked;",
+                "        rayQueryInitializeEXT(asked, " + STANDING + ", gl_RayFlagsTerminateOnFirstHitEXT"
+                        + " | gl_RayFlagsOpaqueEXT, 0xFF, from + normalize(faces) * frame.rays.x, 0.0,"
+                        + " -normalize(frame.sunTowards), frame.rays.y);",
+                "        while (rayQueryProceedEXT(asked)) {",
+                "        }",
+                "        " + sunlit + " = rayQueryGetIntersectionTypeEXT(asked, true)"
+                        + " == gl_RayQueryCommittedIntersectionNoneEXT ? 1.0 : 0.0;",
+                "    }");
     }
 
     /**

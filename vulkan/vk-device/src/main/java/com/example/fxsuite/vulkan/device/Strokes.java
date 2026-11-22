@@ -3,6 +3,8 @@ package com.example.fxsuite.vulkan.device;
 import com.example.fxsuite.vulkan.layout.Filling;
 import com.example.fxsuite.vulkan.space.Vec3;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.VkAccelerationStructureBuildGeometryInfoKHR;
+import org.lwjgl.vulkan.VkAccelerationStructureBuildRangeInfoKHR;
 import org.lwjgl.vulkan.VkBufferImageCopy;
 import org.lwjgl.vulkan.VkCommandBuffer;
 import org.lwjgl.vulkan.VkImageMemoryBarrier;
@@ -14,6 +16,7 @@ import org.lwjgl.vulkan.VkViewport;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import static org.lwjgl.vulkan.KHRAccelerationStructure.vkCmdBuildAccelerationStructuresKHR;
 import static org.lwjgl.vulkan.VK13.*;
 
 /**
@@ -81,14 +84,14 @@ final class Strokes {
     /**
      * A frame drawn on {@code ground}: its colours and its depths made ready, the whole cleared to {@code sky}, and
      * whatever {@code drawing} draws drawn, by what is handed to it and ended as soon as it is done. Each look
-     * drawn with is told what {@code frame} holds, and looks things up in {@code looked}.
+     * drawn with is told what {@code frame} holds, and reads what {@code read} has.
      */
-    void drawn(final Ground ground, final Vec3 sky, final Filling frame, final Depths looked,
+    void drawn(final Ground ground, final Vec3 sky, final Filling frame, final Read read,
                final Consumer<Pass> drawing) {
         moved(ground.colours(), Move.TO_BE_DRAWN_ON);
         moved(ground.depths().image(), Move.TO_BE_DRAWN_AGAINST);
         begun(ground.view(), ground.depths().view(), ground.width(), ground.height(), sky);
-        final Pass pass = new Pass(commands, frame, Optional.of(looked), Optional.empty());
+        final Pass pass = new Pass(commands, frame, Optional.of(read), Optional.empty());
         try {
             drawing.accept(pass);
         } finally {
@@ -136,6 +139,15 @@ final class Strokes {
             pass.ended();
         }
         moved(depths.image(), Move.TO_BE_LOOKED_UP);
+    }
+
+    /** What {@code asked} describes built: pieces a ray can be asked of, {@code count} of them. */
+    void built(final VkAccelerationStructureBuildGeometryInfoKHR.Buffer asked, final int count) {
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            final VkAccelerationStructureBuildRangeInfoKHR.Buffer all = VkAccelerationStructureBuildRangeInfoKHR
+                    .calloc(1, stack).primitiveCount(count);
+            vkCmdBuildAccelerationStructuresKHR(commands, asked, stack.pointers(all.address()));
+        }
     }
 
     /** {@code image}, {@code width} pixels by {@code height} and ready to be read, copied whole into {@code into}. */

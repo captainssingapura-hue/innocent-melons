@@ -29,8 +29,9 @@ import java.util.List;
  * yards of one kind of wall are one form with one look, drawn in one call; every house is the one half melon, drawn
  * once for each. Before the village is its lake: a kerb of rubble, and still water within it, each drawn in one call
  * with the surface its material has. Off the lake's end is a car park of concrete with a hundred cars standing in
- * it ({@link CarParkDrawn}), whose windows are seen through and so are drawn after everything else. What is in the
- * way is the same walls, the same houses, the same kerb and the same cars.
+ * it ({@link CarParkDrawn}), whose windows are seen through and so are drawn after everything else; and off its
+ * other end a small wood of bare oaks ({@link GroveDrawn}). What is in the
+ * way is the same walls, the same houses, the same kerb, the same cars and the same trees' trunks.
  */
 public final class VillagePlace implements Place {
 
@@ -46,6 +47,7 @@ public final class VillagePlace implements Place {
     private final Formed melon;
     /** The car park and its cars, once made: null only while the place is being made. */
     private CarParkDrawn carPark;
+    private GroveDrawn grove;
 
     /** The village, on {@code card}, its layouts as {@code laid} says. */
     public VillagePlace(final Card card, final Laid laid) {
@@ -68,6 +70,7 @@ public final class VillagePlace implements Place {
             lake.add(kept(new Formed(card, new Look(laid, shades.of(new Materials.Rubble())), kerb.formed())));
             lake.add(kept(new Formed(card, new Look(laid, shades.of(new Materials.Water())), village.lake().sheet())));
             this.carPark = new CarParkDrawn(card, laid, village.carPark());
+            this.grove = new GroveDrawn(card, laid, village.grove());
         } catch (final RuntimeException refused) {
             close();
             throw refused;
@@ -98,6 +101,7 @@ public final class VillagePlace implements Place {
         houses.forEach(stands -> melon.drawn(pass, stands, camera, 1));
         lake.forEach(part -> part.drawn(pass, new Mat4(), camera, 1));
         carPark.drawn(pass, camera);
+        grove.drawn(pass, camera);
     }
 
     @Override
@@ -107,6 +111,10 @@ public final class VillagePlace implements Place {
 
     @Override
     public void close() {
+        if (grove != null) {
+            grove.close();
+            grove = null;
+        }
         if (carPark != null) {
             carPark.close();
             carPark = null;

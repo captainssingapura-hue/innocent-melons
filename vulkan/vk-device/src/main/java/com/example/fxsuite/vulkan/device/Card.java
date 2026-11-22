@@ -35,7 +35,7 @@ public final class Card implements AutoCloseable {
     private final Reach reach;
     private final Recording recording;
     /** A picture of depths with nothing on it: what a frame's looks look things up in when it is given no other. */
-    private final Depths nothing;
+    private final Read nothing;
     private boolean closed;
 
     /** The card, to draw pictures on with no window; its shaders compiled by the standard compiler. */
@@ -64,7 +64,8 @@ public final class Card implements AutoCloseable {
             final String wanted = System.getProperty("vulkan.card", "");
             this.reach = new Reach(new Choosing(instance, wanted).chosen(), shown, own, theirs);
             this.recording = new Recording(reach, own);
-            this.nothing = new Depths(reach, recording, 1);
+            this.nothing = new Read(new Depths(reach, recording, 1),
+                    reach.rays() ? Optional.of(new Standing(reach, recording)) : Optional.empty());
         } catch (final RuntimeException refused) {
             theirs.swept();
             own.swept();
@@ -101,9 +102,35 @@ public final class Card implements AutoCloseable {
         return made(() -> new Depths(reach, recording, size));
     }
 
+    /**
+     * Whether the card answers rays: whether a look on it may ask if anything stands along a straight line from a
+     * point. So where the card has what that takes, unless the run is told {@code -Dvulkan.rays=false}. Layouts
+     * that ask rays ({@link Laid#asking}) are for such a card alone.
+     */
+    public boolean rays() {
+        return reach().rays();
+    }
+
+    /** What stands in a frame, kept for rays to be asked of: nothing, until it is gathered. */
+    public Standing standing() {
+        if (!rays()) {
+            throw new IllegalStateException("the card " + name() + " answers no rays, and keeps nothing for them");
+        }
+        return made(() -> new Standing(reach, recording));
+    }
+
+    /** {@code laid}, where the card can build what it asks: layouts that ask rays are refused by one that cannot. */
+    private Laid answered(final Laid laid) {
+        if (laid.rays() && !rays()) {
+            throw new IllegalArgumentException("the card " + name() + " answers no rays, and builds no look that"
+                    + " asks any");
+        }
+        return laid;
+    }
+
     /** The look of {@code vertex} and {@code fragment}, laid out as {@code laid} says, built ready to draw with. */
     public Drawing drawing(final Laid laid, final Shader vertex, final Shader fragment) {
-        return made(() -> new Drawing(reach, compiler, laid, vertex, Optional.of(fragment), false));
+        return made(() -> new Drawing(reach, compiler, answered(laid), vertex, Optional.of(fragment), false));
     }
 
     /**
@@ -113,17 +140,17 @@ public final class Card implements AutoCloseable {
      * and of several such, the furthest first.
      */
     public Drawing mixing(final Laid laid, final Shader vertex, final Shader fragment) {
-        return made(() -> new Drawing(reach, compiler, laid, vertex, Optional.of(fragment), true));
+        return made(() -> new Drawing(reach, compiler, answered(laid), vertex, Optional.of(fragment), true));
     }
 
     /** The look of {@code vertex} alone, which colours nothing: what a picture of depths is drawn with. */
     public Tracing tracing(final Laid laid, final Shader vertex) {
-        return made(() -> new Tracing(reach, compiler, laid, vertex));
+        return made(() -> new Tracing(reach, compiler, answered(laid), vertex));
     }
 
     /** {@code mesh} sent to the card, to be drawn from. */
     public Sent sent(final Packed mesh) {
-        return made(() -> new Sent(reach, mesh));
+        return made(() -> new Sent(reach, recording, mesh));
     }
 
     /** The card as the kit reaches it: for the kit, and for its tests to misuse the card with. */
@@ -164,7 +191,8 @@ public final class Card implements AutoCloseable {
         }
         closed = true;
         new Checked("vkDeviceWaitIdle").of(vkDeviceWaitIdle(reach.device()));
-        nothing.close();
+        nothing.standing().ifPresent(Standing::close);
+        nothing.depths().close();
         final List<String> left = theirs.swept();
         own.swept();
         final List<String> unheard = said.heard();

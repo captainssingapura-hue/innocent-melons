@@ -29,23 +29,35 @@ public final class Pass {
 
     private final VkCommandBuffer commands;
     private final Filling frame;
-    private final Optional<Depths> looked;
+    private final Optional<Read> read;
     private final Optional<Drawing> instead;
+    /** Where the things drawn are gathered, when they are drawn on no picture but only to be kept for rays. */
+    private final Optional<Gathered> gathered;
     private final Set<Drawing> told = new HashSet<>();
     /** Whether a look that is mixed with what is drawn has been drawn with: after one, nothing is written over. */
     private boolean mixing;
     private boolean ended;
 
     /**
-     * What draws, each look told {@code frame}: on colours, each look looking things up in {@code looked}; or, on
+     * What draws, each look told {@code frame}: on colours, each look reading what {@code read} has; or, on
      * depths alone, everything drawn with {@code instead}.
      */
-    Pass(final VkCommandBuffer commands, final Filling frame, final Optional<Depths> looked,
+    Pass(final VkCommandBuffer commands, final Filling frame, final Optional<Read> read,
          final Optional<Drawing> instead) {
         this.commands = commands;
         this.frame = frame;
-        this.looked = looked;
+        this.read = read;
         this.instead = instead;
+        this.gathered = Optional.empty();
+    }
+
+    /** What draws on no picture: each thing drawn is added to {@code gathered}, where it stands, and no more. */
+    Pass(final Gathered gathered) {
+        this.commands = null;
+        this.frame = null;
+        this.read = Optional.empty();
+        this.instead = Optional.empty();
+        this.gathered = Optional.of(gathered);
     }
 
     /**
@@ -57,8 +69,12 @@ public final class Pass {
         if (ended) {
             throw new IllegalStateException("drawing on this picture has ended, and nothing more is drawn on it");
         }
-        if (drawing.mixes() && instead.isPresent()) {
-            // what is seen through is nowhere in a picture of depths: it stands in the way of nothing
+        if (drawing.mixes() && (instead.isPresent() || gathered.isPresent())) {
+            // what is seen through is nowhere in a picture of depths, and stands in the way of no ray
+            return;
+        }
+        if (gathered.isPresent()) {
+            gathered.get().stood(drawing.laid(), mesh, placed);
             return;
         }
         if (mixing && !drawing.mixes()) {
@@ -76,7 +92,7 @@ public final class Pass {
                     + ", not as " + placed.layout());
         }
         if (told.add(with)) {
-            with.told(frame, looked);
+            with.told(frame, read);
         }
         try (MemoryStack stack = MemoryStack.stackPush()) {
             final ByteBuffer telling = placed.filled();
@@ -93,6 +109,9 @@ public final class Pass {
 
     /** Drawing ended: this draws no more. */
     void ended() {
+        if (!ended && gathered.isPresent()) {
+            ended = true;
+        }
         if (!ended) {
             ended = true;
             vkCmdEndRendering(commands);

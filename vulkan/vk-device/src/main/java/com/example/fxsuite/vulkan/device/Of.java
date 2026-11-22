@@ -35,6 +35,10 @@ interface Of {
     interface Sampler extends Of {
     }
 
+    /** The things of a frame, or the triangles of one of them, kept so that a ray can be asked of them. */
+    interface Structure extends Of {
+    }
+
     /** The memory a buffer or an image stands in. */
     interface Memory extends Of {
     }

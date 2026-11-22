@@ -40,6 +40,7 @@ public record Shades() {
             case Materials.LitGlass glass -> Tone.VISOR.surface();
             case Materials.Flame flame -> Tone.FLAME.surface();
             case Materials.Rind rind -> new Watermelon().rind();
+            case Materials.Bark bark -> new RoughBark().surface();
             case Materials.Water water -> new StillWater().surface();
             case Materials.Turf turf -> Grounds.TURF.surface();
             case Materials.Topsoil soil -> Grounds.TOPSOIL.surface();

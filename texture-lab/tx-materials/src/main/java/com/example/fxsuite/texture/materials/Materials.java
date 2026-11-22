@@ -36,7 +36,7 @@ public record Materials() {
                 new Adobe(), new Rubble(), new DressedStone(), new Concrete(),
                 new Enamel(), new Rubber(), new GlossPaint(), new MetallicPaint(), new Glass(), new LitGlass(),
                 new Flame(),
-                new Rind(), new Water(),
+                new Rind(), new Bark(), new Water(),
                 new Turf(), new Topsoil(), new Sand(), new Gravel(), new Bedrock(), new Mud(),
                 new Skin(), new Lip(), new Nail(), new Hair(), new Sclera(), new Iris(), new Cornea(),
                 new ToothEnamel(), new Bone(), new Cartilage(), new Muscle(), new Tendon(), new Fat()),
@@ -98,6 +98,7 @@ public record Materials() {
     // Grown: what grew
     public record Grown() implements L1<Matter> { public Matter parent() { return new Matter(); } }
     public record Rind() implements Leaf<Grown>, Material { public Grown parent() { return new Grown(); } }
+    public record Bark() implements Leaf<Grown>, Material { public Grown parent() { return new Grown(); } }
 
     // Liquid: what flows, and lies level
     public record Liquid() implements L1<Matter>, Mirroring { public Matter parent() { return new Matter(); } }

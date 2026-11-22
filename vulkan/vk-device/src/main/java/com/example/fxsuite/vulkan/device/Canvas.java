@@ -17,7 +17,7 @@ public final class Canvas implements Target, AutoCloseable {
     private static final int PIXEL = 4;
 
     private final Recording recording;
-    private final Depths nothing;
+    private final Read nothing;
     private final int width;
     private final int height;
     private final Sheet colours;
@@ -26,7 +26,7 @@ public final class Canvas implements Target, AutoCloseable {
     private boolean drawn;
 
     /** A picture; a frame drawn on it with nothing to look up looks things up in {@code nothing}. */
-    Canvas(final Reach reach, final Recording recording, final Depths nothing, final int width, final int height) {
+    Canvas(final Reach reach, final Recording recording, final Read nothing, final int width, final int height) {
         if (width <= 0 || height <= 0) {
             throw new IllegalArgumentException("a picture is some pixels wide and tall, not " + width + " by "
                     + height);
@@ -60,8 +60,18 @@ public final class Canvas implements Target, AutoCloseable {
     /** The same, its looks looking things up in {@code looked}. */
     @Override
     public void drawn(final Vec3 sky, final Filling frame, final Depths looked, final Consumer<Pass> drawing) {
+        drawn(sky, frame, nothing.looking(looked), drawing);
+    }
+
+    /** The same, its looks asking rays of {@code stood}. */
+    @Override
+    public void drawn(final Vec3 sky, final Filling frame, final Standing stood, final Consumer<Pass> drawing) {
+        drawn(sky, frame, nothing.asking(stood), drawing);
+    }
+
+    private void drawn(final Vec3 sky, final Filling frame, final Read looks, final Consumer<Pass> drawing) {
         final Strokes strokes = recording.begun();
-        strokes.drawn(new Ground(colours.image(), colours.view(), depths, width, height), sky, frame, looked,
+        strokes.drawn(new Ground(colours.image(), colours.view(), depths, width, height), sky, frame, looks,
                 drawing);
         strokes.moved(colours.image(), Move.TO_BE_READ);
         strokes.read(colours.image(), read, width, height);
