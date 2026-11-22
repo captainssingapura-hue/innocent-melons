@@ -168,7 +168,7 @@ public final class SkinBench extends Application {
         worker.submit(() -> {
             try {
                 if (body == null) {
-                    body = MuscleBody.INSTANCE.make(proportions, true, 1);
+                    body = com.example.fxsuite.life.body.fat.SheetBed.INSTANCE.body(proportions, true, 1);
                     near = new Nearness(FatBeneath.INSTANCE.of(body, bind));
                 }
                 final long t0 = System.nanoTime();

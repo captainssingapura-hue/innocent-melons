@@ -25,6 +25,11 @@ public record TrapeziusUpper() implements Muscle {
     }
 
     @Override
+    public boolean sheet() {
+        return true;
+    }
+
+    @Override
     public MuscleRegion region() {
         return MuscleRegion.BACK;
     }

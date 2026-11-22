@@ -135,7 +135,7 @@ public final class WardrobeBench extends Application {
     private void make() {
         final long t0 = System.nanoTime();
         final Rig bind = new Rig(proportions, BoundPose.INSTANCE.pose(), false);
-        final MuscleBody.Bound body = MuscleBody.INSTANCE.make(proportions, false, 1);
+        final MuscleBody.Bound body = com.example.fxsuite.life.body.fat.SheetBed.INSTANCE.body(proportions, false, 1);
         final Beneath under = Underneath.INSTANCE.of(body, bind, new Detail(0.6));
         final Garment b = Tailor.INSTANCE.briefs(under, bind, WHITE);
         final Garment t = Tailor.INSTANCE.tights(under, bind, BLACK);

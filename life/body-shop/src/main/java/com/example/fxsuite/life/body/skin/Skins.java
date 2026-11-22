@@ -8,6 +8,7 @@ import com.example.fxsuite.life.body.fat.FatBeneath;
 import com.example.fxsuite.life.body.fat.FatMap;
 import com.example.fxsuite.life.body.fat.FatTarget;
 import com.example.fxsuite.life.body.fat.Nearness;
+import com.example.fxsuite.life.body.fat.SheetBed;
 import com.example.fxsuite.life.body.flesh.Flesh;
 import com.example.fxsuite.life.body.muscle.MuscleBody;
 import com.example.fxsuite.life.body.wear.Beneath;
@@ -49,7 +50,7 @@ public final class Skins {
     /** What a skin over a body of {@code p}'s size is found over: its muscles, its deep ones too, and its bones. */
     private FatTarget target(final Proportions p) {
         final Rig bind = new Rig(p, BoundPose.INSTANCE.pose(), false);
-        final Nearness near = new Nearness(FatBeneath.INSTANCE.of(MuscleBody.INSTANCE.make(p, true, 1), bind));
+        final Nearness near = new Nearness(FatBeneath.INSTANCE.of(SheetBed.INSTANCE.body(p, true, 1), bind));
         return new FatTarget(near, new FatMap(FatMap.MEASURED, SKIN), bind);
     }
 

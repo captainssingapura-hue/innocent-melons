@@ -294,7 +294,7 @@ public final class MotionBench extends Application {
         new Thread(() -> {
             final long t0 = System.nanoTime();
             final com.example.fxsuite.life.body.muscle.MuscleBody.Bound b = muscleBodies.computeIfAbsent(key,
-                    k -> com.example.fxsuite.life.body.muscle.MuscleBody.INSTANCE.make(p, withDeep, 1));
+                    k -> com.example.fxsuite.life.body.fat.SheetBed.INSTANCE.body(p, withDeep, 1));
             final long ms = (System.nanoTime() - t0) / 1_000_000;
             javafx.application.Platform.runLater(() -> {
                 if (mine == puppet) {

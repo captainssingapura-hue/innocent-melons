@@ -10,6 +10,7 @@ import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A muscle's shape on a body ({@link Muscle}): a cage of rings, one at each of its sections, each an oval of
@@ -46,6 +47,14 @@ public record MuscleShape() implements StatelessFunctionalObject {
 
     /** {@code m}'s cage, as big as {@code bulk} has it, on the body {@code rig} holds, its points where its skin is. */
     public Cage cage(final Muscle m, final Muscularity bulk, final Rig rig, final boolean left) {
+        return cage(m, bulk, rig, left, p -> Optional.empty());
+    }
+
+    /**
+     * {@code m}'s cage, as big as {@code bulk} has it, on the body {@code rig} holds; a sheet laid on {@code bed}
+     * ({@link Drape}).
+     */
+    public Cage cage(final Muscle m, final Muscularity bulk, final Rig rig, final boolean left, final Bed bed) {
         final List<Section> sections = m.sections();
         final int n = sections.size();
         final V3[] on = new V3[n];
@@ -55,11 +64,14 @@ public record MuscleShape() implements StatelessFunctionalObject {
             on[i] = s.at().in(rig, left);
             way[i] = s.at().way(s.facing(), rig, left).unit();
         }
-        return cageAt(m, on, way, grown(m, bulk, on, way));
+        return cageAt(m, on, way, grown(m, bulk, on, way), bed);
     }
 
-    /** {@code m}'s cage where its sections lie at {@code on}, facing {@code way}, its belly {@code grown} times. */
-    private Cage cageAt(final Muscle m, final V3[] on, final V3[] way, final double grown) {
+    /**
+     * {@code m}'s cage where its sections lie at {@code on}, facing {@code way}, its belly {@code grown} times; a
+     * sheet laid on {@code bed}.
+     */
+    private Cage cageAt(final Muscle m, final V3[] on, final V3[] way, final double grown, final Bed bed) {
         final List<Section> sections = m.sections();
         final int n = sections.size();
         final V3[] at = new V3[n];
@@ -80,10 +92,16 @@ public record MuscleShape() implements StatelessFunctionalObject {
             }
             face = face.unit();
             final V3 across = along.cross(face).unit();
+            if (m.sheet()) {
+                points.addAll(Drape.INSTANCE.ring(on[i], at[i], across, face, along, s.wide() * k[i], s.deep() * k[i],
+                        bed));
+            }
             for (int q = 0; q < ROUND; q++) {
                 final double a = 2 * Math.PI * q / ROUND;
-                points.add(at[i].plus(across.times(Math.cos(a) * s.wide() * k[i] / 2))
-                        .plus(face.times(Math.sin(a) * s.deep() * k[i] / 2)));
+                if (!m.sheet()) {
+                    points.add(at[i].plus(across.times(Math.cos(a) * s.wide() * k[i] / 2))
+                            .plus(face.times(Math.sin(a) * s.deep() * k[i] / 2)));
+                }
                 names.add(m.name() + ", section " + (i + 1) + ", " + q);
             }
         }
@@ -153,7 +171,8 @@ public record MuscleShape() implements StatelessFunctionalObject {
     /** How much {@code m} holds, its belly {@code k} times, its surface smoothed twice, as it is drawn. */
     private double smoothed(final Muscle m, final V3[] on, final V3[] way, final double k) {
         final Subdivision s = Subdivision.INSTANCE;
-        return volume(s.mesh(s.times(s.of(Fitting.INSTANCE.fitted(cageAt(m, on, way, k), 1), 1), 2)));
+        return volume(s.mesh(s.times(s.of(Fitting.INSTANCE.fitted(cageAt(m, on, way, k, p -> Optional.empty()), 1), 1),
+                2)));
     }
 
     /** How much wider and deeper {@code m}'s belly is than drawn, for its frustums to come to {@code target}. */

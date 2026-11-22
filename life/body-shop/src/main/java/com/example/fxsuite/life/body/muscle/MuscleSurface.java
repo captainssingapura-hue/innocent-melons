@@ -29,9 +29,15 @@ public record MuscleSurface() implements StatelessFunctionalObject {
     /** {@code m}'s surface, as big as {@code bulk} has it, on the body {@code rig} holds, smoothed {@code steps}. */
     public Surface surface(final Muscle m, final Muscularity bulk, final Rig rig, final boolean left,
                            final int steps) {
+        return surface(m, bulk, rig, left, steps, p -> java.util.Optional.empty());
+    }
+
+    /** The same, a sheet laid on {@code bed} ({@link Drape}). */
+    public Surface surface(final Muscle m, final Muscularity bulk, final Rig rig, final boolean left, final int steps,
+            final Bed bed) {
         final Subdivision s = Subdivision.INSTANCE;
-        final Subdivision.Level shape = s.of(Fitting.INSTANCE.fitted(MuscleShape.INSTANCE.cage(m, bulk, rig, left), 1),
-                1);
+        final Subdivision.Level shape = s.of(Fitting.INSTANCE.fitted(MuscleShape.INSTANCE.cage(m, bulk, rig, left, bed),
+                1), 1);
         final List<Part> parts = new ArrayList<>();
         final int[] partOf = new int[m.sections().size()];
         for (int i = 0; i < partOf.length; i++) {

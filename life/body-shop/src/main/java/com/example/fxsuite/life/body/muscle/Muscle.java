@@ -23,6 +23,15 @@ public interface Muscle extends StatelessFunctionalObject {
         return Layer.SUPERFICIAL;
     }
 
+    /**
+     * Whether it is a sheet, wide and thin, lying over what is under it, bones and other muscles, and following their
+     * shape: the platysma, the trapezius, the latissimus; drawn lying on them where the body's muscles are made
+     * together ({@link MuscleBody}), each of its sections bent to lie along them; alone, as it is written.
+     */
+    default boolean sheet() {
+        return false;
+    }
+
     /** Its sections, from its origin to its insertion; or round it, if a ring. */
     List<Section> sections();
 

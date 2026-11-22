@@ -9,6 +9,7 @@ import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * A body's muscles as one surface bound to its bones ({@link Flesh}), to be posed as the body moves: every muscle, or
@@ -49,6 +50,35 @@ public record MuscleBody() implements StatelessFunctionalObject {
         final List<MuscleSurface.Surface> found = jobs.parallelStream()
                 .map(j -> MuscleSurface.INSTANCE.surface(j.muscle(), bulk, bind, j.left(), steps)).toList();
         return bound(found, bind);
+    }
+
+    /**
+     * The muscles of a body made as {@code p} says, the deep ones if {@code deep}, smoothed {@code steps} times; its
+     * sheets ({@link Muscle#sheet}) laid on the rest of them, the deep ones too, and its bones: on the bed
+     * {@code bedding} makes of them, the rest as bound.
+     */
+    public Bound make(final Proportions p, final boolean deep, final int steps, final Function<Flesh, Bed> bedding) {
+        final Rig bind = new Rig(p, BoundPose.INSTANCE.pose(), false);
+        final Measured bulk = new Measured(p.stature() / 100, p.mass());
+        final List<Job> firm = new ArrayList<>();
+        final List<Job> sheets = new ArrayList<>();
+        for (final Muscle m : Musculature.INSTANCE.muscles()) {
+            for (final boolean left : m.paired() ? List.of(false, true) : List.of(false)) {
+                (m.sheet() ? sheets : firm).add(new Job(m, left));
+            }
+        }
+        final List<MuscleSurface.Surface> under = firm.parallelStream()
+                .map(j -> MuscleSurface.INSTANCE.surface(j.muscle(), bulk, bind, j.left(), steps)).toList();
+        final Bed bed = bedding.apply(bound(under, bind).flesh());
+        final List<MuscleSurface.Surface> shown = new ArrayList<>();
+        for (int i = 0; i < firm.size(); i++) {
+            if (deep || firm.get(i).muscle().layer() != Layer.DEEP) {
+                shown.add(under.get(i));
+            }
+        }
+        shown.addAll(sheets.parallelStream().filter(j -> deep || j.muscle().layer() != Layer.DEEP)
+                .map(j -> MuscleSurface.INSTANCE.surface(j.muscle(), bulk, bind, j.left(), steps, bed)).toList());
+        return bound(shown, bind);
     }
 
     /** {@code surfaces} put together as one, bound where {@code bind} holds the body. */
