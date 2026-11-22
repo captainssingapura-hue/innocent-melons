@@ -31,7 +31,7 @@ public record DeltoidAnterior() implements Muscle {
     public List<Section> sections() {
         final Sections s = Sections.INSTANCE;
         return List.of(
-                s.at(Clavicle.INSTANCE, 13.122, 46.565, 4.086, 3.2, 0.8, 0.2, 0.6, 0.8),
+                s.at(Clavicle.INSTANCE, 13.122, 46.565, 4.086, 3.2, 0.4, 0.2, 0.6, 0.8),
                 s.at(Humerus.INSTANCE, 1.483, -1.6, 2.411, 4.3, 2.9, 0.3, 0, 1),
                 s.at(Humerus.INSTANCE, 1.64, -7, 1.42, 3.1, 2.2, 0.6, 0, 0.8),
                 s.at(Humerus.INSTANCE, 1.606, -12, 0.741, 1.2, 0.6, 1, 0, 0.2));
