@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>melons.innocent.demos</groupId>
+    <artifactId>integrated-demos</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <description>
+        Demos that bring together what the other units make: the renderer and its walk, the material lab's
+        surfaces, the places' walls, and whatever models there are, each demo a whole place to walk round and fly
+        over, drawn by the card. A demo makes nothing of its own that another unit owns: it asks the lab for its
+        materials and the places for their walls. Each demo is a module of its own, with its own main class. Its
+        code keeps CQ's basic rules, which the studio checks from its jar and its sources jar.
+    </description>
+
+    <properties>
+        <maven.compiler.release>25</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- the renderer and its bench, the material lab, and the places: the one place each one's version is said -->
+        <vulkan.version>0.1.0-SNAPSHOT</vulkan.version>
+        <lab.version>0.1.0-SNAPSHOT</lab.version>
+        <places.version>0.1.0-SNAPSHOT</places.version>
+    </properties>
+
+    <modules>
+        <!-- The melons' village: eight melon houses in walled yards, a lake, and a car park with a hundred cars. -->
+        <module>the-melons-village</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.example.fxsuite.vulkan</groupId>
+                <artifactId>vk-drawing</artifactId>
+                <version>${vulkan.version}</version>
+            </dependency>
+            <!-- the renderer's bench: the card, and the avatar that walks about on it -->
+            <dependency>
+                <groupId>com.example.fxsuite.vulkan</groupId>
+                <artifactId>vk-bench</artifactId>
+                <version>${vulkan.version}</version>
+            </dependency>
+            <!-- the material lab: the tree of materials and each one's surface, and the walls' surfaces -->
+            <dependency>
+                <groupId>com.example.fxsuite.texture</groupId>
+                <artifactId>tx-materials</artifactId>
+                <version>${lab.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example.fxsuite.texture</groupId>
+                <artifactId>tx-brick</artifactId>
+                <version>${lab.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example.fxsuite.texture</groupId>
+                <artifactId>tx-stone</artifactId>
+                <version>${lab.version}</version>
+            </dependency>
+            <!-- the lab's bench, for the plain car body it shows paint and glass on: taken from there until it has a home -->
+            <dependency>
+                <groupId>com.example.fxsuite.texture</groupId>
+                <artifactId>tx-lab</artifactId>
+                <version>${lab.version}</version>
+            </dependency>
+            <!-- the places: the walls a yard is walled with -->
+            <dependency>
+                <groupId>com.example.fxsuite.places</groupId>
+                <artifactId>pl-yard</artifactId>
+                <version>${places.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>5.11.3</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.13.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.5.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>3.3.1</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>

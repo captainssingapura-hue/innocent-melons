@@ -133,13 +133,50 @@ class CardTest {
              Drawing drawing = card.drawing(laid, look.vertex(), look.fragment());
              Sent mesh = card.sent(new Packed(laid.point(), triangle))) {
             final Filling wrong = new Filling(laid.frame()).with("seen", camera.seen(1).columns())
-                    .with("sunTowards", 0, 1, 0).with("sun", 0, 0, 0).with("ambient", 1, 1, 1);
+                    .with("sunTowards", 0, 1, 0).with("sun", 0, 0, 0).with("ambient", 1, 1, 1)
+                .with("sky", 0, 0, 0).with("ground", 0, 0, 0).with("beam", new double[16]).with("eased", 0, 0);
             assertThrows(IllegalArgumentException.class,
                     () -> canvas.drawn(sky, frame(), pass -> pass.draw(drawing, mesh, wrong)));
             final Pass[] kept = new Pass[1];
             canvas.drawn(sky, frame(), pass -> kept[0] = pass);
             assertThrows(IllegalStateException.class, () -> kept[0].draw(drawing, mesh, told()),
                     "what draws, kept past the end of its drawing");
+        }
+    }
+
+    @Test
+    void aLookThatIsMixedShowsWhatIsBehindItAsFarAsItDoesNotHideItAndComesAfterEveryLookThatWritesOver() {
+        // red that hides half of what is behind it, and shows half of itself: lit evenly, half red over half the rest
+        final Look clear = new Look(laid,
+                new Surface(new Colour(1, 0, 0), List.of(), new Colour(0, 0, 0), 8).clear(0.5));
+        final Filling nearer = new Filling(laid.draw()).with("placed", camera.placed(new Vec3(0, 0, -1)).columns())
+                .with("coarsened", 1).with("tint", 1, 1, 1);
+        final Filling further = new Filling(laid.draw()).with("placed", camera.placed(new Vec3(0, 0, 1)).columns())
+                .with("coarsened", 1).with("tint", 1, 1, 1);
+        try (Card card = new Card();
+             Canvas canvas = card.canvas(SIZE, SIZE);
+             Drawing over = card.drawing(laid, look.vertex(), look.fragment());
+             Drawing mixed = card.mixing(laid, clear.vertex(), clear.fragment());
+             Sent mesh = card.sent(new Packed(laid.point(), triangle))) {
+            assertTrue(mixed.mixes() && !over.mixes());
+            canvas.drawn(sky, frame(), pass -> {
+                pass.draw(over, mesh, told());
+                pass.draw(mixed, mesh, nearer);
+            });
+            final Picture before = new Picture(canvas.width(), canvas.pixels());
+            near(before, 23, 40, 159, 64, 96, "in front of the triangle: half red, over half of its colour");
+            near(before, 13, 50, 140, 26, 38, "at its own corner, past the triangle's: half red over half the sky");
+            near(before, 40, 23, 26, 51, 77, "where neither is, the sky");
+            canvas.drawn(sky, frame(), pass -> {
+                pass.draw(over, mesh, told());
+                pass.draw(mixed, mesh, further);
+            });
+            near(new Picture(canvas.width(), canvas.pixels()), 23, 40, 64, 128, 191, "behind the triangle: hidden");
+            assertThrows(IllegalStateException.class, () -> canvas.drawn(sky, frame(), pass -> {
+                pass.draw(mixed, mesh, nearer);
+                pass.draw(over, mesh, told());
+            }), "written over after one is mixed in");
+            assertEquals(List.of(), card.heard(), "the validation layer has nothing to say of it");
         }
     }
 
@@ -176,12 +213,14 @@ class CardTest {
     /** What the frame is told: the camera, and an even white light with no sun. */
     private Filling frame() {
         return new Filling(laid.frame()).with("seen", camera.seen(1).columns())
-                .with("sunTowards", 0, 1, 0).with("sun", 0, 0, 0).with("ambient", 1, 1, 1);
+                .with("sunTowards", 0, 1, 0).with("sun", 0, 0, 0).with("ambient", 1, 1, 1)
+                .with("sky", 0, 0, 0).with("ground", 0, 0, 0).with("beam", new double[16]).with("eased", 0, 0);
     }
 
     /** What the triangle is told: where it stands, as the camera sees it. */
     private Filling told() {
-        return new Filling(laid.draw()).with("placed", camera.placed(placed).columns()).with("coarsened", 1);
+        return new Filling(laid.draw()).with("placed", camera.placed(placed).columns()).with("coarsened", 1)
+                .with("tint", 1, 1, 1);
     }
 
     private void near(final Picture picture, final int x, final int y, final int red, final int green,

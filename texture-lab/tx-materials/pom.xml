@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.example.fxsuite.texture</groupId>
+        <artifactId>texture-lab</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>tx-materials</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        The lab's materials: the tree of what made things are made of, which the lab owns, and for every leaf of it
+        the surface it is drawn with. Whatever is in the tree is already shaded: a leaf comes with its surface or not
+        at all, so whoever builds a thing asks here for a material by its type and is given how it looks. The tree is
+        a taxonomy like the others of what exists, kept here and not with them because only who can shade a material
+        can add one. Nothing here touches the card.
+    </description>
+
+    <dependencies>
+        <!-- the tree's own kind: levels as types, and each node's meaning beside its tree -->
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>fxsuite-taxonomy-core</artifactId>
+        </dependency>
+        <!-- the terms a surface is written in -->
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-drawing</artifactId>
+        </dependency>
+        <!-- the surfaces made beside what they were first made for: the avatar's tones and the watermelon's rind -->
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-bench</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite.texture</groupId>
+            <artifactId>tx-brick</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite.texture</groupId>
+            <artifactId>tx-stone</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

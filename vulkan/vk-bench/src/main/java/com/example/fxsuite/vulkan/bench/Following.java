@@ -1,6 +1,9 @@
 package com.example.fxsuite.vulkan.bench;
 
+import com.example.fxsuite.avatar.sim.Block;
 import com.example.fxsuite.avatar.sim.Body;
+import com.example.fxsuite.avatar.sim.Hit;
+import com.example.fxsuite.avatar.sim.Obstacles;
 import com.example.fxsuite.avatar.view.Chase;
 import com.example.fxsuite.vulkan.space.Vec3;
 import com.example.fxsuite.vulkan.view.Camera;
@@ -70,8 +73,25 @@ public final class Following {
 
     /** The renderer's camera, where the engine's is: the engine tilts up and counts height down, the renderer not. */
     public Camera camera() {
+        return camera(Obstacles.NONE);
+    }
+
+    /**
+     * The same, kept this side of whatever of {@code inTheWay} stands between the camera and the avatar's head: as
+     * the engine's camera is kept inside the room the avatar is in, it is pulled in to just short of what it would
+     * be behind, so the avatar is never hidden by a wall or a melon it has gone round.
+     */
+    public Camera camera(final Obstacles inTheWay) {
+        final com.example.fxsuite.avatar.sim.Vec3 back = chase.forward().multiply(-1);
+        double off = chase.distance();
+        for (final Block block : inTheWay.blocks()) {
+            final Hit met = block.ray(chase.pivot(), back, off);
+            if (met != null) {
+                off = Math.min(off, Math.max(Chase.NEAREST, met.distance() - Chase.WALL_GAP));
+            }
+        }
         final Vec3 looksAt = new Vec3(chase.pivot().x(), -chase.pivot().y(), chase.pivot().z());
-        return new Orbit(looksAt, chase.yaw(), -chase.pitch(), chase.distance()).camera(FIELD, NEAR);
+        return new Orbit(looksAt, chase.yaw(), -chase.pitch(), off).camera(FIELD, NEAR);
     }
 
     private com.example.fxsuite.avatar.sim.Vec3 head(final Body body) {

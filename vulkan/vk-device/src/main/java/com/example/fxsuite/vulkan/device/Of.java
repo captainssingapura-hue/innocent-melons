@@ -31,6 +31,10 @@ interface Of {
     interface View extends Of {
     }
 
+    /** How a picture is looked up by a shader. */
+    interface Sampler extends Of {
+    }
+
     /** The memory a buffer or an image stands in. */
     interface Memory extends Of {
     }

@@ -1,6 +1,7 @@
 package com.example.fxsuite.vulkan.bench.subject;
 
 import com.example.fxsuite.avatar.sim.Fruit;
+import com.example.fxsuite.vulkan.form.Dome;
 import com.example.fxsuite.vulkan.form.Ellipsoid;
 import com.example.fxsuite.vulkan.form.Mesh;
 import com.example.fxsuite.vulkan.term.Colour;
@@ -41,6 +42,15 @@ public record Watermelon() {
     /** Its body as triangles, {@code round} points round it. */
     public Mesh formed(final int round) {
         return body().formed(round, round / 2);
+    }
+
+    /**
+     * Half of it, cut along its length and set down on the cut: a dome as long and as wide as it is and half as
+     * high, {@code round} points over it. Its rind is the whole fruit's, so its stripes run on as they did.
+     */
+    public Mesh halved(final int round) {
+        final Fruit fruit = Fruit.WATERMELON;
+        return new Dome(fruit.length(), fruit.height(), fruit.width()).formed(round, round);
     }
 
     /** How high its middle is when it lies on the ground, in centimetres. */

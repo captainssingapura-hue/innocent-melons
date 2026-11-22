@@ -9,8 +9,13 @@ import java.util.List;
  * faces there (one long), and its triangles, three corners each, a corner the number of a point. Every triangle is
  * wound so that its second side crossed with its third faces out of the form ({@link Vec3#cross}); the camera's own
  * test says which way round that shows on the card. Never changed once made.
+ *
+ * <p>Each point also says where on the thing's surface it is ({@code ons}), which is what the surface's terms are
+ * worked out from. For most things that is simply where the point is. For a thing whose surface is laid round it,
+ * as a wall's bricks are laid round a house, it is how far along the surface and how far up, so the one pattern
+ * runs on round a corner and over an edge.
  */
-public record Mesh(List<Vec3> points, List<Vec3> facings, List<Integer> corners) {
+public record Mesh(List<Vec3> points, List<Vec3> facings, List<Integer> corners, List<Vec3> ons) {
 
     private static final int CORNERS = 3;
 
@@ -18,9 +23,10 @@ public record Mesh(List<Vec3> points, List<Vec3> facings, List<Integer> corners)
         points = List.copyOf(points);
         facings = List.copyOf(facings);
         corners = List.copyOf(corners);
-        if (points.size() != facings.size()) {
-            throw new IllegalArgumentException("each point faces one way: " + points.size() + " points, "
-                    + facings.size() + " ways");
+        ons = List.copyOf(ons);
+        if (points.size() != facings.size() || points.size() != ons.size()) {
+            throw new IllegalArgumentException("each point faces one way and is at one place on the surface: "
+                    + points.size() + " points, " + facings.size() + " ways, " + ons.size() + " places");
         }
         if (corners.size() % CORNERS != 0) {
             throw new IllegalArgumentException("a triangle has three corners: " + corners.size() + " corners in all");
@@ -30,6 +36,11 @@ public record Mesh(List<Vec3> points, List<Vec3> facings, List<Integer> corners)
                 throw new IllegalArgumentException("a corner at point " + corner + ", of " + points.size());
             }
         }
+    }
+
+    /** A form each of whose points is, on its surface, where it is. */
+    public Mesh(final List<Vec3> points, final List<Vec3> facings, final List<Integer> corners) {
+        this(points, facings, corners, points);
     }
 
     public int triangles() {
@@ -44,6 +55,11 @@ public record Mesh(List<Vec3> points, List<Vec3> facings, List<Integer> corners)
     /** The way the surface faces at corner {@code which} of {@code triangle}. */
     public Vec3 facing(final int triangle, final int which) {
         return facings.get(corners.get(CORNERS * triangle + which));
+    }
+
+    /** Where on the thing's surface corner {@code which} of {@code triangle} is. */
+    public Vec3 on(final int triangle, final int which) {
+        return ons.get(corners.get(CORNERS * triangle + which));
     }
 
     /** {@code triangle}'s second side crossed with its third: the way it faces, twice as long as it is big. */

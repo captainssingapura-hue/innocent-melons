@@ -30,7 +30,16 @@ public record Swatch(Surface surface, double across, double up) {
      * comes to from that many times as far without the swatch shrinking to a dot.
      */
     public Picture seen(final double from, final double coarsened, final int width, final int height) {
-        return picture(new Look(new Laid(), surface), from, coarsened, width, height);
+        return seen(from, coarsened, width, height, new Vec3(1, 1, 1));
+    }
+
+    /**
+     * The same, the swatch being of the colour {@code tint}: for a texture that takes its colour from the thing it
+     * is on, as paint does. Any other texture is not changed by it.
+     */
+    public Picture seen(final double from, final double coarsened, final int width, final int height,
+                        final Vec3 tint) {
+        return picture(new Look(new Laid(), surface), from, coarsened, width, height, tint);
     }
 
     /**
@@ -38,7 +47,8 @@ public record Swatch(Surface surface, double across, double up) {
      * texture can no longer be seen there averaged over the face and left out.
      */
     public Picture coarser(final double covers, final double from, final int width, final int height) {
-        return picture(new Look(new Laid(), surface).coarser(covers, averaged()), from, 1, width, height);
+        return picture(new Look(new Laid(), surface).coarser(covers, averaged()), from, 1, width, height,
+                new Vec3(1, 1, 1));
     }
 
     /** What works out averages over the swatch's face. */
@@ -47,12 +57,12 @@ public record Swatch(Surface surface, double across, double up) {
     }
 
     private Picture picture(final Look look, final double from, final double coarsened, final int width,
-                            final int height) {
+                            final int height, final Vec3 tint) {
         final Daylight day = new Daylight();
         final Camera camera = new Orbit(new Vec3(0, up / 2, 0), 0, 0, from).camera(FIELD_OF_VIEW, 1);
         // the face drawn as two triangles; worked at twice the size and halved, so each pixel covers half as much
         final Mesh face = new Panel(across, up, Math.max(across, up)).formed();
-        return new Worked(look, face, new Vec3(0, 0, 0), camera, day.light(), day.sky(), 2 * coarsened)
+        return new Worked(look, face, new Vec3(0, 0, 0), camera, day.light(), day.sky(), 2 * coarsened, tint)
                 .picture(2 * width, 2 * height).halved();
     }
 }

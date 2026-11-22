@@ -17,6 +17,7 @@ public final class Canvas implements Target, AutoCloseable {
     private static final int PIXEL = 4;
 
     private final Recording recording;
+    private final Depths nothing;
     private final int width;
     private final int height;
     private final Sheet colours;
@@ -24,12 +25,14 @@ public final class Canvas implements Target, AutoCloseable {
     private final Bytes read;
     private boolean drawn;
 
-    Canvas(final Reach reach, final Recording recording, final int width, final int height) {
+    /** A picture; a frame drawn on it with nothing to look up looks things up in {@code nothing}. */
+    Canvas(final Reach reach, final Recording recording, final Depths nothing, final int width, final int height) {
         if (width <= 0 || height <= 0) {
             throw new IllegalArgumentException("a picture is some pixels wide and tall, not " + width + " by "
                     + height);
         }
         this.recording = recording;
+        this.nothing = nothing;
         this.width = width;
         this.height = height;
         this.colours = new Sheet(reach, "a picture's colours", Paper.COLOUR, width, height);
@@ -51,8 +54,15 @@ public final class Canvas implements Target, AutoCloseable {
     /** A frame drawn, and done, all of it, before this comes back. */
     @Override
     public void drawn(final Vec3 sky, final Filling frame, final Consumer<Pass> drawing) {
+        drawn(sky, frame, nothing, drawing);
+    }
+
+    /** The same, its looks looking things up in {@code looked}. */
+    @Override
+    public void drawn(final Vec3 sky, final Filling frame, final Depths looked, final Consumer<Pass> drawing) {
         final Strokes strokes = recording.begun();
-        strokes.drawn(new Ground(colours.image(), colours.view(), depths, width, height), sky, frame, drawing);
+        strokes.drawn(new Ground(colours.image(), colours.view(), depths, width, height), sky, frame, looked,
+                drawing);
         strokes.moved(colours.image(), Move.TO_BE_READ);
         strokes.read(colours.image(), read, width, height);
         recording.sent();

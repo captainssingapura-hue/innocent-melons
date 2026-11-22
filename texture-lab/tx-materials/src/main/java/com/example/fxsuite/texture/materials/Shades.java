@@ -1,0 +1,48 @@
+package com.example.fxsuite.texture.materials;
+
+import com.example.fxsuite.texture.brick.Brickwork;
+import com.example.fxsuite.texture.stone.CoursedStone;
+import com.example.fxsuite.texture.stone.RubbleWall;
+import com.example.fxsuite.vulkan.bench.subject.Tone;
+import com.example.fxsuite.vulkan.bench.subject.Watermelon;
+import com.example.fxsuite.vulkan.term.Surface;
+
+/**
+ * How each material is drawn: for every leaf of the tree of materials, its surface. Whatever is in the tree is
+ * already shaded, and this is where: a thing says what it is made of by the material's type and asks here for the
+ * surface, never making one of its own. A test goes through the tree's leaves and fails on one with no surface, so
+ * a material cannot be added to the tree without being added here.
+ *
+ * <p>The surfaces themselves are where they were made: the metals and what gives light with the avatar's tones, the
+ * walls in the texture lab, the rind with the watermelon, the water with the village's lake.
+ */
+public record Shades() {
+
+    /** {@code material}'s surface. */
+    public Surface of(final Material material) {
+        return switch (material) {
+            case Materials.Gold gold -> Tone.GOLD.surface();
+            case Materials.Bronze bronze -> Tone.BRONZE.surface();
+            case Materials.Titanium titanium -> Tone.TITANIUM.surface();
+            case Materials.Gunmetal gunmetal -> Tone.GUNMETAL.surface();
+            case Materials.Steel steel -> Tone.STEEL.surface();
+            case Materials.CommonRedBrick brick -> Brickwork.COMMON_RED.wall().surface();
+            case Materials.ChineseGreyBrick brick -> Brickwork.CHINESE_GREY.wall().surface();
+            case Materials.Adobe adobe -> Brickwork.ADOBE.wall().surface();
+            case Materials.Rubble rubble -> new RubbleWall().surface();
+            case Materials.DressedStone stone -> new CoursedStone().wall().surface();
+            case Materials.Concrete concrete -> new CastConcrete().surface();
+            case Materials.Enamel enamel -> Tone.SHELL.surface();
+            case Materials.Rubber rubber -> Tone.JOINT.surface();
+            case Materials.GlossPaint paint -> new Lacquer().surface();
+            case Materials.MetallicPaint paint -> new FlakedLacquer().surface();
+            case Materials.Glass glass -> new SheetGlass().surface();
+            case Materials.LitGlass glass -> Tone.VISOR.surface();
+            case Materials.Flame flame -> Tone.FLAME.surface();
+            case Materials.Rind rind -> new Watermelon().rind();
+            case Materials.Water water -> new StillWater().surface();
+            default -> throw new IllegalArgumentException(material.title() + " is in no tree of materials that is"
+                    + " shaded here");
+        };
+    }
+}

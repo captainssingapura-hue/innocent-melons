@@ -59,6 +59,43 @@ class CourierTest {
     }
 
     @Test
+    void finishedInMetalItStandsOneMetreNinetyItsBodyGoldAndItsArmsAndLegsTitanium() {
+        final List<Courier.Placed> placed = new Courier(190, Finish.GILT).placed(
+                Body.standing(new com.example.fxsuite.avatar.sim.Vec3(0, 0, 0), 0), still);
+        assertEquals(190, corner(placed.get(4), 0, 0.5, 0).y(), 1e-9, "the top of its head");
+        assertEquals(3 * 190.0 / 201, lowest(placed), 1e-9, "its soles, as much nearer the ground as it is smaller");
+        assertEquals(Tone.BRONZE, placed.get(0).tone(), "its pelvis");
+        assertEquals(Tone.GOLD, placed.get(1).tone(), "its torso");
+        assertEquals(Tone.GOLD, placed.get(4).tone(), "its head");
+        assertEquals(Tone.VISOR, placed.get(5).tone(), "its visor, lit from within as it was");
+        assertEquals(Tone.TITANIUM, placed.get(9).tone(), "a leg");
+        assertEquals(Tone.GUNMETAL, placed.get(11).tone(), "a foot");
+        assertEquals(Tone.TITANIUM, placed.get(16).tone(), "an arm");
+    }
+
+    @Test
+    void itsJetsAreSetIntoItsBackAndFlameOnlyWhenTheyFireAndTheEnginesBodyFliesWithNoWings() {
+        final Courier gilt = new Courier(190, Finish.GILT);
+        final Body standing = Body.standing(new com.example.fxsuite.avatar.sim.Vec3(0, 0, 0), 0);
+        final List<Courier.Placed> idle = gilt.placed(standing, still);
+        final List<Courier.Placed> firing = gilt.placed(standing, 1, still);
+        assertEquals(25 + 4, idle.size(), "two housings and two nozzles");
+        assertEquals(25 + 6, firing.size(), "and two flames, firing");
+        assertTrue(corner(idle.get(25), 0, 0, 0).z() < -15, "behind it: " + corner(idle.get(25), 0, 0, 0));
+        assertEquals(Tone.FLAME, firing.get(27).tone());
+        assertTrue(corner(firing.get(27), 0, -0.5, 0).y() < corner(firing.get(26), 0, -0.5, 0).y(),
+                "a flame reaches down below its nozzle");
+        assertEquals(25, new Courier().placed(standing, 1, still).size(), "the engine's own figure has none");
+        // taken off as the walk takes it off, and told to climb for a second
+        Body flying = standing.toggledFlight();
+        for (int step = 0; step < 120; step++) {
+            flying = flying.step(new Controls(0, 0, 0, 1, true), 1.0 / 120);
+        }
+        assertTrue(flying.flying() && flying.height() > 300, "well off the ground: " + flying.height());
+        assertTrue(flying.thrust() > 0.3, "its jets firing: " + flying.thrust());
+    }
+
+    @Test
     void runningByTheEnginesOwnSimulationItGoesForwardWithArmAndLegOppositeWays() {
         Body body = Body.standing(new com.example.fxsuite.avatar.sim.Vec3(0, 0, 0), 0);
         final Controls running = new Controls(1, 0, 0, 0, true);

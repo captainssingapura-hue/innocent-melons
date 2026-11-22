@@ -28,7 +28,7 @@ class LayersTest {
 
     /** Each module's packages, lowest first: a package may read those before it in its module, and none after. */
     private final Map<String, List<String>> layers = Map.of(
-            "vk-drawing", List.of("space", "layout", "form", "view", "term", "shade", "worked"),
+            "vk-drawing", List.of("space", "sky", "layout", "form", "view", "term", "shade", "worked"),
             "vk-device", List.of("device"),
             "vk-render", List.of("render"),
             "vk-bench", List.of("bench"));

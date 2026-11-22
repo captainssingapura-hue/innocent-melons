@@ -33,6 +33,10 @@
         <module>tx-stone</module>
         <!-- The lab's bench: a swatch of a texture seen from any distance, its picture worked out by Java. -->
         <module>tx-bench</module>
+        <!-- The lab's materials: the tree of what things are made of, which it owns, and each leaf's surface. -->
+        <module>tx-materials</module>
+        <!-- The material bench: a material on a wall, a ball and a block, drawn by the card, beside a JavaFX window. -->
+        <module>tx-lab</module>
         <!-- The gates: CQ's basic rules and the layers, over every module here. -->
         <module>tx-qc</module>
     </modules>
@@ -44,7 +48,24 @@
                 <artifactId>vk-drawing</artifactId>
                 <version>${drawing.version}</version>
             </dependency>
+            <!-- the renderer's bench: the surfaces made beside the avatar and the melon, and the card for the lab's own bench -->
+            <dependency>
+                <groupId>com.example.fxsuite.vulkan</groupId>
+                <artifactId>vk-bench</artifactId>
+                <version>${drawing.version}</version>
+            </dependency>
+            <!-- the taxonomy's own kind, for the tree of materials the lab keeps -->
+            <dependency>
+                <groupId>com.example.fxsuite</groupId>
+                <artifactId>fxsuite-taxonomy-core</artifactId>
+                <version>0.1.0-SNAPSHOT</version>
+            </dependency>
             <!-- its own modules, at its own version -->
+            <dependency>
+                <groupId>com.example.fxsuite.texture</groupId>
+                <artifactId>tx-materials</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>com.example.fxsuite.texture</groupId>
                 <artifactId>tx-brick</artifactId>
@@ -58,6 +79,11 @@
             <dependency>
                 <groupId>com.example.fxsuite.texture</groupId>
                 <artifactId>tx-bench</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example.fxsuite.texture</groupId>
+                <artifactId>tx-lab</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <!-- every CQ artifact at one version -->

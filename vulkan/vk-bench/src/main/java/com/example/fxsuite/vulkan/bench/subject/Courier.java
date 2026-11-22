@@ -19,8 +19,20 @@ import java.util.List;
  * shapes: their sizes, places and tones are that class's, number for number. They are to be read from one place
  * once the engine has the figure described free of JavaFX. Its antenna and its beacon, a rod and a ball there, are
  * boxes here; it wears no pack and holds nothing.
+ *
+ * <p>{@code tall} is how high the top of its head stands, in centimetres: the whole figure is made bigger or smaller
+ * to it, its feet where they were. {@code finish} is what it is made of. The engine's own is 201 centimetres to the
+ * top of its head, in its shell and trim; the simulation takes it for two metres tall whatever size it is drawn.
  */
-public record Courier() {
+public record Courier(double tall, Finish finish) {
+
+    /** How high the top of the engine's figure's head stands: its soles' clearance, its neck, and its head. */
+    private static final double ENGINES = 201;
+
+    /** As the engine's own figure is: as tall, and finished as it is. */
+    public Courier() {
+        this(ENGINES, Finish.PLAIN);
+    }
 
     /** One box of it: the limb it is part of, what it is made of, how big it is and where its middle is. */
     public record Piece(Limb limb, Tone tone, double across, double up, double along, double x, double y, double z) {
@@ -32,6 +44,10 @@ public record Courier() {
 
     /** How far down a forearm its hand is. */
     private static final double HAND = 32;
+    /** Its jets: how far either side of its spine, how far behind its middle, and how long a flame at full thrust. */
+    private static final double JET_OUT = 16;
+    private static final double JET_BEHIND = 23;
+    private static final double FLAME = 70;
 
     /** Every box of it, each in its limb's own frame as the engine has it: down the way its second number grows. */
     public List<Piece> pieces() {
@@ -79,17 +95,53 @@ public record Courier() {
      * engine's frame, exactly as the engine places it, and the whole is then turned over.
      */
     public List<Placed> placed(final Body body, final Pose pose) {
+        return placed(body, 0, pose);
+    }
+
+    /**
+     * The same, its jets firing as hard as {@code thrust} says, from nothing to one: each flame as long as that, and
+     * none at all at nothing. Only a courier finished in metal has jets.
+     */
+    public List<Placed> placed(final Body body, final double thrust, final Pose pose) {
         final Stance stance = new Stance(pose);
         final Mat4 stood = new Mat4(new Vec3(body.position().x(), body.position().y(), body.position().z()))
-                .times(new Turned(new Vec3(0, 1, 0), body.yaw()).matrix());
+                .times(new Turned(new Vec3(0, 1, 0), body.yaw()).matrix())
+                .times(new Sized(tall / ENGINES).matrix());
         final List<Placed> all = new ArrayList<>();
         for (final Piece piece : pieces()) {
-            final Mat4 there = stood.times(stance.of(piece.limb()))
-                    .times(new Mat4(new Vec3(piece.x(), piece.y(), piece.z())))
-                    .times(new Sized(piece.across(), piece.up(), piece.along()).matrix());
-            all.add(new Placed(piece.tone(), overturned(there)));
+            all.add(new Placed(finish.of(piece.limb(), piece.tone()), there(stood, stance, piece)));
+        }
+        if (finish == Finish.GILT) {
+            for (final Piece jet : jets(thrust)) {
+                all.add(new Placed(jet.tone(), there(stood, stance, jet)));
+            }
         }
         return all;
+    }
+
+    /**
+     * Its jets: two, set into its back either side of its spine, each a housing with a nozzle under it and, firing,
+     * a flame under that. They are part of its body and turn with it; it has no pack, no straps and no wings. Not
+     * the engine's, whose figure carries a pack with swing wings.
+     */
+    private List<Piece> jets(final double thrust) {
+        final List<Piece> jets = new ArrayList<>();
+        for (final double side : new double[] {-JET_OUT, JET_OUT}) {
+            jets.add(new Piece(Limb.BODY, Tone.GUNMETAL, 16, 40, 14, side, -124, -JET_BEHIND));
+            jets.add(new Piece(Limb.BODY, Tone.BRONZE, 12, 8, 12, side, -100, -JET_BEHIND));
+            if (thrust > 0) {
+                final double flame = FLAME * thrust;
+                jets.add(new Piece(Limb.BODY, Tone.FLAME, 8, flame, 8, side, -96 + flame / 2, -JET_BEHIND));
+            }
+        }
+        return jets;
+    }
+
+    /** Where {@code piece} is, in the engine's frame turned over: what takes a box a unit each way to it. */
+    private Mat4 there(final Mat4 stood, final Stance stance, final Piece piece) {
+        return overturned(stood.times(stance.of(piece.limb()))
+                .times(new Mat4(new Vec3(piece.x(), piece.y(), piece.z())))
+                .times(new Sized(piece.across(), piece.up(), piece.along()).matrix()));
     }
 
     /** {@code engines}, a placing in the engine's frame, as the same placing where up and down are the other way. */

@@ -62,4 +62,16 @@ class WoodTest {
         assertTrue(camera.eye().x() < 100 - 500, "behind it, which faces right: " + camera.eye());
         assertTrue(camera.eye().y() > 160, "above its head, looking down on it: " + camera.eye());
     }
+
+    @Test
+    void theViewIsPulledInToJustShortOfAWallStandingBetweenItAndTheAvatar() {
+        final Body body = Body.standing(new Vec3(0, 0, 0), 0);
+        // a wall four metres high, three metres behind the avatar, which faces away from it
+        final Obstacles wall = new Obstacles(List.of(new Block(0, -300, 400, 15, 0, 0, 400)));
+        final Camera free = new Following(body).camera();
+        final Camera kept = new Following(body).camera(wall);
+        assertTrue(free.eye().z() < -500, "with nothing in the way, six metres back: " + free.eye());
+        assertTrue(kept.eye().z() > -285 && kept.eye().z() < -200, "this side of the wall: " + kept.eye());
+        assertTrue(kept.eye().y() > 160, "and above its head still");
+    }
 }

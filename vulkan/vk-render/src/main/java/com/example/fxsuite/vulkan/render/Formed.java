@@ -1,13 +1,8 @@
 package com.example.fxsuite.vulkan.render;
 
 import com.example.fxsuite.vulkan.device.Card;
-import com.example.fxsuite.vulkan.device.Drawing;
 import com.example.fxsuite.vulkan.device.Pass;
-import com.example.fxsuite.vulkan.device.Sent;
 import com.example.fxsuite.vulkan.form.Mesh;
-import com.example.fxsuite.vulkan.form.Packed;
-import com.example.fxsuite.vulkan.layout.Filling;
-import com.example.fxsuite.vulkan.shade.Laid;
 import com.example.fxsuite.vulkan.shade.Look;
 import com.example.fxsuite.vulkan.space.Mat4;
 import com.example.fxsuite.vulkan.space.Vec3;
@@ -15,25 +10,22 @@ import com.example.fxsuite.vulkan.view.Camera;
 
 /**
  * A form with a look, on the card: the look built and the form sent, once, and then drawn as often as wanted, each
- * time standing wherever it is said to stand. Closed, both are gone from the card.
+ * time standing wherever it is said to stand. One look and one form, for a thing that has just the one of each;
+ * where many forms share a look, or many looks a form, each is kept by itself ({@link Looked}, {@link Shaped}).
+ * Closed, both are gone from the card.
  */
 public final class Formed implements AutoCloseable {
 
-    private static final String PLACED = "placed";
-    private static final String COARSENED = "coarsened";
-
-    private final Laid laid;
-    private final Drawing drawing;
-    private final Sent mesh;
+    private final Looked look;
+    private final Shaped form;
 
     /** {@code form}, looking as {@code look} says, on {@code card}. */
     public Formed(final Card card, final Look look, final Mesh form) {
-        this.laid = look.laid();
-        this.drawing = card.drawing(laid, look.vertex(), look.fragment());
+        this.look = new Looked(card, look);
         try {
-            this.mesh = card.sent(new Packed(laid.point(), form));
+            this.form = new Shaped(card, look.laid(), form);
         } catch (final RuntimeException refused) {
-            drawing.close();
+            this.look.close();
             throw refused;
         }
     }
@@ -53,18 +45,15 @@ public final class Formed implements AutoCloseable {
 
     /**
      * The same, standing as {@code stands} says: turned, stretched and moved from its own frame into the world, in
-     * that order or any other, by the one matrix. Where it is as the camera sees it is worked out here in doubles,
-     * so a thing far from the world's middle is drawn as steadily as one at it.
+     * that order or any other, by the one matrix.
      */
     public void drawn(final Pass pass, final Mat4 stands, final Camera camera, final double coarsened) {
-        pass.draw(drawing, mesh, new Filling(laid.draw())
-                .with(PLACED, camera.placed(new Vec3(0, 0, 0)).times(stands).columns())
-                .with(COARSENED, coarsened));
+        look.drawn(pass, form, stands, camera, coarsened);
     }
 
     @Override
     public void close() {
-        mesh.close();
-        drawing.close();
+        form.close();
+        look.close();
     }
 }

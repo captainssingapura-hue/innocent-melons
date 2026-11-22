@@ -18,6 +18,13 @@ public record Declared(Layout layout) {
         return each("in");
     }
 
+    /** The same, for a vertex shader that takes only the fields called {@code only}: each still at its own place. */
+    public List<String> taken(final List<String> only) {
+        only.forEach(layout::field);
+        return each("in").stream().filter(line -> only.stream().anyMatch(name -> line.endsWith(" " + name + ";")))
+                .toList();
+    }
+
     /** As what a vertex shader hands on. */
     public List<String> handedOn() {
         return each("out");

@@ -33,10 +33,13 @@ public record Averaged(Mesh over) {
         return sum / over.area();
     }
 
-    /** The point of {@code triangle} so many rows from its first corner toward its second, steps toward its third. */
+    /**
+     * The place on the surface of {@code triangle} so many rows from its first corner toward its second, steps
+     * toward its third.
+     */
     private Vec3 inside(final int triangle, final double rows, final double steps) {
-        final Vec3 first = over.corner(triangle, 0);
-        return first.plus(over.corner(triangle, 1).minus(first).times(rows / ROWS))
-                .plus(over.corner(triangle, 2).minus(first).times(steps / ROWS));
+        final Vec3 first = over.on(triangle, 0);
+        return first.plus(over.on(triangle, 1).minus(first).times(rows / ROWS))
+                .plus(over.on(triangle, 2).minus(first).times(steps / ROWS));
     }
 }

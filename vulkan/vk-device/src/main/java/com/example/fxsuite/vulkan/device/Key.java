@@ -15,6 +15,7 @@ public enum Key {
     Q(GLFW_KEY_Q, GLFW_KEY_Q),
     E(GLFW_KEY_E, GLFW_KEY_E),
     C(GLFW_KEY_C, GLFW_KEY_C),
+    F(GLFW_KEY_F, GLFW_KEY_F),
     SPACE(GLFW_KEY_SPACE, GLFW_KEY_SPACE),
     ESCAPE(GLFW_KEY_ESCAPE, GLFW_KEY_ESCAPE),
     /** Either Shift. */

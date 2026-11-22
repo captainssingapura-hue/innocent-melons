@@ -34,6 +34,8 @@ public final class Card implements AutoCloseable {
     private final Optional<Desk> desk;
     private final Reach reach;
     private final Recording recording;
+    /** A picture of depths with nothing on it: what a frame's looks look things up in when it is given no other. */
+    private final Depths nothing;
     private boolean closed;
 
     /** The card, to draw pictures on with no window; its shaders compiled by the standard compiler. */
@@ -62,7 +64,9 @@ public final class Card implements AutoCloseable {
             final String wanted = System.getProperty("vulkan.card", "");
             this.reach = new Reach(new Choosing(instance, wanted).chosen(), shown, own, theirs);
             this.recording = new Recording(reach, own);
+            this.nothing = new Depths(reach, recording, 1);
         } catch (final RuntimeException refused) {
+            theirs.swept();
             own.swept();
             said.closed();
             throw refused;
@@ -76,7 +80,7 @@ public final class Card implements AutoCloseable {
 
     /** A picture to draw on with no window, {@code width} pixels by {@code height}. */
     public Canvas canvas(final int width, final int height) {
-        return made(() -> new Canvas(reach, recording, width, height));
+        return made(() -> new Canvas(reach, recording, nothing, width, height));
     }
 
     /**
@@ -86,12 +90,35 @@ public final class Card implements AutoCloseable {
     public Window window(final String title, final int width, final int height) {
         final Desk on = desk.orElseThrow(() -> new IllegalStateException(
                 "the card was opened to draw pictures only, with no desk for a window to stand on"));
-        return made(() -> new Window(reach, recording, on, title, width, height));
+        return made(() -> new Window(reach, recording, nothing, on, title, width, height));
+    }
+
+    /**
+     * A picture of depths, {@code size} pixels wide and as many tall, to be drawn first and then looked up by the
+     * looks of what is drawn after it.
+     */
+    public Depths depths(final int size) {
+        return made(() -> new Depths(reach, recording, size));
     }
 
     /** The look of {@code vertex} and {@code fragment}, laid out as {@code laid} says, built ready to draw with. */
     public Drawing drawing(final Laid laid, final Shader vertex, final Shader fragment) {
-        return made(() -> new Drawing(reach, compiler, laid, vertex, fragment));
+        return made(() -> new Drawing(reach, compiler, laid, vertex, Optional.of(fragment), false));
+    }
+
+    /**
+     * The same, for what is seen through: what it draws is mixed with what is already drawn. Its fragment shader's
+     * fourth number says how much of what was there it hides, from none to all; its colour is added to the rest.
+     * It is hidden by whatever is nearer and already drawn, and hides nothing drawn after it, so it is drawn last,
+     * and of several such, the furthest first.
+     */
+    public Drawing mixing(final Laid laid, final Shader vertex, final Shader fragment) {
+        return made(() -> new Drawing(reach, compiler, laid, vertex, Optional.of(fragment), true));
+    }
+
+    /** The look of {@code vertex} alone, which colours nothing: what a picture of depths is drawn with. */
+    public Tracing tracing(final Laid laid, final Shader vertex) {
+        return made(() -> new Tracing(reach, compiler, laid, vertex));
     }
 
     /** {@code mesh} sent to the card, to be drawn from. */
@@ -137,6 +164,7 @@ public final class Card implements AutoCloseable {
         }
         closed = true;
         new Checked("vkDeviceWaitIdle").of(vkDeviceWaitIdle(reach.device()));
+        nothing.close();
         final List<String> left = theirs.swept();
         own.swept();
         final List<String> unheard = said.heard();

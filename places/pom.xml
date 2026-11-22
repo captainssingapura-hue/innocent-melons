@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example.fxsuite.places</groupId>
+    <artifactId>places</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <description>
+        Places to walk round and fly over, drawn by the card: what is built of the material lab's surfaces and stood
+        on the ground at its true size, for the engine's avatar to go round and look at close to. A house with no
+        roof, a car's parts spread out apart, and the walls a yard is walled with, which the demos use. Each place gives, from one description, what
+        is drawn of it and what is in the avatar's way. A place makes no material of its own: it asks the lab for
+        one. Its code keeps CQ's basic rules, and its layers are kept by a test of its own (pl-qc).
+    </description>
+
+    <properties>
+        <maven.compiler.release>25</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- the renderer and its bench, and the material lab: the one place each one's version is said -->
+        <vulkan.version>0.1.0-SNAPSHOT</vulkan.version>
+        <lab.version>0.1.0-SNAPSHOT</lab.version>
+        <!-- CQ, whose basic rules its code keeps: a dependency of its tests only -->
+        <cq.version>0.1.0</cq.version>
+    </properties>
+
+    <modules>
+        <!-- The yard: the house and the car's parts, each a place to walk, and the walls of any yard. -->
+        <module>pl-yard</module>
+        <!-- The gates: CQ's basic rules and the layers, over every module here. -->
+        <module>pl-qc</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.example.fxsuite.vulkan</groupId>
+                <artifactId>vk-drawing</artifactId>
+                <version>${vulkan.version}</version>
+            </dependency>
+            <!-- the renderer's bench: the card, and the avatar that walks about on it -->
+            <dependency>
+                <groupId>com.example.fxsuite.vulkan</groupId>
+                <artifactId>vk-bench</artifactId>
+                <version>${vulkan.version}</version>
+            </dependency>
+            <!-- the material lab: the tree of materials and each one's surface, and the walls a place is built of -->
+            <dependency>
+                <groupId>com.example.fxsuite.texture</groupId>
+                <artifactId>tx-materials</artifactId>
+                <version>${lab.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example.fxsuite.texture</groupId>
+                <artifactId>tx-brick</artifactId>
+                <version>${lab.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example.fxsuite.texture</groupId>
+                <artifactId>tx-stone</artifactId>
+                <version>${lab.version}</version>
+            </dependency>
+            <!-- its own modules, at its own version -->
+            <dependency>
+                <groupId>com.example.fxsuite.places</groupId>
+                <artifactId>pl-yard</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!-- every CQ artifact at one version -->
+            <dependency>
+                <groupId>io.github.captainssingapura-hue.homing.cq</groupId>
+                <artifactId>homing-cq-bom</artifactId>
+                <version>${cq.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>5.11.3</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.13.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.5.2</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>

@@ -44,6 +44,12 @@ public record Colour(Node node) {
         return new Colour(three().scaled(by).node());
     }
 
+    /** How much of it there is, as one number: its red, green and blue, evened. */
+    public Real evened() {
+        return three().picked(Shaped.FIRST).plus(three().picked(Shaped.SECOND)).plus(three().picked(Shaped.THIRD))
+                .over(3);
+    }
+
     private Three three() {
         return new Three(node);
     }

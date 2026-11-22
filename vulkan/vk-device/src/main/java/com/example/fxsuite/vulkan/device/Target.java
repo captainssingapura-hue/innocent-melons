@@ -23,4 +23,10 @@ public interface Target {
      * is handed to {@code drawing} and draws only until {@code drawing} is done.
      */
     void drawn(Vec3 sky, Filling frame, Consumer<Pass> drawing);
+
+    /**
+     * The same, with a picture of depths drawn beforehand for its looks to look things up in: {@code looked}. Drawn
+     * with none, as above, a look that looks anything up finds the furthest there is everywhere.
+     */
+    void drawn(Vec3 sky, Filling frame, Depths looked, Consumer<Pass> drawing);
 }
