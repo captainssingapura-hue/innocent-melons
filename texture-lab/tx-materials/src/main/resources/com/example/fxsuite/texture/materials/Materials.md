@@ -142,3 +142,67 @@ Rock as it lies in the ground, where the soil has gone from it.
 ## Mud
 
 Earth and water together, soft, at a water's edge or in a hollow.
+
+## Bodily
+
+What a human body is made of.
+
+## Outward
+
+What is seen of a person from outside.
+
+## Skin
+
+What covers a body: its colour is the person's own.
+
+## Lip
+
+The soft red edge of the mouth.
+
+## Nail
+
+The hard plate at the end of a finger or a toe.
+
+## Hair
+
+What grows from the skin in strands, on the head, the brow and the chin: its colour is the person's own.
+
+## Sclera
+
+The white of the eye.
+
+## Iris
+
+The coloured ring of the eye, round its dark middle: its colour is the person's own.
+
+## Cornea
+
+The clear skin over the front of the eye, seen through and wet.
+
+## ToothEnamel
+
+The hard white coat of a tooth.
+
+## Inward
+
+What is under the skin, seen where a body is shown opened.
+
+## Bone
+
+What a body's frame is made of, as it is when laid bare.
+
+## Cartilage
+
+The smooth firm stuff on the ends of bones and in the nose and the ear.
+
+## Muscle
+
+The red flesh that pulls, in fibres side by side.
+
+## Tendon
+
+The pale cord that ties a muscle to a bone, and the like bands that tie bone to bone.
+
+## Fat
+
+The soft yellow stuff under the skin, in small lobes.

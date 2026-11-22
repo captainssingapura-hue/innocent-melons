@@ -2,6 +2,7 @@ package com.example.fxsuite.texture.materials;
 
 import com.example.fxsuite.taxonomy.L0;
 import com.example.fxsuite.taxonomy.L1;
+import com.example.fxsuite.taxonomy.L2;
 import com.example.fxsuite.taxonomy.Leaf;
 import com.example.fxsuite.taxonomy.Meanings;
 import com.example.fxsuite.taxonomy.Taxonomy;
@@ -36,7 +37,9 @@ public record Materials() {
                 new Enamel(), new Rubber(), new GlossPaint(), new MetallicPaint(), new Glass(), new LitGlass(),
                 new Flame(),
                 new Rind(), new Water(),
-                new Turf(), new Topsoil(), new Sand(), new Gravel(), new Bedrock(), new Mud()),
+                new Turf(), new Topsoil(), new Sand(), new Gravel(), new Bedrock(), new Mud(),
+                new Skin(), new Lip(), new Nail(), new Hair(), new Sclera(), new Iris(), new Cornea(),
+                new ToothEnamel(), new Bone(), new Cartilage(), new Muscle(), new Tendon(), new Fat()),
                 Meanings.INSTANCE.beside(Materials.class));
     }
 
@@ -108,4 +111,26 @@ public record Materials() {
     public record Gravel() implements Leaf<Ground>, Material { public Ground parent() { return new Ground(); } }
     public record Bedrock() implements Leaf<Ground>, Material { public Ground parent() { return new Ground(); } }
     public record Mud() implements Leaf<Ground>, Material { public Ground parent() { return new Ground(); } }
+
+    // Bodily: what a human body is made of; what is seen of a person, and what is under the skin
+    public record Bodily() implements L1<Matter> { public Matter parent() { return new Matter(); } }
+    public record Outward() implements L2<Bodily> { public Bodily parent() { return new Bodily(); } }
+    public record Inward() implements L2<Bodily> { public Bodily parent() { return new Bodily(); } }
+    public record Skin() implements Leaf<Outward>, Material { public Outward parent() { return new Outward(); } }
+    public record Lip() implements Leaf<Outward>, Material { public Outward parent() { return new Outward(); } }
+    public record Nail() implements Leaf<Outward>, Material { public Outward parent() { return new Outward(); } }
+    public record Hair() implements Leaf<Outward>, Material { public Outward parent() { return new Outward(); } }
+    public record Sclera() implements Leaf<Outward>, Material { public Outward parent() { return new Outward(); } }
+    public record Iris() implements Leaf<Outward>, Material { public Outward parent() { return new Outward(); } }
+    public record Cornea() implements Leaf<Outward>, Material, Mirroring {
+        public Outward parent() { return new Outward(); }
+    }
+    public record ToothEnamel() implements Leaf<Outward>, Material {
+        public Outward parent() { return new Outward(); }
+    }
+    public record Bone() implements Leaf<Inward>, Material { public Inward parent() { return new Inward(); } }
+    public record Cartilage() implements Leaf<Inward>, Material { public Inward parent() { return new Inward(); } }
+    public record Muscle() implements Leaf<Inward>, Material { public Inward parent() { return new Inward(); } }
+    public record Tendon() implements Leaf<Inward>, Material { public Inward parent() { return new Inward(); } }
+    public record Fat() implements Leaf<Inward>, Material { public Inward parent() { return new Inward(); } }
 }

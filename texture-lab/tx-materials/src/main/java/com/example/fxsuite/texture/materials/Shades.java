@@ -47,6 +47,19 @@ public record Shades() {
             case Materials.Gravel gravel -> Grounds.GRAVEL.surface();
             case Materials.Bedrock rock -> Grounds.BEDROCK.surface();
             case Materials.Mud mud -> Grounds.MUD.surface();
+            case Materials.Skin skin -> Tissues.SKIN.surface();
+            case Materials.Lip lip -> Tissues.LIP.surface();
+            case Materials.Nail nail -> Tissues.NAIL.surface();
+            case Materials.Hair hair -> Tissues.HAIR.surface();
+            case Materials.Sclera sclera -> Tissues.SCLERA.surface();
+            case Materials.Iris iris -> Tissues.IRIS.surface();
+            case Materials.Cornea cornea -> new ClearCornea().surface();
+            case Materials.ToothEnamel enamel -> Tissues.TOOTH_ENAMEL.surface();
+            case Materials.Bone bone -> Tissues.BONE.surface();
+            case Materials.Cartilage cartilage -> Tissues.CARTILAGE.surface();
+            case Materials.Muscle muscle -> Tissues.MUSCLE.surface();
+            case Materials.Tendon tendon -> Tissues.TENDON.surface();
+            case Materials.Fat fat -> Tissues.FAT.surface();
             default -> throw new IllegalArgumentException(material.title() + " is in no tree of materials that is"
                     + " shaded here");
         };
