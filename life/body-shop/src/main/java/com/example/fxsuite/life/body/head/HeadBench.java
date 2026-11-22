@@ -27,9 +27,11 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.EnumSet;
 import java.util.EnumMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -42,8 +44,9 @@ import java.util.concurrent.Executors;
  * as lines, to see the reference through it.
  *
  * <p>{@code -Dhead.reference} (the reference's path), {@code -Dhead.compare} (beside, over), {@code -Dhead.show}
- * (blank, lines, reference, features; bare: nothing put on; earless: its ears not; by commas); {@code -Dhead.yaw},
- * {@code -Dhead.pitch}, {@code -Dhead.distance} where it is seen from.</p>
+ * (blank, lines, reference, features; bare: nothing put on; earless: its ears not; by commas); {@code -Dhead.adjust}
+ * (how its pieces are adjusted at first: {@code ears:turn=20,bigger=1.2;nose:tilt=10}); {@code -Dhead.yaw}, {@code
+ * -Dhead.pitch}, {@code -Dhead.distance} where it is seen from.</p>
  */
 public final class HeadBench extends Application {
 
@@ -73,13 +76,10 @@ public final class HeadBench extends Application {
     private ReferenceHead referred;
     private Feature[] masks;
     private Mesher.Mesh fitted;
-    /** The blank made a solid; the reference's pieces, to be put on it; the head with those chosen on it. */
-    private Field.Shape solid;
-    /** The blank with its ears grafted in. */
-    private Field.Shape eared;
-    private Map<Feature, Field.Shape> pieces = Map.of();
+    private final PieceKnobs knobs = new PieceKnobs(this::put, System.getProperty("head.adjust", ""));
+    /** What the head is made of, cut from the reference; the head with the pieces chosen on it. */
+    private Clay clay;
     private Mesher.Mesh shaped;
-    private List<Field.Element> eyeLayers = List.of();
     private int asked;
     private double lowest;
 
@@ -111,22 +111,13 @@ public final class HeadBench extends Application {
             final long ms = (System.nanoTime() - t0) / 1_000_000;
             final long t1 = System.nanoTime();
             final Field.Shape s = MeshSolid.INSTANCE.closed(b, BLANK_CELL);
-            final Map<Feature, Field.Shape> found = new EnumMap<>(Feature.class);
-            for (final Feature f : List.of(Feature.NOSE, Feature.MOUTH)) {
-                found.put(f, Pieces.INSTANCE.of(r, f, s));
-            }
-            final Field.Shape right = Pieces.INSTANCE.grafted(r, Feature.RIGHT_EAR, s, s);
-            final Field.Shape both = Pieces.INSTANCE.grafted(r, Feature.LEFT_EAR, s, right);
-            final List<Field.Element> sockets = Eyes.INSTANCE.of(r, s);
+            final Clay c = Pieces.INSTANCE.clay(r, s);
             final long cut = (System.nanoTime() - t1) / 1_000_000;
             Platform.runLater(() -> {
                 referred = r;
                 masks = m;
                 fitted = b;
-                solid = s;
-                eared = both;
-                pieces = found;
-                eyeLayers = sockets;
+                clay = c;
                 lowest = lowest(r.mesh());
                 view.lookAt(0, (highest(r.mesh()) - lowest) / 2, 0);
                 bus.publish(new Bus.Working(false, "head"));
@@ -148,27 +139,29 @@ public final class HeadBench extends Application {
      * since; the bare blank, if none is chosen.
      */
     private void put() {
-        if (solid == null) {
+        if (clay == null) {
             return;
         }
-        final List<Field.Shape> on = new ArrayList<>();
-        if (nose.isSelected()) {
-            on.add(pieces.get(Feature.NOSE));
-        }
-        if (mouth.isSelected()) {
-            on.add(pieces.get(Feature.MOUTH));
+        final Set<Piece> on = EnumSet.noneOf(Piece.class);
+        final Map<Piece, CheckBox> boxes = Map.of(Piece.NOSE, nose, Piece.MOUTH, mouth, Piece.EYES, eyes,
+                Piece.EARS, ears);
+        final Map<Piece, Adjust> adjusts = new EnumMap<>(Piece.class);
+        for (final Piece p : Piece.values()) {
+            adjusts.put(p, knobs.of(p));
+            if (boxes.get(p).isSelected()) {
+                on.add(p);
+            }
         }
         final int n = ++asked;
-        final List<Field.Element> then = eyes.isSelected() ? eyeLayers : List.of();
-        if (on.isEmpty() && then.isEmpty() && !ears.isSelected()) {
+        if (on.isEmpty()) {
             shaped = null;
             draw();
             return;
         }
-        final Field.Shape s = ears.isSelected() ? eared : solid;
+        final Clay c = clay;
         bus.publish(new Bus.Working(true, "put"));
         worker.submit(() -> {
-            final Mesher.Mesh m = n == asked ? Mesher.of(Pieces.INSTANCE.head(s, on, then), HEAD_CELL) : null;
+            final Mesher.Mesh m = n == asked ? Mesher.of(c.head(on, adjusts::get), HEAD_CELL) : null;
             Platform.runLater(() -> {
                 bus.publish(new Bus.Working(false, "put"));
                 if (m != null && n == asked) {
@@ -201,7 +194,7 @@ public final class HeadBench extends Application {
         }
         about.setWrapText(true);
         final VBox side = new VBox(8, new Label("Shown"), blank, nose, mouth, eyes, ears, lines, reference, compare,
-                features, about, shell.problems());
+                features, about, knobs.node(), shell.problems());
         side.setPadding(new Insets(10));
         return side;
     }

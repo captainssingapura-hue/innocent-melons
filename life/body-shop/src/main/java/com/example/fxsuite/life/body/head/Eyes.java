@@ -4,7 +4,6 @@ import com.example.fxsuite.life.body.Field;
 import com.example.fxsuite.life.body.V3;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -25,24 +24,25 @@ public record Eyes() implements StatelessFunctionalObject {
     private static final double SOFT = 0.15;
     private static final double SET = 0.05;
 
-    /** The eyes' layers, to be laid on a head whose blank is {@code blank}, after its other pieces. */
-    public List<Field.Element> of(final ReferenceHead r, final Field.Shape blank) {
-        final List<Field.Element> e = new ArrayList<>();
-        for (final Feature f : List.of(Feature.RIGHT_EYE, Feature.LEFT_EYE)) {
-            final ReferenceHead.Eye eye = f == Feature.RIGHT_EYE ? r.rightEye() : r.leftEye();
-            final Field.Ellipsoid open = opening(eye);
-            final Field.Shape carved = Field.Compound.of(List.of(new Field.Element("the blank", blank, Field.Op.ADD, 0),
-                    new Field.Element("the opening", open, Field.Op.CARVE, SOFT)));
-            final double b = eye.radius();
-            e.add(new Field.Element(f + "'s opening", open, Field.Op.CARVE, SOFT));
-            e.add(new Field.Element(f + "'s ball", Field.Ellipsoid.of(eye.middle(), new V3(b, 0, 0), new V3(0, b, 0),
-                    new V3(0, 0, b)), Field.Op.ADD, SET));
-            final Field.Shape lids = Field.Compound.of(List.of(new Field.Element("the lids",
-                    Pieces.INSTANCE.of(r, f, carved), Field.Op.ADD, 0),
-                    new Field.Element("the opening", open, Field.Op.CARVE, SOFT)));
-            e.add(new Field.Element(f + "'s lids", lids, Field.Op.ADD, SET));
-        }
-        return e;
+    /** Eye {@code f}'s layers, to be laid on a head whose blank is {@code blank}, after its other pieces. */
+    public List<Field.Element> of(final ReferenceHead r, final Field.Shape blank, final Feature f) {
+        final ReferenceHead.Eye eye = eye(r, f);
+        final Field.Ellipsoid open = opening(eye);
+        final Field.Shape carved = Field.Compound.of(List.of(new Field.Element("the blank", blank, Field.Op.ADD, 0),
+                new Field.Element("the opening", open, Field.Op.CARVE, SOFT)));
+        final double b = eye.radius();
+        final Field.Shape lids = Field.Compound.of(List.of(new Field.Element("the lids",
+                Pieces.INSTANCE.of(r, f, carved), Field.Op.ADD, 0),
+                new Field.Element("the opening", open, Field.Op.CARVE, SOFT)));
+        return List.of(new Field.Element(f + "'s opening", open, Field.Op.CARVE, SOFT),
+                new Field.Element(f + "'s ball", Field.Ellipsoid.of(eye.middle(), new V3(b, 0, 0), new V3(0, b, 0),
+                        new V3(0, 0, b)), Field.Op.ADD, SET),
+                new Field.Element(f + "'s lids", lids, Field.Op.ADD, SET));
+    }
+
+    /** Eye {@code f} of {@code r}. */
+    public ReferenceHead.Eye eye(final ReferenceHead r, final Feature f) {
+        return f == Feature.LEFT_EYE ? r.leftEye() : r.rightEye();
     }
 
     /** The opening of {@code eye}: between its lids, at the front of its eyeball, {@link #DEEP} each way. */
