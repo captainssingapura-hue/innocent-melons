@@ -35,11 +35,17 @@ public record Pieces() implements StatelessFunctionalObject {
 
     /** The head: {@code blank} with {@code pieces} pressed on it. */
     public Field head(final Field.Shape blank, final List<Field.Shape> pieces) {
+        return head(blank, pieces, List.of());
+    }
+
+    /** The head: {@code blank} with {@code pieces} pressed on it, and {@code then} laid on it, its eyes, say. */
+    public Field head(final Field.Shape blank, final List<Field.Shape> pieces, final List<Field.Element> then) {
         final List<Field.Element> e = new java.util.ArrayList<>();
         e.add(new Field.Element("the blank", blank, Field.Op.ADD, 0));
         for (final Field.Shape p : pieces) {
             e.add(new Field.Element("a piece", p, Field.Op.ADD, SEAM));
         }
+        e.addAll(then);
         return new Field(e);
     }
 }

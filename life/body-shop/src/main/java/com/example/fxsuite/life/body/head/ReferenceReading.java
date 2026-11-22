@@ -17,9 +17,10 @@ import java.util.function.UnaryOperator;
  * A reference head read from a body's mesh in a Wavefront OBJ file, as MakeHuman's base mesh is made: its points; its
  * skin, the faces of the group {@code body}; its joints, each a small group named {@code joint-...}, where the head
  * sits on the neck ({@code joint-head}), the neck ({@code joint-neck}), each eye ({@code joint-r-eye}, {@code
- * joint-l-eye}), the mouth ({@code joint-mouth}). Of its skin, what is above its neck's joint, at its own size, its
- * decimetres our centimetres, its head's joint our head's middle; its right, at its x's less, made ours, at our x's
- * more, its faces turned to go round the other way with it.
+ * joint-l-eye}) and its lids ({@code joint-r-upperlid}, {@code joint-r-lowerlid}, ...), the jaw's hinge ({@code
+ * joint-mouth}); each eyeball, a helper ({@code helper-r-eye}, {@code helper-l-eye}). Of its skin, what is above
+ * its neck's joint, at its own size, its decimetres our centimetres, its head's joint our head's middle; its right,
+ * at its x's less, made ours, at our x's more, its faces turned to go round the other way with it.
  */
 public record ReferenceReading() implements StatelessFunctionalObject {
 
@@ -39,6 +40,32 @@ public record ReferenceReading() implements StatelessFunctionalObject {
         final double neck = middle(obj, "joint-neck").y();
         final UnaryOperator<V3> ours = p -> new V3(-(p.x() - head.x()) * UNIT, (p.y() - head.y()) * UNIT,
                 (p.z() - head.z()) * UNIT);
+        return new ReferenceHead(skin(obj, ours, neck), path.toString(), eye(obj, "r", ours), eye(obj, "l", ours),
+                ours.apply(middle(obj, "joint-mouth")));
+    }
+
+    /**
+     * The eye on side {@code side} ({@code r} or {@code l}): its joint, its lids' joints, and how far round its
+     * eyeball is, the faces of its helper as far out from their middle as they are on average.
+     */
+    private ReferenceHead.Eye eye(final Obj obj, final String side, final UnaryOperator<V3> ours) {
+        final String name = "helper-" + side + "-eye";
+        final V3 mid = ours.apply(middle(obj, name));
+        double far = 0;
+        int n = 0;
+        for (final int[] f : obj.groups().get(name)) {
+            for (final int i : f) {
+                far += ours.apply(obj.points().get(i)).minus(mid).length();
+                n++;
+            }
+        }
+        final String joint = "joint-" + side + "-";
+        return new ReferenceHead.Eye(ours.apply(middle(obj, joint + "eye")),
+                ours.apply(middle(obj, joint + "upperlid")), ours.apply(middle(obj, joint + "lowerlid")), far / n);
+    }
+
+    /** Of the skin, the faces of group {@code body}, those above height {@code neck}, in our frame by {@code ours}. */
+    private Mesher.Mesh skin(final Obj obj, final UnaryOperator<V3> ours, final double neck) {
         final Map<Integer, Integer> kept = new HashMap<>();
         final List<Float> at = new ArrayList<>();
         final List<Integer> t = new ArrayList<>();
@@ -66,9 +93,7 @@ public record ReferenceReading() implements StatelessFunctionalObject {
         for (int i = 0; i < points.length; i++) {
             points[i] = at.get(i);
         }
-        return new ReferenceHead(new Mesher.Mesh(points, t.stream().mapToInt(Integer::intValue).toArray()),
-                path.toString(), ours.apply(middle(obj, "joint-r-eye")), ours.apply(middle(obj, "joint-l-eye")),
-                ours.apply(middle(obj, "joint-mouth")));
+        return new Mesher.Mesh(points, t.stream().mapToInt(Integer::intValue).toArray());
     }
 
     /** The middle of the points the faces of group {@code name} go through. */

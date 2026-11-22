@@ -57,8 +57,10 @@ class BlankFitTest {
             final boolean on = bumped.get(tri[3 * k]) || bumped.get(tri[3 * k + 1]) || bumped.get(tri[3 * k + 2]);
             masked[k] = on ? Feature.NOSE : null;
         }
-        final ReferenceHead ball = new ReferenceHead(new Mesher.Mesh(p, tri), "a ball", new V3(3, MIDDLE, 8),
-                new V3(-3, MIDDLE, 8), new V3(0, MIDDLE - 4, 8));
+        final ReferenceHead.Eye eye = new ReferenceHead.Eye(new V3(3, MIDDLE, 8), new V3(3, MIDDLE + 1, 8),
+                new V3(3, MIDDLE - 1, 8), 1);
+        final ReferenceHead ball = new ReferenceHead(new Mesher.Mesh(p, tri), "a ball", eye, eye,
+                new V3(0, MIDDLE - 4, 8));
         final Mesher.Mesh blank = BlankFit.INSTANCE.of(ball, masked);
         double ahead = 0;
         double out = 0;

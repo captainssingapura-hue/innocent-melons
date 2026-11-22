@@ -36,9 +36,10 @@ import java.util.concurrent.Executors;
 /**
  * The head bench, a head made as clay is: its blank first, the head's shape with nothing on it ({@link BlankFit}),
  * fitted to a reference head read from a file on the machine, never kept in the code ({@link ReferenceReading}), its
- * features masked out of the fit ({@link FeatureMasks}); then its pieces pressed on it, its nose and its mouth from the
- * reference, each put on or not ({@link Pieces}); the reference beside it or over it as lines, its features in
- * a colour of their own, to see what was left out; the blank as lines, to see the reference through it.
+ * features masked out of the fit ({@link FeatureMasks}); then its pieces pressed on it, its nose and its mouth
+ * from the reference, each put on or not ({@link Pieces}), and its eyes ({@link Eyes}); the reference beside it or
+ * over it as lines, its features in a colour of their own, to see what was left out; the blank as lines, to see the
+ * reference through it.
  *
  * <p>{@code -Dhead.reference} (the reference's path), {@code -Dhead.compare} (beside, over), {@code -Dhead.show}
  * (blank, lines, reference, features, bare: its nose not put on, by commas); {@code -Dhead.yaw}, {@code
@@ -60,6 +61,7 @@ public final class HeadBench extends Application {
     private final CheckBox features = new CheckBox("Its features, masked, in their own colour");
     private final CheckBox nose = new CheckBox("Put on: its nose");
     private final CheckBox mouth = new CheckBox("Put on: its mouth");
+    private final CheckBox eyes = new CheckBox("Put on: its eyes");
     private final ChoiceBox<String> compare = new ChoiceBox<>();
     private final Label about = new Label("Reading the reference");
     private final ExecutorService worker = Executors.newSingleThreadExecutor(r -> {
@@ -74,6 +76,7 @@ public final class HeadBench extends Application {
     private Field.Shape solid;
     private Map<Feature, Field.Shape> pieces = Map.of();
     private Mesher.Mesh shaped;
+    private List<Field.Element> eyeLayers = List.of();
     private int asked;
     private double lowest;
 
@@ -109,6 +112,7 @@ public final class HeadBench extends Application {
             for (final Feature f : List.of(Feature.NOSE, Feature.MOUTH)) {
                 found.put(f, Pieces.INSTANCE.of(r, f, s));
             }
+            final List<Field.Element> sockets = Eyes.INSTANCE.of(r, s);
             final long cut = (System.nanoTime() - t1) / 1_000_000;
             Platform.runLater(() -> {
                 referred = r;
@@ -116,6 +120,7 @@ public final class HeadBench extends Application {
                 fitted = b;
                 solid = s;
                 pieces = found;
+                eyeLayers = sockets;
                 lowest = lowest(r.mesh());
                 view.lookAt(0, (highest(r.mesh()) - lowest) / 2, 0);
                 bus.publish(new Bus.Working(false, "head"));
@@ -148,7 +153,8 @@ public final class HeadBench extends Application {
             on.add(pieces.get(Feature.MOUTH));
         }
         final int n = ++asked;
-        if (on.isEmpty()) {
+        final List<Field.Element> then = eyes.isSelected() ? eyeLayers : List.of();
+        if (on.isEmpty() && then.isEmpty()) {
             shaped = null;
             draw();
             return;
@@ -156,7 +162,7 @@ public final class HeadBench extends Application {
         final Field.Shape s = solid;
         bus.publish(new Bus.Working(true, "put"));
         worker.submit(() -> {
-            final Mesher.Mesh m = n == asked ? Mesher.of(Pieces.INSTANCE.head(s, on), HEAD_CELL) : null;
+            final Mesher.Mesh m = n == asked ? Mesher.of(Pieces.INSTANCE.head(s, on, then), HEAD_CELL) : null;
             Platform.runLater(() -> {
                 bus.publish(new Bus.Working(false, "put"));
                 if (m != null && n == asked) {
@@ -176,6 +182,8 @@ public final class HeadBench extends Application {
         features.setSelected(show.contains("features"));
         nose.setSelected(!show.contains("bare"));
         mouth.setSelected(!show.contains("bare"));
+        eyes.setSelected(!show.contains("bare"));
+        eyes.setOnAction(e -> put());
         nose.setOnAction(e -> put());
         mouth.setOnAction(e -> put());
         compare.getItems().setAll("Beside it", "Over it, as lines");
@@ -185,7 +193,7 @@ public final class HeadBench extends Application {
             c.setOnAction(e -> draw());
         }
         about.setWrapText(true);
-        final VBox side = new VBox(8, new Label("Shown"), blank, nose, mouth, lines, reference, compare, features,
+        final VBox side = new VBox(8, new Label("Shown"), blank, nose, mouth, eyes, lines, reference, compare, features,
                 about,
                 shell.problems());
         side.setPadding(new Insets(10));

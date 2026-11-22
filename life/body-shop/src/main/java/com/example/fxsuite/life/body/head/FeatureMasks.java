@@ -51,7 +51,7 @@ public record FeatureMasks() implements StatelessFunctionalObject {
     /** Each feature's region on {@code r}. */
     public Map<Feature, Region> regions(final ReferenceHead r) {
         final float[] p = r.mesh().points();
-        final double eyes = (r.rightEye().y() + r.leftEye().y()) / 2;
+        final double eyes = (r.rightEye().middle().y() + r.leftEye().middle().y()) / 2;
         // down the middle of the face: the nose's tip, the nose's foot under it, the upper lip, the mouth's line
         final double tip = extreme(p, eyes - 7, eyes - 1, true);
         final double foot = extreme(p, tip - 2.5, tip - 0.5, false);
@@ -60,8 +60,8 @@ public record FeatureMasks() implements StatelessFunctionalObject {
         final double lips = ahead(p, mouth - 1.2, mouth + 1.2);
         final Map<Feature, Region> m = new EnumMap<>(Feature.class);
         final V3 eye = new V3(1.9, 1.4, 1.8);
-        m.put(Feature.RIGHT_EYE, new Region(r.rightEye().plus(new V3(0, 0, 0.6)), eye));
-        m.put(Feature.LEFT_EYE, new Region(r.leftEye().plus(new V3(0, 0, 0.6)), eye));
+        m.put(Feature.RIGHT_EYE, new Region(r.rightEye().middle().plus(new V3(0, 0, 0.6)), eye));
+        m.put(Feature.LEFT_EYE, new Region(r.leftEye().middle().plus(new V3(0, 0, 0.6)), eye));
         m.put(Feature.MOUTH, new Region(new V3(0, mouth, lips - 0.8), new V3(2.7, 1.3, 1.5)));
         m.put(Feature.NOSE, new Region(new V3(0, (eyes + foot) / 2, ahead(p, tip - 0.25, tip + 0.25) - 1),
                 new V3(1.9, (eyes - foot) / 2 + 0.1, 2)));
