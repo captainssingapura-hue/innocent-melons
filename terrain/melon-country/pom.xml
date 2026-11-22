@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.terrain</groupId>
+        <artifactId>terrain</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>melon-country</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        The Melon country, the dry ground the melons' village stands on, as data: the Melon plain the village lies on,
+        MontMelon to the north, ribbed as a melon is, the Melon Downs to the west, the Melon River running down from
+        MontMelon past the village into Melon Bay, and the bay between Melon Point and Melon Head, deepening out to
+        the open sea. No water: the river's bed and the bay's lie dry, as deep as they are.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>melons.innocent.terrain</groupId>
+            <artifactId>terrain-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

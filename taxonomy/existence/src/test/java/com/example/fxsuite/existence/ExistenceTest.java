@@ -24,13 +24,13 @@ class ExistenceTest {
         assertEquals(List.of(), Existence.INSTANCE.problems());
         assertEquals(List.of("terrains", "features", "made", "uses", "spaces", "elements"),
                 Existence.INSTANCE.trees().stream().map(Taxonomy::name).toList());
-        assertEquals(19, Terrains.TREE.leaves().size());
+        assertEquals(20, Terrains.TREE.leaves().size());
         assertEquals(11, Features.TREE.leaves().size());
         assertEquals(46, Made.TREE.leaves().size());
         assertEquals(32, Uses.TREE.leaves().size());
         assertEquals(20, Spaces.TREE.leaves().size());
         assertEquals(33, Elements.TREE.leaves().size());
-        assertEquals(220, Existence.INSTANCE.trees().stream().mapToInt(tree -> tree.nodes().size()).sum());
+        assertEquals(221, Existence.INSTANCE.trees().stream().mapToInt(tree -> tree.nodes().size()).sum());
         assertEquals("Rooms let by the night, served from a lobby.", Uses.TREE.meaning(new Uses.HotelRooms()));
         assertEquals("A wide ditch round a town or a castle, often holding water, to keep out.",
                 Made.TREE.meaning(new Earthworks.Moat()));

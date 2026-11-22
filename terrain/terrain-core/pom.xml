@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.terrain</groupId>
+        <artifactId>terrain</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>terrain-core</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        The land, as data: the ground over a stretch of the map and how high it is at any point of it, the same every
+        time, in centimetres, across (x) and along (z) the map, up (y); made from its map, lines joining spots on it
+        (a graph), each line straight or bowed along a curve, and its landforms laid over one another in turn, each
+        shaped by curves; and over it, its land features, each labelled, of a kind of what exists, in a colour of its
+        own, and lying where it says. Plain Java, knowing no engine.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>fxsuite-existence</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.math</groupId>
+            <artifactId>math-curves</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>fxsuite-math-graph</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.lang.ontology</groupId>
+            <artifactId>core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

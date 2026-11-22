@@ -114,3 +114,7 @@ A low, soft cover on damp ground and stone.
 ## Scrub
 
 Low bushes, close together.
+
+## Forest
+
+Trees standing close, their crowns meeting overhead, the ground under them shaded.
