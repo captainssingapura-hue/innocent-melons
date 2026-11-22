@@ -11,7 +11,21 @@ import java.util.List;
  * hands on to the fragment shader, what every frame is told, and what each thing drawn is told. The bytes Java
  * fills, the shaders' declarations and what the pipeline is told all come from these.
  */
-public record Laid() {
+public record Laid(boolean rays) {
+
+    /** The layouts of looks that ask no rays: what any card draws. */
+    public Laid() {
+        this(false);
+    }
+
+    /**
+     * The same layouts, for looks that ask rays where {@code able}: whether anything stands along a straight line
+     * from a point, asked of whatever stands in the frame as the card keeps it. Only a card that answers rays
+     * builds such looks.
+     */
+    public Laid asking(final boolean able) {
+        return new Laid(able);
+    }
 
     /**
      * A point of a mesh: where it is, the way the thing's surface faces there, and where on the thing's surface it
@@ -41,16 +55,33 @@ public record Laid() {
      * light that falls on everything alike; what is mirrored from above and from below; and, for shadows, where the
      * sun's own picture of the frame has a point the camera sees ({@code beam}), with how far a point is eased
      * before it is looked up there: so many centimetres the way its surface faces, and so much nearer the sun.
+     * Or, for shadows found by rays ({@code rays}): how far a point is eased the way its surface faces before a
+     * ray is sent from it toward the sun, and how far the ray reaches, both in centimetres; no reach, for a frame
+     * whose shadows are not found so.
      */
     public Layout frame() {
         return new Layout("Frame", List.of(new Field("seen", Kind.MATRIX), new Field("sunTowards", Kind.TRIPLE),
                 new Field("sun", Kind.TRIPLE), new Field("ambient", Kind.TRIPLE), new Field("sky", Kind.TRIPLE),
-                new Field("ground", Kind.TRIPLE), new Field("beam", Kind.MATRIX), new Field("eased", Kind.PAIR)));
+                new Field("ground", Kind.TRIPLE), new Field("beam", Kind.MATRIX), new Field("eased", Kind.PAIR),
+                new Field("rays", Kind.PAIR)));
     }
 
     /** Where a look's frame is bound, as its shaders declare it and the card is told. */
     public int frameBound() {
         return 0;
+    }
+
+    /** Where what stands in the frame is bound for a look that asks rays of it, the same way. */
+    public int standingBound() {
+        return 2;
+    }
+
+    /**
+     * Which of what a thing drawn is told says where it stands: what whoever keeps the things of a frame, to
+     * answer rays, takes of each.
+     */
+    public String stands() {
+        return "placed";
     }
 
     /** Where the picture of depths a look looks things up in is bound, the same way. */

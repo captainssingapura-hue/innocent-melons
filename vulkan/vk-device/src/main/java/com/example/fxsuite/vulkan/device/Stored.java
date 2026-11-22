@@ -2,6 +2,7 @@ package com.example.fxsuite.vulkan.device;
 
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkDevice;
+import org.lwjgl.vulkan.VkMemoryAllocateFlagsInfo;
 import org.lwjgl.vulkan.VkMemoryAllocateInfo;
 import org.lwjgl.vulkan.VkMemoryRequirements;
 import org.lwjgl.vulkan.VkPhysicalDeviceMemoryProperties;
@@ -17,12 +18,12 @@ import static org.lwjgl.vulkan.VK13.*;
  */
 record Stored(Reach reach) {
 
-    /** Memory under {@code buffer}. */
-    Kept<Of.Memory> under(final Kept<Of.Buffer> buffer, final int wanted) {
+    /** Memory under {@code buffer}; where {@code addressed}, memory whose place on the card can be asked. */
+    Kept<Of.Memory> under(final Kept<Of.Buffer> buffer, final int wanted, final boolean addressed) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             final VkMemoryRequirements needs = VkMemoryRequirements.malloc(stack);
             vkGetBufferMemoryRequirements(reach.device(), buffer.raw(), needs);
-            final Kept<Of.Memory> memory = made(buffer.name(), needs, wanted, stack);
+            final Kept<Of.Memory> memory = made(buffer.name(), needs, wanted, addressed, stack);
             new Checked("vkBindBufferMemory")
                     .of(vkBindBufferMemory(reach.device(), buffer.raw(), memory.raw(), 0));
             return memory;
@@ -34,17 +35,21 @@ record Stored(Reach reach) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             final VkMemoryRequirements needs = VkMemoryRequirements.malloc(stack);
             vkGetImageMemoryRequirements(reach.device(), image.raw(), needs);
-            final Kept<Of.Memory> memory = made(image.name(), needs, wanted, stack);
+            final Kept<Of.Memory> memory = made(image.name(), needs, wanted, false, stack);
             new Checked("vkBindImageMemory").of(vkBindImageMemory(reach.device(), image.raw(), memory.raw(), 0));
             return memory;
         }
     }
 
     private Kept<Of.Memory> made(final String of, final VkMemoryRequirements needs, final int wanted,
-                                 final MemoryStack stack) {
+                                 final boolean addressed, final MemoryStack stack) {
         final VkDevice device = reach.device();
         final VkMemoryAllocateInfo asked = VkMemoryAllocateInfo.calloc(stack).sType$Default()
                 .allocationSize(needs.size()).memoryTypeIndex(kind(needs.memoryTypeBits(), wanted, stack));
+        if (addressed) {
+            asked.pNext(VkMemoryAllocateFlagsInfo.calloc(stack).sType$Default()
+                    .flags(VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT).address());
+        }
         final LongBuffer made = stack.mallocLong(1);
         new Checked("vkAllocateMemory").of(vkAllocateMemory(device, asked, null, made));
         return reach.owner().kept("the memory of " + of, made.get(0), raw -> vkFreeMemory(device, raw, null));

@@ -46,6 +46,7 @@ public record Suited(Material material) {
             case Materials.MetallicPaint paint -> Optional.of(List.of(Shape.CAR, Shape.CURVED));
             case Materials.Glass glass -> Optional.of(List.of(Shape.PANE, Shape.BALL));
             case Materials.Ground ground -> Optional.of(List.of(Shape.KNOLL));
+            case Materials.Bark bark -> Optional.of(List.of(Shape.LIMB, Shape.BLOCK));
             case Materials.Bodily body -> Optional.of(List.of(Shape.LIMB, Shape.BALL));
             case Materials.Inward inward -> Optional.of(List.of(Shape.LIMB, Shape.BLOCK));
             case Materials.Hair hair -> Optional.of(List.of(Shape.BALL));

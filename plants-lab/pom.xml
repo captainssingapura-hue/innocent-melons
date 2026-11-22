@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>melons.innocent.plants</groupId>
+    <artifactId>plants-lab</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <description>
+        The plants lab: plants modelled as finely as they are made, a tree to its twigs, each grown from rules and a
+        number so that it is the same every time. The fine model is the only one written: the coarser forms a forest
+        is drawn with far off are to be worked out from it, never written beside it. How plants act on one another
+        comes later. A plant makes no material of its own: it asks the material lab for its bark. Its code keeps
+        CQ's basic rules, which the studio checks from each module's jar and its sources jar.
+    </description>
+
+    <properties>
+        <maven.compiler.release>25</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- the renderer and its bench, and the material lab: the one place each one's version is said -->
+        <vulkan.version>0.1.0-SNAPSHOT</vulkan.version>
+        <lab.version>0.1.0-SNAPSHOT</lab.version>
+    </properties>
+
+    <modules>
+        <!-- A tree as it is grown: its boughs from the trunk to the twigs, and its form. No card, no window. -->
+        <module>plants-tree</module>
+        <!-- A place to walk round a tree, drawn by the card. -->
+        <module>plants-walk</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.example.fxsuite.vulkan</groupId>
+                <artifactId>vk-drawing</artifactId>
+                <version>${vulkan.version}</version>
+            </dependency>
+            <!-- the renderer's bench: the card, and the avatar that walks about on it -->
+            <dependency>
+                <groupId>com.example.fxsuite.vulkan</groupId>
+                <artifactId>vk-bench</artifactId>
+                <version>${vulkan.version}</version>
+            </dependency>
+            <!-- the material lab: the tree of materials and each one's surface -->
+            <dependency>
+                <groupId>com.example.fxsuite.texture</groupId>
+                <artifactId>tx-materials</artifactId>
+                <version>${lab.version}</version>
+            </dependency>
+            <!-- its own modules, at its own version -->
+            <dependency>
+                <groupId>melons.innocent.plants</groupId>
+                <artifactId>plants-tree</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>5.11.3</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.13.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.5.2</version>
+                </plugin>
+                <plugin>
+                    <!-- its sources in a jar beside its classes, installed with it: what the studio's checks read it by -->
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>3.3.1</version>
+                    <executions>
+                        <execution>
+                            <id>sources</id>
+                            <goals>
+                                <goal>jar-no-fork</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>

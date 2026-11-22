@@ -14,9 +14,11 @@ import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkPipelineLayoutCreateInfo;
 import org.lwjgl.vulkan.VkPushConstantRange;
 import org.lwjgl.vulkan.VkWriteDescriptorSet;
+import org.lwjgl.vulkan.VkWriteDescriptorSetAccelerationStructureKHR;
 
 import java.nio.LongBuffer;
 
+import static org.lwjgl.vulkan.KHRAccelerationStructure.VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
 import static org.lwjgl.vulkan.VK13.*;
 
 /**
@@ -34,7 +36,13 @@ record Described(Reach reach, Laid laid) {
     Kept<Of.Told> told() {
         final VkDevice device = reach.device();
         try (MemoryStack stack = MemoryStack.stackPush()) {
-            final VkDescriptorSetLayoutBinding.Buffer both = VkDescriptorSetLayoutBinding.calloc(2, stack);
+            final VkDescriptorSetLayoutBinding.Buffer both = VkDescriptorSetLayoutBinding
+                    .calloc(laid.rays() ? 3 : 2, stack);
+            if (laid.rays()) {
+                both.get(2).binding(laid.standingBound())
+                        .descriptorType(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR)
+                        .descriptorCount(1).stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT);
+            }
             both.get(0).binding(laid.frameBound()).descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
                     .descriptorCount(1).stageFlags(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
             both.get(1).binding(laid.depthsBound()).descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
@@ -66,7 +74,10 @@ record Described(Reach reach, Laid laid) {
     Kept<Of.Tellings> tellings() {
         final VkDevice device = reach.device();
         try (MemoryStack stack = MemoryStack.stackPush()) {
-            final VkDescriptorPoolSize.Buffer each = VkDescriptorPoolSize.calloc(2, stack);
+            final VkDescriptorPoolSize.Buffer each = VkDescriptorPoolSize.calloc(laid.rays() ? 3 : 2, stack);
+            if (laid.rays()) {
+                each.get(2).type(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR).descriptorCount(1);
+            }
             each.get(0).type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER).descriptorCount(1);
             each.get(1).type(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER).descriptorCount(1);
             final LongBuffer made = stack.mallocLong(1);
@@ -110,6 +121,21 @@ record Described(Reach reach, Laid laid) {
             final VkWriteDescriptorSet.Buffer written = VkWriteDescriptorSet.calloc(1, stack).sType$Default()
                     .dstSet(bound.raw()).dstBinding(laid.depthsBound())
                     .descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER).descriptorCount(1).pImageInfo(read);
+            vkUpdateDescriptorSets(reach.device(), written, null);
+        }
+    }
+
+    /**
+     * {@code bound} set to ask rays of {@code stood}: for the frames drawn from now on, until it is set to
+     * another. Only for a look laid out to ask rays.
+     */
+    void asked(final Kept<Of.Bound> bound, final Kept<Of.Structure> stood) {
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            final VkWriteDescriptorSetAccelerationStructureKHR of = VkWriteDescriptorSetAccelerationStructureKHR
+                    .calloc(stack).sType$Default().pAccelerationStructures(stack.longs(stood.raw()));
+            final VkWriteDescriptorSet.Buffer written = VkWriteDescriptorSet.calloc(1, stack).sType$Default()
+                    .pNext(of.address()).dstSet(bound.raw()).dstBinding(laid.standingBound())
+                    .descriptorType(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR).descriptorCount(1);
             vkUpdateDescriptorSets(reach.device(), written, null);
         }
     }

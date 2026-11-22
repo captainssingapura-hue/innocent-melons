@@ -24,6 +24,7 @@
         <module>texture-lab</module>
         <module>places</module>
         <module>terrain</module>
+        <module>plants-lab</module>
         <module>integrated-demos</module>
         <module>lifts-lab</module>
         <module>buildings-lab</module>

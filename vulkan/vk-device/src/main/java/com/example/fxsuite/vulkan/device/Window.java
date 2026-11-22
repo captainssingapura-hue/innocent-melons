@@ -31,7 +31,7 @@ public final class Window implements Target, AutoCloseable {
 
     private final Reach reach;
     private final Recording recording;
-    private final Depths nothing;
+    private final Read nothing;
     private final Kept<Of.Glass> glass;
     private final Pointed pointed;
     private final Kept<Of.Surface> surface;
@@ -40,7 +40,7 @@ public final class Window implements Target, AutoCloseable {
     private boolean stale;
 
     /** A window on {@code desk}; a frame drawn to it with nothing to look up looks things up in {@code nothing}. */
-    Window(final Reach reach, final Recording recording, final Depths nothing, final Desk desk, final String title,
+    Window(final Reach reach, final Recording recording, final Read nothing, final Desk desk, final String title,
            final int width, final int height) {
         desk.mine();
         this.reach = reach;
@@ -132,6 +132,16 @@ public final class Window implements Target, AutoCloseable {
     /** The same, its looks looking things up in {@code looked}. */
     @Override
     public void drawn(final Vec3 sky, final Filling frame, final Depths looked, final Consumer<Pass> drawing) {
+        drawn(sky, frame, nothing.looking(looked), drawing);
+    }
+
+    /** The same, its looks asking rays of {@code stood}. */
+    @Override
+    public void drawn(final Vec3 sky, final Filling frame, final Standing stood, final Consumer<Pass> drawing) {
+        drawn(sky, frame, nothing.asking(stood), drawing);
+    }
+
+    private void drawn(final Vec3 sky, final Filling frame, final Read read, final Consumer<Pass> drawing) {
         if (!fitted()) {
             return;
         }
@@ -146,7 +156,7 @@ public final class Window implements Target, AutoCloseable {
             }
             final Ground ground = shown.ground(which.get(0));
             final Strokes strokes = recording.begun();
-            strokes.drawn(ground, sky, frame, looked, drawing);
+            strokes.drawn(ground, sky, frame, read, drawing);
             strokes.moved(ground.colours(), Move.TO_BE_SHOWN);
             final Kept<Of.Signal> done = shown.drawn(which.get(0));
             recording.sent(ready, done);

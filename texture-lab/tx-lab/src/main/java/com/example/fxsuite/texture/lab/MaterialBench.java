@@ -64,7 +64,6 @@ public final class MaterialBench {
     /** How long past its time a run goes on, for the kit to save the JavaFX window, in thousandths of a second. */
     private static final long KIT_FIRST = 1500;
 
-    private final Laid laid = new Laid();
     private final Light noon = new Daylight().light();
     private final Asked asked = new Asked(1, Boolean.parseBoolean(System.getProperty("bench.shadows", "true")),
             new Asked.Sun(said("bench.sun.high", noon.sunHigh()), said("bench.sun.round", noon.sunRound())));
@@ -86,6 +85,7 @@ public final class MaterialBench {
         asked.night(Boolean.getBoolean("bench.night"));
         asked.clocked(Boolean.getBoolean("bench.sky"));
         asked.quickened(said("bench.sky.speed", asked.quickened()));
+        asked.shadowing(System.getProperty("bench.shadows.mode", ""));
         asked.almanac(asked.almanac().told(System.getProperty("bench.sky.at", ""),
                 System.getProperty("bench.sky.when", ""), System.getProperty("bench.sky.zone", "")));
         bus.subscribe(OnShow.class, shown::set, Bus.HERE);
@@ -93,7 +93,8 @@ public final class MaterialBench {
         try (Desk desk = new Desk();
              Card card = new Card(desk);
              Window window = card.window("The material bench, drawn on " + card.name(), WIDTH, HEIGHT);
-             MaterialView view = new MaterialView(card, laid)) {
+             MaterialView view = new MaterialView(card, new Laid().asking(card.rays()))) {
+            asked.offered(view.offered());
             Platform.startup(() -> console.shown(LEFT, TOP));
             window.shown(LEFT + BESIDE, TOP);
             drawn(desk, card, window, view, console);
@@ -161,7 +162,8 @@ public final class MaterialBench {
 
     /** One frame of what is on show, looked at as it is now, drawn on {@code target}. */
     private void frame(final Target target, final MaterialView view) {
-        view.drawn(target, shown.get(), orbit.camera(48, 10), skies.lit(), asked.shadowed());
+        view.drawn(target, shown.get(), orbit.camera(48, 10), skies.lit(), asked.shadowed(),
+                asked.shadowing());
     }
 
     /**

@@ -29,6 +29,8 @@ public final class Drawing implements AutoCloseable {
     private final Kept<Of.Bound> bound;
     /** The picture of depths it is set to look things up in, once it has been set to one. */
     private Optional<Depths> looked = Optional.empty();
+    /** What it is set to ask rays of, as the card has it, once it has been set to any. */
+    private Optional<Kept<Of.Structure>> asked = Optional.empty();
 
     /**
      * The look of {@code vertex} and, where it colours anything, {@code fragment}; where {@code mixed}, what it
@@ -62,10 +64,13 @@ public final class Drawing implements AutoCloseable {
     }
 
     /**
-     * Told what {@code filling} holds of the frame, and to look things up in {@code depths} where there is one;
+     * Told what {@code filling} holds of the frame, and to read what {@code read} has where there is any: its
+     * picture of depths to look things up in and, for a look that asks rays, what stands in the frame;
      * a frame laid out otherwise than the look reads it is refused.
      */
-    void told(final Filling filling, final Optional<Depths> depths) {
+    void told(final Filling filling, final Optional<Read> read) {
+        final Optional<Depths> depths = read.map(Read::depths);
+        final Optional<Kept<Of.Structure>> stood = read.flatMap(Read::standing).map(Standing::structure);
         if (!filling.layout().equals(laid.frame())) {
             throw new IllegalArgumentException("the look reads a frame laid out as " + laid.frame() + ", not as "
                     + filling.layout());
@@ -74,6 +79,10 @@ public final class Drawing implements AutoCloseable {
         if (depths.isPresent() && !depths.equals(looked)) {
             described.looked(bound, depths.get().view(), depths.get().sampler());
             looked = depths;
+        }
+        if (laid.rays() && stood.isPresent() && !stood.equals(asked)) {
+            described.asked(bound, stood.get());
+            asked = stood;
         }
     }
 

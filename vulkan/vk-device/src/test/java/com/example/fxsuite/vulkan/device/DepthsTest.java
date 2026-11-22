@@ -154,14 +154,15 @@ class DepthsTest {
                 .with("sunTowards", 0, -1, 1).with("sun", sun, sun, sun).with("ambient", 0.2, 0.2, 0.2)
                 .with("sky", 0, 0, 0).with("ground", 0, 0, 0)
                 .with("beam", lookedUp ? fromTheEye().columns() : new double[16])
-                .with("eased", 2 * pixel, pixel / 48);
+                .with("eased", 2 * pixel, pixel / 48).with("rays", 0, 0);
     }
 
     /** What the sun's own frame is told: the same things, seen from the sun. */
     private Filling beamed() {
         return new Filling(laid.frame()).with("seen", fromTheEye().columns())
                 .with("sunTowards", 0, -1, 1).with("sun", 0, 0, 0).with("ambient", 0, 0, 0)
-                .with("sky", 0, 0, 0).with("ground", 0, 0, 0).with("beam", new double[16]).with("eased", 0, 0);
+                .with("sky", 0, 0, 0).with("ground", 0, 0, 0).with("beam", new double[16]).with("eased", 0, 0)
+                .with("rays", 0, 0);
     }
 
     /** What a thing standing at {@code stands} is told: where it stands, as the camera sees it. */

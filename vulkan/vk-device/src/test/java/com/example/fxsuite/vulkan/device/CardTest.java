@@ -134,7 +134,8 @@ class CardTest {
              Sent mesh = card.sent(new Packed(laid.point(), triangle))) {
             final Filling wrong = new Filling(laid.frame()).with("seen", camera.seen(1).columns())
                     .with("sunTowards", 0, 1, 0).with("sun", 0, 0, 0).with("ambient", 1, 1, 1)
-                .with("sky", 0, 0, 0).with("ground", 0, 0, 0).with("beam", new double[16]).with("eased", 0, 0);
+                .with("sky", 0, 0, 0).with("ground", 0, 0, 0).with("beam", new double[16]).with("eased", 0, 0)
+                .with("rays", 0, 0);
             assertThrows(IllegalArgumentException.class,
                     () -> canvas.drawn(sky, frame(), pass -> pass.draw(drawing, mesh, wrong)));
             final Pass[] kept = new Pass[1];
@@ -214,7 +215,8 @@ class CardTest {
     private Filling frame() {
         return new Filling(laid.frame()).with("seen", camera.seen(1).columns())
                 .with("sunTowards", 0, 1, 0).with("sun", 0, 0, 0).with("ambient", 1, 1, 1)
-                .with("sky", 0, 0, 0).with("ground", 0, 0, 0).with("beam", new double[16]).with("eased", 0, 0);
+                .with("sky", 0, 0, 0).with("ground", 0, 0, 0).with("beam", new double[16]).with("eased", 0, 0)
+                .with("rays", 0, 0);
     }
 
     /** What the triangle is told: where it stands, as the camera sees it. */

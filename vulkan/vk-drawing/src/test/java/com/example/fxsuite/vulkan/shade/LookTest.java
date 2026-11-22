@@ -44,10 +44,25 @@ class LookTest {
         assertTrue(code.contains("layout(location = 0) in vec3 point;\nlayout(location = 1) in vec3 facing;\n"));
         assertTrue(code.contains("layout(std140, set = 0, binding = 0) uniform Frame {\n    mat4 seen;\n"
                 + "    vec3 sunTowards;\n    vec3 sun;\n    vec3 ambient;\n    vec3 sky;\n    vec3 ground;\n"
-                + "    mat4 beam;\n    vec2 eased;\n} frame;\n"));
+                + "    mat4 beam;\n    vec2 eased;\n    vec2 rays;\n} frame;\n"));
         assertTrue(code.contains("layout(push_constant) uniform Draw {\n    mat4 placed;\n    float coarsened;\n"
                 + "    vec3 tint;\n} draw;\n"));
         assertTrue(code.contains("gl_Position = frame.seen * seenFrom;"));
+    }
+
+    @Test
+    void aLookLaidOutToAskRaysAsksOneTowardTheSunWhereTheFrameSaysOneReachesAndAnotherAsksNone() {
+        final String asking = new Look(new Laid().asking(true), look.surface()).fragment().code();
+        assertTrue(asking.startsWith("#version 460\n#extension GL_EXT_ray_query : require\n"));
+        assertTrue(asking.contains("layout(set = 0, binding = 2) uniform accelerationStructureEXT standing;\n"),
+                "what stands in the frame, beside the sun's picture");
+        assertTrue(asking.contains("    if (frame.rays.y > 0.0) {\n"), "only in a frame that says a ray reaches");
+        assertTrue(asking.contains("-normalize(frame.sunTowards), frame.rays.y);"), "toward the sun, so far");
+        assertTrue(asking.indexOf("float sunlit = texture(") < asking.indexOf("sunlit = rayQueryGet"),
+                "the ray's answer taking the place of the picture's");
+        final String plain = look.fragment().code();
+        assertTrue(plain.startsWith("#version 450\n") && !plain.contains("rayQuery")
+                && !plain.contains("accelerationStructureEXT"), "a look that asks none is written as it was");
     }
 
     @Test

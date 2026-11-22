@@ -10,7 +10,8 @@ import com.example.fxsuite.vulkan.device.Pass;
 import com.example.fxsuite.vulkan.device.Target;
 import com.example.fxsuite.vulkan.render.Framed;
 import com.example.fxsuite.vulkan.render.Looked;
-import com.example.fxsuite.vulkan.render.Shadows;
+import com.example.fxsuite.vulkan.render.Shaded;
+import com.example.fxsuite.vulkan.render.Shadowing;
 import com.example.fxsuite.vulkan.render.Shaped;
 import com.example.fxsuite.vulkan.shade.Laid;
 import com.example.fxsuite.vulkan.shade.Look;
@@ -52,7 +53,7 @@ public final class MaterialView implements AutoCloseable {
     /** What else a shape is fitted with, each part by the material it is always of: a car's tyres and wheels. */
     private final Map<Shape, Map<Material, Shaped>> fitting = new EnumMap<>(Shape.class);
     private final Cast cast;
-    private final Shadows shadows;
+    private final Shaded shadows;
     /** What undoes each thing made here, in the order it was made. */
     private final List<Runnable> closing = new ArrayList<>();
 
@@ -88,7 +89,7 @@ public final class MaterialView implements AutoCloseable {
             }
             this.cast = new Cast(card, laid);
             closing.add(cast::close);
-            this.shadows = new Shadows(card, laid, PIXELS);
+            this.shadows = new Shaded(card, laid, PIXELS);
             closing.add(shadows::close);
         } catch (final RuntimeException refused) {
             close();
@@ -102,6 +103,17 @@ public final class MaterialView implements AutoCloseable {
      */
     public void drawn(final Target target, final OnShow shown, final Camera camera, final Daylight time,
                       final boolean shadowed) {
+        drawn(target, shown, camera, time, shadowed, Shadowing.PICTURE);
+    }
+
+    /** The ways its shadows can be found, on the card it draws on. */
+    public List<Shadowing> offered() {
+        return shadows.offered();
+    }
+
+    /** The same frame, its shadows found {@code by} that way where there are any. */
+    public void drawn(final Target target, final OnShow shown, final Camera camera, final Daylight time,
+                      final boolean shadowed, final Shadowing by) {
         final Stand stand = new Stand(shown.shapes());
         final double aspect = (double) target.width() / target.height();
         final Framed framed = new Framed(laid, camera, time.light());
@@ -111,8 +123,8 @@ public final class MaterialView implements AutoCloseable {
             standing.accept(pass);
         };
         if (shadowed) {
-            final Beam beam = new Beam(stand.middle(), time.light().sunTowards(), SHADED, SHADED).settled(PIXELS);
-            target.drawn(time.sky(), framed.filling(aspect, beam, PIXELS), shadows.cast(framed, beam, standing), all);
+            final Beam beam = new Beam(stand.middle(), time.light().sunTowards(), SHADED, SHADED);
+            shadows.drawn(target, time.sky(), framed, by, beam, standing, all);
         } else {
             target.drawn(time.sky(), framed.filling(aspect), all);
         }

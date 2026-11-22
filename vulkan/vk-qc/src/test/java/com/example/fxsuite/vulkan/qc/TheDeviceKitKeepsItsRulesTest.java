@@ -3,6 +3,7 @@ package com.example.fxsuite.vulkan.qc;
 import org.junit.jupiter.api.Test;
 import org.lwjgl.glfw.GLFWVulkan;
 import org.lwjgl.vulkan.EXTDebugUtils;
+import org.lwjgl.vulkan.KHRAccelerationStructure;
 import org.lwjgl.vulkan.KHRSurface;
 import org.lwjgl.vulkan.KHRSwapchain;
 import org.lwjgl.vulkan.VK13;
@@ -44,7 +45,7 @@ class TheDeviceKitKeepsItsRulesTest {
 
     /** Where Vulkan's calls are declared, as LWJGL has them. */
     private final List<Class<?>> vulkan = List.of(VK13.class, KHRSurface.class, KHRSwapchain.class,
-            EXTDebugUtils.class, GLFWVulkan.class);
+            EXTDebugUtils.class, GLFWVulkan.class, KHRAccelerationStructure.class);
 
     @Test
     void noAnswerOfTheCardsIsDropped() throws IOException {

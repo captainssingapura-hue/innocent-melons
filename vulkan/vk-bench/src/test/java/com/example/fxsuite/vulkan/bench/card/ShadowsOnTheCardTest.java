@@ -6,6 +6,8 @@ import com.example.fxsuite.vulkan.device.Pass;
 import com.example.fxsuite.vulkan.form.Cuboid;
 import com.example.fxsuite.vulkan.render.Formed;
 import com.example.fxsuite.vulkan.render.Framed;
+import com.example.fxsuite.vulkan.render.Shaded;
+import com.example.fxsuite.vulkan.render.Shadowing;
 import com.example.fxsuite.vulkan.render.Shadows;
 import com.example.fxsuite.vulkan.shade.Laid;
 import com.example.fxsuite.vulkan.shade.Look;
@@ -35,7 +37,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Shadows on the card, by the bench's day: a grey box a metre each way stands on grey ground. With shadows, the
  * ground behind the box from the sun is much darker than the ground beside it, and the box's top, which nothing
  * stands over, is as bright as with none; with none, the ground is one brightness all over, as it was before there
- * were shadows. The validation layer has nothing to say of either. The picture is kept in {@code target/card}.
+ * were shadows. Found by rays, on a card that answers them, the shadow lies where the sun's picture has it. The
+ * validation layer has nothing to say of any of it. The pictures are kept in {@code target/card}.
  */
 class ShadowsOnTheCardTest {
 
@@ -85,6 +88,40 @@ class ShadowsOnTheCardTest {
         assertEquals(bright(without, sunny), bright(with, sunny), 3, "clear of the shadow, as with none");
         assertEquals(bright(without, sunny), bright(without, shaded), 3, "with none, one brightness all over");
         assertEquals(bright(without, top), bright(with, top), 3, "the box's top shades nothing of itself");
+    }
+
+    @Test
+    void foundEitherWayTheCardHasTheShadowLiesInTheSamePlaceAndAWayItHasNotIsAnsweredWithTheSunsPicture()
+            throws IOException {
+        final Path folder = Path.of("target", "card");
+        Files.createDirectories(folder);
+        try (Card card = new Card(); Canvas canvas = card.canvas(WIDTH, HEIGHT)) {
+            final Laid asking = new Laid().asking(card.rays());
+            try (Shaded shadows = new Shaded(card, asking, PIXELS);
+                 Formed box = new Formed(card, new Look(asking, grey), new Cuboid(1, 1, 1).formed())) {
+                assertEquals(card.rays() ? List.of(Shadowing.PICTURE, Shadowing.RAYS) : List.of(Shadowing.PICTURE),
+                        shadows.offered());
+                final Framed framed = new Framed(asking, camera, day.light());
+                final Consumer<Pass> standing = pass -> box.drawn(pass, new Mat4(new Vec3(0, 50, 0))
+                        .times(new Sized(100, 100, 100).matrix()), camera, 1);
+                final Consumer<Pass> all = pass -> {
+                    box.drawn(pass, new Mat4(new Vec3(0, -50, 0)).times(new Sized(4000, 100, 4000).matrix()),
+                            camera, 1);
+                    standing.accept(pass);
+                };
+                // every way there is, whether or not this card has it
+                for (final Shadowing by : Shadowing.values()) {
+                    shadows.drawn(canvas, day.sky(), framed, by, beam, standing, all);
+                    final Picture found = new Picture(canvas.width(), canvas.pixels());
+                    ImageIO.write(found.image(), "png", folder.resolve("box-shadow-by-" + by + ".png").toFile());
+                    assertTrue(bright(found, shaded) < bright(found, sunny) - 150,
+                            by + ", in the box's shadow: " + bright(found, shaded) + " beside "
+                                    + bright(found, sunny));
+                    assertTrue(bright(found, top) > bright(found, shaded) + 150, by + ", the box's top in the sun");
+                }
+            }
+            assertEquals(List.of(), card.heard(), "the validation layer has nothing to say");
+        }
     }
 
     /** How bright the picture is where {@code point} of the world falls in it: its red, green and blue together. */

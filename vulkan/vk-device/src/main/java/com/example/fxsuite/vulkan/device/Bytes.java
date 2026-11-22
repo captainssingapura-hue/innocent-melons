@@ -4,6 +4,7 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.VkBufferCreateInfo;
+import org.lwjgl.vulkan.VkBufferDeviceAddressInfo;
 import org.lwjgl.vulkan.VkDevice;
 
 import java.nio.ByteBuffer;
@@ -23,8 +24,13 @@ final class Bytes {
     private final Kept<Of.Buffer> buffer;
     private final Kept<Of.Memory> memory;
 
-    /** {@code size} bytes called {@code name}, to be used as {@code use} says. */
+    /** {@code size} bytes called {@code name}, to be used as {@code use} says, where Java can reach them. */
     Bytes(final Reach reach, final String name, final int size, final int use) {
+        this(reach, name, size, use, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    }
+
+    /** The same, in memory of the kind {@code wanted}: the card's own, say, which Java does not reach. */
+    Bytes(final Reach reach, final String name, final int size, final int use, final int wanted) {
         this.reach = reach;
         this.size = size;
         final VkDevice device = reach.device();
@@ -35,8 +41,8 @@ final class Bytes {
             new Checked("vkCreateBuffer").of(vkCreateBuffer(device, asked, null, made));
             this.buffer = reach.owner().kept(name, made.get(0), raw -> vkDestroyBuffer(device, raw, null));
         }
-        this.memory = new Stored(reach).under(buffer,
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        this.memory = new Stored(reach).under(buffer, wanted,
+                (use & VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT) != 0);
     }
 
     /** Filled with {@code from}'s bytes, which are as many as it holds. */
@@ -62,6 +68,14 @@ final class Bytes {
             final PointerBuffer at = stack.mallocPointer(1);
             new Checked("vkMapMemory").of(vkMapMemory(reach.device(), memory.raw(), 0, size, 0, at));
             return MemoryUtil.memByteBuffer(at.get(0), size);
+        }
+    }
+
+    /** Where on the card its first byte is, for what is told where to read instead of being handed a buffer. */
+    long address() {
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            return vkGetBufferDeviceAddress(reach.device(),
+                    VkBufferDeviceAddressInfo.calloc(stack).sType$Default().buffer(buffer.raw()));
         }
     }
 

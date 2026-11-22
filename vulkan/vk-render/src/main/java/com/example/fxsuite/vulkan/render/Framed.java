@@ -19,6 +19,10 @@ public record Framed(Laid laid, Camera camera, Light light) {
     private static final double EASED = 2;
     /** How many of them nearer the sun it is then counted, so that what is exactly as near is in the sun. */
     private static final double NEARER = 0.5;
+    /** How far a point is eased the way its surface faces before a ray is sent from it, in centimetres. */
+    private static final double RAY_EASED = 0.5;
+    /** How far a ray toward the sun reaches, in centimetres: ten kilometres. */
+    private static final double RAY_REACHES = 1_000_000;
 
     /** The frame's block, filled, for a picture {@code aspect} times as wide as it is tall, with no shadows. */
     public Filling filling(final double aspect) {
@@ -48,8 +52,21 @@ public record Framed(Laid laid, Camera camera, Light light) {
         return beam.seen().times(new Mat4(camera.eye()));
     }
 
+    /**
+     * The same, with shadows found by rays: each look sends a ray from each point it draws toward the sun, and
+     * the point is in shadow where anything stands along it. Only for looks laid out to ask rays.
+     */
+    public Filling rayed(final double aspect) {
+        if (!laid.rays()) {
+            throw new IllegalStateException("these looks are laid out to ask no rays");
+        }
+        return lit(camera.seen(aspect)).with("beam", new double[16]).with("eased", 0, 0)
+                .with("rays", RAY_EASED, RAY_REACHES);
+    }
+
     private Filling lit(final Mat4 seen) {
         return new Filling(laid.frame())
+                .with("rays", 0, 0)
                 .with("seen", seen.columns())
                 .with("sunTowards", three(light.sunTowards()))
                 .with("sun", three(light.sun()))

@@ -82,7 +82,8 @@ class WindowTest {
     private Filling frame(final double aspect) {
         return new Filling(laid.frame()).with("seen", camera.seen(aspect).columns())
                 .with("sunTowards", 0, 1, 0).with("sun", 0, 0, 0).with("ambient", 1, 1, 1)
-                .with("sky", 0, 0, 0).with("ground", 0, 0, 0).with("beam", new double[16]).with("eased", 0, 0);
+                .with("sky", 0, 0, 0).with("ground", 0, 0, 0).with("beam", new double[16]).with("eased", 0, 0)
+                .with("rays", 0, 0);
     }
 
     private Filling told() {

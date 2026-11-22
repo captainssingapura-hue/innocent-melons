@@ -24,6 +24,7 @@
         <vulkan.version>0.1.0-SNAPSHOT</vulkan.version>
         <lab.version>0.1.0-SNAPSHOT</lab.version>
         <places.version>0.1.0-SNAPSHOT</places.version>
+        <plants.version>0.1.0-SNAPSHOT</plants.version>
     </properties>
 
     <modules>
@@ -65,6 +66,12 @@
                 <groupId>com.example.fxsuite.texture</groupId>
                 <artifactId>tx-lab</artifactId>
                 <version>${lab.version}</version>
+            </dependency>
+            <!-- the plants lab: a tree as it is grown -->
+            <dependency>
+                <groupId>melons.innocent.plants</groupId>
+                <artifactId>plants-tree</artifactId>
+                <version>${plants.version}</version>
             </dependency>
             <!-- the places: the walls a yard is walled with -->
             <dependency>
