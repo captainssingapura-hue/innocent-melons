@@ -65,12 +65,23 @@ public record Village(int homes) {
         return new VillageLake(new Vec3(0, 0, -3400), 12_000, 6_200);
     }
 
+    /**
+     * The car park beside the lake: off the lake's right-hand end as the avatar faces the village, some six metres
+     * from its kerb, its aisles running the way the lane does. A hundred cars stand in it.
+     */
+    public CarPark carPark() {
+        return new CarPark(new Vec3(9600, 0, -3400));
+    }
+
     /** Where each house stands, for the one half melon that is drawn once for each. */
     public List<Mat4> houses() {
         return homesteads().stream().map(home -> home.house().placed()).toList();
     }
 
-    /** Everything of the village that is in the way: every yard's wall, every house, and the lake's kerb. */
+    /**
+     * Everything of the village that is in the way: every yard's wall, every house, the lake's kerb, and every car
+     * in the car park.
+     */
     public Obstacles inTheWay() {
         final List<Block> blocks = new ArrayList<>();
         for (final Home home : homesteads()) {
@@ -78,6 +89,7 @@ public record Village(int homes) {
             blocks.addAll(home.house().inTheWay());
         }
         blocks.addAll(lake().inTheWay());
+        blocks.addAll(carPark().inTheWay());
         return new Obstacles(blocks);
     }
 }

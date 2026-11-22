@@ -15,8 +15,17 @@ public interface Place extends AutoCloseable {
     /** What is in the avatar's way. */
     Obstacles inTheWay();
 
-    /** What stands there, drawn by {@code pass} as {@code camera} sees it. */
+    /** What stands there, drawn by {@code pass} as {@code camera} sees it: all of it that hides what is behind it. */
     void drawn(Pass pass, Camera camera);
+
+    /**
+     * What stands there that is seen through, as glass is, drawn by {@code pass} as {@code camera} sees it. It is
+     * asked for after everything else of a frame is drawn, the avatar too, since what is seen through is laid over
+     * what is behind it; of several such things, a place draws the furthest from the eye first. Most places have
+     * nothing of the kind, and draw nothing here.
+     */
+    default void seenThrough(final Pass pass, final Camera camera) {
+    }
 
     @Override
     void close();

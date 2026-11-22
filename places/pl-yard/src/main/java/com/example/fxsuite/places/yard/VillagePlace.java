@@ -28,7 +28,9 @@ import java.util.List;
  * adobe on a footing of rubble, with the old grey brick on courses of stone, and with rubble all through. All the
  * yards of one kind of wall are one form with one look, drawn in one call; every house is the one half melon, drawn
  * once for each. Before the village is its lake: a kerb of rubble, and still water within it, each drawn in one call
- * with the surface its material has. What is in the way is the same walls, the same houses and the same kerb.
+ * with the surface its material has. Off the lake's end is a car park of concrete with a hundred cars standing in
+ * it ({@link CarParkDrawn}), whose windows are seen through and so are drawn after everything else. What is in the
+ * way is the same walls, the same houses, the same kerb and the same cars.
  */
 public final class VillagePlace implements Place {
 
@@ -42,6 +44,8 @@ public final class VillagePlace implements Place {
     private final List<Formed> yards = new ArrayList<>();
     private final List<Formed> lake = new ArrayList<>();
     private final Formed melon;
+    /** The car park and its cars, once made: null only while the place is being made. */
+    private CarParkDrawn carPark;
 
     /** The village, on {@code card}, its layouts as {@code laid} says. */
     public VillagePlace(final Card card, final Laid laid) {
@@ -63,6 +67,7 @@ public final class VillagePlace implements Place {
             village.lake().kerbed(kerb);
             lake.add(kept(new Formed(card, new Look(laid, shades.of(new Materials.Rubble())), kerb.formed())));
             lake.add(kept(new Formed(card, new Look(laid, shades.of(new Materials.Water())), village.lake().sheet())));
+            this.carPark = new CarParkDrawn(card, laid, village.carPark());
         } catch (final RuntimeException refused) {
             close();
             throw refused;
@@ -92,10 +97,20 @@ public final class VillagePlace implements Place {
         yards.forEach(yard -> yard.drawn(pass, new Mat4(), camera, 1));
         houses.forEach(stands -> melon.drawn(pass, stands, camera, 1));
         lake.forEach(part -> part.drawn(pass, new Mat4(), camera, 1));
+        carPark.drawn(pass, camera);
+    }
+
+    @Override
+    public void seenThrough(final Pass pass, final Camera camera) {
+        carPark.seenThrough(pass, camera);
     }
 
     @Override
     public void close() {
+        if (carPark != null) {
+            carPark.close();
+            carPark = null;
+        }
         made.reversed().forEach(Formed::close);
         made.clear();
     }

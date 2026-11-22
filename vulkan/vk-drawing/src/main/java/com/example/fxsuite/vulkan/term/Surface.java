@@ -40,6 +40,16 @@ public record Surface(Colour base, List<Term> terms, Colour shine, double tightn
         return new Surface(base, terms, shine, tightness, glow, mirror, glance, flakes, share);
     }
 
+    /**
+     * The same surface with {@code mark} laid over it besides, over all its own terms: a line painted on it, a
+     * stain. The mark fades to its average far off as every term does.
+     */
+    public Surface marked(final Term mark) {
+        final List<Term> all = new ArrayList<>(terms);
+        all.add(mark);
+        return new Surface(base, all, shine, tightness, glow, mirror, glance, flakes, through);
+    }
+
     /** Whether anything behind it shows through it. */
     public boolean seenThrough() {
         return through > 0;

@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The tree of materials, which the lab owns: nineteen leaves under six branches, every node with its meaning; each
+ * The tree of materials, which the lab owns: twenty leaves under six branches, every node with its meaning; each
  * leaf under the branch it is of, and its line going up to what all things are made of; every leaf to be asked for
  * as a material, and nothing that is not a leaf; the metals, both paints, glass and water mirroring, and only what
  * gives light glowing.
@@ -21,11 +21,11 @@ class MaterialsTest {
     private final Taxonomy tree = new Materials().tree();
 
     @Test
-    void nineteenLeavesUnderSixBranchesEveryNodeWithItsMeaning() {
+    void twentyLeavesUnderSixBranchesEveryNodeWithItsMeaning() {
         assertEquals(List.of(), tree.problems());
         assertEquals("materials", tree.name());
-        assertEquals(19, tree.leaves().size());
-        assertEquals(26, tree.nodes().size(), "the leaves, their six branches, and the root");
+        assertEquals(20, tree.leaves().size());
+        assertEquals(27, tree.nodes().size(), "the leaves, their six branches, and the root");
         for (final Node node : tree.nodes()) {
             assertFalse(tree.meaning(node).isBlank(), node.title() + " has its meaning");
         }
@@ -40,7 +40,7 @@ class MaterialsTest {
                 new Materials.Gold().lineage());
         assertEquals(List.of(new Materials.CommonRedBrick(), new Materials.ChineseGreyBrick(),
                 new Materials.Adobe(), new Materials.Rubble(),
-                new Materials.DressedStone()), tree.under(new Materials.Masonry()));
+                new Materials.DressedStone(), new Materials.Concrete()), tree.under(new Materials.Masonry()));
         assertEquals(List.of(new Materials.Water()), tree.under(new Materials.Liquid()));
     }
 

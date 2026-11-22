@@ -250,6 +250,8 @@ public final class Walk {
         final Consumer<Pass> standing = pass -> {
             staged.place().drawn(pass, camera);
             staged.cast().figure(pass, figure, camera);
+            // last, what is seen through: it is laid over all the rest, and leaves nothing in the sun's picture
+            staged.place().seenThrough(pass, camera);
         };
         final Consumer<Pass> all = pass -> {
             staged.cast().ground(pass, camera);

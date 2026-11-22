@@ -1,13 +1,16 @@
 package com.example.fxsuite.texture.lab;
 
+import com.example.fxsuite.texture.materials.Material;
+import com.example.fxsuite.texture.materials.Materials;
 import com.example.fxsuite.vulkan.form.Cuboid;
 import com.example.fxsuite.vulkan.form.Dome;
 import com.example.fxsuite.vulkan.form.Ellipsoid;
 import com.example.fxsuite.vulkan.form.Mesh;
 
-import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
  * The plain shapes a material can be looked at on, on the bench. Which of them stand on it is chosen in the bench's
@@ -20,7 +23,7 @@ import java.util.function.Supplier;
  *   <li>the curved sheet, a low dome 1.8 m long, for a sheet that bends both ways at once as a car's bonnet does,
  *       and is seen at every angle from square on to glancing;</li>
  *   <li>the pane, a thin upright sheet 1.6 m long, for what is flat and thin, as glass is;</li>
- *   <li>the car body, a plain saloon 4.4 m long with no wheels ({@link CarBody}), for paint on a body's sheets:
+ *   <li>the car body, a plain saloon 4.5 m long on its four wheels ({@link CarBody}), for paint on a body's sheets:
  *       its windows are of glass whatever material is on show, and through them its inside is seen, dark.</li>
  * </ul>
  *
@@ -33,10 +36,14 @@ public enum Shape {
     BLOCK("Block", 100, 50, () -> new Cuboid(100, 100, 100).formed()),
     CURVED("Curved sheet", 180, 0, () -> new Dome(180, 90, 130).formed(64, 24)),
     PANE("Pane", 160, 55, () -> new Cuboid(160, 110, 1.2).formed()),
-    CAR("Car body", 440, 0, () -> new Sheeted(new CarFaces(new CarBody().skeleton()).body()).formed(),
+    CAR("Car body", 454.5, 0, () -> new Sheeted(new CarFaces(new CarBody().skeleton()).body()).formed(),
             () -> Optional.of(new Sheeted(new CarFaces(new CarBody().skeleton()).glass()).formed()),
             () -> Optional.of(new Sheeted(new CarFaces(new CarBody().skeleton()).body())
-                    .lining(List.of(new CarFaces(new CarBody().skeleton()).floor()))));
+                    .lining(Stream.concat(new CarFaces(new CarBody().skeleton())
+                                    .inside(new CarWheels(new CarBody()).within()).stream(),
+                            new CarWheels(new CarBody()).wells().stream()).toList())),
+            () -> Map.of(new Materials.Rubber(), new Sheeted(new CarWheels(new CarBody()).tyres()).formed(),
+                    new Materials.Steel(), new Sheeted(new CarWheels(new CarBody()).discs()).formed()));
 
     private final String title;
     private final double across;
@@ -44,19 +51,22 @@ public enum Shape {
     private final Supplier<Mesh> forming;
     private final Supplier<Optional<Mesh>> glazing;
     private final Supplier<Optional<Mesh>> lining;
+    private final Supplier<Map<Material, Mesh>> fitting;
 
     Shape(final String title, final double across, final double lifted, final Supplier<Mesh> forming) {
-        this(title, across, lifted, forming, Optional::empty, Optional::empty);
+        this(title, across, lifted, forming, Optional::empty, Optional::empty, Map::of);
     }
 
     Shape(final String title, final double across, final double lifted, final Supplier<Mesh> forming,
-          final Supplier<Optional<Mesh>> glazing, final Supplier<Optional<Mesh>> lining) {
+          final Supplier<Optional<Mesh>> glazing, final Supplier<Optional<Mesh>> lining,
+          final Supplier<Map<Material, Mesh>> fitting) {
         this.title = title;
         this.across = across;
         this.lifted = lifted;
         this.forming = forming;
         this.glazing = glazing;
         this.lining = lining;
+        this.fitting = fitting;
     }
 
     /** What it is called in the bench's window. */
@@ -90,5 +100,13 @@ public enum Shape {
      */
     public Optional<Mesh> lined() {
         return lining.get();
+    }
+
+    /**
+     * What else it is fitted with, in the same frame, each part with the material it is always of, whatever
+     * material is on show: a car's tyres are rubber and its wheels steel. Most shapes have nothing of the kind.
+     */
+    public Map<Material, Mesh> fitted() {
+        return fitting.get();
     }
 }

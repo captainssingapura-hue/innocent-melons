@@ -63,6 +63,12 @@
                 <artifactId>tx-stone</artifactId>
                 <version>${lab.version}</version>
             </dependency>
+            <!-- the lab's bench, for the plain car body it shows paint and glass on: taken from there until it has a home -->
+            <dependency>
+                <groupId>com.example.fxsuite.texture</groupId>
+                <artifactId>tx-lab</artifactId>
+                <version>${lab.version}</version>
+            </dependency>
             <!-- its own modules, at its own version -->
             <dependency>
                 <groupId>com.example.fxsuite.places</groupId>

@@ -58,6 +58,10 @@ Stones as they are found or broken, fitted together unshaped.
 
 Stone cut square, to lie in courses.
 
+## Concrete
+
+Cement, sand and stone poured wet and set hard, cast in slabs with a joint between each.
+
 ## Synthetic
 
 Made by a process, not found and not grown.

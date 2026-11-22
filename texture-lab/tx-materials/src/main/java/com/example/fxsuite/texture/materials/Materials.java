@@ -32,7 +32,7 @@ public record Materials() {
     public Taxonomy tree() {
         return new Taxonomy("materials", new Matter(), List.of(new Gold(), new Bronze(),
                 new Titanium(), new Gunmetal(), new Steel(), new CommonRedBrick(), new ChineseGreyBrick(),
-                new Adobe(), new Rubble(), new DressedStone(),
+                new Adobe(), new Rubble(), new DressedStone(), new Concrete(),
                 new Enamel(), new Rubber(), new GlossPaint(), new MetallicPaint(), new Glass(), new LitGlass(),
                 new Flame(),
                 new Rind(), new Water()),
@@ -61,6 +61,9 @@ public record Materials() {
     }
     public record Adobe() implements Leaf<Masonry>, Material { public Masonry parent() { return new Masonry(); } }
     public record Rubble() implements Leaf<Masonry>, Material { public Masonry parent() { return new Masonry(); } }
+    public record Concrete() implements Leaf<Masonry>, Material {
+        public Masonry parent() { return new Masonry(); }
+    }
     public record DressedStone() implements Leaf<Masonry>, Material {
         public Masonry parent() { return new Masonry(); }
     }

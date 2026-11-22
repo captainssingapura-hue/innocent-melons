@@ -14,7 +14,8 @@ import java.util.List;
  *
  * <ul>
  *   <li>its sheets of metal, of the kind {@code body}: the bonnet, the roof and the boot lid, the nose and the tail,
- *       and three along each flank, each a curved patch between the four edges round it; and the frames round
+ *       each a curved patch between the four edges round it; a flank each side, from its belt down to its sill
+ *       and its wheels' arches ({@link CarFlank}); and the frames round
  *       the glass, each a flat face with its windows cut out of it as holes;</li>
  *   <li>its windows, of the kind {@code glass}: each a flat face that fills one of those holes exactly.</li>
  * </ul>
@@ -26,11 +27,13 @@ public record CarFaces(Form skeleton) {
     private static final String BODY = "body";
     private static final String GLASS = "glass";
     /** How many triangles' pairs a patch has along the car or across it, and up a flank. */
-    private static final int LONG = 12;
+    private static final int LONG = 16;
     private static final int HIGH = 6;
+    /** How many pieces the belt is in under the cabin, from the windscreen's foot to the rear window's. */
+    private static final int WAIST = 30;
     /** Somewhere inside the car: every face's outside is the side away from it. */
     private static final double INSIDE = 40;
-    /** How far above the ground its floor lies: enough to be told from the ground, too little to see under. */
+    /** How far above its sills its floor lies: a hair, so the two are told apart where they meet. */
     private static final double LIFTED = 0.5;
 
     /** Its sheets of metal. */
@@ -46,15 +49,48 @@ public record CarFaces(Form skeleton) {
         sheets.add(framed("rear window", boot.bottom(), roof.top()));
         for (final Side side : Side.values()) {
             final String of = ", " + side.called();
-            final Patch door = flank("door panel" + of, "scuttle", "deck", of);
-            sheets.add(flank("front wing" + of, "nose", "scuttle", of).sheet());
-            sheets.add(door.sheet());
-            sheets.add(flank("rear wing" + of, "deck", "tail", of).sheet());
-            sheets.add(Sheet.flat("cabin side" + of, BODY, round(door.top(), roof.edge(side)),
+            final List<Vec3> waist = waist(side, bonnet, boot);
+            sheets.add(new CarFlank(skeleton, side).sheet("flank" + of, belt(side, bonnet, waist, boot)));
+            sheets.add(Sheet.flat("cabin side" + of, BODY, round(waist, roof.edge(side)),
                     List.of(corners("door window" + of), corners("quarter window" + of)),
-                    outward(door.top(), roof.edge(side))));
+                    outward(waist, roof.edge(side))));
         }
         return sheets;
+    }
+
+    /**
+     * What its inside has that its outside has not: its floor, and over each wheel a well running in from the
+     * wheel's arch as far as {@code within} of the car's middle. A plate across each well's inner end, which the
+     * wheels bring ({@link CarWheels#wells}), shuts the wheel off from the inside.
+     */
+    public List<Sheet> inside(final double within) {
+        final Patch bonnet = across("bonnet", "nose belt", "scuttle", LONG);
+        final Patch boot = across("boot lid", "deck", "tail belt", LONG);
+        final List<Sheet> inside = new ArrayList<>(List.of(floor()));
+        for (final Side side : Side.values()) {
+            inside.addAll(new CarFlank(skeleton, side)
+                    .wells(belt(side, bonnet, waist(side, bonnet, boot), boot), within));
+        }
+        return inside;
+    }
+
+    /** The belt under the cabin on one side: so many points, evenly, from the bonnet's corner to the boot's. */
+    private List<Vec3> waist(final Side side, final Patch bonnet, final Patch boot) {
+        final List<Vec3> waist = new ArrayList<>();
+        for (int station = 0; station <= WAIST; station++) {
+            waist.add(bonnet.edge(side).getLast().add(boot.edge(side).getFirst()
+                    .subtract(bonnet.edge(side).getLast()).multiply((double) station / WAIST)));
+        }
+        waist.set(WAIST, boot.edge(side).getFirst());
+        return waist;
+    }
+
+    /** The belt on one side from the nose's corner to the tail's: the bonnet's edge, the cabin's foot, the boot's. */
+    private List<Vec3> belt(final Side side, final Patch bonnet, final List<Vec3> waist, final Patch boot) {
+        final List<Vec3> belt = new ArrayList<>(bonnet.edge(side));
+        belt.addAll(waist.subList(1, waist.size()));
+        belt.addAll(boot.edge(side).subList(1, boot.edge(side).size()));
+        return belt;
     }
 
     /** Its windows. */
@@ -74,20 +110,20 @@ public record CarFaces(Form skeleton) {
     }
 
     /**
-     * Its floor, which only its inside has: a flat face within its sills, a hair above the ground it stands on,
+     * Its floor, which only its inside has: a flat face within its sills, a hair above them,
      * facing up. Without it, whoever looks in at a window sees the ground under the car.
      */
     public Sheet floor() {
+        // round its sills, straight past each wheel's arch: the floor is flat, and does not climb over a wheel
         final List<Vec3> outline = new ArrayList<>(run("nose sill, left", "nose sill, right"));
-        for (final String[] along : List.of(new String[] {"nose", "scuttle"}, new String[] {"scuttle", "deck"},
-                new String[] {"deck", "tail"})) {
-            outline.addAll(run(along[0] + " sill, right", along[1] + " sill, right"));
+        for (final String station : List.of("scuttle")) {
+            outline.add(skeleton.at(vertex(station + " sill, right")));
         }
         outline.addAll(run("tail sill, right", "tail sill, left"));
-        for (final String[] along : List.of(new String[] {"tail", "deck"}, new String[] {"deck", "scuttle"},
-                new String[] {"scuttle", "nose"})) {
-            outline.addAll(run(along[0] + " sill, left", along[1] + " sill, left"));
+        for (final String station : List.of("scuttle")) {
+            outline.add(skeleton.at(vertex(station + " sill, left")));
         }
+        outline.add(outline.getFirst());
         final List<Vec3> lifted = new ArrayList<>();
         for (final Vec3 point : outline) {
             // where one edge ends the next begins: the point they share is taken once
@@ -104,19 +140,6 @@ public record CarFaces(Form skeleton) {
         return new Patch(Sheet.patch(called, BODY, run(foot + ", left", foot + ", right"),
                 run(foot + ", right", head + ", right"), run(head + ", left", head + ", right"),
                 run(foot + ", left", head + ", left"), LONG, deep, new Vec3(0, 0, INSIDE)), LONG, deep);
-    }
-
-    /** A patch of one flank, from the post or corner at {@code first} back to the one at {@code second}. */
-    private Patch flank(final String called, final String first, final String second, final String of) {
-        final String low = " sill" + of;
-        return new Patch(Sheet.patch(called, BODY, run(first + low, second + low),
-                run(second + low, high(second) + of), run(high(first) + of, high(second) + of),
-                run(first + low, high(first) + of), LONG, HIGH, new Vec3(0, 0, INSIDE)), LONG, HIGH);
-    }
-
-    /** What the vertex over the sill at {@code station} is called: the belt at the car's ends, itself between. */
-    private String high(final String station) {
-        return station.equals("nose") || station.equals("tail") ? station + " belt" : station;
     }
 
     /** The frame round the window called {@code window}: the flat face between a foot and a head, less the window. */

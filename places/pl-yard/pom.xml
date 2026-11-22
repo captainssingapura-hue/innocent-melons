@@ -47,6 +47,10 @@
             <artifactId>tx-stone</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.example.fxsuite.texture</groupId>
+            <artifactId>tx-lab</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>

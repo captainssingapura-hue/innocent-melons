@@ -49,6 +49,8 @@ public final class MaterialView implements AutoCloseable {
     private final Map<Shape, Shaped> glazing = new EnumMap<>(Shape.class);
     /** The insides of the shapes that are hollow and looked into: drawn in rubber, dark, whatever is on show. */
     private final Map<Shape, Shaped> lining = new EnumMap<>(Shape.class);
+    /** What else a shape is fitted with, each part by the material it is always of: a car's tyres and wheels. */
+    private final Map<Shape, Map<Material, Shaped>> fitting = new EnumMap<>(Shape.class);
     private final Cast cast;
     private final Shadows shadows;
     /** What undoes each thing made here, in the order it was made. */
@@ -77,6 +79,11 @@ public final class MaterialView implements AutoCloseable {
                     final Shaped skin = new Shaped(card, laid, inside);
                     closing.add(skin::close);
                     lining.put(shape, skin);
+                });
+                shape.fitted().forEach((material, part) -> {
+                    final Shaped sent = new Shaped(card, laid, part);
+                    closing.add(sent::close);
+                    fitting.computeIfAbsent(shape, fitted -> new LinkedHashMap<>()).put(material, sent);
                 });
             }
             this.cast = new Cast(card, laid);
@@ -112,14 +119,17 @@ public final class MaterialView implements AutoCloseable {
     }
 
     /**
-     * The shapes on show, drawn by {@code pass}. First whatever hides what is behind it: each shape in the
-     * material on show, unless that is seen through, and the inside of each that has one. Then whatever is seen
+     * The shapes on show, drawn by {@code pass}. First whatever hides what is behind it: what each shape is
+     * fitted with, each shape in the material on show, unless that is seen through, and the inside of each that
+     * has one. Then whatever is seen
      * through, the shape furthest from the eye first, so that each is laid over what is behind it: a shape in a
      * material that is seen through, and the windows of each shape that has any.
      */
     private void stood(final Pass pass, final OnShow shown, final Stand stand, final Camera camera) {
         final Looked look = looks.get(shown.material());
         for (final Shape shape : stand.shown()) {
+            fitting.getOrDefault(shape, Map.of()).forEach((material, part) -> looks.get(material)
+                    .drawn(pass, part, new Mat4(stand.stands(shape)), camera, shown.further()));
             if (!look.seenThrough()) {
                 look.drawn(pass, shapes.get(shape), new Mat4(stand.stands(shape)), camera, shown.further(),
                         shown.tint());

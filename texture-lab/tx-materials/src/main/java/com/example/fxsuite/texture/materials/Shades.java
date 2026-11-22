@@ -31,6 +31,7 @@ public record Shades() {
             case Materials.Adobe adobe -> Brickwork.ADOBE.wall().surface();
             case Materials.Rubble rubble -> new RubbleWall().surface();
             case Materials.DressedStone stone -> new CoursedStone().wall().surface();
+            case Materials.Concrete concrete -> new CastConcrete().surface();
             case Materials.Enamel enamel -> Tone.SHELL.surface();
             case Materials.Rubber rubber -> Tone.JOINT.surface();
             case Materials.GlossPaint paint -> new Lacquer().surface();

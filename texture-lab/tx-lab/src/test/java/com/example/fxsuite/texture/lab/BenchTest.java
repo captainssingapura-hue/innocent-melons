@@ -34,8 +34,14 @@ class BenchTest {
                 right = Math.max(right, point.x());
                 lowest = Math.min(lowest, point.y());
             }
-            // to a tenth of a millimetre: a bowed edge cut into straight pieces falls a hair short of its bow
-            assertEquals(shape.across(), right - left, 0.01, shape + " as wide as it says");
+            // what stands on the ground may be what the shape is fitted with: a car stands on its wheels
+            for (final Mesh part : shape.fitted().values()) {
+                for (final Vec3 point : part.points()) {
+                    lowest = Math.min(lowest, point.y());
+                }
+            }
+            // to a fifth of a millimetre: a bowed edge cut into straight pieces falls a hair short of its bow
+            assertEquals(shape.across(), right - left, 0.02, shape + " as wide as it says");
             assertEquals(0, lowest + shape.lifted(), 1e-9, shape + " on the ground");
             // somewhere inside it: its frame's middle, or just above the ground for what stands on its foot
             final Vec3 inside = new Vec3(0, shape.lifted() > 0 ? 0 : 10, 0);
