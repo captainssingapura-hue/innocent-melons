@@ -3,18 +3,26 @@ package melons.innocent.building.generic;
 import java.util.List;
 
 /**
- * A storey's plan of its structure: its shear walls, each a straight line in plan, so thick; and its slabs, each a
- * rectangle in plan. The same plan, storey on storey, is the building: its walls raised from each floor to the slab
- * over it ({@link Raised}). In centimetres, across and along, its front toward along.
+ * A storey's plan: its structure, its shear walls, each a straight line in plan so thick, and its slabs, each a
+ * rectangle in plan; and its cover, the walls that close it in from outside and hold nothing up, each a straight run
+ * in plan, so thick, of its kind. The same plan, storey on storey, is the building ({@link Raised}). In centimetres,
+ * across and along, its front toward along.
  *
- * @param walls its shear walls
- * @param slabs its slabs
+ * @param walls  its shear walls
+ * @param slabs  its slabs
+ * @param covers its cover
  */
-public record FloorPlan(List<Wall> walls, List<Slab> slabs) {
+public record FloorPlan(List<Wall> walls, List<Slab> slabs, List<Cover> covers) {
 
     public FloorPlan {
         walls = List.copyOf(walls);
         slabs = List.copyOf(slabs);
+        covers = List.copyOf(covers);
+    }
+
+    /** Its structure, bare: no cover. */
+    public FloorPlan(final List<Wall> walls, final List<Slab> slabs) {
+        this(walls, slabs, List.of());
     }
 
     /**
@@ -57,5 +65,24 @@ public record FloorPlan(List<Wall> walls, List<Slab> slabs) {
                         + ".." + z1);
             }
         }
+    }
+
+    /** What a run of cover is. */
+    public enum Kind {
+        /** A wall with a window as wide as the run, a sill wall under it and a band of wall over it. */
+        WINDOWED,
+        /** A wall, its full height, no window in it. */
+        SOLID,
+        /** A wall half a storey high, along an open edge: an access balcony's. */
+        PARAPET
+    }
+
+    /**
+     * A run of cover in plan: its wall, along its middle line, so thick, of its kind.
+     *
+     * @param wall what it runs along, and how thick it is
+     * @param kind what it is
+     */
+    public record Cover(Wall wall, Kind kind) {
     }
 }

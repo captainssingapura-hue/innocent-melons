@@ -1,5 +1,6 @@
 package melons.innocent.building.generic;
 
+import com.example.fxsuite.avatar.build.Material;
 import com.example.fxsuite.avatar.build.Point;
 import com.example.fxsuite.avatar.build.Solid;
 import com.example.fxsuite.building.Structure;
@@ -10,6 +11,7 @@ import com.example.fxsuite.historian.Civilization;
 import com.example.fxsuite.historian.CommonEras;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,16 +19,18 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The slab block and the point block as bare structure: nothing wrong with either; each storey its plan's walls, its
- * slabs over them, the topmost its roof; as high as its storeys, the first 3.6 m and the rest 2.8 m; the slab block as
- * long as its flats and cores, a core at each end and between each group; the point block square, its core closed and
- * four party walls out from it; and blocks too big refused.
+ * The slab block and the point block, their structure and their cover: nothing wrong with either; each storey its
+ * plan's walls, its slabs over them, the topmost its roof; as high as its storeys, the first 3.6 m and the rest 2.8 m;
+ * the slab block as long as its flats and cores, a core at each end and between each group; the point block four
+ * executive flats on their pillars, round their lobby, clear of one another; covered above the void deck in brick,
+ * the slab block's windows as wide as each flat's back, the access balcony guarded half a storey high; and blocks too
+ * big or too small refused.
  */
 class BlocksTest {
 
     private final SlabBlockSpec<Civilization, CommonEras.Modern> slab = new SlabBlockSpec<>(12, 750, 1_200, 180, 6,
             12);
-    private final PointBlockSpec<Civilization, CommonEras.Modern> point = new PointBlockSpec<>(20, 1_900, 800);
+    private final PointBlockSpec<Civilization, CommonEras.Modern> point = new PointBlockSpec<>(20, 900);
 
     @Test
     void theSlabBlockItsBaysItsCoresItsStoreys() {
@@ -46,16 +50,30 @@ class BlocksTest {
     }
 
     @Test
-    void thePointBlockSquareItsCoreClosedFourPartyWalls() {
+    void thePointBlockFourExecutiveFlatsRoundTheirLobby() {
         final Structure block = new GenericPointBlock().build(point);
         assertEquals(List.of(), block.problems());
-        assertEquals(8, new GenericPointBlock().plan(point).walls().size());
-        assertEquals(20 * 8, block.solids(new Elements.BearingWall()).size());
+        final FloorPlan plan = new GenericPointBlock().plan(point);
+        final List<FloorPlan.Wall> pillars = new ExecutiveFlat().walls();
+        assertEquals(19, pillars.size(), "as the board's plan has them");
+        assertTrue(pillars.stream().allMatch(w -> w.thick() == ExecutiveFlat.PILLAR && w.length() <= 180),
+                "blades 30 cm thick, none longer than 1.8 m");
+        // each flat's pillars, and the lobby's wall its side, in two, either side of its door; the shaft's four
+        assertEquals(4 * (pillars.size() + 2) + 4, plan.walls().size());
+        assertEquals(20 * plan.walls().size(), block.solids(new Elements.BearingWall()).size());
+        final List<FloorPlan.Slab> slabs = plan.slabs();
+        for (int i = 0; i < slabs.size(); i++) {
+            for (int j = i + 1; j < slabs.size(); j++) {
+                assertTrue(apart(slabs.get(i), slabs.get(j)), "the flats clear one another and the lobby");
+            }
+        }
         final double[] size = size(block.solids());
-        assertEquals(1_900, size[0], 1e-6);
-        assertEquals(1_900, size[1], 1e-6);
+        final double reach = 2 * (ExecutiveFlat.LOBBY + 450);
+        assertEquals(reach, size[0], 1e-6, "a flat each side, the lobby between");
+        assertEquals(reach, size[1], 1e-6);
         assertEquals(360 + 19 * 280 + GenericPointBlock.SLAB, size[2], 1e-6);
-        assertThrows(IllegalArgumentException.class, () -> new PointBlockSpec<>(20, 1_900, 1_000));
+        assertThrows(IllegalArgumentException.class, () -> new PointBlockSpec<>(20, 800));
+        assertThrows(IllegalArgumentException.class, () -> new PointBlockSpec<>(20, 1_300));
         assertThrows(IllegalArgumentException.class, () -> new SlabBlockSpec<>(12, 750, 1_200, 180, 6, 31));
     }
 
@@ -70,6 +88,42 @@ class BlocksTest {
         final Point end = wall.corners().get(1);
         assertEquals(500, Math.hypot(end.across() - a.across(), end.along() - a.along()), 1e-9, "so long along it");
         assertTrue(wall.corners().get(4).up() > a.up());
+    }
+
+    @Test
+    void coveredAboveTheVoidDeckInBrickTheirWindowsAsWideAsTheFlats() {
+        final Structure block = new GenericSlabBlock().build(slab);
+        final List<Solid> cover = new ArrayList<>(block.solids(new Elements.Wall()));
+        cover.addAll(block.solids(new Elements.Window()));
+        cover.addAll(block.solids(new Elements.Parapet()));
+        assertTrue(cover.stream().allMatch(s -> s.corners().stream().allMatch(p -> p.up() >= GenericSlabBlock.GROUND
+                - 1e-6)), "nothing on the void deck");
+        assertTrue(block.solids(new Elements.Wall()).stream().allMatch(s -> s.material() == Material.BRICK));
+        final List<Solid> parapets = block.solids(new Elements.Parapet());
+        assertEquals(11, parapets.size(), "the access balcony guarded on every storey over the void deck");
+        assertTrue(parapets.stream().allMatch(p -> Math.abs(height(p) - 100) < 1e-6), "half a storey high");
+        // each flat's back a window as wide as it, between its party walls: 7.3 m, five panes, eleven storeys
+        final long panes = block.solids(new Elements.Window()).stream().filter(s -> s.material() == Material.GLASS)
+                .count();
+        assertEquals(11 * 12 * 5, panes);
+        final Structure tower = new GenericPointBlock().build(point);
+        final long round = tower.solids(new Elements.Window()).stream().filter(s -> s.material() == Material.GLASS)
+                .count();
+        assertTrue(round > 0 && round % (4 * 19) == 0, "the four flats alike, on nineteen storeys");
+        assertEquals(List.of(), block.problems());
+        assertEquals(List.of(), tower.problems());
+    }
+
+    /** Whether {@code a} and {@code b} share no ground, but for an edge. */
+    private boolean apart(final FloorPlan.Slab a, final FloorPlan.Slab b) {
+        return Math.min(a.x1(), b.x1()) - Math.max(a.x0(), b.x0()) < 1e-6
+                || Math.min(a.z1(), b.z1()) - Math.max(a.z0(), b.z0()) < 1e-6;
+    }
+
+    /** How high {@code solid} is, its top over its bottom. */
+    private double height(final Solid solid) {
+        final double low = solid.corners().stream().mapToDouble(Point::up).min().orElseThrow();
+        return solid.corners().stream().mapToDouble(Point::up).max().orElseThrow() - low;
     }
 
     /** How far {@code solids} reach across, along and up, all told. */

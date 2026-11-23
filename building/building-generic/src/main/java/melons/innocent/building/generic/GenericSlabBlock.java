@@ -16,8 +16,11 @@ import java.util.List;
  * length, bays in turn: a core, so many flats, a core, and so on, a core at each end; a party wall between every two
  * bays, front to back, the end ones its gables; each core closed behind by a wall, a shaft for its stairs and lifts;
  * a spine wall along the whole of it between its flats and its corridor; each storey's slab over flats and corridor
- * alike. Its first storey 3.6 m, open below as a void deck, the rest 2.8 m, as the board's own guide gives them; its
- * walls and slabs 20 cm. Its front, the corridor's side, toward along.
+ * alike. Covered, above its first storey, in lightweight brick ({@link Covered}): across its back each flat a window
+ * as wide as it is, between its party walls, and behind each core a wall; its corridor an access balcony along its
+ * front, guarded by a parapet half a storey high. Its first storey 3.6 m, open below as a void deck, the rest 2.8 m,
+ * as the board's own guide gives them; its walls and slabs 20 cm, its cover 10 cm. Its front, the corridor's side,
+ * toward along.
  */
 public final class GenericSlabBlock
         implements ThingImpl<Buildings.SlabBlock, Civilization, CommonEras.Modern, SlabBlockSpec<Civilization,
@@ -29,6 +32,7 @@ public final class GenericSlabBlock
     static final double TYPICAL = 280;
     static final double CORE_WIDE = 600;
     static final double CORE_DEEP = 700;
+    static final double COVER = 10;
 
     @Override
     public Buildings.SlabBlock thing() {
@@ -50,7 +54,11 @@ public final class GenericSlabBlock
         return new Raised(SLAB).of(plan(s), s.storeys(), GROUND, TYPICAL);
     }
 
-    /** {@code s}'s floor plan: its bays' party walls, its cores' back walls, its spine wall, and its slab. */
+    /**
+     * {@code s}'s floor plan: its bays' party walls, its cores' back walls, its spine wall and its slab; and its cover,
+     * a window as wide as each flat across its back, the back closed behind each core, and a parapet along its access
+     * balcony.
+     */
     public FloorPlan plan(final SlabBlockSpec<?, ?> s) {
         final List<double[]> bays = new ArrayList<>();
         int left = s.flats();
@@ -66,17 +74,25 @@ public final class GenericSlabBlock
         final double length = bays.stream().mapToDouble(bay -> bay[0]).sum();
         final double deep = s.flatDeep();
         final List<FloorPlan.Wall> walls = new ArrayList<>();
+        final List<FloorPlan.Cover> covers = new ArrayList<>();
         double x = -length / 2;
         walls.add(new FloorPlan.Wall(x, -deep, x, 0, WALL, "gable"));
         for (int b = 0; b < bays.size(); b++) {
             final double next = x + bays.get(b)[0];
-            if (bays.get(b)[1] == 1) {
+            final boolean core = bays.get(b)[1] == 1;
+            if (core) {
                 walls.add(new FloorPlan.Wall(x, -CORE_DEEP, next, -CORE_DEEP, WALL, "core's back wall"));
             }
+            covers.add(new FloorPlan.Cover(new FloorPlan.Wall(x + WALL / 2, -deep + COVER / 2, next - WALL / 2,
+                    -deep + COVER / 2, COVER, core ? "back wall behind a core" : "back wall"),
+                    core ? FloorPlan.Kind.SOLID : FloorPlan.Kind.WINDOWED));
             walls.add(new FloorPlan.Wall(next, -deep, next, 0, WALL, b + 1 == bays.size() ? "gable" : "party wall"));
             x = next;
         }
         walls.add(new FloorPlan.Wall(-length / 2, 0, length / 2, 0, WALL, "spine wall"));
-        return new FloorPlan(walls, List.of(new FloorPlan.Slab(-length / 2, -deep, length / 2, s.corridor())));
+        covers.add(new FloorPlan.Cover(new FloorPlan.Wall(-length / 2, s.corridor() - COVER / 2, length / 2,
+                s.corridor() - COVER / 2, COVER, "access balcony's parapet"), FloorPlan.Kind.PARAPET));
+        return new FloorPlan(walls, List.of(new FloorPlan.Slab(-length / 2, -deep, length / 2, s.corridor())),
+                covers);
     }
 }
