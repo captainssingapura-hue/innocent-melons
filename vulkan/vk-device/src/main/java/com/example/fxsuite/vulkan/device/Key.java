@@ -16,6 +16,10 @@ public enum Key {
     E(GLFW_KEY_E, GLFW_KEY_E),
     C(GLFW_KEY_C, GLFW_KEY_C),
     F(GLFW_KEY_F, GLFW_KEY_F),
+    /** Faster, flying only. */
+    R(GLFW_KEY_R, GLFW_KEY_R),
+    /** Slower, flying only. */
+    V(GLFW_KEY_V, GLFW_KEY_V),
     SPACE(GLFW_KEY_SPACE, GLFW_KEY_SPACE),
     ESCAPE(GLFW_KEY_ESCAPE, GLFW_KEY_ESCAPE),
     /** Either Shift. */

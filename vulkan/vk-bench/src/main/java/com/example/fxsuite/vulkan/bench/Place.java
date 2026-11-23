@@ -15,6 +15,30 @@ public interface Place extends AutoCloseable {
     /** What is in the avatar's way. */
     Obstacles inTheWay();
 
+    /**
+     * Whether it stands on the flat ground every walk has, level at nothing: yes, but for a place that brings its own
+     * land, which the flat ground would cut through.
+     */
+    default boolean onTheFlat() {
+        return true;
+    }
+
+    /**
+     * Made ready for a frame seen by {@code camera}, before any of it is drawn: what is to be put on the card, or
+     * taken off it, for that view, while nothing is being drawn. Most places stand as they are, and do nothing here.
+     */
+    default void readied(final Camera camera) {
+    }
+
+    /**
+     * Whether, readied for the last view, everything to be drawn of it is on the card: yes, for a place put on the
+     * card whole when it is made; a place that streams onto it as the eye moves says no till it has caught up. A film
+     * waits for it before each frame, so no frame shows land not yet come.
+     */
+    default boolean settled() {
+        return true;
+    }
+
     /** What stands there, drawn by {@code pass} as {@code camera} sees it: all of it that hides what is behind it. */
     void drawn(Pass pass, Camera camera);
 

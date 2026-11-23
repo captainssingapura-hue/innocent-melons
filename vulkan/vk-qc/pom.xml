@@ -41,6 +41,11 @@
             <artifactId>vk-bench</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-flight</artifactId>
+            <scope>test</scope>
+        </dependency>
         <!-- CQ: the scan and its basic rules -->
         <dependency>
             <groupId>io.github.captainssingapura-hue.homing.cq</groupId>

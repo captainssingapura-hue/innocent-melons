@@ -1,4 +1,4 @@
-package melons.innocent.terrain.bench;
+package melons.innocent.terrain.drawn;
 
 import melons.innocent.terrain.Ground;
 import melons.innocent.terrain.Sample;

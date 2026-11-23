@@ -1,4 +1,4 @@
-package melons.innocent.terrain.bench;
+package melons.innocent.terrain.drawn;
 
 import com.example.fxsuite.texture.materials.Materials;
 import melons.innocent.terrain.Sample;

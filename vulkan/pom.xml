@@ -40,6 +40,8 @@
         <module>vk-render</module>
         <!-- The renderer's own bench: its subjects, the watermelon first, and Java's working of their picture. -->
         <module>vk-bench</module>
+        <!-- Flying only: a figure on its jets over any place, kept above the ground below it; no other physics. -->
+        <module>vk-flight</module>
         <!-- The gates: CQ's basic rules and the layers, over every module here. -->
         <module>vk-qc</module>
     </modules>
@@ -71,6 +73,11 @@
             <dependency>
                 <groupId>com.example.fxsuite.vulkan</groupId>
                 <artifactId>vk-bench</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example.fxsuite.vulkan</groupId>
+                <artifactId>vk-flight</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <!-- LWJGL: Vulkan, the window it is shown in, and the standard shader compiler -->

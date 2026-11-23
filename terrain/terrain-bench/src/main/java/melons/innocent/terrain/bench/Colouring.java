@@ -1,5 +1,7 @@
 package melons.innocent.terrain.bench;
 
+import melons.innocent.terrain.drawn.Painting;
+
 import java.util.concurrent.atomic.AtomicReference;
 
 /**

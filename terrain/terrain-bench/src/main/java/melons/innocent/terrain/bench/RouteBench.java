@@ -1,5 +1,9 @@
 package melons.innocent.terrain.bench;
 
+import melons.innocent.terrain.drawn.TiledLand;
+import melons.innocent.terrain.drawn.Painting;
+import melons.innocent.terrain.drawn.ByMaterials;
+
 import com.example.fxsuite.vulkan.device.Canvas;
 import com.example.fxsuite.vulkan.device.Card;
 import com.example.fxsuite.vulkan.device.Desk;
@@ -216,7 +220,7 @@ public final class RouteBench {
         final Camera camera = flight.camera(FIELD, NEAR);
         final double aspect = (double) target.width() / target.height();
         target.drawn(day.sky(), new Framed(laid, camera, day.light()).filling(aspect),
-                pass -> land.drawn(pass, flight, camera));
+                pass -> land.drawn(pass, flight.land(), camera));
     }
 
     /** The route the bench's properties give, if any, and whether to set going at once. */

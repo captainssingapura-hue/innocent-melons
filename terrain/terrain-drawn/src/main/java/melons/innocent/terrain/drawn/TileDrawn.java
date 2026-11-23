@@ -1,4 +1,4 @@
-package melons.innocent.terrain.bench;
+package melons.innocent.terrain.drawn;
 
 import com.example.fxsuite.vulkan.device.Card;
 import com.example.fxsuite.vulkan.device.Pass;
@@ -42,9 +42,9 @@ public final class TileDrawn implements AutoCloseable {
         return meshes.carded();
     }
 
-    /** Drawn in {@code pass}, its layers in {@code looks}, as {@code flight} has the land, seen by {@code camera}. */
-    public void drawn(final Pass pass, final Looks looks, final Flight flight, final Camera camera) {
-        final Mat4 stands = flight.land().times(new Mat4(meshes.corner()));
+    /** Drawn in {@code pass}, in {@code looks}, the land where {@code land} stands it, to {@code camera}. */
+    public void drawn(final Pass pass, final Looks looks, final Mat4 land, final Camera camera) {
+        final Mat4 stands = land.times(new Mat4(meshes.corner()));
         sheets.forEach((layer, sheet) -> looks.of(layer).drawn(pass, sheet, stands, camera, 1));
         if (water != null) {
             looks.of(waterLayer).drawn(pass, water, stands, camera, 1);

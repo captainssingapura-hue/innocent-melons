@@ -1,4 +1,4 @@
-package melons.innocent.terrain.bench;
+package melons.innocent.terrain.drawn;
 
 import com.example.fxsuite.vulkan.term.Colour;
 import com.example.fxsuite.vulkan.term.Surface;

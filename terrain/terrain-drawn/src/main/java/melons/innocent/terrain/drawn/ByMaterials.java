@@ -1,4 +1,4 @@
-package melons.innocent.terrain.bench;
+package melons.innocent.terrain.drawn;
 
 import com.example.fxsuite.existence.Earthworks;
 import com.example.fxsuite.existence.Features;

@@ -1,0 +1,53 @@
+package com.example.fxsuite.vulkan.bench;
+
+import com.example.fxsuite.avatar.hear.Hearing;
+import com.example.fxsuite.avatar.sim.Obstacles;
+import com.example.fxsuite.vulkan.bench.subject.Courier;
+import com.example.fxsuite.vulkan.space.Vec3;
+import com.example.fxsuite.vulkan.view.Camera;
+
+import java.util.List;
+
+/**
+ * What moves the figures a walk draws: stepped in fixed steps, each as its source tells it, and read between its
+ * last two steps to be drawn. The walk's loop and its film maker speak to this and to nothing behind it, so the same
+ * windows, light, shadows, kept runs and films serve whatever moves: the engine's own avatar on its feet and its
+ * jets ({@link Company}), or anything else that is stepped so. In the renderer's frame, height counted up,
+ * centimetres and degrees.
+ */
+public interface Roaming {
+
+    /** What is in the way of everyone moving, from now on. */
+    void inTheWay(Obstacles blocks);
+
+    /** Taken on by the steps {@code seconds} earn; how far on the next step is, for drawing between the last two. */
+    double stepped(double seconds);
+
+    /** Whether it has nothing more to be told. */
+    boolean over();
+
+    /** Whether it ends of itself, as a script or a kept run does. */
+    boolean ends();
+
+    /** How long it is, in seconds of its own time; of someone playing, no end. */
+    double seconds();
+
+    /** Where the lead's eye is, {@code blend} of the way between its last two steps. */
+    Vec3 head(double blend);
+
+    /** Which way round the lead is turned, so far, in degrees. */
+    double yaw(double blend);
+
+    /** The camera as the one moving it would have it: following the lead. */
+    Camera camera(double blend);
+
+    /** The spot on the ground under the lead, for the sun's picture to be drawn round. */
+    Vec3 foot(double blend);
+
+    /** Every figure's parts, as they are drawn. */
+    List<Courier.Placed> figures(double blend);
+
+    /** What has happened since this was last asked, heard as the lead would hear it: nothing, of most. */
+    default void heard(final Hearing hearing, final double blend) {
+    }
+}

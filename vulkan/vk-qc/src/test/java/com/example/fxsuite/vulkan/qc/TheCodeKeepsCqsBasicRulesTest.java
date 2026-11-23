@@ -1,6 +1,7 @@
 package com.example.fxsuite.vulkan.qc;
 
 import com.example.fxsuite.vulkan.bench.subject.Watermelon;
+import com.example.fxsuite.vulkan.flight.Aloft;
 import com.example.fxsuite.vulkan.device.Card;
 import com.example.fxsuite.vulkan.render.Formed;
 import com.example.fxsuite.vulkan.space.Vec3;
@@ -38,12 +39,14 @@ class TheCodeKeepsCqsBasicRulesTest {
             return List.of(Path.of("..", "vk-drawing", "src", "main", "java").toAbsolutePath().normalize(),
                     Path.of("..", "vk-device", "src", "main", "java").toAbsolutePath().normalize(),
                     Path.of("..", "vk-render", "src", "main", "java").toAbsolutePath().normalize(),
-                    Path.of("..", "vk-bench", "src", "main", "java").toAbsolutePath().normalize());
+                    Path.of("..", "vk-bench", "src", "main", "java").toAbsolutePath().normalize(),
+                    Path.of("..", "vk-flight", "src", "main", "java").toAbsolutePath().normalize());
         }
     }
 
     /** One class of each module the scan must read. */
-    private final List<Class<?>> modules = List.of(Vec3.class, Card.class, Formed.class, Watermelon.class);
+    private final List<Class<?>> modules = List.of(Vec3.class, Card.class, Formed.class, Watermelon.class,
+            Aloft.class);
 
     private final ScanResult result = Scanner.INSTANCE.scan(new Checked().and(BasicRules.INSTANCE),
             getClass().getClassLoader());

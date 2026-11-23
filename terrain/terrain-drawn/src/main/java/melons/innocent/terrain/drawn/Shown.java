@@ -1,4 +1,4 @@
-package melons.innocent.terrain.bench;
+package melons.innocent.terrain.drawn;
 
 import melons.innocent.terrain.tiles.Chosen;
 import melons.innocent.terrain.tiles.TileKey;

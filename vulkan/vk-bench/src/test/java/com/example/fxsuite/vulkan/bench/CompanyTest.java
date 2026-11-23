@@ -69,6 +69,6 @@ class CompanyTest {
         final Run lead = new Run(new Scripted(led), Optional.empty(), Optional.of(new Skies(new Asked(1))),
                 new Start("0,0,0").body());
         final Run other = new Run(new Scripted(with), Optional.empty(), Optional.empty(), new Start("5,0,0").body());
-        return new Company(lead, Optional.of(new Company.Companion(other, new Bot(Build.WOMAN))));
+        return new Company(lead, new Bot(), Optional.of(new Company.Companion(other, new Bot(Build.WOMAN))));
     }
 }

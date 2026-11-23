@@ -1,4 +1,4 @@
-package melons.innocent.terrain.bench;
+package melons.innocent.terrain.drawn;
 
 import com.example.fxsuite.vulkan.device.Card;
 import com.example.fxsuite.vulkan.render.Looked;

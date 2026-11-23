@@ -41,6 +41,10 @@
             <artifactId>terrain-tiles</artifactId>
         </dependency>
         <dependency>
+            <groupId>melons.innocent.terrain</groupId>
+            <artifactId>terrain-drawn</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.example.fxsuite.vulkan</groupId>
             <artifactId>vk-render</artifactId>
         </dependency>

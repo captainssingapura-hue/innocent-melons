@@ -1,5 +1,7 @@
 package melons.innocent.terrain.bench;
 
+import melons.innocent.terrain.drawn.Painting;
+
 import com.example.fxsuite.vulkan.device.Card;
 import com.example.fxsuite.vulkan.device.Pass;
 import com.example.fxsuite.vulkan.render.Formed;

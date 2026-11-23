@@ -1,5 +1,7 @@
 package melons.innocent.terrain.bench;
 
+import melons.innocent.terrain.drawn.TiledLand;
+
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;

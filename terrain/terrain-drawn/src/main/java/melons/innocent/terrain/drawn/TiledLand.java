@@ -1,8 +1,9 @@
-package melons.innocent.terrain.bench;
+package melons.innocent.terrain.drawn;
 
 import com.example.fxsuite.vulkan.device.Card;
 import com.example.fxsuite.vulkan.device.Pass;
 import com.example.fxsuite.vulkan.shade.Laid;
+import com.example.fxsuite.vulkan.space.Mat4;
 import com.example.fxsuite.vulkan.view.Camera;
 import melons.innocent.terrain.Ground;
 import melons.innocent.terrain.tiles.Chosen;
@@ -194,9 +195,9 @@ public final class TiledLand implements AutoCloseable {
         return on != null && on.chosen().equals(tile);
     }
 
-    /** Its tiles drawn this frame drawn in {@code pass}, as {@code flight} has the land, seen by {@code camera}. */
-    public void drawn(final Pass pass, final Flight flight, final Camera camera) {
-        drawing.forEach(tile -> tile.drawn(pass, looks, flight, camera));
+    /** The tiles of this frame drawn in {@code pass}, the land stood as {@code land} says, seen by {@code camera}. */
+    public void drawn(final Pass pass, final Mat4 land, final Camera camera) {
+        drawing.forEach(tile -> tile.drawn(pass, looks, land, camera));
     }
 
     /** How many tiles are to be shown. */

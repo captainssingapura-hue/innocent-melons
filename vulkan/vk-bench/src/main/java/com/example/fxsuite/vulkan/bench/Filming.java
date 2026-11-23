@@ -1,6 +1,5 @@
 package com.example.fxsuite.vulkan.bench;
 
-import com.example.fxsuite.avatar.sim.Avatar;
 import com.example.fxsuite.vulkan.bench.film.Encoder;
 import com.example.fxsuite.vulkan.bench.film.Shots;
 import com.example.fxsuite.vulkan.device.Canvas;
@@ -21,12 +20,9 @@ import java.util.List;
  */
 public record Filming(double rate, int width, int height, Shots shots) {
 
-    /**
-     * How a frame is drawn: on {@code target}, the lead where {@code shown} has it, as {@code camera} sees it, and
-     * everyone else {@code blend} of the way between their last two steps.
-     */
+    /** How a frame is drawn: on {@code target}, as {@code camera} sees it, everyone {@code blend} of the way on. */
     public interface Drawing {
-        void drawn(Target target, Avatar shown, Camera camera, double blend);
+        void drawn(Target target, Camera camera, double blend);
     }
 
     public Filming {
@@ -41,30 +37,28 @@ public record Filming(double rate, int width, int height, Shots shots) {
     }
 
     /**
-     * {@code company}, from where it stands to its end, drawn on {@code card} by {@code drawing} into
+     * {@code roaming}, from where it stands to its end, drawn on {@code card} by {@code drawing} into
      * {@code encoder}.
      */
-    public void filmed(final Card card, final Company company, final Encoder encoder, final Drawing drawing) {
-        final Run run = company.lead();
-        final Shots ending = shots.endingAt(run.seconds());
+    public void filmed(final Card card, final Roaming roaming, final Encoder encoder, final Drawing drawing) {
+        final Shots ending = shots.endingAt(roaming.seconds());
         try (Canvas canvas = card.canvas(width, height)) {
             double blend = 1;
             long frame = 0;
             while (true) {
-                final Avatar shown = run.shown(blend);
-                final Camera camera = ending.camera(frame / rate, run.head(shown), shown.body().yaw(),
-                        run.following().camera(run.inTheWay(), blend));
-                drawing.drawn(canvas, shown, camera, blend);
+                final Camera camera = ending.camera(frame / rate, roaming.head(blend), roaming.yaw(blend),
+                        roaming.camera(blend));
+                drawing.drawn(canvas, camera, blend);
                 encoder.frame(canvas.pixels());
                 final List<String> said = card.heard();
                 if (!said.isEmpty()) {
                     throw new Refused("the validation layer", String.join("\n", said));
                 }
                 frame++;
-                if (company.over()) {
+                if (roaming.over()) {
                     return;
                 }
-                blend = company.stepped(1 / rate);
+                blend = roaming.stepped(1 / rate);
             }
         }
     }

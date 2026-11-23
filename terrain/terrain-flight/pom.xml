@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.terrain</groupId>
+        <artifactId>terrain</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>terrain-flight</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        The countries flown over: a bot on its jets, flying only, over the Melon country, the meadow round the
+        village, or any country's text (Marina Bay's land, say), the land in tiles as fine as the eye's height and its
+        distance call for, in the lab's materials, lit by the walks' sky and casting its shadows. The flight is the
+        renderer's own (vk-flight); the engine is not stepped, and nothing here is in anyone's way.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>melons.innocent.terrain</groupId>
+            <artifactId>terrain-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.terrain</groupId>
+            <artifactId>terrain-tiles</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.terrain</groupId>
+            <artifactId>terrain-drawn</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.terrain</groupId>
+            <artifactId>melon-country</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.terrain</groupId>
+            <artifactId>meadow-country</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-flight</artifactId>
+            <version>${vulkan.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <!-- mvn -f terrain/pom.xml -pl terrain-flight exec:java flies over the Melon country;
+                     -Dbench.country=meadow the meadow, -Dbench.map= any country's text -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.6.3</version>
+                <configuration>
+                    <mainClass>melons.innocent.terrain.flight.CountryFlight</mainClass>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>-Dorg.lwjgl.util.DebugAllocator=true --enable-native-access=ALL-UNNAMED</argLine>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

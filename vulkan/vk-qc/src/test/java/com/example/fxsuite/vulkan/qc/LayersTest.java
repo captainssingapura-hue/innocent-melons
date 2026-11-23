@@ -31,7 +31,8 @@ class LayersTest {
             "vk-drawing", List.of("space", "sky", "layout", "form", "view", "term", "shade", "worked"),
             "vk-device", List.of("device"),
             "vk-render", List.of("render"),
-            "vk-bench", List.of("bench"));
+            "vk-bench", List.of("bench"),
+            "vk-flight", List.of("flight"));
 
     @Test
     void whatIsWorkedOutWithNoCardTouchesNoCardNoJavaFxAndNoEngine() throws IOException {
@@ -66,6 +67,7 @@ class LayersTest {
         final List<String> wrong = new ArrayList<>();
         forbid(wrong, "vk-render", "render", "org.lwjgl");
         forbid(wrong, "vk-bench", "bench", "org.lwjgl");
+        forbid(wrong, "vk-flight", "flight", "org.lwjgl");
         assertEquals(List.of(), wrong);
     }
 
