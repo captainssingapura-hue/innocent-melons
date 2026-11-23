@@ -16,5 +16,6 @@
 
     <modules>
         <module>body-shop</module>
+        <module>body-vulkan</module>
     </modules>
 </project>

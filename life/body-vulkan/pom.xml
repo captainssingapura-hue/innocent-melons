@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example.fxsuite</groupId>
+    <artifactId>fxsuite-life-body-vulkan</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <description>
+        The body bench on the card: the body shop's body, its skin, its muscles and tendons and its bones, drawn by
+        the card in the material lab's tissues, in daylight, with shadows, still, as the body is bound; each group of
+        its parts drawn as deep as chosen. The body shop knows nothing of the card: this depends on it, never the
+        other way round. mvn -pl life/body-vulkan exec:java
+    </description>
+
+    <properties>
+        <maven.compiler.release>25</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <vulkan.version>0.1.0-SNAPSHOT</vulkan.version>
+        <lab.version>0.1.0-SNAPSHOT</lab.version>
+    </properties>
+
+    <dependencies>
+        <!-- the body: its skin, muscles and bones, as numbers -->
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>fxsuite-life-body-shop</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
+        <!-- what it is drawn in: the material lab's tissues -->
+        <dependency>
+            <groupId>com.example.fxsuite.texture</groupId>
+            <artifactId>tx-materials</artifactId>
+            <version>${lab.version}</version>
+        </dependency>
+        <!-- the card, the renderer and the light's controls -->
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-drawing</artifactId>
+            <version>${vulkan.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-bench</artifactId>
+            <version>${vulkan.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.11.3</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.2</version>
+            </plugin>
+            <plugin>
+                <!-- mvn -pl life/body-vulkan exec:java opens the body bench on the card -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.6.3</version>
+                <configuration>
+                    <mainClass>com.example.fxsuite.life.body.vulkan.BodyBench</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
