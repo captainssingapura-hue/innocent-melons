@@ -19,9 +19,9 @@ import java.util.stream.IntStream;
  * A surface of triangles made a solid, as a field of distances sampled on a grid ({@link Field.Sampled}): near the
  * surface, within {@link #BAND} of it, how far each of the grid's points is from it, less than nothing behind it, the
  * way its nearest triangle faces; further off, only which side it is, as far as the band either way. Which side, for a
- * blank closed but at its neck: outside what is reached from the grid's sides and its top without passing behind the
- * surface; for a piece of a head, the side of the blank it is on. Each triangle writes only the points near it, the
- * grid taken a slab at a time on as many threads as there are.
+ * blank closed but at its neck: inside where a line straight up crosses it an odd number of times ({@link Crossings});
+ * for a piece of a head, the side of the blank it is on. Each triangle writes only the points near it, the grid taken a
+ * slab at a time on as many threads as there are.
  */
 public record MeshSolid() implements StatelessFunctionalObject {
 
@@ -55,7 +55,12 @@ public record MeshSolid() implements StatelessFunctionalObject {
     public Field.Sampled closed(final Mesher.Mesh m, final double cell) {
         final double[] b = bounds(m);
         final Grid g = band(m, new double[] {b[0] - 1, b[1], b[2] - 1, b[3] + 1, b[4] + 1, b[5] + 1}, cell);
-        outside(g);
+        final boolean[] in = Crossings.INSTANCE.inside(m, g.lo(), g.cell(), g.n());
+        for (int at = 0; at < in.length; at++) {
+            if (!g.found()[at]) {
+                g.v()[at] = (float) (in[at] ? -BAND : BAND);
+            }
+        }
         return g.sampled();
     }
 
@@ -198,54 +203,6 @@ public record MeshSolid() implements StatelessFunctionalObject {
             best = best == null || n.distance() < best.distance() ? n : best;
         }
         return side(b, normals, best, mid) < 0 ? 1 : -1;
-    }
-
-    /** What is reached from the grid's sides and top, through what is not behind the surface, made outside. */
-    private void outside(final Grid g) {
-        final int[] n = g.n();
-        final boolean[] out = new boolean[g.v().length];
-        final int[] queue = new int[g.v().length];
-        int head = 0;
-        int tail = 0;
-        for (int k = 0; k < n[2]; k++) {
-            for (int j = 0; j < n[1]; j++) {
-                for (int i = 0; i < n[0]; i++) {
-                    final boolean edge = i == 0 || i == n[0] - 1 || k == 0 || k == n[2] - 1 || j == n[1] - 1;
-                    final int at = g.at(i, j, k);
-                    if (edge && open(g, at)) {
-                        out[at] = true;
-                        queue[tail++] = at;
-                    }
-                }
-            }
-        }
-        while (head < tail) {
-            final int at = queue[head++];
-            final int i = at % n[0];
-            final int j = at / n[0] % n[1];
-            final int k = at / (n[0] * n[1]);
-            final int[][] next = {{i - 1, j, k}, {i + 1, j, k}, {i, j - 1, k}, {i, j + 1, k}, {i, j, k - 1},
-                {i, j, k + 1}};
-            for (final int[] q : next) {
-                if (q[0] >= 0 && q[1] >= 0 && q[2] >= 0 && q[0] < n[0] && q[1] < n[1] && q[2] < n[2]) {
-                    final int to = g.at(q[0], q[1], q[2]);
-                    if (!out[to] && open(g, to)) {
-                        out[to] = true;
-                        queue[tail++] = to;
-                    }
-                }
-            }
-        }
-        for (int at = 0; at < out.length; at++) {
-            if (!g.found()[at]) {
-                g.v()[at] = (float) (out[at] ? BAND : -BAND);
-            }
-        }
-    }
-
-    /** Whether the grid's point {@code at} may be passed through from outside: not found, or found ahead. */
-    private boolean open(final Grid g, final int at) {
-        return !g.found()[at] || g.v()[at] > 0;
     }
 
     /** The lowest and the highest of {@code m}'s points each way. */
