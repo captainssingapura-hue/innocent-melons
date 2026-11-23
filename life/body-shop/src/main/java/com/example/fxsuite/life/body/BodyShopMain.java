@@ -14,7 +14,8 @@ import java.util.Arrays;
  * and the fat under it ({@link com.example.fxsuite.life.body.skin.SkinBench});
  * with {@code bones}, the bone bench, each bone on its own; with {@code assembly},
  * the skeleton put together from its joints, as far as the groups asked; with {@code muscles}, the muscles on the
- * bones ({@link MuscleBench}); with {@code play}, the game, its humanoids offered as the avatar
+ * bones ({@link MuscleBench}); with {@code soft} or {@code fea}, a region to be simulated soft
+ * ({@link com.example.fxsuite.life.body.soft.SoftBench}); with {@code play}, the game, its humanoids offered as the avatar
  * ({@link HumanoidFigure}) beside the courier, the exposed robot chosen unless {@code -Davatar.figure} says
  * otherwise; anything after {@code play} given to the game. Started from a class that is not JavaFX's, so the jar
  * runs with JavaFX on its class path.
@@ -45,6 +46,8 @@ public final class BodyShopMain {
                     com.example.fxsuite.life.body.head.HeadBench.class, args);
             case "assembly" -> javafx.application.Application.launch(AssemblyBench.class, args);
             case "muscles" -> javafx.application.Application.launch(MuscleBench.class, args);
+            case "soft", "fea" -> javafx.application.Application.launch(
+                    com.example.fxsuite.life.body.soft.SoftBench.class, args);
             default -> javafx.application.Application.launch(BodyShopBench.class, args);
         }
     }
