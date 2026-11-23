@@ -1,6 +1,7 @@
 package melons.innocent.vehicles.osprey;
 
 import com.example.fxsuite.vulkan.form.Forming;
+import com.example.fxsuite.vulkan.form.Lofting;
 import com.example.fxsuite.vulkan.form.Mesh;
 import com.example.fxsuite.vulkan.space.Vec3;
 

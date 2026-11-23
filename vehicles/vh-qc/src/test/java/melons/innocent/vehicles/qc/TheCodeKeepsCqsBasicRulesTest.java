@@ -9,6 +9,7 @@ import com.homing_labs.cq.scan.Scanner;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import melons.innocent.vehicles.drawn.OspreyDrawn;
 import melons.innocent.vehicles.osprey.Osprey;
+import melons.innocent.vehicles.boat.RiverBoat;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
@@ -34,12 +35,13 @@ class TheCodeKeepsCqsBasicRulesTest {
         @Override
         public List<Path> sources() {
             return List.of(Path.of("..", "vh-osprey", "src", "main", "java").toAbsolutePath().normalize(),
+                    Path.of("..", "vh-boat", "src", "main", "java").toAbsolutePath().normalize(),
                     Path.of("..", "vh-drawn", "src", "main", "java").toAbsolutePath().normalize());
         }
     }
 
     /** One class of each module the scan must read. */
-    private final List<Class<?>> modules = List.of(Osprey.class, OspreyDrawn.class);
+    private final List<Class<?>> modules = List.of(Osprey.class, RiverBoat.class, OspreyDrawn.class);
 
     private final ScanResult result = Scanner.INSTANCE.scan(new Checked().and(BasicRules.INSTANCE),
             getClass().getClassLoader());

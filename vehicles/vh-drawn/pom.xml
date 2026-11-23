@@ -14,8 +14,9 @@
     <packaging>jar</packaging>
 
     <description>
-        A vehicle on the card: the Osprey's parts sent once, each in the material lab's material for what it is
-        finished in, drawn where its flight says, its nacelles turned and its rotors round; the airframe a flight flies.
+        A vehicle on the card: the Osprey's parts and the river boat's sent once, each in the material lab's material for
+        what it is finished in, drawn where its flight or cruise says: the airframe a flight flies, the vessel a cruise
+        drives.
     </description>
 
     <dependencies>
@@ -24,8 +25,16 @@
             <artifactId>vh-osprey</artifactId>
         </dependency>
         <dependency>
+            <groupId>melons.innocent.vehicles</groupId>
+            <artifactId>vh-boat</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.example.fxsuite.vulkan</groupId>
             <artifactId>vk-flight</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-afloat</artifactId>
         </dependency>
         <dependency>
             <groupId>com.example.fxsuite.texture</groupId>

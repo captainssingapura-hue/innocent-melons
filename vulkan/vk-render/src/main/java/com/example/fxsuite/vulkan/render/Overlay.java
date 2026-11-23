@@ -44,7 +44,9 @@ public final class Overlay implements AutoCloseable {
             this.light = kept(new Looked(card, new Look(laid, new Surface(new Colour("#000000"), List.of(),
                     new Colour("#000000"), 1).glowing(new Tint().colour()).clear(1 - HIDES))));
             final Forming forming = new Forming(new Vec3(0, 0, -1));
-            lettering.barred(forming, new Vec3(0, 0, 0), new Vec3(1, 0, 0), 1);
+            // a unit square, from nothing to one along and half either side across: a bar of no length, which its
+            // square ends make a unit long (a bar a unit long would be two, half a unit past either end)
+            lettering.barred(forming, new Vec3(0.5, 0, 0), new Vec3(0.5, 0, 0), 1);
             this.bar = kept(new Shaped(card, laid, forming.formed()));
             for (final char letter : "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-+.:/|<>[]%*".toCharArray()) {
                 letters.put(letter, kept(new Shaped(card, laid, lettering.form(letter))));
@@ -98,8 +100,10 @@ public final class Overlay implements AutoCloseable {
             final double length = Math.hypot(dx, dy);
             final double c = length > 0 ? dx / length : 1;
             final double s = length > 0 ? dy / length : 0;
-            final Mat4 placed = screen.times(new Mat4(new double[] {c * length, -s * thick, 0, x0,
-                s * length, c * thick, 0, y0, 0, 0, 1, 0, 0, 0, 0, 1}));
+            // squared off half its thickness past either end, so a box's corners meet
+            final double reach = length + thick;
+            final Mat4 placed = screen.times(new Mat4(new double[] {c * reach, -s * thick, 0, x0 - c * thick / 2,
+                s * reach, c * thick, 0, y0 - s * thick / 2, 0, 0, 1, 0, 0, 0, 0, 1}));
             light.drawn(pass, bar, placed, camera, 1, colour);
         }
 

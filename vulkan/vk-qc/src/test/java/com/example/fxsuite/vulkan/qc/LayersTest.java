@@ -32,7 +32,8 @@ class LayersTest {
             "vk-device", List.of("device"),
             "vk-render", List.of("render"),
             "vk-bench", List.of("bench"),
-            "vk-flight", List.of("flight"));
+            "vk-flight", List.of("flight"),
+            "vk-afloat", List.of("afloat"));
 
     @Test
     void whatIsWorkedOutWithNoCardTouchesNoCardNoJavaFxAndNoEngine() throws IOException {
@@ -68,6 +69,7 @@ class LayersTest {
         forbid(wrong, "vk-render", "render", "org.lwjgl");
         forbid(wrong, "vk-bench", "bench", "org.lwjgl");
         forbid(wrong, "vk-flight", "flight", "org.lwjgl");
+        forbid(wrong, "vk-afloat", "afloat", "org.lwjgl");
         assertEquals(List.of(), wrong);
     }
 

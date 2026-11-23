@@ -20,6 +20,11 @@
         renderer's own (vk-flight); the engine is not stepped, and nothing here is in anyone's way.
     </description>
 
+    <properties>
+        <!-- the main class exec:java runs: CountryFlight, or CountryCruise -->
+        <terrain.main>CountryFlight</terrain.main>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>melons.innocent.terrain</groupId>
@@ -52,6 +57,11 @@
             <version>${vulkan.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-afloat</artifactId>
+            <version>${vulkan.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
@@ -62,12 +72,13 @@
         <plugins>
             <plugin>
                 <!-- mvn -f terrain/pom.xml -pl terrain-flight exec:java flies over the Melon country;
-                     -Dbench.country=meadow the meadow, -Dbench.map= any country's text -->
+                     -Dbench.country=meadow the meadow, -Dbench.map= any country's text;
+                     -Dterrain.main=CountryCruise cruises its water in the river boat -->
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.6.3</version>
                 <configuration>
-                    <mainClass>melons.innocent.terrain.flight.CountryFlight</mainClass>
+                    <mainClass>melons.innocent.terrain.flight.${terrain.main}</mainClass>
                 </configuration>
             </plugin>
             <plugin>

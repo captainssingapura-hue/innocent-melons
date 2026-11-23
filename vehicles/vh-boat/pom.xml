@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.vehicles</groupId>
+        <artifactId>vehicles</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>vh-boat</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        A fun boat for the waterways: a Singapore river boat in its livery, its hull's lines a typed graph of named
+        points and the sheer, chine, keel and stem between them, its skin lofted between the lines; a timber cabin
+        with red lanterns along its eaves, a wheelhouse with its wheel, a railed foredeck, tyres for fenders. No card,
+        no window, no engine.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-drawing</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>fxsuite-math-graph</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.math</groupId>
+            <artifactId>math-curves</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.lang.ontology</groupId>
+            <artifactId>core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

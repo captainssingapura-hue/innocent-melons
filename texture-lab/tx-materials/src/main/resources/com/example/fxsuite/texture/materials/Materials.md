@@ -99,6 +99,11 @@ Glass with a light behind it.
 
 Gas, burning.
 
+## LitPaper
+
+Paper stretched over a frame, a lantern, with a light inside it: it glows in its own colour, which is the
+thing's, told with each.
+
 ## Grown
 
 What grew, and was not made.
@@ -106,6 +111,11 @@ What grew, and was not made.
 ## Rind
 
 The tough outer skin of a fruit.
+
+## Timber
+
+Wood sawn and worked, its grain running along it, under a coat of varnish that shines a little: a boat's posts,
+rails and benches.
 
 ## Bark
 

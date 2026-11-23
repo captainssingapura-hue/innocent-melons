@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.example.fxsuite.vulkan</groupId>
+        <artifactId>vulkan</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>vk-afloat</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        Afloat only: a boat kept on the water wherever a place has water, steered by its wheel and driven by its
+        throttle from the keyboard, unable to leave the water or to go where it is too shallow for its draught, bobbing
+        a little and heeling into its turns; followed by a camera or seen from its helm, its display over the picture.
+        No physics but that, and nothing of the engine changed. Any place that says where its water lies may have it.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-flight</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>${card.tests}</argLine>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

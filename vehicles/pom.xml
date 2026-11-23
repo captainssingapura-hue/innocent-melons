@@ -28,6 +28,8 @@
     <modules>
         <!-- The Osprey as it is made: its parts, sized to its published figures, where they turn. No card. -->
         <module>vh-osprey</module>
+        <!-- A fun boat for the waterways, a Singapore river boat in its livery, its hull on the typed graph. No card. -->
+        <module>vh-boat</module>
         <!-- A vehicle on the card: its parts in the lab's materials, turned as it says. -->
         <module>vh-drawn</module>
         <!-- The gate: CQ's basic rules over every module here, in the build that breaks them. -->
@@ -65,6 +67,32 @@
                 <groupId>melons.innocent.vehicles</groupId>
                 <artifactId>vh-drawn</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.vehicles</groupId>
+                <artifactId>vh-boat</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example.fxsuite.vulkan</groupId>
+                <artifactId>vk-afloat</artifactId>
+                <version>${vulkan.version}</version>
+            </dependency>
+            <!-- the typed graph and curves the hull's lines are, and the value types they are made of -->
+            <dependency>
+                <groupId>com.example.fxsuite</groupId>
+                <artifactId>fxsuite-math-graph</artifactId>
+                <version>0.1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.math</groupId>
+                <artifactId>math-curves</artifactId>
+                <version>0.1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.captainssingapura-hue.lang.ontology</groupId>
+                <artifactId>core</artifactId>
+                <version>0.1.0</version>
             </dependency>
             <!-- every CQ artifact at one version -->
             <dependency>
