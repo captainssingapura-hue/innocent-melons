@@ -116,7 +116,8 @@ final class Traced {
             }
         }
         final double station = stations[best] + bestT * (stations[best + 1] - stations[best]);
-        return new Near(bestDistance, station, side(best, bestT, x, z));
+        return new Near(bestDistance, station, side(best, bestT, x, z), xs[best] + bestT * (xs[best + 1] - xs[best]),
+                zs[best] + bestT * (zs[best + 1] - zs[best]));
     }
 
     /**
@@ -173,7 +174,9 @@ final class Traced {
      * @param distance how far off it is
      * @param station  how far along the path its nearest point is
      * @param side     which side it is on: one to the path's left, minus one to its right
+     * @param x        how far across that nearest point is
+     * @param z        how far along
      */
-    record Near(double distance, double station, double side) {
+    record Near(double distance, double station, double side, double x, double z) {
     }
 }

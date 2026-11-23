@@ -14,7 +14,7 @@ import java.util.function.ToIntFunction;
  * ground rises at its edges, and not kept. Its triangles are cut where what lies on them parts ({@link Triangles}).
  * Worked out once, the same from the same land every time; never changed.
  */
-public final class TileData {
+public final class TileData implements Sampled {
 
     private final TileKey key;
     private final double x0;
@@ -68,7 +68,7 @@ public final class TileData {
                 waters[p] = water.applyAsDouble(sample);
             }
         }
-        this.triangles = new Triangles(this, ground, sorted);
+        this.triangles = new Triangles(this, sorted);
     }
 
     /** Which tile it is. */
@@ -94,6 +94,16 @@ public final class TileData {
     /** Where it begins along. */
     public double z0() {
         return z0;
+    }
+
+    @Override
+    public int columns() {
+        return points;
+    }
+
+    @Override
+    public int rows() {
+        return points;
     }
 
     /** How far across point column {@code i} is. */

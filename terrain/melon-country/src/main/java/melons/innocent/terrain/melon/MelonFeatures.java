@@ -5,8 +5,7 @@ import com.example.fxsuite.existence.Features;
 import com.example.fxsuite.existence.Terrains;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import melons.innocent.math.curves.Knot;
-import melons.innocent.math.curves.Knots;
-import melons.innocent.math.curves.Monotone;
+import melons.innocent.math.curves.Line;
 import melons.innocent.terrain.Area;
 import melons.innocent.terrain.Band;
 import melons.innocent.terrain.Hue;
@@ -15,7 +14,7 @@ import melons.innocent.terrain.Path;
 import melons.innocent.terrain.Sea;
 import melons.innocent.terrain.Spot;
 import melons.innocent.terrain.Steep;
-import melons.innocent.terrain.Terrain;
+import melons.innocent.terrain.Topography;
 import melons.innocent.terrain.Watercourse;
 
 import java.util.ArrayList;
@@ -25,8 +24,10 @@ import java.util.List;
  * The Melon country's land features, laid over its ground in turn. Meadow over the plain and the low slopes, scrub
  * higher up, moss over the heights, sand along the waterline, bare crags where the ground is too steep to hold
  * anything; the Melon Wood on the east spur's lower flanks and the West Wood on the west ridge's; the village's
- * fields either side of it; the Melon River filling its bed to its banks; and Melon Bay over all of the sea, the
- * harbour's deep among it. Each labelled, of a kind of what exists, in a colour of its own. Sizes in metres here.
+ * fields either side of it; the Melon River filling its bed to its banks, a metre deep over its thalweg; and Melon
+ * Bay over all of the sea. Each labelled, of a kind of what exists, in a colour of its own. Laid over the country's
+ * natural ground, its topographic map ({@link MelonTopography}), along its map's lines ({@link MelonCountry#map()}),
+ * reading the ground and never changing it. Sizes in metres here.
  */
 public record MelonFeatures() implements StatelessFunctionalObject {
 
@@ -34,11 +35,11 @@ public record MelonFeatures() implements StatelessFunctionalObject {
 
     private static final double M = 100;
 
-    /** The features, laid over the country's ground. */
+    /** The features, laid over the country's natural ground. */
     public LandFeatures features() {
-        final Terrain country = MelonCountry.INSTANCE.terrain();
+        final Topography ground = MelonTopography.INSTANCE.topography();
         final MelonCountry map = MelonCountry.INSTANCE;
-        return new LandFeatures(country, List.of(
+        return new LandFeatures(ground.name(), ground, map.map(), List.of(
                 new Band("the Melon meadows", new Terrains.Meadow(), new Hue("#8cbf5a"), 1.5 * M, 60 * M),
                 new Band("the scrub on the heights", new Terrains.Scrub(), new Hue("#9a9a62"), 60 * M, 350 * M),
                 new Band("the high moss", new Terrains.Moss(), new Hue("#b2b096"), 350 * M, 2_000 * M),
@@ -51,7 +52,7 @@ public record MelonFeatures() implements StatelessFunctionalObject {
                 new Area("the village's east fields", new Earthworks.Field(), new Hue("#c49a48"),
                         new Path(areas().get(3))),
                 new Watercourse("the Melon River", new Features.River(), new Hue("#3b7fc0"), new Path(map.river()),
-                        surface(), 30 * M),
+                        new Line(new Knot(0, M), new Knot(5_000 * M, M)), 0, 30 * M),
                 new Sea("Melon Bay", new Features.Bay(), new Hue("#2a6496"), new Path(map.shore()), 0)));
     }
 
@@ -65,17 +66,6 @@ public record MelonFeatures() implements StatelessFunctionalObject {
                 closed(-200, 1_500, 500, 1_400, 900, 2_300, 700, 3_300, 100, 2_600),
                 closed(-750, -350, -200, -350, -200, 650, -750, 750),
                 closed(200, -250, 470, -250, 520, 650, 250, 700));
-    }
-
-    /** How high the river's top lies along it: a metre or so over its bed, down to the sea's level at its mouth. */
-    private Monotone surface() {
-        final double[] metres = {0, 216, 400, 191, 1_350, 141.2, 1_900, 96.3, 2_470, 49.4, 3_060, 11.8, 3_640, 10.4,
-            4_080, 8.8, 4_520, 0.2, 4_950, 0};
-        final List<Knot> knots = new ArrayList<>();
-        for (int i = 0; i < metres.length; i += 2) {
-            knots.add(new Knot(metres[i] * M, metres[i + 1] * M));
-        }
-        return new Monotone(new Knots(knots));
     }
 
     /** The spots so many metres across and along, in turn, closed round back to the first. */

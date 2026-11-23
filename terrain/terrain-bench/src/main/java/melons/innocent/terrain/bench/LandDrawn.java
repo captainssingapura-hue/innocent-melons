@@ -6,6 +6,7 @@ import com.example.fxsuite.vulkan.render.Formed;
 import com.example.fxsuite.vulkan.shade.Laid;
 import com.example.fxsuite.vulkan.shade.Look;
 import com.example.fxsuite.vulkan.view.Camera;
+import melons.innocent.terrain.Sample;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,8 +25,19 @@ public final class LandDrawn implements AutoCloseable {
     public LandDrawn(final Card card, final Laid laid, final Painting painting, final Grid grid, final double up,
                      final Colouring.Coloured coloured) {
         this.laid = coloured.laid();
-        Sheet.INSTANCE.parts(grid, up, coloured.layers()).forEach((layer, sheet) ->
+        final int laidSoFar = coloured.laid();
+        Sheet.INSTANCE.parts(grid, up, coloured.layers(), at -> topmost(painting, laidSoFar, at)).forEach((layer, sheet) ->
                 parts.add(new Formed(card, new Look(laid, painting.surface(layer)), sheet)));
+    }
+
+    /** The last of the first {@code laid} of {@code painting}'s layers that lies at {@code at}; the first, if none. */
+    private int topmost(final Painting painting, final int laid, final Sample at) {
+        for (int layer = laid - 1; layer > 0; layer--) {
+            if (painting.covers(layer, at)) {
+                return layer;
+            }
+        }
+        return 0;
     }
 
     /** How many layers it is coloured in. */

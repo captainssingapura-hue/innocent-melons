@@ -1,5 +1,6 @@
 package melons.innocent.terrain;
 
+import com.example.fxsuite.math.graph.Graph;
 import com.example.fxsuite.taxonomy.Leaf;
 
 /**
@@ -20,8 +21,8 @@ public record Area(String label, Leaf<?> kind, Hue hue, Path boundary) implement
     }
 
     @Override
-    public Coverage coverage(final Terrain terrain) {
-        final Traced traced = new Traced(boundary, terrain.map());
+    public Coverage coverage(final Graph<Spot, Course> map, final Ground ground) {
+        final Traced traced = new Traced(boundary, map);
         return at -> traced.inside(at.x(), at.z());
     }
 }

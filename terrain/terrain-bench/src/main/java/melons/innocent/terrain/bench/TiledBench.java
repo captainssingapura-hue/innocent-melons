@@ -14,7 +14,9 @@ import com.example.fxsuite.vulkan.worked.Daylight;
 import com.example.fxsuite.vulkan.worked.Picture;
 import javafx.application.Platform;
 import melons.innocent.terrain.Extent;
+import melons.innocent.terrain.Ground;
 import melons.innocent.terrain.LandFeatures;
+import melons.innocent.terrain.Seen;
 import melons.innocent.terrain.melon.MelonFeatures;
 import melons.innocent.terrain.tiles.Choice;
 import melons.innocent.terrain.tiles.Tiling;
@@ -29,13 +31,15 @@ import java.util.List;
  * the card's thread nearest first and drawn as they are built, each layer's look built once for every tile. The eye
  * stands where it is placed, from outside the scene only, the bench's properties at first, the console's map and its
  * slider for how high after; the mouse dragged in the card's window turns it round and tips it, and moves it not.
- * Its land is the Melon country's, in the lab's materials, plain where the lab has none.
+ * Its land is the Melon country's natural ground from its contours, seen at a scale, its features in the lab's
+ * materials, plain where the lab has none.
  *
  * <p>{@code -Dbench.across=}, {@code -Dbench.along=}, {@code -Dbench.height=} (metres), {@code -Dbench.yaw=} and
  * {@code -Dbench.pitch=} (degrees) where the eye is first placed; {@code -Dbench.finest=} (metres) how near together
  * the finest tiles have their points; {@code -Dbench.near=} how many times its side a tile may be from the spot and
  * still be cut into its four; {@code -Dbench.cells=} how many cells a tile has to a side; {@code -Dbench.up=} how many
- * times as high the land is drawn. For a run with nobody watching, {@code -Dbench.settle=} so many thousandths of a
+ * times as high the land is drawn; {@code -Dbench.seen=} (metres) how finely the ground is seen, 10 m at first, the
+ * same for every tile. For a run with nobody watching, {@code -Dbench.settle=} so many thousandths of a
  * second ends it, once every tile wanted is drawn, and {@code -Dbench.snapshot=} a file saves the picture.
  */
 public final class TiledBench {
@@ -57,6 +61,8 @@ public final class TiledBench {
     private final Laid laid = new Laid();
     private final Daylight day;
     private final LandFeatures features;
+    /** The ground as the tiles are made of it: seen at one scale, so tiles of every level meet. */
+    private final Ground seen;
     private final Painting painting;
     private final Choice choice;
     private final double up;
@@ -67,11 +73,12 @@ public final class TiledBench {
     /** A tiled bench for {@code features}, drawn as {@code painting} says. */
     public TiledBench(final LandFeatures features, final Painting painting) {
         this.features = features;
+        this.seen = new Seen(features.ground(), METRE * said("bench.seen", 10));
         this.painting = painting;
         final Daylight plain = new Daylight();
         this.day = new Daylight(plain.light().sunAt(said("bench.sun", 30), said("bench.sunRound", 225)), plain.sky());
         this.up = said("bench.up", 1);
-        final Extent e = features.terrain().extent();
+        final Extent e = features.ground().extent();
         final Tiling tiling = new Tiling(e, (int) said("bench.cells", 32));
         this.choice = new Choice(tiling, said("bench.near", 1.5), tiling.level(METRE * said("bench.finest", 1.5)));
         this.first = new Flight(METRE * said("bench.across", 0), METRE * said("bench.along", -300),
@@ -81,7 +88,7 @@ public final class TiledBench {
 
     public static void main(final String[] args) throws IOException {
         final LandFeatures features = MelonFeatures.INSTANCE.features();
-        new TiledBench(features, new ByMaterials(features)).run(features.terrain().name()
+        new TiledBench(features, new ByMaterials(features)).run(features.name()
                 + " in tiles around the eye, in the lab's materials, plain where it has none");
     }
 
@@ -90,9 +97,9 @@ public final class TiledBench {
         try (Desk desk = new Desk();
              Card card = new Card(desk);
              Window window = card.window("Tiled terrain bench, drawn on " + card.name(), WIDTH, HEIGHT);
-             TiledLand land = new TiledLand(card, laid, painting, choice.tiling(), features.terrain(), up)) {
+             TiledLand land = new TiledLand(card, laid, painting, choice.tiling(), seen, up)) {
             final TiledControls controls = new TiledControls(wanted, about, painting.legend(),
-                    new MapPicture(features.terrain(), painting, MAP), first);
+                    new MapPicture(features.ground(), painting, MAP), first);
             Platform.startup(() -> controls.shown(LEFT, TOP));
             window.shown(LEFT + BESIDE, TOP);
             drawn(desk, card, window, land, controls);

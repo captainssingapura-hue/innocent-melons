@@ -1,5 +1,6 @@
 package melons.innocent.terrain;
 
+import com.example.fxsuite.math.graph.Graph;
 import com.example.fxsuite.taxonomy.Leaf;
 
 /**
@@ -15,15 +16,15 @@ import com.example.fxsuite.taxonomy.Leaf;
 public record Sea(String label, Leaf<?> kind, Hue hue, Path shore, double level) implements WaterBody {
 
     @Override
-    public Coverage coverage(final Terrain terrain) {
-        final Traced traced = new Traced(shore, terrain.map());
+    public Coverage coverage(final Graph<Spot, Course> map, final Ground ground) {
+        final Traced traced = new Traced(shore, map);
         return at -> at.height() < level && traced.near(at.x(), at.z()).side() < 0;
     }
 
     /** Its level, everywhere to the right of its shore, whether the ground there is under it or not. */
     @Override
-    public Level level(final Terrain terrain) {
-        final Traced traced = new Traced(shore, terrain.map());
+    public Level level(final Graph<Spot, Course> map, final Ground ground) {
+        final Traced traced = new Traced(shore, map);
         return (x, z) -> traced.near(x, z).side() < 0 ? level : Double.NaN;
     }
 }

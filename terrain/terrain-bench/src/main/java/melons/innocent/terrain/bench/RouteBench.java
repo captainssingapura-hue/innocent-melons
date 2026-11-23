@@ -13,7 +13,9 @@ import com.example.fxsuite.vulkan.view.Camera;
 import com.example.fxsuite.vulkan.worked.Daylight;
 import com.example.fxsuite.vulkan.worked.Picture;
 import javafx.application.Platform;
+import melons.innocent.terrain.Ground;
 import melons.innocent.terrain.LandFeatures;
+import melons.innocent.terrain.Seen;
 import melons.innocent.terrain.melon.MelonFeatures;
 import melons.innocent.terrain.tiles.Choice;
 import melons.innocent.terrain.tiles.Chosen;
@@ -31,7 +33,9 @@ import java.util.Optional;
  * ahead of it against its coming, so how far ahead is enough at a speed can be tried without a game: the gaps, tiles
  * that should be shown and are not drawn yet, counted as it goes. The route is made on the console's map, waypoint by
  * waypoint, each at its own height; the camera faces the way the route goes, the mouse dragged in the card's window
- * turning it round and tipping it from there. Its land is the Melon country's, in the lab's materials.
+ * turning it round and tipping it from there. Its land is the Melon country's natural ground from its contours,
+ * seen at a scale, {@code -Dbench.seen=} (metres), 10 m at first, the same for every tile, its features in the lab's
+ * materials.
  *
  * <p>For a run with nobody watching: {@code -Dbench.route=} a route, so many metres across, along and up for each
  * waypoint, {@code x,z,h;x,z,h;...}; {@code -Dbench.go=true} sets the camera going at once, {@code -Dbench.speed=}
@@ -64,6 +68,8 @@ public final class RouteBench {
     private final Laid laid = new Laid();
     private final Daylight day = new Daylight();
     private final LandFeatures features;
+    /** The ground as the tiles are made of it: seen at one scale, so tiles of every level meet. */
+    private final Ground seen;
     private final Painting painting;
     private final Choice choice;
     private final Steering steering;
@@ -81,8 +87,9 @@ public final class RouteBench {
     /** A route bench over {@code features}, drawn as {@code painting} says. */
     public RouteBench(final LandFeatures features, final Painting painting) {
         this.features = features;
+        this.seen = new Seen(features.ground(), METRE * said("bench.seen", 10));
         this.painting = painting;
-        final Tiling tiling = new Tiling(features.terrain().extent(), 32);
+        final Tiling tiling = new Tiling(features.ground().extent(), 32);
         this.choice = new Choice(tiling, 1.5, tiling.level(150));
         this.steering = new Steering(METRE * said("bench.speed", 30), said("bench.ahead", 4), 5 * METRE);
     }
@@ -98,9 +105,9 @@ public final class RouteBench {
         try (Desk desk = new Desk();
              Card card = new Card(desk);
              Window window = card.window("Route bench, drawn on " + card.name(), WIDTH, HEIGHT);
-             TiledLand land = new TiledLand(card, laid, painting, choice.tiling(), features.terrain(), 1)) {
+             TiledLand land = new TiledLand(card, laid, painting, choice.tiling(), seen, 1)) {
             final RouteControls controls = new RouteControls(steering, new RouteMap(new MapPicture(
-                    features.terrain(), painting, MAP), features.terrain()), 120 * METRE);
+                    features.ground(), painting, MAP), seen), 120 * METRE);
             Platform.startup(() -> controls.shown(LEFT, TOP));
             window.shown(LEFT + BESIDE, TOP);
             drawn(desk, card, window, land, controls);
@@ -180,7 +187,7 @@ public final class RouteBench {
         final Waypoint at = r.at(travelled);
         final double clear = steering.clearance();
         final double up = Double.isNaN(clear) ? at.height()
-                : Math.max(at.height(), features.terrain().height(at.x(), at.z()) + clear);
+                : Math.max(at.height(), seen.height(at.x(), at.z()) + clear);
         flight = new Flight(at.x(), at.z(), up, r.heading(travelled) + turned, down, 1);
     }
 

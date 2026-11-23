@@ -1,5 +1,6 @@
 package melons.innocent.terrain;
 
+import com.example.fxsuite.math.graph.Graph;
 import com.example.fxsuite.taxonomy.Leaf;
 
 /**
@@ -22,7 +23,7 @@ public record Band(String label, Leaf<?> kind, Hue hue, double low, double high)
     }
 
     @Override
-    public Coverage coverage(final Terrain terrain) {
+    public Coverage coverage(final Graph<Spot, Course> map, final Ground ground) {
         return at -> at.height() >= low && at.height() < high;
     }
 }

@@ -12,9 +12,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The Melon country's land features: the village in its meadows, its fields either side; the bay over the sea, the
- * harbour among it; the river in its bed beside the village; the woods on the range's flanks; moss on Mount Melon;
- * every feature of a kind, in a colour, no two labelled the same.
+ * The Melon country's land features: the village in its meadows, its fields either side; the bay over the sea, where
+ * the harbour is to be dredged too; the river in its bed beside the village; the woods on the range's flanks; moss on
+ * Mount Melon; every feature of a kind, in a colour, no two labelled the same.
  */
 class MelonFeaturesTest {
 
@@ -35,12 +35,12 @@ class MelonFeaturesTest {
     @Test
     void theBayOverTheSeaTheRiverInItsBedTheWoodsTheMoss() {
         assertEquals(Optional.of("Melon Bay"), at(0, -1_500));
-        assertEquals(Optional.of("Melon Bay"), at(593, -673), "the harbour's deep, under the bay");
+        assertEquals(Optional.of("Melon Bay"), at(593, -673), "where the harbour is to be dredged, under the bay");
         // across the plain east of the village, where the ground is lowest, the river
         double lowest = Double.MAX_VALUE;
         double across = 0;
         for (double x = 400; x <= 800; x++) {
-            final double height = features.terrain().height(x * M, 125 * M);
+            final double height = features.ground().height(x * M, 125 * M);
             if (height < lowest) {
                 lowest = height;
                 across = x;
