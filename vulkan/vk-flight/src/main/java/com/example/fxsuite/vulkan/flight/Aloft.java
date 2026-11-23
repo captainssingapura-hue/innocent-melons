@@ -82,7 +82,8 @@ public record Aloft(Vec3 feet, double yaw, Vec3 going, int gear, double thrust) 
         final double round = Math.toRadians(turned);
         final Vec3 ahead = new Vec3(Math.sin(round), 0, Math.cos(round));
         final Vec3 right = new Vec3(Math.cos(round), 0, -Math.sin(round));
-        Vec3 level = ahead.times(held(told, "W") - held(told, "S")).plus(right.times(held(told, "D") - held(told, "A")));
+        Vec3 level = ahead.times(held(told, "W") - held(told, "S"))
+                .plus(right.times(held(told, "D") - held(told, "A")));
         level = level.length() > 0 ? level.unit().times(fast) : level;
         final Vec3 asked = level.plus(new Vec3(0, (held(told, "SPACE") - held(told, "CONTROL")) * fast * CLIMB, 0));
         final Vec3 now = going.plus(asked.minus(going).times(Math.min(1, seconds / EASING)));

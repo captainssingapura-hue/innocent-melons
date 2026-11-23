@@ -19,6 +19,7 @@ import com.example.fxsuite.vulkan.device.Refused;
 import com.example.fxsuite.vulkan.device.Target;
 import com.example.fxsuite.vulkan.device.Window;
 import com.example.fxsuite.vulkan.render.Framed;
+import com.example.fxsuite.vulkan.render.Overlay;
 import com.example.fxsuite.vulkan.render.Shaded;
 import com.example.fxsuite.vulkan.shade.Laid;
 import com.example.fxsuite.vulkan.shade.Light;
@@ -33,6 +34,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -174,12 +176,14 @@ public final class Walk {
              Place place = placing.apply(card, laid = new Laid().asking(card.rays()));
              Cast cast = new Cast(card, laid);
              Shaded shadows = new Shaded(card, laid, Integer.getInteger("bench.shadows.pixels", 4096));
+             Overlay overlay = new Overlay(card, laid);
+             Carded carded = new Carded(roaming, card, laid);
              Hearing hearing = Hearing.open(roaming.ends() || settle >= 0)) {
             final Guide guide = new Guide(asked, card.name(), roamer.keys());
             asked.offered(shadows.offered());
             Platform.startup(() -> guide.shown(LEFT, TOP));
             window.shown(LEFT + BESIDE, TOP);
-            final Staged staged = new Staged(place, cast, shadows);
+            final Staged staged = new Staged(place, cast, shadows, overlay);
             drawn(desk, card, window, staged, guide, hearing, roaming);
             final String snapshot = System.getProperty("bench.snapshot", "");
             if (!snapshot.isEmpty()) {
@@ -203,12 +207,15 @@ public final class Walk {
         while (window.open() && !asked.stopped() && !roaming.over()) {
             desk.heard();
             driven.heard(window);
-            if (driven.taken(Key.ESCAPE) || frames == 0 && !roaming.ends() && settle < 0) {
+            if (!roaming.pointing() && (driven.taken(Key.ESCAPE) || frames == 0 && !roaming.ends() && settle < 0)) {
                 taken = !taken;
                 window.taken(taken);
             }
             final Moved mouse = window.mouse();
-            played.told(driven.held(), driven.pressed(), taken ? mouse.across() * SENSITIVITY : 0,
+            // what a click means is told to the next step with the keys pressed, so a kept run plays it again
+            final List<String> pressed = new ArrayList<>(driven.pressed());
+            window.clicks().forEach(click -> pressed.addAll(roaming.clicked(click, window.width(), window.height())));
+            played.told(driven.held(), pressed, taken ? mouse.across() * SENSITIVITY : 0,
                     taken ? -mouse.down() * SENSITIVITY : 0, mouse.scrolled());
             final long now = System.nanoTime();
             final double blend = roaming.stepped((now - last) / BILLION);
@@ -245,9 +252,11 @@ public final class Walk {
              Place place = placing.apply(card, laid = new Laid().asking(card.rays()));
              Cast cast = new Cast(card, laid);
              Shaded shadows = new Shaded(card, laid, Integer.getInteger("bench.shadows.pixels", 4096));
+             Overlay overlay = new Overlay(card, laid);
+             Carded carded = new Carded(roaming, card, laid);
              Encoder encoder = filming.encoder(film, System.getProperty("bench.film.ffmpeg", "ffmpeg"))) {
             asked.offered(shadows.offered());
-            final Staged staged = new Staged(place, cast, shadows);
+            final Staged staged = new Staged(place, cast, shadows, overlay);
             roaming.inTheWay(place.inTheWay());
             filming.filmed(card, roaming, encoder, (target, camera, blend) -> {
                 settled(place, camera);
@@ -255,6 +264,23 @@ public final class Walk {
             });
             System.out.printf("filmed %d frames, %.1f s of the run, to %s%n", encoder.frames(),
                     encoder.frames() / filming.rate(), film.toAbsolutePath());
+        }
+    }
+
+    /**
+     * What the run puts on the card of its own, for as long as the card is open: put on as this is made, and taken off
+     * as it is closed, which is before the card is, since it is opened after it.
+     */
+    private record Carded(Roaming roaming) implements AutoCloseable {
+
+        Carded(final Roaming roaming, final Card card, final Laid laid) {
+            this(roaming);
+            roaming.carded(card, laid);
+        }
+
+        @Override
+        public void close() {
+            roaming.uncarded();
         }
     }
 
@@ -276,6 +302,7 @@ public final class Walk {
         final Consumer<Pass> standing = pass -> {
             staged.place().drawn(pass, camera);
             staged.cast().figure(pass, figures, camera);
+            roaming.drawn(pass, camera, blend);
             // last, what is seen through: it is laid over all the rest, and leaves nothing in the sun's picture
             staged.place().seenThrough(pass, camera);
         };
@@ -284,6 +311,7 @@ public final class Walk {
                 staged.cast().ground(pass, camera);
             }
             standing.accept(pass);
+            roaming.overlaid(pass, staged.overlay().over(camera, aspect), blend);
         };
         if (asked.shadowed()) {
             final Beam beam = new Beam(roaming.foot(blend), lit.sunTowards(), shaded, shaded);
@@ -312,6 +340,6 @@ public final class Walk {
     }
 
     /** What a frame is drawn of, on the card: the place, the avatar's boxes and the ground, and the shadows. */
-    private record Staged(Place place, Cast cast, Shaded shadows) {
+    private record Staged(Place place, Cast cast, Shaded shadows, Overlay overlay) {
     }
 }

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.vehicles</groupId>
+        <artifactId>vehicles</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>vh-osprey</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        The Bell Boeing V-22 Osprey as it is made: its fuselage with its sponsons, its high wing, a nacelle at each
+        wing tip turning from flying ahead to standing up, a three-bladed rotor on each, its tail of two fins, its
+        wheels and its windows; sized to its published figures, the rest the builder's. Each part says what it is
+        finished in and what it turns with. No card, no window, no engine.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-drawing</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

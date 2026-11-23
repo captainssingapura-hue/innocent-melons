@@ -20,6 +20,16 @@ public enum Key {
     R(GLFW_KEY_R, GLFW_KEY_R),
     /** Slower, flying only. */
     V(GLFW_KEY_V, GLFW_KEY_V),
+    /** The arrows: a craft's pitch and roll. */
+    UP(GLFW_KEY_UP, GLFW_KEY_UP),
+    DOWN(GLFW_KEY_DOWN, GLFW_KEY_DOWN),
+    LEFT(GLFW_KEY_LEFT, GLFW_KEY_LEFT),
+    RIGHT(GLFW_KEY_RIGHT, GLFW_KEY_RIGHT),
+    /** Time faster or as it is; and three presets. */
+    T(GLFW_KEY_T, GLFW_KEY_T),
+    ONE(GLFW_KEY_1, GLFW_KEY_1),
+    TWO(GLFW_KEY_2, GLFW_KEY_2),
+    THREE(GLFW_KEY_3, GLFW_KEY_3),
     SPACE(GLFW_KEY_SPACE, GLFW_KEY_SPACE),
     ESCAPE(GLFW_KEY_ESCAPE, GLFW_KEY_ESCAPE),
     /** Either Shift. */

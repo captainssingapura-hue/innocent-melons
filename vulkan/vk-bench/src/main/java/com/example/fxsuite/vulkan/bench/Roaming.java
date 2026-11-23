@@ -3,6 +3,11 @@ package com.example.fxsuite.vulkan.bench;
 import com.example.fxsuite.avatar.hear.Hearing;
 import com.example.fxsuite.avatar.sim.Obstacles;
 import com.example.fxsuite.vulkan.bench.subject.Courier;
+import com.example.fxsuite.vulkan.device.Card;
+import com.example.fxsuite.vulkan.device.Clicked;
+import com.example.fxsuite.vulkan.device.Pass;
+import com.example.fxsuite.vulkan.render.Overlay;
+import com.example.fxsuite.vulkan.shade.Laid;
 import com.example.fxsuite.vulkan.space.Vec3;
 import com.example.fxsuite.vulkan.view.Camera;
 
@@ -49,5 +54,34 @@ public interface Roaming {
 
     /** What has happened since this was last asked, heard as the lead would hear it: nothing, of most. */
     default void heard(final Hearing hearing, final double blend) {
+    }
+
+    /** What it draws of its own, beyond the figures, put on {@code card} once it is open: nothing, of most. */
+    default void carded(final Card card, final Laid laid) {
+    }
+
+    /** What it draws of its own, solid, by {@code pass} as {@code camera} sees it, casting its shadow too. */
+    default void drawn(final Pass pass, final Camera camera, final double blend) {
+    }
+
+    /** What it draws over the picture, by {@code pass}: an instrument's display, say. Nothing, of most. */
+    default void overlaid(final Pass pass, final Overlay.Over over, final double blend) {
+    }
+
+    /**
+     * What a click at {@code click} on a picture {@code width} by {@code height} pixels means: the names of what it
+     * presses, told to the next step as keys are, so a kept run plays it again. Nothing, of most.
+     */
+    default List<String> clicked(final Clicked click, final int width, final int height) {
+        return List.of();
+    }
+
+    /** Whether the mouse is left free to click, not taken to turn with. */
+    default boolean pointing() {
+        return false;
+    }
+
+    /** What it put on the card, taken off it. */
+    default void uncarded() {
     }
 }
