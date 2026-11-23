@@ -14,6 +14,7 @@ import java.util.List;
  * <pre>
  * topography "the Melon country" x=-3000..3000m z=-2600..3400m datum=-30m
  * contour 12m 120,-450 130.5,-452 ...          # its height, then the spots round it, across,along
+ * contour 0m level -240,60 -140,60 ...         # one marked level: the ground inside it at its height
  * spot 760m 2100,2600                          # its height, then where
  * crest "the Melon Range" 3300,3100,420 ...    # its name, then its spots, across,along,height
  * thalweg "the Melon River" 1500,3800,215 ...
@@ -69,15 +70,16 @@ public record TopographyText() implements StatelessFunctionalObject {
                 centimetres(value(measures, "datum=")), List.of(), List.of(), List.of());
     }
 
-    /** The contour {@code rest} gives: its height, then the spots round it. */
+    /** The contour {@code rest} gives: its height, whether it is level, then the spots round it. */
     private Contour contour(final String rest) {
         final String[] parts = rest.split("\\s+");
+        final boolean level = parts.length > 1 && parts[1].equals("level");
         final List<Spot> round = new ArrayList<>();
-        for (int i = 1; i < parts.length; i++) {
+        for (int i = level ? 2 : 1; i < parts.length; i++) {
             final double[] at = numbers(parts[i], 2);
             round.add(new Spot(at[0], at[1]));
         }
-        return new Contour(centimetres(parts[0]), new Loop(round));
+        return new Contour(centimetres(parts[0]), new Loop(round), level);
     }
 
     /** The spot height {@code rest} gives: its height, then where. */
@@ -94,7 +96,7 @@ public record TopographyText() implements StatelessFunctionalObject {
                 .append(metres(e.x0())).append("..").append(metres(e.x1())).append("m z=").append(metres(e.z0()))
                 .append("..").append(metres(e.z1())).append("m datum=").append(metres(map.datum())).append("m\n");
         for (final Contour contour : map.contours()) {
-            out.append("contour ").append(metres(contour.height())).append('m');
+            out.append("contour ").append(metres(contour.height())).append(contour.level() ? "m level" : "m");
             contour.loop().spots().forEach(s -> out.append(' ').append(metres(s.x())).append(',')
                     .append(metres(s.z())));
             out.append('\n');

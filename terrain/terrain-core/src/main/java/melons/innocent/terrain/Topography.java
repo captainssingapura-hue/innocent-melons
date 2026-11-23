@@ -31,7 +31,7 @@ public final class Topography implements Ground {
         this.contours = List.copyOf(contours);
         this.spotHeights = List.copyOf(spotHeights);
         this.breakLines = List.copyOf(breakLines);
-        this.banded = new Banded(new Nesting(this.contours, datum, this.spotHeights), this.breakLines);
+        this.banded = new Banded(new Nesting(this.contours, datum, this.spotHeights), this.breakLines, extent);
     }
 
     /** Its name. */

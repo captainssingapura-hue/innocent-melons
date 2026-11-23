@@ -15,6 +15,7 @@ import com.example.fxsuite.vulkan.worked.Picture;
 import javafx.application.Platform;
 import melons.innocent.terrain.Averaged;
 import melons.innocent.terrain.LandFeatures;
+import melons.innocent.terrain.meadow.MeadowFeatures;
 import melons.innocent.terrain.melon.MelonFeatures;
 import melons.innocent.terrain.tiles.Tiling;
 
@@ -33,7 +34,8 @@ import java.util.List;
  * against its turning, those it would see turned any way round; every tile built kept, as the land does not change,
  * so a view come back to, or a band, is there at once. Where one feature gives way to another is cut on the land, to
  * within a cell. The eye looks down 45 degrees at least, so all it
- * sees is about as far off as it is high. Its land is the Melon country's, in the lab's materials.
+ * sees is about as far off as it is high. Its land is the Melon country's, or with {@code -Dbench.country=meadow}
+ * the meadow round the village, in the lab's materials.
  *
  * <p>{@code -Dbench.across=}, {@code -Dbench.along=}, {@code -Dbench.height=} (metres), {@code -Dbench.yaw=} and
  * {@code -Dbench.pitch=} (degrees down) where the eye is first placed; {@code -Dbench.held=} and {@code -Dbench.card=}
@@ -92,7 +94,8 @@ public final class BandBench {
     }
 
     public static void main(final String[] args) throws IOException {
-        final LandFeatures features = MelonFeatures.INSTANCE.features();
+        final LandFeatures features = "meadow".equals(System.getProperty("bench.country", "melon"))
+                ? MeadowFeatures.INSTANCE.features() : MelonFeatures.INSTANCE.features();
         new BandBench(features, new ByMaterials(features)).run(features.name() + " seen from a band of height,"
                 + " downsampled for it, in the lab's materials, plain where it has none");
     }
@@ -135,6 +138,7 @@ public final class BandBench {
         long previous = began;
         int frames = 0;
         Flight wantedFor = null;
+        double shapedFor = 0;
         final Tally tally = new Tally();
         while (window.open() && !wanted.stopped()) {
             desk.heard();
@@ -143,10 +147,12 @@ public final class BandBench {
             flight = moved(window.mouse(), tally.filled() ? turning * (at - previous) / 1e9 : 0);
             previous = at;
             final int band = altitudes.band(flight.height());
-            if (!flight.equals(wantedFor)) {
-                final Footprint seen = new Footprint(flight, FIELD, (double) WIDTH / HEIGHT);
+            final double shape = (double) window.width() / Math.max(1, window.height());
+            if (!flight.equals(wantedFor) || shape != shapedFor) {
+                final Footprint seen = new Footprint(flight, FIELD, shape);
                 land.want(seen.tiles(tiling, level(band)), seen.round(tiling, level(band)));
                 wantedFor = flight;
+                shapedFor = shape;
             }
             if (!flight.equals(before)) {
                 controls.seen(flight);

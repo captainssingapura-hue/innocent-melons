@@ -7,9 +7,9 @@ import java.util.List;
  * How a topographic map's contours nest: each inside the smallest that goes round it, or inside none, the map's
  * outside, its root; each holding the contours directly inside it and the spot heights inside it and in none of
  * those. A contour with nothing inside it has a spot height made for it at its pole, half as far again past its own
- * height as it is past the height round it, so a top nobody marked still rises and a hollow still sinks, and a
- * contour as high as the one round it holds the ground inside it level. And for each contour, what lies beyond its
- * line seen from outside it: how high, on the average, what is directly inside it is, and how far in that is.
+ * height as it is past the height round it, so a top nobody marked still rises and a hollow still sinks; a contour as
+ * high as the one round it, or one marked level, holds the ground inside it level. And for each contour, what lies
+ * beyond its line seen from outside it: how high, on the average, what is directly inside it is, and how far in.
  */
 final class Nesting {
 
@@ -46,7 +46,8 @@ final class Nesting {
         for (int i = 0; i < n; i++) {
             if (children.get(i).isEmpty() && spots.get(i).isEmpty()) {
                 final Spot pole = this.contours.get(i).loop().pole();
-                spots.get(i).add(new SpotHeight(pole, height(i) + (height(i) - height(parents[i])) / 2));
+                final double past = this.contours.get(i).level() ? 0 : (height(i) - height(parents[i])) / 2;
+                spots.get(i).add(new SpotHeight(pole, height(i) + past));
             }
             inner(i);
         }
@@ -142,11 +143,6 @@ final class Nesting {
     /** How high contour {@code i} is; the root, the ground outside every contour. */
     double height(final int i) {
         return i == ROOT ? datum : contours.get(i).height();
-    }
-
-    /** Whether the ground goes up, or stays level, coming in over contour {@code i}'s line; always, for the root. */
-    boolean rises(final int i) {
-        return i == ROOT || height(i) >= height(parents[i]);
     }
 
     /** How high, on the average, what lies directly inside contour {@code i} is. */

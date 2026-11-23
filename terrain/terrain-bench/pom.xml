@@ -34,6 +34,10 @@
         </dependency>
         <dependency>
             <groupId>melons.innocent.terrain</groupId>
+            <artifactId>meadow-country</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.terrain</groupId>
             <artifactId>terrain-tiles</artifactId>
         </dependency>
         <dependency>

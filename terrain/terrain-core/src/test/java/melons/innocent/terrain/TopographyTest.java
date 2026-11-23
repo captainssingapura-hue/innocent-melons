@@ -12,7 +12,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * The ground of a topographic map: on every contour and spot height, as high as it; between two contours, never past
  * either, and going the one way; smooth across a contour, its slope the same both sides; level between two contours
  * as high as each other; a top nobody marked rising past its last contour, and a hollow sinking, by no more than half
- * the last rise; on a break line, as high as the line, and turning there.
+ * the last rise; level inside a contour marked level; the map's edge as high as outside every contour; a hill drawn on
+ * a slope between two contours rising from the lower; on a break line, as high as the line, and turning there.
  */
 class TopographyTest {
 
@@ -129,6 +130,29 @@ class TopographyTest {
         assertEquals(-300, groove.height(0, 0));
         assertTrue(new Seen(groove, 50 * M).height(0, 0) > -150, "a groove 20 m wide, seen at 50 m, shallowed");
         assertEquals(-300, new Seen(groove, 0).height(0, 0));
+    }
+
+    @Test
+    void levelInsideALevelContourTheEdgeAsHighAsTheOutsideAHillOnASlopeRisingFromTheLower() {
+        final Topography floor = new Topography("a floor", EXTENT, 100 * M,
+                List.of(contour(10, 1_000), new Contour(0, circle(500), true)), List.of(), List.of());
+        assertEquals(0, floor.height(0, 0), 0.1, "level at its middle");
+        assertEquals(0, floor.height(300 * M, 100 * M), 0.1, "and all over it");
+        assertEquals(100 * M, floor.height(2_000 * M, 0), 0.1, "the map's edge as high as outside every contour");
+        assertTrue(floor.height(1_500 * M, 0) > 10 * M, "rising from the outermost contour to the edge");
+        // a valley: the 25 m contour round the 10 m one; a knoll drawn between them, its 30 m loop 1.1 km out
+        final List<Spot> knoll = new ArrayList<>();
+        for (int k = 0; k < 36; k++) {
+            final double a = 2 * Math.PI * k / 36;
+            knoll.add(new Spot((1_100 + 100 * Math.cos(a)) * M, 100 * M * Math.sin(a)));
+        }
+        final Topography slope = new Topography("a slope", EXTENT, 40 * M,
+                List.of(contour(25, 1_600), contour(10, 700), new Contour(30 * M, new Loop(knoll))),
+                List.of(new SpotHeight(new Spot(1_100 * M, 0), 34 * M)), List.of());
+        final double below = slope.height(850 * M, 0);
+        assertTrue(below > 10 * M && below < 25 * M, "on the slope below the knoll, between 10 m and 25 m: " + below);
+        assertTrue(slope.height(950 * M, 0) > below, "rising toward the knoll");
+        assertEquals(34 * M, slope.height(1_100 * M, 0), 0.1);
     }
 
     @Test

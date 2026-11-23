@@ -44,7 +44,7 @@ public record ByMaterials(LandFeatures features) implements Painting {
         return Map.of(new Terrains.Meadow(), new Materials.Turf(), new Terrains.Sand(), new Materials.Sand(),
                 new Terrains.Rock(), new Materials.Bedrock(), new Earthworks.Field(), new Materials.Topsoil(),
                 new Features.River(), new Materials.Water(), new Features.Bay(), new Materials.Water(),
-                new Features.Sea(), new Materials.Water());
+                new Features.Sea(), new Materials.Water(), new Features.Pond(), new Materials.Water());
     }
 
     /** The material layer {@code layer} is drawn in; none for the first, or for a feature the lab has none for. */

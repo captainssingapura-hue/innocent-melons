@@ -13,7 +13,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * The eye's bands of height: every 500 m from the sea's level; held within its band; the land seen the more coarsely
  * the higher the band, as two pixels cover from its top. And what the eye sees: the spot under it and what lies ahead
- * of it, not what lies behind; the tiles over it all of one level, none coarser than the next, the nearest first.
+ * of it, not what lies behind, and the further to the sides the wider the view; the tiles over it all of one level,
+ * none coarser than the next, the nearest first.
  */
 class BandTest {
 
@@ -31,6 +32,14 @@ class BandTest {
         assertEquals(1_000 * M, altitudes.within(2, 0));
         assertEquals(3 * M, altitudes.scale(2), 1e-9, "two pixels of a thousandth, from 1500 m");
         assertTrue(altitudes.scale(5) > altitudes.scale(2));
+    }
+
+    @Test
+    void aWiderViewSeesFurtherToTheSides() {
+        final Flight flight = new Flight(0, 0, 1_000 * M, 0, 60, 1);
+        final double aside = 1_100 * M;
+        assertTrue(new Footprint(flight, 50, 1.6).distance(aside, 700 * M) > 0, "beyond a view 1.6 times as wide");
+        assertEquals(0, new Footprint(flight, 50, 2.4).distance(aside, 700 * M), 1e-6, "within one 2.4 times as wide");
     }
 
     @Test

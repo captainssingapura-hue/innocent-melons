@@ -13,8 +13,8 @@
         The land, as data: what the ground is, how high it is at any point on the map, and what lies on it, depending
         on no engine, neither the game's nor the card's; and its bench, which draws any ground on the card to be
         looked round and flown over. The core is plain Java (terrain-core); the Melon country is a terrain made in it
-        (melon-country), as data; the bench is the one module here that
-        knows the renderer (terrain-bench).
+        (melon-country), as data, and so is the meadow round the village (meadow-country); the bench is the one module
+        here that knows the renderer (terrain-bench).
     </description>
 
     <properties>
@@ -29,6 +29,7 @@
     <modules>
         <module>terrain-core</module>
         <module>melon-country</module>
+        <module>meadow-country</module>
         <module>terrain-tiles</module>
         <module>terrain-bench</module>
     </modules>
@@ -48,6 +49,11 @@
             <dependency>
                 <groupId>melons.innocent.terrain</groupId>
                 <artifactId>melon-country</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.terrain</groupId>
+                <artifactId>meadow-country</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

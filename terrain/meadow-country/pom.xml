@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.terrain</groupId>
+        <artifactId>terrain</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>meadow-country</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        The meadow round the village, as data: its ground a topographic map, twenty kilometres along its river's
+        valley and ten across, the valley's floor level at the river, the land rising north and south through rolling
+        ground and hills to the moors at its edge, a hill for the church, a hollow for a pond; its river cut into the
+        floor; and its land features over it, its meadows, its moors, its river and its pond. No roads yet.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>melons.innocent.terrain</groupId>
+            <artifactId>terrain-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>
