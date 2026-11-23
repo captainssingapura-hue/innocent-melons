@@ -28,8 +28,8 @@ public record Stance(Pose pose) {
     public Mat4 of(final Limb limb) {
         return switch (limb) {
             case BODY -> body();
-            case LEFT_LEG -> hung(-HIPS_APART, -HIP, pose.leftLeg(), pose.legSpread());
-            case RIGHT_LEG -> hung(HIPS_APART, -HIP, pose.rightLeg(), -pose.legSpread());
+            case LEFT_LEG, LEFT_SHIN -> hung(-HIPS_APART, -HIP, pose.leftLeg(), pose.legSpread());
+            case RIGHT_LEG, RIGHT_SHIN -> hung(HIPS_APART, -HIP, pose.rightLeg(), -pose.legSpread());
             case HEAD -> body().times(new Mat4(new Vec3(0, -NECK, 0))).times(about(0, 1, 0, pose.headYaw()))
                     .times(about(1, 0, 0, pose.headPitch()));
             case LEFT_ARM -> leftArm();

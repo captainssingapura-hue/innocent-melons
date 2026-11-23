@@ -73,6 +73,12 @@
                 <artifactId>plants-tree</artifactId>
                 <version>${plants.version}</version>
             </dependency>
+            <!-- the plants lab: which of the lab's barks each kind of tree wears -->
+            <dependency>
+                <groupId>melons.innocent.plants</groupId>
+                <artifactId>plants-walk</artifactId>
+                <version>${plants.version}</version>
+            </dependency>
             <!-- the places: the walls a yard is walled with -->
             <dependency>
                 <groupId>com.example.fxsuite.places</groupId>

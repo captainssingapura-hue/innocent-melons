@@ -1,6 +1,5 @@
 package melons.innocent.demos.village;
 
-import com.example.fxsuite.texture.materials.Materials;
 import com.example.fxsuite.texture.materials.Shades;
 import com.example.fxsuite.vulkan.device.Card;
 import com.example.fxsuite.vulkan.device.Pass;
@@ -9,31 +8,39 @@ import com.example.fxsuite.vulkan.render.Shaped;
 import com.example.fxsuite.vulkan.shade.Laid;
 import com.example.fxsuite.vulkan.shade.Look;
 import com.example.fxsuite.vulkan.view.Camera;
-import melons.innocent.plants.tree.Tree;
+import melons.innocent.plants.tree.Kind;
 import melons.innocent.plants.tree.Wooded;
+import melons.innocent.plants.walk.Barks;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A wood on the card: each of its few different trees sent to the card once, and drawn once for every tree of that
- * kind that stands in the wood, where it stands. One look serves them all, the lab's bark. Every tree is drawn as
- * finely as it is grown, however far off it is: the coarser forms a far tree would be drawn with are not built.
- * Closed, all of it is gone from the card.
+ * kind that stands in the wood, where it stands. One look serves every tree of a kind, the lab's bark for that kind.
+ * Every tree is drawn as finely as it is grown, however far off it is: the coarser forms a far tree would be drawn
+ * with are not built. Closed, all of it is gone from the card.
  */
 public final class GroveDrawn implements AutoCloseable {
 
     private final List<Grove.Standing> standing;
+    private final List<Grove.Grown> grown;
     private final List<Shaped> kinds = new ArrayList<>();
-    private Looked bark;
+    private final Map<Kind, Looked> barks = new EnumMap<>(Kind.class);
 
     /** {@code grove}, on {@code card}, its layouts as {@code laid} says. */
     public GroveDrawn(final Card card, final Laid laid, final Grove grove) {
         this.standing = grove.standing();
+        this.grown = grove.kinds();
         try {
-            this.bark = new Looked(card, new Look(laid, new Shades().of(new Materials.Bark())));
-            for (final Tree kind : grove.kinds()) {
-                kinds.add(new Shaped(card, laid, new Wooded(kind).formed()));
+            for (final Grove.Grown tree : grown) {
+                if (!barks.containsKey(tree.kind())) {
+                    barks.put(tree.kind(), new Looked(card, new Look(laid,
+                            new Shades().of(new Barks().of(tree.kind())))));
+                }
+                kinds.add(new Shaped(card, laid, new Wooded(tree.tree()).formed()));
             }
         } catch (final RuntimeException refused) {
             close();
@@ -44,7 +51,7 @@ public final class GroveDrawn implements AutoCloseable {
     /** Every tree of the wood, drawn by {@code pass} as {@code camera} sees it. */
     public void drawn(final Pass pass, final Camera camera) {
         for (final Grove.Standing tree : standing) {
-            bark.drawn(pass, kinds.get(tree.kind()), tree.placed(), camera, 1);
+            barks.get(grown.get(tree.kind()).kind()).drawn(pass, kinds.get(tree.kind()), tree.placed(), camera, 1);
         }
     }
 
@@ -52,9 +59,7 @@ public final class GroveDrawn implements AutoCloseable {
     public void close() {
         kinds.reversed().forEach(Shaped::close);
         kinds.clear();
-        if (bark != null) {
-            bark.close();
-            bark = null;
-        }
+        barks.values().forEach(Looked::close);
+        barks.clear();
     }
 }

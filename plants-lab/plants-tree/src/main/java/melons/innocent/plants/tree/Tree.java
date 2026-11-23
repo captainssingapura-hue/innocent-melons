@@ -12,7 +12,8 @@ import java.util.Random;
  * same number are the same tree every time, and another number is another tree of the same kind.
  *
  * <p>How it grows. A bough runs its length in a few pieces, thinning as it goes, straying a little from straight
- * and drawn a little upward. At its end, unless it is by then a twig, it forks in two. The two share out the
+ * and drawn a little upward, or, where it is slender and its kind's twigs hang, down. At its end, unless it is
+ * by then a twig, it forks in two. The two share out the
  * bough's thickness so that what they are through together is what the bough was through, which is how wood
  * grows: so the thicker of the two is nearly as thick as the bough, and turns less from the way the bough was
  * going, and the thinner turns more. Each is shorter than the bough before it.
@@ -26,8 +27,16 @@ public record Tree(Habit habit, long number) {
     private static final double PIECE = 6;
     private static final int FEWEST = 2;
     private static final double FULL = 360;
-    /** How unevenly a fork shares out its bough: the thicker of the two has from a half to this much of it. */
-    private static final double MOST = 0.78;
+    /**
+     * How unevenly a fork shares out its bough, at least, for a tree whose forks lead as an oak's do: the thicker
+     * has no less than its most less this. A tree whose forks lead more keeps its leader the more surely.
+     */
+    private static final double UNEVEN = 0.28;
+    private static final double OAKEN = 0.78;
+    /** How long a bough leaving a leader is, of the trunk's height, were it as thick as the trunk. */
+    private static final double ASIDE = 0.75;
+    /** How many twigs thick a leader is, at least: thinner, it leads no more, but forks as any bough does. */
+    private static final double LEADS = 6;
 
     /** An oak, the first of its kind. */
     public Tree() {
@@ -38,7 +47,7 @@ public record Tree(Habit habit, long number) {
     public List<Bough> boughs() {
         final List<Bough> boughs = new ArrayList<>();
         grown(boughs, new Random(number), new Sprout(new Vec3(0, 0, 0), new Vec3(0, 1, 0), habit.trunkThick(),
-                habit.trunkTall(), 0, -1));
+                habit.trunkTall(), 0, -1, habit.step() > 0));
         return boughs;
     }
 
@@ -53,8 +62,12 @@ public record Tree(Habit habit, long number) {
                 .mapToDouble(point -> Math.hypot(point.x(), point.z())).max().orElse(0);
     }
 
-    /** A bough about to grow: where from, which way, how thick and how long, and what it forks from. */
-    private record Sprout(Vec3 from, Vec3 heading, double thick, double length, int forks, int parent) {
+    /**
+     * A bough about to grow: where from, which way, how thick and how long, what it forks from, and whether it is
+     * the leader of a tree that has one.
+     */
+    private record Sprout(Vec3 from, Vec3 heading, double thick, double length, int forks, int parent,
+                          boolean leads) {
     }
 
     /** The bough {@code sprout} grows into, added to {@code boughs}, and every bough that forks from it after it. */
@@ -64,10 +77,12 @@ public record Tree(Habit habit, long number) {
         final List<Double> thick = new ArrayList<>(List.of(sprout.thick() * (sprout.forks() == 0 ? habit.flare() : 1)));
         Vec3 heading = sprout.heading();
         for (int piece = 1; piece <= pieces; piece++) {
-            // the trunk stands nearly straight; a bough strays, and is drawn upward
-            final double strays = sprout.forks() == 0 ? habit.wander() / 4 : habit.wander();
+            // the trunk and a leader stand nearly straight; a bough strays, is drawn upward, and if slender droops
+            final double strays = sprout.forks() == 0 || sprout.leads() ? habit.wander() / 4 : habit.wander();
             heading = heading.plus(anyWay(chance).times(strays))
-                    .plus(new Vec3(0, sprout.forks() == 0 ? 0 : habit.rising(), 0)).unit();
+                    .plus(new Vec3(0, sprout.forks() == 0 ? 0
+                            : habit.rising() - (sprout.leads() ? 0 : drooping(sprout.thick())), 0))
+                    .unit();
             points.add(points.getLast().plus(heading.times(sprout.length() / pieces)));
             thick.add(sprout.thick() * (1 - (1 - habit.taper()) * piece / pieces));
         }
@@ -78,14 +93,37 @@ public record Tree(Habit habit, long number) {
             return;
         }
         // the fork: the bough's thickness shared out by what each is through, the thicker turning the less
-        final double share = 0.5 + chance.nextDouble() * (MOST - 0.5);
+        final double least = Math.max(0.5, habit.lead() - UNEVEN * (1 - habit.lead()) / (1 - OAKEN));
+        final double share = least + chance.nextDouble() * (habit.lead() - least);
         final Vec3 aside = aside(heading, chance.nextDouble() * FULL);
         for (final double part : new double[] {share, 1 - share}) {
             final double turn = Math.toRadians(2 * habit.spread() * (1 - part)) * (part == share ? 1 : -1);
             final Vec3 way = heading.times(Math.cos(turn)).plus(aside.times(Math.sin(turn))).unit();
-            grown(boughs, chance, new Sprout(points.getLast(), way, left * Math.sqrt(part),
-                    sprout.length() * habit.shorter() * (0.75 + 0.5 * part), sprout.forks() + 1, here));
+            final double thicker = left * Math.sqrt(part);
+            final boolean leader = sprout.leads() && part == share && thicker > LEADS * habit.twig();
+            grown(boughs, chance, new Sprout(points.getLast(), way, thicker, length(sprout, part, leader, thicker),
+                    sprout.forks() + 1, here, leader));
         }
+    }
+
+    /**
+     * How much a bough so thick is drawn down as it runs: the more the more slender it is, a twig most of all,
+     * and a bough many twigs thick hardly at all.
+     */
+    private double drooping(final double thick) {
+        return habit.droop() * Math.min(1, 2 * habit.twig() / thick);
+    }
+
+    /**
+     * How long a bough of a fork is that takes {@code part} of {@code from}, and is {@code thick}: of a tree with no
+     * leader, as long as the bough it forks from gives it, the thicker of two the longer; of one with a leader, the
+     * leader a step, and a bough leaving it as long as its thickness gives it, from the trunk's own height down.
+     */
+    private double length(final Sprout from, final double part, final boolean leader, final double thick) {
+        if (!from.leads()) {
+            return from.length() * habit.shorter() * (0.75 + 0.5 * part);
+        }
+        return leader ? habit.step() : ASIDE * habit.trunkTall() * Math.cbrt(thick / habit.trunkThick());
     }
 
     /** A way out from a point, any way at all, one long. */

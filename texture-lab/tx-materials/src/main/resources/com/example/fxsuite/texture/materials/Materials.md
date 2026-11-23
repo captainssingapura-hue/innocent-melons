@@ -109,7 +109,22 @@ The tough outer skin of a fruit.
 
 ## Bark
 
-The rough outer skin of a tree's trunk and boughs.
+The outer skin of a tree's trunk and boughs, as each kind of tree grows its own.
+
+## OakBark
+
+An oak's bark: grey-brown and rough, its narrow furrows running along the wood, with weather-stains and spots of
+lichen.
+
+## WalnutBark
+
+A walnut's bark: grey ridges standing as long narrow plates between dark furrows that run along the wood, parting
+and meeting again in diamonds.
+
+## BirchBark
+
+A white birch's bark: chalky white and smooth, with grey bands where its papery skin peels, short dark dashes
+lying across the wood, and black patches low on an old trunk.
 
 ## Liquid
 

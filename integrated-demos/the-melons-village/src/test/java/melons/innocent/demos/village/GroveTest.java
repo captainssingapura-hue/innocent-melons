@@ -34,7 +34,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The village's small wood. Thirty trees of four kinds, the same every time, each on the wood's ground, no two
+ * The village's small wood. Thirty trees, of six different trees, two each of oak, walnut and white birch, the
+ * same every time, each on the wood's ground, no two
  * trunks standing on one another, turned every way and of different sizes. It lies across the lake from the car
  * park, clear of the lake's kerb. The engine's own avatar, running at a tree, is stopped by its trunk. And the
  * whole is drawn on the card with its shadows, from the sky and from among the trees, with nothing said by the
@@ -46,12 +47,13 @@ class GroveTest {
     private final Grove grove = village.grove();
 
     @Test
-    void thirtyTreesOfFourKindsStandOnItsGroundTheSameEveryTimeAndNoTwoOnOneAnother() {
+    void thirtyTreesOfSixStandOnItsGroundTheSameEveryTimeAndNoTwoOnOneAnother() {
         final List<Grove.Standing> standing = grove.standing();
         assertEquals(30, standing.size());
         assertEquals(standing, village.grove().standing(), "the same every time");
-        assertEquals(4, grove.kinds().size());
-        assertEquals(4, standing.stream().map(Grove.Standing::kind).distinct().count(), "every kind stands in it");
+        assertEquals(6, grove.kinds().size());
+        assertEquals(3, grove.kinds().stream().map(Grove.Grown::kind).distinct().count(), "oak, walnut and birch");
+        assertEquals(6, standing.stream().map(Grove.Standing::kind).distinct().count(), "every tree stands in it");
         for (final Grove.Standing tree : standing) {
             assertTrue(Math.abs(tree.stands().x() - grove.middle().x()) <= grove.across() / 2 + 320
                     && Math.abs(tree.stands().z() - grove.middle().z()) <= grove.deep() / 2 + 320, "on its ground");

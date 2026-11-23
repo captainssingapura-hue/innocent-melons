@@ -2,6 +2,7 @@ package com.example.fxsuite.vulkan.bench;
 
 import com.example.fxsuite.avatar.sim.Block;
 import com.example.fxsuite.avatar.sim.Body;
+import com.example.fxsuite.avatar.sim.Clock;
 import com.example.fxsuite.avatar.sim.Hit;
 import com.example.fxsuite.avatar.sim.Obstacles;
 import com.example.fxsuite.avatar.view.Chase;
@@ -29,12 +30,28 @@ public final class Following {
     /** How many degrees the game sees from top to bottom, and from how near it begins to see, in centimetres. */
     private static final double FIELD = 48;
     private static final double NEAR = 10;
+    private static final double FULL = 360;
 
     private Chase chase;
+    /** The camera before the last step moved it, to be drawn between it and the camera now. */
+    private Chase was;
 
     /** Behind the avatar, with the avatar where {@code body} is. */
     public Following(final Body body) {
         this.chase = Chase.behind(head(body), body.yaw());
+        this.was = chase;
+    }
+
+    /**
+     * One step of the simulation's of following the avatar, which is where {@code body} is after the step: put back
+     * behind it if {@code behind}, nearer or further by {@code scrolled} notches, tilted up by {@code tilt} degrees,
+     * swung round as {@code circling} says (1 for E, -1 for Q), and gone after the avatar. Stepped so, with the
+     * simulation, the camera is the same on every replay of the same steps.
+     */
+    public void stepped(final Body body, final double tilt, final int circling, final double scrolled,
+                        final boolean behind) {
+        was = chase;
+        followed(body, tilt, circling, scrolled, behind, Clock.STEP);
     }
 
     /**
@@ -82,18 +99,36 @@ public final class Following {
      * be behind, so the avatar is never hidden by a wall or a melon it has gone round.
      */
     public Camera camera(final Obstacles inTheWay) {
-        final com.example.fxsuite.avatar.sim.Vec3 back = chase.forward().multiply(-1);
-        double off = chase.distance();
+        return orbit(chase, inTheWay).camera(FIELD, NEAR);
+    }
+
+    /**
+     * The same, {@code blend} of the way from where the camera was before the last step to where it is now: drawn
+     * between its last two steps, as the avatar is.
+     */
+    public Camera camera(final Obstacles inTheWay, final double blend) {
+        final Orbit from = orbit(was, inTheWay);
+        final Orbit to = orbit(chase, inTheWay);
+        double turned = to.yaw() - from.yaw();
+        turned -= FULL * Math.round(turned / FULL);
+        return new Orbit(from.round().plus(to.round().minus(from.round()).times(blend)), from.yaw() + turned * blend,
+                from.pitch() + (to.pitch() - from.pitch()) * blend,
+                from.distance() + (to.distance() - from.distance()) * blend).camera(FIELD, NEAR);
+    }
+
+    /** Where {@code seen} has the renderer's eye, kept this side of {@code inTheWay}. */
+    private Orbit orbit(final Chase seen, final Obstacles inTheWay) {
+        final com.example.fxsuite.avatar.sim.Vec3 back = seen.forward().multiply(-1);
+        double off = seen.distance();
         for (final Block block : inTheWay.blocks()) {
-            final Hit met = block.ray(chase.pivot(), back, off);
+            final Hit met = block.ray(seen.pivot(), back, off);
             if (met != null) {
                 off = Math.min(off, Math.max(Chase.NEAREST, met.distance() - Chase.WALL_GAP));
             }
         }
-        final Vec3 looksAt = new Vec3(chase.pivot().x(), -chase.pivot().y(), chase.pivot().z());
-        return new Orbit(looksAt, chase.yaw(), -chase.pitch(), off).camera(FIELD, NEAR);
+        final Vec3 looksAt = new Vec3(seen.pivot().x(), -seen.pivot().y(), seen.pivot().z());
+        return new Orbit(looksAt, seen.yaw(), -seen.pitch(), off);
     }
-
     private com.example.fxsuite.avatar.sim.Vec3 head(final Body body) {
         return body.position().add(0, -Chase.EYE_HEIGHT, 0);
     }
