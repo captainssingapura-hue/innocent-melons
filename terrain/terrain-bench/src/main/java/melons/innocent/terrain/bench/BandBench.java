@@ -36,8 +36,13 @@ import java.util.List;
  * sees is about as far off as it is high. Its land is the Melon country's, in the lab's materials.
  *
  * <p>{@code -Dbench.across=}, {@code -Dbench.along=}, {@code -Dbench.height=} (metres), {@code -Dbench.yaw=} and
- * {@code -Dbench.pitch=} (degrees down) where the eye is first placed. For a run with nobody watching,
- * {@code -Dbench.settle=} so many thousandths of a second ends it, once every tile wanted is drawn, and
+ * {@code -Dbench.pitch=} (degrees down) where the eye is first placed; {@code -Dbench.held=} and {@code -Dbench.card=}
+ * (megabytes) how much room what is built may take, kept here, and what is put on the card, there;
+ * {@code -Dbench.cells=} how many cells a tile has to a side, 64 at first, so fewer, bigger tiles go on the card. For
+ * a run with
+ * nobody watching, {@code -Dbench.turn=} (degrees a second) turns the eye round of itself once the first view is
+ * filled, and tells at the end how many frames since had holes in the land, or old tiles standing in, and how many at
+ * worst; {@code -Dbench.settle=} so many thousandths of a second ends it, once every tile wanted is drawn, and
  * {@code -Dbench.snapshot=} a file saves the picture.
  */
 public final class BandBench {
@@ -50,6 +55,7 @@ public final class BandBench {
     private static final int EVENED = 30;
     private static final int MAP = 300;
     private static final double MILLION = 1e6;
+    private static final long MB = 1L << 20;
     private static final double METRE = 100;
     private static final double FIELD = 50;
     private static final double NEAR = 50;
@@ -66,6 +72,8 @@ public final class BandBench {
     private final Tiling tiling;
     private final Altitudes altitudes = new Altitudes(STOREY, 2 * Math.tan(Math.toRadians(FIELD) / 2) / HEIGHT);
     private final Flight first;
+    /** How fast the eye turns round of itself, in degrees a second, once the first view is filled: none, at first. */
+    private final double turning;
     /** Where the eye is now: the card's thread's own. */
     private Flight flight;
 
@@ -75,11 +83,12 @@ public final class BandBench {
         this.painting = painting;
         final Daylight plain = new Daylight();
         this.day = new Daylight(plain.light().sunAt(said("bench.sun", 30), said("bench.sunRound", 225)), plain.sky());
-        this.tiling = new Tiling(features.ground().extent(), 32);
+        this.tiling = new Tiling(features.ground().extent(), (int) said("bench.cells", 64));
         this.first = new Flight(METRE * said("bench.across", 0), METRE * said("bench.along", -1_200),
                 METRE * said("bench.height", 1_200), said("bench.yaw", 0),
                 Math.max(STEEPEST, said("bench.pitch", 60)), 1);
         this.flight = first;
+        this.turning = said("bench.turn", 0);
     }
 
     public static void main(final String[] args) throws IOException {
@@ -98,7 +107,8 @@ public final class BandBench {
             Platform.startup(() -> controls.shown(LEFT, TOP));
             window.shown(LEFT + BESIDE, TOP);
             try (TiledLand land = new TiledLand(card, laid, painting, tiling,
-                    level -> new Averaged(features.ground(), tiling.spacing(level)), 1)) {
+                    level -> new Averaged(features.ground(), tiling.spacing(level)), 1, MB * (long) said("bench.held",
+                    1_536), MB * (long) said("bench.card", 512))) {
                 drawn(desk, card, window, land, controls);
                 snapshot(card, window, land);
             }
@@ -122,12 +132,16 @@ public final class BandBench {
         final long settle = Long.getLong("bench.settle", -1);
         final long began = System.nanoTime();
         long last = began;
+        long previous = began;
         int frames = 0;
         Flight wantedFor = null;
+        final Tally tally = new Tally();
         while (window.open() && !wanted.stopped()) {
             desk.heard();
             final Flight before = flight;
-            flight = moved(window.mouse());
+            final long at = System.nanoTime();
+            flight = moved(window.mouse(), tally.filled() ? turning * (at - previous) / 1e9 : 0);
+            previous = at;
             final int band = altitudes.band(flight.height());
             if (!flight.equals(wantedFor)) {
                 final Footprint seen = new Footprint(flight, FIELD, (double) WIDTH / HEIGHT);
@@ -146,21 +160,29 @@ public final class BandBench {
             final long now = System.nanoTime();
             if (++frames % EVENED == 0) {
                 controls.told((now - last) / MILLION / EVENED);
-                controls.tiles(land.shown(), land.built(), land.drawn(), land.stored(), tiling.spacing(level(band)));
+                controls.cached(land.cached());
                 last = now;
             }
+            tally.framed(land.gaps(), land.stale());
             if (settle >= 0 && (now - began) / MILLION >= settle && land.gaps() == 0) {
+                if (turning != 0) {
+                    System.out.println(tally + String.format(java.util.Locale.ROOT, "; %d tiles put on the card,"
+                            + " %.2f ms each; %d frames in %.1f s", land.cached().put(), land.cached().putting(),
+                            frames, (now - began) / 1e9));
+                }
                 return;
             }
         }
     }
 
     /**
-     * The eye as the console and {@code mouse} have moved it: turned round and tipped as the mouse was dragged, never
-     * looking less than {@link #STEEPEST} degrees down; as high as the console wants it; over the spot it wants.
+     * The eye as the console and {@code mouse} have moved it: turned round and tipped as the mouse was dragged, and
+     * turned {@code round} degrees more, never looking less than {@link #STEEPEST} degrees down; as high as the console
+     * wants it; over the spot it wants.
      */
-    private Flight moved(final Moved mouse) {
-        final Flight looked = mouse.dragged() ? flight.dragged(mouse.across(), mouse.down()) : flight;
+    private Flight moved(final Moved mouse, final double round) {
+        final Flight dragged = mouse.dragged() ? flight.dragged(mouse.across(), mouse.down()) : flight;
+        final Flight looked = round == 0 ? dragged : dragged.turned(round, 0);
         final double[] spot = wanted.placedAt().orElse(new double[] {looked.x(), looked.z()});
         return new Flight(spot[0], spot[1], wanted.raised().orElse(looked.height()), looked.yaw(),
                 Math.max(STEEPEST, looked.pitch()), 1);
