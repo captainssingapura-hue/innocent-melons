@@ -28,6 +28,16 @@ A household's halls and rooms round a courtyard, behind a gate.
 
 Many homes stacked, reached by lifts.
 
+## SlabBlock
+
+A long, narrow block of flats, its homes side by side along a common corridor on one face, storey on storey, the
+corridor reached by stairs and lifts at its cores: the corridor-access block of public housing.
+
+## PointBlock
+
+A compact block of flats, a few homes on each storey, three to five, set round a central core of stairs and lifts
+that reaches each directly, with no corridor; a tower standing apart from its neighbours.
+
 ## Commerce
 
 Built to trade or to work in.

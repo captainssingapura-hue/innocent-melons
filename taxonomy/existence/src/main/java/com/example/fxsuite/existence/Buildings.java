@@ -25,6 +25,8 @@ public final class Buildings {
     public record Farmhouse() implements Leaf<Residence> { public Residence parent() { return new Residence(); } }
     public record CourtyardHouse() implements Leaf<Residence> { public Residence parent() { return new Residence(); } }
     public record HomesTower() implements Leaf<Residence> { public Residence parent() { return new Residence(); } }
+    public record SlabBlock() implements Leaf<Residence> { public Residence parent() { return new Residence(); } }
+    public record PointBlock() implements Leaf<Residence> { public Residence parent() { return new Residence(); } }
 
     // Commerce
     public record Commerce() implements L2<Building> { public Building parent() { return new Building(); } }

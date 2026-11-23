@@ -36,7 +36,8 @@ public record Made() implements L0 {
             new Earthworks.Field(), new Earthworks.Paddy(),
             // the buildings: what stands on the ground
             new Buildings.House(), new Buildings.Farmhouse(), new Buildings.CourtyardHouse(),
-            new Buildings.HomesTower(), new Buildings.ShopHouse(), new Buildings.WineHouse(), new Buildings.TeaHouse(),
+            new Buildings.HomesTower(), new Buildings.SlabBlock(), new Buildings.PointBlock(),
+            new Buildings.ShopHouse(), new Buildings.WineHouse(), new Buildings.TeaHouse(),
             new Buildings.Stall(), new Buildings.Warehouse(), new Buildings.FestiveGateway(),
             new Buildings.OfficeTower(), new Buildings.HotelTower(), new Buildings.MixedTower(), new Buildings.Temple(),
             new Buildings.Church(), new Buildings.Pavilion(), new Buildings.Courthouse(), new Buildings.Quay(),

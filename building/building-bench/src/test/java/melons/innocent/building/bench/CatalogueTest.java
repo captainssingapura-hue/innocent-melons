@@ -27,7 +27,7 @@ class CatalogueTest {
 
     @Test
     void eachALeafOfWhatIsMadeBuiltWithNothingWrongDrawn() {
-        assertEquals(12, catalogue.offered().size());
+        assertEquals(14, catalogue.offered().size());
         for (final Offered offered : catalogue.offered()) {
             assertTrue(Made.TREE.has(offered.thing()), offered.title() + " in the taxonomy of what is made");
             final Structure built = offered.built(offered.sample());

@@ -18,21 +18,26 @@ import com.example.fxsuite.building.spec.FarmhouseSpec;
 import com.example.fxsuite.building.spec.GateTowerSpec;
 import com.example.fxsuite.building.spec.HallSpec;
 import com.example.fxsuite.building.spec.HouseSpec;
+import com.example.fxsuite.building.spec.PointBlockSpec;
 import com.example.fxsuite.building.spec.QuaySpec;
 import com.example.fxsuite.building.spec.Roofing;
+import com.example.fxsuite.building.spec.SlabBlockSpec;
 import com.example.fxsuite.building.spec.ShopHouseSpec;
 import com.example.fxsuite.building.spec.StallSpec;
 import com.example.fxsuite.building.spec.WineHouseSpec;
 import com.example.fxsuite.taxonomy.Leaf;
 import melons.innocent.building.generic.GenericHouse;
+import melons.innocent.building.generic.GenericPointBlock;
+import melons.innocent.building.generic.GenericSlabBlock;
 
 import java.util.List;
 import java.util.Optional;
 
 /**
  * What the bench offers to build, each thing by its default implementation and a specification to build it from at
- * first: anyone's house of today, and the Northern Song's buildings and works, as their tests build them. One to a
- * thing; other civilizations and eras later.
+ * first: anyone's house of today; the slab block and the point block of the modern era's public housing, as bare
+ * structure; and the Northern Song's buildings and works, as their tests build them. One to a thing; other
+ * civilizations and eras later.
  *
  * @param offered each thing offered
  */
@@ -46,6 +51,8 @@ public record Catalogue(List<Offered> offered) {
     public Catalogue() {
         this(List.of(
                 new Offered(new GenericHouse(), new HouseSpec<>(900, 700, 2, 300, 3)),
+                new Offered(new GenericSlabBlock(), new SlabBlockSpec<>(12, 750, 1_200, 180, 6, 12)),
+                new Offered(new GenericPointBlock(), new PointBlockSpec<>(20, 1_900, 800)),
                 new Offered(new SongFarmhouse(), new FarmhouseSpec<>(3, 330, 600, Roofing.THATCH, 800)),
                 new Offered(new SongShopHouse(), new ShopHouseSpec<>(3, 360, 600, Roofing.TILE)),
                 new Offered(new SongTeaHouse(), new HallSpec<>(3, 380, 600, Roofing.THATCH)),
