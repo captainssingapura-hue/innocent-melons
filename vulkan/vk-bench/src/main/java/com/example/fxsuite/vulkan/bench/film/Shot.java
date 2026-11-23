@@ -19,7 +19,7 @@ public record Shot(double start, Kind kind, Map<String, String> said, List<Vec3>
     public enum Kind {
         /** The chase camera exactly as it was played. */
         AS_PLAYED,
-        /** Standing at a point, watching the avatar. */
+        /** Standing at a point, watching the avatar; or, told to look at a place, looking there, as on a pole. */
         FIXED,
         /** Circling the avatar at a set distance, height and speed. */
         ORBIT,
@@ -52,7 +52,7 @@ public record Shot(double start, Kind kind, Map<String, String> said, List<Vec3>
         final double into = at - start;
         return switch (kind) {
             case AS_PLAYED -> asPlayed;
-            case FIXED -> looking(place("at", "0,2,0"), head, number("fov", FIELD));
+            case FIXED -> looking(place("at", "0,2,0"), looked(head), number("fov", FIELD));
             case ORBIT -> {
                 final double round = Math.toRadians(number("from", yaw + 180) + number("speed", 20) * into);
                 final double away = number("distance", 8) * METRE;
@@ -79,8 +79,17 @@ public record Shot(double start, Kind kind, Map<String, String> said, List<Vec3>
         final int from = Math.min(path.size() - 2, (int) Math.floor(reached));
         final Vec3 here = path.get(from).plus(path.get(from + 1).minus(path.get(from)).times(reached - from));
         final Vec3 looked = said.getOrDefault("look", "avatar").equals("ahead")
-                ? here.plus(path.get(from + 1).minus(path.get(from))) : head;
+                ? here.plus(path.get(from + 1).minus(path.get(from))) : looked(head);
         return looking(here, looked, number("fov", FIELD));
+    }
+
+    /**
+     * What the shot looks at, as its {@code look} says: the avatar's head, at {@code head}, unless it says
+     * otherwise; or a place that stays where it is, three numbers in metres, as a camera on a wall looks.
+     */
+    private Vec3 looked(final Vec3 head) {
+        final String look = said.getOrDefault("look", "avatar");
+        return look.equals("avatar") || look.equals("ahead") ? head : new Placed(look).place();
     }
 
     /** The camera at {@code eye} looking at {@code at}, seeing {@code field} degrees from top to bottom. */

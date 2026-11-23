@@ -10,8 +10,8 @@ import com.example.fxsuite.vulkan.bench.play.Played;
 import com.example.fxsuite.vulkan.bench.play.Replayed;
 import com.example.fxsuite.vulkan.bench.play.Scripted;
 import com.example.fxsuite.vulkan.bench.play.Source;
+import com.example.fxsuite.vulkan.bench.subject.Bot;
 import com.example.fxsuite.vulkan.bench.subject.Courier;
-import com.example.fxsuite.vulkan.bench.subject.Finish;
 import com.example.fxsuite.vulkan.device.Canvas;
 import com.example.fxsuite.vulkan.device.Card;
 import com.example.fxsuite.vulkan.device.Desk;
@@ -107,8 +107,8 @@ public final class Walk {
     private final BiFunction<Card, Laid, Place> placing;
     /** The layouts of every look: asking rays, once the card is open, where the card answers them. */
     private Laid laid = new Laid();
-    /** The avatar as it is drawn here: 1.9 m to the top of its head, its body gold and its arms and legs titanium. */
-    private final Courier courier = new Courier(190, Finish.GILT);
+    /** The avatar as it is drawn here: a bot of a man's proportions, 1.88 m tall, gold and titanium. */
+    private final Bot bot = new Bot();
     /** The bench's day, for where its sun stands: where the sliders begin unless the run is told otherwise. */
     private final Light noon = new Daylight().light();
     /** What the JavaFX window asks: shadows or none, and where the sun stands; to begin with, as the run is told. */
@@ -266,7 +266,7 @@ public final class Walk {
     private void frame(final Target target, final Staged staged, final Avatar shown, final Run run,
                        final Camera camera) {
         final Following following = run.following();
-        final List<Courier.Placed> figure = courier.placed(shown.body(), shown.body().thrust(),
+        final List<Courier.Placed> figure = bot.placed(shown.body(), shown.body().thrust(),
                 Gait.of(shown, following.yaw(), following.lookUp()));
         final double aspect = (double) target.width() / target.height();
         final Daylight time = skies.lit();

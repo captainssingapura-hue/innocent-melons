@@ -17,6 +17,7 @@ import java.util.Map;
  * 0     as played
  * 6.5   orbit distance=8 height=2.5 speed=20 cut
  * 14    fixed at=12,1.6,30 fov=35 blend 1.5
+ * 18    fixed at=70,5,-34 look=-97,6,-34 fov=60 cut
  * 22    path 0,40,-20 > 30,25,10 > 60,8,40 look=avatar blend 2
  * </pre>
  * In metres, degrees and seconds. A shot is come into by a cut unless it says {@code blend} and over how many

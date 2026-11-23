@@ -12,9 +12,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Where a film's shots put the camera, worked out with no card. With none, the run as played. A fixed shot stands
- * where it is put and looks at the avatar; an orbit keeps its distance and height and goes round at its speed; a
- * shot beside the avatar stands to its right when told to, whichever way it faces; a path goes from its first place
- * to its last over the shot, the last shot of a film over to the film's end. A cut changes the camera at once; a blend begins where the shot before has it and ends
+ * where it is put and looks at the avatar, or, told where to look, looks there whatever the avatar does; an orbit
+ * keeps its distance and height and goes round at its speed; a shot beside the avatar stands to its right when told
+ * to, whichever way it faces; a path goes from its first place to its last over the shot, the last shot of a film
+ * over to the film's end. A cut changes the camera at once; a blend begins where the shot before has it and ends
  * where the new one does. A list that is out of order, or a line that cannot be read, is refused, saying which line.
  */
 class ShotsTest {
@@ -36,6 +37,18 @@ class ShotsTest {
         near(new Vec3(1000, 300, 200), fixed.eye());
         near(head.minus(fixed.eye()).unit(), fixed.ahead());
         assertEquals(35, fixed.fieldOfView(), NEAR);
+    }
+
+    @Test
+    void aFixedShotToldWhereToLookLooksThereWhereverTheAvatarGoesAsACameraOnAPoleDoes() {
+        final Shots pole = new Shots("shots 1\n0 fixed at=70,5,-34 look=-97,6,-34 fov=60\n");
+        final Camera here = pole.camera(1, head, 0, played);
+        final Camera there = pole.camera(9, new Vec3(-12000, 3300, -4000), 250, played);
+        near(new Vec3(7000, 500, -3400), here.eye());
+        near(new Vec3(-9700, 600, -3400).minus(here.eye()).unit(), here.ahead());
+        near(here.eye(), there.eye());
+        near(here.ahead(), there.ahead());
+        assertEquals(60, there.fieldOfView(), NEAR);
     }
 
     @Test
