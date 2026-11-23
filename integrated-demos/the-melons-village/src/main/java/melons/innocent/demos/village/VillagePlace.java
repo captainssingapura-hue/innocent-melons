@@ -63,13 +63,16 @@ public final class VillagePlace implements Place {
                 }
                 yards.add(kept(new Formed(card, new Look(laid, wallings.get(walling)), forming.formed())));
             }
+            final Forming towered = new Forming(new Vec3(0, 0, 0));
+            village.towers().forEach(tower -> tower.walls().formed(towered));
+            yards.add(kept(new Formed(card, new Look(laid, village.towers().getFirst().laid()), towered.formed())));
             this.melon = kept(new Formed(card, new Look(laid, watermelon.rind()), watermelon.halved(96)));
             final Shades shades = new Shades();
             final Forming kerb = new Forming(village.lake().stands());
             village.lake().kerbed(kerb);
             lake.add(kept(new Formed(card, new Look(laid, shades.of(new Materials.Rubble())), kerb.formed())));
             lake.add(kept(new Formed(card, new Look(laid, shades.of(new Materials.Water())), village.lake().sheet())));
-            this.carPark = new CarParkDrawn(card, laid, village.carPark());
+            this.carPark = new CarParkDrawn(card, laid, village.carPark(), village.woodCars());
             this.grove = new GroveDrawn(card, laid, village.grove());
         } catch (final RuntimeException refused) {
             close();

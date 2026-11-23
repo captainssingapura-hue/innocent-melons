@@ -30,6 +30,7 @@ public record Village(int homes) {
     private static final double GATE = 300;
     /** How many kinds of wall the yards are walled with, by turns. */
     private static final int WALLINGS = 3;
+    private static final int WOOD_CARS = 5;
 
     /**
      * One home: its yard's wall, the house in the yard, and which kind of wall the yard has (0, 1 or 2).
@@ -83,6 +84,25 @@ public record Village(int homes) {
     }
 
     /** Where each house stands, for the one half melon that is drawn once for each. */
+    /**
+     * Its tall brick towers: two west of the yards on the left of the lane and two south-west of the wood, so that
+     * with the sun where the bench's day has it (some 60 degrees up, from the south-west) their shadows fall
+     * north-east across the yards and into the wood. Each one's door faces what its shadow falls on. Where they
+     * stand and how high are their author's.
+     */
+    public List<Tower> towers() {
+        return List.of(
+                new Tower(new Vec3(-2600, 0, 1800), -90, 4500),
+                new Tower(new Vec3(-2600, 0, 5800), -90, 5500),
+                new Tower(new Vec3(-13400, 0, -6600), 180, 5000),
+                new Tower(new Vec3(-9800, 0, -6500), 180, 4000));
+    }
+
+    /** The few cars left parked among the wood's trees, clear of their trunks. */
+    public List<Parked> woodCars() {
+        return grove().parked(WOOD_CARS);
+    }
+
     public List<Mat4> houses() {
         return homesteads().stream().map(home -> home.house().placed()).toList();
     }
@@ -100,6 +120,8 @@ public record Village(int homes) {
         blocks.addAll(lake().inTheWay());
         blocks.addAll(carPark().inTheWay());
         blocks.addAll(grove().inTheWay());
+        towers().forEach(tower -> blocks.addAll(tower.walls().inTheWay()));
+        woodCars().forEach(car -> blocks.addAll(car.inTheWay()));
         return new Obstacles(blocks);
     }
 }

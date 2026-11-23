@@ -50,10 +50,10 @@ public final class CarParkDrawn implements AutoCloseable {
     /** What undoes each thing made here, in the order it was made. */
     private final List<Runnable> closing = new ArrayList<>();
 
-    /** {@code park}, on {@code card}, its layouts as {@code laid} says. */
-    public CarParkDrawn(final Card card, final Laid laid, final CarPark park) {
+    /** {@code park} and {@code elsewhere}, cars parked elsewhere, on {@code card}, laid out as {@code laid} says. */
+    public CarParkDrawn(final Card card, final Laid laid, final CarPark park, final List<Parked> elsewhere) {
         this.park = park;
-        this.cars = park.parked();
+        this.cars = Stream.concat(park.parked().stream(), elsewhere.stream()).toList();
         final CarFaces faces = new CarFaces(new CarBody().skeleton());
         try {
             this.sheet = new Formed(card, new Look(laid, park.paved()), park.sheet());

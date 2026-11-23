@@ -35,6 +35,13 @@ public record Grove(Vec3 middle, double across, double deep, int trees) {
     private static final double BIGGEST = 1.12;
     private static final double FULL = 360;
     private static final long CHANCE = 20261123L;
+    /**
+     * How far a parked car stands clear of a trunk's middle, along the car and across it; and how many spots are
+     * tried for the cars before giving up.
+     */
+    private static final double CLEAR_ALONG = 520;
+    private static final double CLEAR_ACROSS = 330;
+    private static final int TRIES = 400;
 
     public Grove {
         if (!(across > 0 && deep > 0 && trees > 0)) {
@@ -84,6 +91,35 @@ public record Grove(Vec3 middle, double across, double deep, int trees) {
                     chance.nextDouble() * FULL, SMALLEST + chance.nextDouble() * (BIGGEST - SMALLEST)));
         }
         return standing;
+    }
+
+    /**
+     * A few cars parked among the trees, left where they could be got to: {@code cars} of them, each clear of every
+     * trunk and of every other car by a stride or so, nose one way or the other, in any of the car park's liveries.
+     * They are the same every time. Where each stands is chosen by chance among the trees and kept only if it is
+     * clear; how many and how clear are their author's.
+     */
+    public List<Parked> parked(final int cars) {
+        final Random chance = new Random(CHANCE + 1);
+        final List<Standing> trees = standing();
+        final List<Parked> parked = new ArrayList<>();
+        for (int tried = 0; parked.size() < cars && tried < TRIES; tried++) {
+            final Vec3 spot = middle.plus(new Vec3((chance.nextDouble() - 0.5) * across, 0,
+                    (chance.nextDouble() - 0.5) * deep));
+            final boolean about = chance.nextBoolean();
+            final Livery livery = Livery.values()[chance.nextInt(Livery.values().length)];
+            final boolean clear = trees.stream().noneMatch(tree -> near(spot, tree.stands(), CLEAR_ALONG, CLEAR_ACROSS))
+                    && parked.stream().noneMatch(car -> near(spot, car.stands(), 2 * CLEAR_ALONG, 2 * CLEAR_ACROSS));
+            if (clear) {
+                parked.add(new Parked(spot, about, livery));
+            }
+        }
+        return parked;
+    }
+
+    /** Whether {@code one} is within {@code along} of {@code other} along a car and within {@code across} across. */
+    private boolean near(final Vec3 one, final Vec3 other, final double along, final double across) {
+        return Math.abs(one.x() - other.x()) < along && Math.abs(one.z() - other.z()) < across;
     }
 
     /** What is in the way: every tree's trunk, as a post as thick and as high as the trunk is. */
