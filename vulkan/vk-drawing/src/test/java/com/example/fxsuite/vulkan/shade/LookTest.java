@@ -188,6 +188,26 @@ class LookTest {
         assertThrows(IllegalArgumentException.class, () -> solid.clear(1.5));
     }
 
+    @Test
+    void aHazeHidesMostThroughItsMiddleNothingAtItsRimAndOnTheAverageOfABallWhatItDoesNotLetThrough() {
+        final Surface solid = new Surface(new Colour("#ffffff"), List.of(), new Colour("#000000"), 8);
+        final Look haze = new Look(new Laid(), solid.clear(0.6).hazy());
+        assertTrue(haze.mixed());
+        final Vec3 up = new Vec3(0, 1, 0);
+        assertEquals(0.4 * 1.5, hidden(haze, up, new Vec3(0, -100, 0)), 1e-9, "through its middle");
+        assertEquals(0, hidden(haze, up, new Vec3(100, 0, 0)), 1e-9, "at its rim");
+        // over a ball seen from far off, each ring of it counted for as much of the view as it fills
+        double sum = 0;
+        final int rings = 2000;
+        for (int ring = 0; ring < rings; ring++) {
+            final double r = (ring + 0.5) / rings;
+            final Vec3 faces = new Vec3(r, Math.sqrt(1 - r * r), 0);
+            sum += hidden(haze, faces, new Vec3(0, -100, 0)) * 2 * r / rings;
+        }
+        assertEquals(0.4, sum, 1e-3, "on the average, what it does not let through");
+        assertThrows(IllegalStateException.class, solid::hazy, "only what is seen through is a haze");
+    }
+
     /** How much of what is behind a point of {@code of} it hides, the point {@code from} away from the eye. */
     private double hidden(final Look of, final Vec3 faces, final Vec3 from) {
         final Light any = new Light(new Vec3(0, -1, 0), new Vec3(0, 0, 0), new Vec3(1, 1, 1));

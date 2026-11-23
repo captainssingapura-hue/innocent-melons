@@ -2,20 +2,17 @@ package melons.innocent.plants.walk;
 
 import com.example.fxsuite.avatar.sim.Block;
 import com.example.fxsuite.avatar.sim.Obstacles;
-import com.example.fxsuite.texture.materials.Shades;
 import com.example.fxsuite.vulkan.bench.Place;
 import com.example.fxsuite.vulkan.device.Card;
 import com.example.fxsuite.vulkan.device.Pass;
-import com.example.fxsuite.vulkan.render.Formed;
 import com.example.fxsuite.vulkan.shade.Laid;
-import com.example.fxsuite.vulkan.shade.Look;
 import com.example.fxsuite.vulkan.space.Mat4;
 import com.example.fxsuite.vulkan.space.Vec3;
 import com.example.fxsuite.vulkan.view.Camera;
 import melons.innocent.plants.tree.Bough;
 import melons.innocent.plants.tree.Kind;
+import melons.innocent.plants.tree.Stage;
 import melons.innocent.plants.tree.Tree;
-import melons.innocent.plants.tree.Wooded;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,8 +20,8 @@ import java.util.List;
 /**
  * Trees standing by themselves on level ground, to walk round and to fly up into, one of each kind there is, with
  * no leaves: the oak twelve metres ahead of where the avatar starts, the walnut off to its left and the birch off
- * to its right, each far enough from the others that their crowns do not meet. Each is drawn as finely as it is
- * grown, in its own kind's bark from the lab, as one form with one look, in one call. A trunk is in the avatar's
+ * to its right, each far enough from the others that their crowns do not meet. Each is drawn as finely as its
+ * distance calls for ({@link WoodDrawn}), in its own kind's bark from the lab. A trunk is in the avatar's
  * way, as a post; boughs are not, so the avatar flies through a crown as if it were not there.
  */
 public final class TreePlace implements Place {
@@ -41,19 +38,22 @@ public final class TreePlace implements Place {
             new Standing(Kind.OAK, Kind.OAK.tree(1), new Vec3(0, 0, 1200)),
             new Standing(Kind.WALNUT, Kind.WALNUT.tree(1), new Vec3(-APART, 0, 1200 + BEYOND)),
             new Standing(Kind.BIRCH, Kind.BIRCH.tree(1), new Vec3(APART, 0, 1200 + BEYOND)));
-    private final List<Formed> woods = new ArrayList<>();
+    private WoodDrawn wood;
 
     /** The trees, on {@code card}, their layouts as {@code laid} says. */
     public TreePlace(final Card card, final Laid laid) {
-        try {
-            for (final Standing tree : standing) {
-                woods.add(new Formed(card, new Look(laid, new Shades().of(new Barks().of(tree.kind()))),
-                        new Wooded(tree.tree()).formed()));
-            }
-        } catch (final RuntimeException refused) {
-            close();
-            throw refused;
+        final List<WoodDrawn.Grown> grown = new ArrayList<>();
+        final List<WoodDrawn.Planted> planted = new ArrayList<>();
+        for (final Standing tree : standing) {
+            planted.add(new WoodDrawn.Planted(grown.size(), new Mat4(tree.stands()), 1));
+            grown.add(new WoodDrawn.Grown(tree.kind(), tree.tree()));
         }
+        this.wood = new WoodDrawn(card, laid, grown, planted);
+    }
+
+    /** The stage each tree was last drawn at, the oak first. */
+    public List<Stage> stages() {
+        return wood.stages();
     }
 
     /** The trees that stand here, the oak first. */
@@ -74,14 +74,19 @@ public final class TreePlace implements Place {
 
     @Override
     public void drawn(final Pass pass, final Camera camera) {
-        for (int tree = 0; tree < standing.size(); tree++) {
-            woods.get(tree).drawn(pass, new Mat4(standing.get(tree).stands()), camera, 1);
-        }
+        wood.drawn(pass, camera);
+    }
+
+    @Override
+    public void seenThrough(final Pass pass, final Camera camera) {
+        wood.seenThrough(pass, camera);
     }
 
     @Override
     public void close() {
-        woods.reversed().forEach(Formed::close);
-        woods.clear();
+        if (wood != null) {
+            wood.close();
+            wood = null;
+        }
     }
 }

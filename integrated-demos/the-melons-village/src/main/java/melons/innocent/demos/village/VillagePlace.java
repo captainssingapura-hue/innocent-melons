@@ -109,6 +109,9 @@ public final class VillagePlace implements Place {
 
     @Override
     public void seenThrough(final Pass pass, final Camera camera) {
+        // the wood's far haze first, then the cars' windows: one before the other wherever they lie, which is wrong
+        // only where a window and a crown's haze cross in the picture, and then only in which is laid over which
+        grove.seenThrough(pass, camera);
         carPark.seenThrough(pass, camera);
     }
 

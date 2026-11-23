@@ -51,6 +51,8 @@ public record Lit(Layout passed, Layout frame, String held) {
      * times over, for a mirrored view swung from one side to the other.
      */
     private static final double TWINKLE = 25;
+    /** How much more a haze hides through its middle than on the whole of a round clump: three halves. */
+    private static final double MIDDLE = 1.5;
 
     public Lit {
         // asked now: a layout without what the lighting reads is refused here, by name
@@ -85,7 +87,8 @@ public record Lit(Layout passed, Layout frame, String held) {
         final Colour unflaked = surface.flakes().map(flakes -> surface.colour().scaled(flakes.dulled(square)))
                 .orElse(surface.colour());
         // seen through, its own colour shows only as much as is not let through
-        final Colour own = surface.seenThrough() ? unflaked.scaled(new Real(1 - surface.through())) : unflaked;
+        final Colour own = !surface.seenThrough() ? unflaked
+                : unflaked.scaled(surface.haze() ? hazed(surface, square) : new Real(1 - surface.through()));
         final Colour whole = own.lit(ambient.plus(sun.scaled(falls.times(reaches))))
                 .plus(surface.shine().lit(sun).scaled(glint))
                 .plus(surface.glow()).plus(mirrored.lit(around));
@@ -107,7 +110,19 @@ public record Lit(Layout passed, Layout frame, String held) {
         }
         final Direction faces = new Direction(new Given(FACES, 3)).unit();
         final Direction toEye = new Point(new Given(FROM, 3)).back();
+        if (surface.haze()) {
+            return hazed(surface, faces.dot(toEye).most(new Real(0)));
+        }
         return new Real(1).less(new Real(1).less(mirrored(surface, faces, toEye).evened()).times(surface.through()));
+    }
+
+    /**
+     * How much a haze hides where its outside is seen {@code square} on (one, through its middle; nothing, at its
+     * rim): as much as the eye's way through it is long, which over a round clump comes on the average to two thirds
+     * of the longest; so through its middle half as much again as it hides on the whole, and never more than all.
+     */
+    private Real hazed(final Surface surface, final Real square) {
+        return square.times(MIDDLE * (1 - surface.through())).least(new Real(1));
     }
 
     /**
