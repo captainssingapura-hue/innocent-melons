@@ -24,6 +24,7 @@
     <modules>
         <module>building-core</module>
         <module>building-chinese</module>
+        <module>building-bench</module>
     </modules>
 
     <dependencyManagement>

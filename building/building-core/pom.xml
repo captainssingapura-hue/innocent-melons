@@ -20,6 +20,11 @@
     </description>
 
     <dependencies>
+        <dependency>
+            <groupId>melons.innocent.forms</groupId>
+            <artifactId>forms-data</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
         <!-- the ontology's markers: what is a value, what is a stateless function -->
         <dependency>
             <groupId>io.github.captainssingapura-hue.lang.ontology</groupId>
