@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * A humanoid drawn to be moved: each part drawn once, rigid, in its own frame, and put each frame where its skeleton
@@ -49,6 +50,7 @@ public final class Puppet {
     public static final double TWIST = 85;
 
     private final Kind kind;
+    private final Layers layers;
     private final Proportions proportions;
     private final RobotDesign design;
     private final Palette palette;
@@ -70,19 +72,27 @@ public final class Puppet {
 
     public Puppet(final Kind kind, final Proportions proportions, final RobotDesign design, final Palette palette,
                   final V3 signs) {
+        this(kind, proportions, design, palette, signs, new Layers(Map.of()));
+    }
+
+    /** The same, each group of its parts drawn as {@code layers} says ({@link Layers}). */
+    public Puppet(final Kind kind, final Proportions proportions, final RobotDesign design, final Palette palette,
+                  final V3 signs, final Layers layers) {
         this.kind = kind;
         this.proportions = proportions;
         this.design = design;
         this.palette = palette;
         this.signs = signs;
+        this.layers = layers;
         rest = new Rig(proportions, Pose.REST);
         for (final Part p : Part.values()) {
             // drawn in the part's own frame; its frame put where it is each frame, into the scene's
             final Group g = new Group();
-            if (skeletal()) {
+            final Optional<Layer> l = layers.of(p, kind);
+            if (l.isPresent() && l.get().boned()) {
                 bones.put(p, new Group(skeleton(p, detail)));
                 g.getChildren().add(bones.get(p));
-            } else {
+            } else if (l.isEmpty()) {
                 final List<Surface> baked = new ArrayList<>();
                 for (final Surface s : local(p)) {
                     baked.add(s.moved(v -> bake(p, v)));
@@ -126,9 +136,24 @@ public final class Puppet {
         return detail;
     }
 
-    /** Whether it is drawn as a skeleton, its muscles on it or not. */
-    private boolean skeletal() {
-        return kind == Kind.SKELETON || kind == Kind.MUSCLES;
+    /** How deep {@code p} is drawn; none, as a robot's part. */
+    public Optional<Layer> layer(final Part p) {
+        return layers.of(p, kind);
+    }
+
+    /** Whether any of its parts is drawn {@code l} deep. */
+    public boolean shows(final Layer l) {
+        for (final Part p : Part.values()) {
+            if (layer(p).equals(Optional.of(l))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Whether point {@code i} of {@code flesh}, by the part it follows most, is of a part drawn {@code l} deep. */
+    private boolean drawn(final Flesh flesh, final int i, final Layer l) {
+        return layer(flesh.most(i)).equals(Optional.of(l));
     }
 
     /** Its skeleton's levels of detail, found and kept: to find one on another thread before it is drawn. */
@@ -152,15 +177,23 @@ public final class Puppet {
      * none.
      */
     public void muscles(final com.example.fxsuite.life.body.muscle.MuscleBody.Bound body) {
-        muscles = body == null ? null
-                : new com.example.fxsuite.life.body.muscle.MusclesView(body, signs, shown != null ? shown : rest);
+        muscles = body == null ? null : new com.example.fxsuite.life.body.muscle.MusclesView(
+                new com.example.fxsuite.life.body.muscle.MuscleBody.Bound(
+                        body.flesh().only(i -> drawn(body.flesh(), i, Layer.MUSCLES)), body.tendon(), body.parts(),
+                        body.main()), signs, shown != null ? shown : rest);
         muscled.getChildren().setAll(muscles == null ? List.of() : List.of(muscles.node()));
     }
 
-    /** Its skin, {@code flesh}, found away from the screen ({@link Skins}), drawn from now on. */
+    /**
+     * Its skin, {@code flesh}, found away from the screen ({@link Skins}), drawn from now on: of the parts drawn as
+     * skin only, each triangle of the part it is known to be of, else of the one its points follow most.
+     */
     public void skin(final Flesh flesh) {
-        skin = new FleshView(flesh, Skins.COLOUR, signs, shown != null ? shown : rest);
-        skinned.getChildren().setAll(skin.node());
+        final Optional<Layer> skin = Optional.of(Layer.SKIN);
+        final Flesh kept = flesh.inPatches() ? flesh.patch(p -> layer(p).equals(skin))
+                : flesh.only(i -> drawn(flesh, i, Layer.SKIN));
+        this.skin = new FleshView(kept, Skins.COLOUR, signs, shown != null ? shown : rest);
+        skinned.getChildren().setAll(this.skin.node());
     }
 
     /** Whether its pistons are drawn, if it has any. */

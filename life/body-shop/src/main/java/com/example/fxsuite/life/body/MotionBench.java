@@ -35,7 +35,8 @@ import java.util.Locale;
  * down, the only weapon it holds for now.
  *
  * <p>{@code -Dmotion.look} (exposed, shelled, skeleton, muscles, skin), {@code -Dskeleton.detail} (mm,
- * a skeleton's grid), {@code -Dmotion.deep=true} (its deep muscles too),
+ * a skeleton's grid), {@code -Dmotion.deep=true} (its deep muscles too), {@code -Dmotion.head} and so the neck's,
+ * the trunk's, the arms', the legs' (each a layer of its own, {@link LayerChoice}),
  * {@code -Dmotion.move} (walk, quick, parade), {@code -Dmotion.speed} (cm/s), {@code -Dmotion.tour=true},
  * {@code -Dmotion.gatling=true}, {@code -Dmotion.aim} (degrees), {@code -Dmotion.slow} (a share of real time) what
  * it plays first;
@@ -81,6 +82,7 @@ public final class MotionBench extends Application {
     private Pose arms = GatlingHold.ready(Pose.REST);
 
     private final ChoiceBox<Puppet.Kind> look = new ChoiceBox<>();
+    private final LayerChoice layered = new LayerChoice(this::dress);
     private final ChoiceBox<Move> how = new ChoiceBox<>();
     private final Slider speed = new Slider(0, 800, 140);
     private final Label speedSaid = new Label();
@@ -199,7 +201,8 @@ public final class MotionBench extends Application {
                 + " Stop it and move the point of its stride to look at a moment. Drag to turn the view, right-drag"
                 + " to move it, scroll to come nearer.");
         hint.setWrapText(true);
-        final VBox side = new VBox(10, new Label("Drawn as"), look, new Label("How it goes"), how,
+        final VBox side = new VBox(10, new Label("Drawn as"), look, new Label("Each part drawn as"), layered.node(),
+                new Label("How it goes"), how,
                 new Label("How fast"), paces, tour, knobs, new FlowPane(10, 6, play), deep, muscleSaid, gatling,
                 forces, treadmill, hint);
         side.setPadding(new Insets(8));
@@ -270,7 +273,8 @@ public final class MotionBench extends Application {
         walker = new Walker(proportions);
         walker.move(how.getValue());
         hold = new GatlingHold(proportions);
-        puppet = new Puppet(look.getValue(), proportions, RobotDesign.DEFAULT, Palette.DEFAULT, new V3(-1, -1, -1));
+        puppet = new Puppet(look.getValue(), proportions, RobotDesign.DEFAULT, Palette.DEFAULT, new V3(-1, -1, -1),
+                layered.layers());
         shown.getChildren().setAll(puppet.node(), gun, strap, loads);
         draw(walker.rig(), 0);
         regrid();
@@ -283,7 +287,7 @@ public final class MotionBench extends Application {
      * drawn over it; kept, to be drawn again without finding them afresh. None for any other kind.
      */
     private void muscled() {
-        if (puppet.kind() != Puppet.Kind.MUSCLES) {
+        if (!puppet.shows(Layer.MUSCLES)) {
             muscleSaid.setText("");
             return;
         }
@@ -309,7 +313,7 @@ public final class MotionBench extends Application {
 
     /** Its skin found away from the screen, if it is drawn as one, then drawn; kept, to be drawn again at once. */
     private void skinned() {
-        if (puppet.kind() != Puppet.Kind.SKIN) {
+        if (!puppet.shows(Layer.SKIN)) {
             return;
         }
         final Puppet mine = puppet;
@@ -317,15 +321,12 @@ public final class MotionBench extends Application {
         muscleSaid.setText("finding its skin");
         new Thread(() -> {
             final long t0 = System.nanoTime();
-            final com.example.fxsuite.life.body.flesh.Flesh skin = skins.moving(p);
-            final Node clay = clay(skin);
+            final boolean clayed = mine.layer(Part.HEAD).equals(java.util.Optional.of(Layer.SKIN));
+            final com.example.fxsuite.life.body.flesh.Flesh skin = clayed ? clay(skins.moving(p)) : skins.moving(p);
             final long ms = (System.nanoTime() - t0) / 1_000_000;
             javafx.application.Platform.runLater(() -> {
                 if (mine == puppet) {
-                    mine.skin(clay == null ? skin : ClayHead.INSTANCE.headless(skin));
-                    if (clay != null) {
-                        mine.part(Part.HEAD).getChildren().add(clay);
-                    }
+                    mine.skin(skin);
                     muscleSaid.setText(String.format(Locale.ROOT, "Skin: %,d points, %,d triangles, found in %,d ms",
                             skin.size(), skin.triangleCount(), ms));
                 }
@@ -334,37 +335,32 @@ public final class MotionBench extends Application {
     }
 
     /**
-     * The clay head made from the reference head {@code -Dhead.reference} names, if it does, as big as the head of the
-     * body {@code skin} is, drawn in the head's frame in the skin's colour, to take the place of the skin's own head;
-     * none, if it names none or it cannot be read.
+     * {@code skin} with the clay head made from the reference head {@code -Dhead.reference} names, if it does, joined
+     * on at its neck in place of its own head ({@link com.example.fxsuite.life.body.head.NeckJoin}): where the skull
+     * fitted under it sets it, at its own size; else as big as the skin's head. As it is, if it names none or it cannot
+     * be read.
      */
-    private Node clay(final com.example.fxsuite.life.body.flesh.Flesh skin) {
+    private com.example.fxsuite.life.body.flesh.Flesh clay(final com.example.fxsuite.life.body.flesh.Flesh skin) {
         final String path = System.getProperty("head.reference");
         if (path == null) {
-            return null;
+            return skin;
         }
         try {
             final Mesher.Mesh head = ClayHead.INSTANCE.of(java.nio.file.Path.of(path));
-            // set where the skull fitted under it sets it, at its own size; else as big as the skin's head
             final V3 at = com.example.fxsuite.life.body.bone.skull.SkullForm.INSTANCE.headAt().orElse(V3.ZERO);
             final double k = com.example.fxsuite.life.body.bone.skull.SkullForm.INSTANCE.headAt().isPresent() ? 1
                     : ClayHead.INSTANCE.scale(head, skin);
-            final javafx.scene.Group g = com.example.fxsuite.life.body.bone.BoneView.INSTANCE.mapped(head, Paint.SKIN,
-                    v -> v.times(k).plus(at), false);
-            final javafx.scene.paint.PhongMaterial m = new javafx.scene.paint.PhongMaterial(
-                    javafx.scene.paint.Color.web(com.example.fxsuite.life.body.skin.Skins.COLOUR));
-            g.getChildren().forEach(n -> ((javafx.scene.shape.Shape3D) n).setMaterial(m));
             System.out.printf(Locale.ROOT, "clay head made %.3f times as big%n", k);
-            return g;
+            return com.example.fxsuite.life.body.head.NeckJoin.INSTANCE.joined(skin, head, at, k);
         } catch (final java.io.IOException e) {
             System.out.println("the clay head not made: " + e.getMessage());
-            return null;
+            return skin;
         }
     }
 
     /** A skeleton found afresh on the grid asked for, away from the screen, then drawn; how many triangles, said. */
     private void regrid() {
-        if (puppet.kind() != Puppet.Kind.SKELETON && puppet.kind() != Puppet.Kind.MUSCLES) {
+        if (!puppet.shows(Layer.SKELETON) && !puppet.shows(Layer.MUSCLES)) {
             gridSaid.setText("for a skeleton");
             return;
         }
