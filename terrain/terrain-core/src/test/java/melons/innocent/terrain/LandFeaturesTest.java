@@ -16,6 +16,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Land features laid over the ground, the later over the earlier: a band by how high the ground is, a steep slope's
@@ -56,12 +57,12 @@ class LandFeaturesTest {
     }
 
     private LandFeatures features() {
-        return new LandFeatures(terrain(), List.of(
+        return new LandFeatures("land", terrain(), terrain().map(), List.of(
                 new Band("meadow", new Terrains.Meadow(), new Hue("#80b050"), 0, 1_000),
                 new Steep("rock", new Terrains.Rock(), new Hue("#808080"), 0.5),
                 new Area("field", new Earthworks.Field(), new Hue("#c0b060"), new Path(field)),
                 new Watercourse("river", new Features.River(), blue, new Path(List.of(head, foot)),
-                        fold(0, 450, 10_000, 0), 400),
+                        fold(0, 150, 10_000, 200), 0, 400),
                 new Sea("sea", new Features.Sea(), blue, new Path(List.of(west, east)), 0)));
     }
 
@@ -83,12 +84,25 @@ class LandFeaturesTest {
     }
 
     @Test
+    void theWatersTopLevelAcrossItsReachWhetherTheGroundIsUnderItOrNot() {
+        final LandFeatures features = features();
+        assertEquals(0, features.water(5_000, -3_000), 1e-9, "the sea's top, out at sea");
+        assertEquals(0, features.water(5_000, -10), 1e-9, "at the shore, its ground just under");
+        assertTrue(Double.isNaN(features.water(5_000, 3_000)), "inland, beyond the sea's reach and the river's");
+        // along the river, its top so deep over its bed as its curve says; across it, level, banks and all, as far as
+        // it reaches
+        assertEquals(315, features.water(0, 5_000), 1e-9);
+        assertEquals(315, features.water(300, 5_000), 1e-9);
+        assertTrue(Double.isNaN(features.water(500, 5_000)), "past its spread");
+    }
+
+    @Test
     void eachLabelledOfAKindInItsColourNoTwoLabelledTheSame() {
         final Feature river = features().laid().get(3);
         assertEquals(new Features.River(), river.kind());
         assertEquals(new Hue(0x30 / 255.0, 0x60 / 255.0, 0xa0 / 255.0), river.hue());
         assertThrows(IllegalArgumentException.class, () -> new Hue("3060a0"));
-        assertThrows(IllegalArgumentException.class, () -> new LandFeatures(terrain(), List.of(
+        assertThrows(IllegalArgumentException.class, () -> new LandFeatures("land", terrain(), terrain().map(), List.of(
                 new Band("same", new Terrains.Meadow(), blue, 0, 1),
                 new Band("same", new Terrains.Sand(), blue, 1, 2))));
         assertThrows(IllegalArgumentException.class, () -> new Area("open", new Earthworks.Field(), blue,

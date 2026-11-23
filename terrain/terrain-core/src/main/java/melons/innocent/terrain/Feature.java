@@ -1,5 +1,6 @@
 package melons.innocent.terrain;
 
+import com.example.fxsuite.math.graph.Graph;
 import com.example.fxsuite.taxonomy.Leaf;
 import hue.captains.singapura.tao.ontology.Scalar;
 
@@ -9,7 +10,7 @@ import hue.captains.singapura.tao.ontology.Scalar;
  * to be shown in; where it lies is worked out from the ground and the map's lines, the same every time. Features are
  * laid one over another, the later over the earlier, so water lies over the meadow it floods.
  */
-public sealed interface Feature extends Scalar permits Band, Steep, Area, Sea, Watercourse {
+public sealed interface Feature extends Scalar permits Band, Steep, Area, WaterBody {
 
     /** What it is labelled. */
     String label();
@@ -20,8 +21,11 @@ public sealed interface Feature extends Scalar permits Band, Steep, Area, Sea, W
     /** The colour it is shown in. */
     Hue hue();
 
-    /** Where it lies, on {@code terrain}'s ground and along its map's lines. */
-    Coverage coverage(Terrain terrain);
+    /**
+     * Where it lies, along {@code map}'s lines and over {@code ground}, which it only reads: no feature changes how
+     * high the ground is.
+     */
+    Coverage coverage(Graph<Spot, Course> map, Ground ground);
 
     /**
      * Where a feature lies: whether it lies at a spot, the ground there as already worked out, so nothing asks the

@@ -17,9 +17,11 @@ import javafx.application.Platform;
 import melons.innocent.terrain.Extent;
 import melons.innocent.terrain.Ground;
 import melons.innocent.terrain.LandFeatures;
+import melons.innocent.terrain.Seen;
 import melons.innocent.terrain.Terrain;
+import melons.innocent.terrain.Topography;
 import melons.innocent.terrain.melon.MelonCountry;
-import melons.innocent.terrain.melon.MelonFeatures;
+import melons.innocent.terrain.melon.MelonTopography;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -35,9 +37,12 @@ import java.util.List;
  * is started on is the card's: it opens the card and draws every frame. Closing either window ends it; anything the
  * validation layer says ends it too, and is the error it ends with.
  *
- * <p>{@code -Dbench.terrain=} says which ground: {@code melon}, the Melon country (the first), or {@code rolling}, the
- * rolling country it began with; for the Melon country, {@code -Dbench.paint=} how it is painted: {@code features},
- * each land feature in its colour (the first), or {@code dry}, its dry ground in concrete. {@code -Dbench.every=}
+ * <p>{@code -Dbench.terrain=} says which ground: {@code melon}, the Melon country, its natural ground from its
+ * contours (the first), {@code contours}, the same in concrete, or {@code rolling}, the rolling country it began
+ * with; the Melon country's ground seen as finely as the sheet's points are apart. For the Melon country,
+ * {@code -Dbench.paint=} how it is painted: {@code features}, each land feature in its colour (the first),
+ * {@code materials}, each in the lab's material for its kind, plain where it has none, or {@code dry}, the ground its
+ * first draft's landforms made, in concrete. {@code -Dbench.every=}
  * says how far apart the sheet's points are, in metres; {@code -Dbench.across=} and {@code -Dbench.along=} (metres)
  * where over the map the eye starts, {@code -Dbench.height=} (metres) how high, {@code -Dbench.yaw=} and
  * {@code -Dbench.pitch=} (degrees, degrees down) which way it looks, and {@code -Dbench.scale=} how many times as big
@@ -92,15 +97,25 @@ public final class TerrainBench {
 
     public static void main(final String[] args) throws IOException {
         final Plainly concrete = new Plainly("concrete", new Shades().of(new Materials.Concrete()));
-        if ("rolling".equals(System.getProperty("bench.terrain", "melon"))) {
+        final String terrain = System.getProperty("bench.terrain", "melon");
+        final double every = METRE * Double.parseDouble(System.getProperty("bench.every", "10"));
+        if ("contours".equals(terrain)) {
+            final Topography map = MelonTopography.INSTANCE.topography();
+            new TerrainBench(new Seen(map, every), concrete).run(map.name() + ", its natural ground from its contours, "
+                    + map.contours().size() + " of them, seen at " + Math.round(every / METRE) + " m, in concrete");
+        } else if ("rolling".equals(terrain)) {
             new TerrainBench(new Rolling(), concrete).run("Rolling country, three kilometres square, in concrete");
         } else if ("dry".equals(System.getProperty("bench.paint", "features"))) {
             final Terrain melon = MelonCountry.INSTANCE.terrain();
             new TerrainBench(melon, concrete).run(melon.name() + ", its dry ground, in concrete");
+        } else if ("materials".equals(System.getProperty("bench.paint", "features"))) {
+            final LandFeatures features = Countries.INSTANCE.chosen();
+            new TerrainBench(new Seen(features.ground(), every), new ByMaterials(features)).run(features.name()
+                    + ", its land features in the lab's materials, plain where it has none");
         } else {
-            final LandFeatures features = MelonFeatures.INSTANCE.features();
-            new TerrainBench(features.terrain(), new ByFeatures(features))
-                    .run(features.terrain().name() + ", its land features in their colours");
+            final LandFeatures features = Countries.INSTANCE.chosen();
+            new TerrainBench(new Seen(features.ground(), every), new ByFeatures(features))
+                    .run(features.name() + ", its land features in their colours");
         }
     }
 

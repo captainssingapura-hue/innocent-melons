@@ -13,6 +13,10 @@
     <artifactId>terrain-bench</artifactId>
     <packaging>jar</packaging>
 
+    <properties>
+        <bench.main>TerrainBench</bench.main>
+    </properties>
+
     <description>
         The terrain's bench: any ground drawn on the card as a sheet of triangles, lit by the day, in one of the
         lab's materials, looked round, carried across and flown over with the mouse, its controls in a JavaFX window
@@ -27,6 +31,14 @@
         <dependency>
             <groupId>melons.innocent.terrain</groupId>
             <artifactId>melon-country</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.terrain</groupId>
+            <artifactId>meadow-country</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.terrain</groupId>
+            <artifactId>terrain-tiles</artifactId>
         </dependency>
         <dependency>
             <groupId>com.example.fxsuite.vulkan</groupId>
@@ -59,12 +71,12 @@
     <build>
         <plugins>
             <plugin>
-                <!-- mvn -pl terrain/terrain-bench exec:java opens the bench -->
+                <!-- mvn -pl terrain/terrain-bench exec:java opens the bench; -Dbench.main=TiledBench the tiled one -->
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.6.3</version>
                 <configuration>
-                    <mainClass>melons.innocent.terrain.bench.TerrainBench</mainClass>
+                    <mainClass>melons.innocent.terrain.bench.${bench.main}</mainClass>
                 </configuration>
             </plugin>
             <plugin>
