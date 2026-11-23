@@ -24,17 +24,34 @@ public record SheetBed() implements StatelessFunctionalObject {
 
     /** How far a sheet's bed is looked for, cm. */
     private static final double REACH = 6;
+    /** How finely its bones are found, cm. */
+    private static final double BONES = 0.6;
 
-    /** The muscles of a body made as {@code p} says, the deep ones if {@code deep}, its sheets laid on the rest. */
+    /**
+     * The muscles of a body made as {@code p} says, the deep ones if {@code deep}, as drawn ({@link MuscleState}), its
+     * sheets laid on the rest.
+     */
     public MuscleBody.Bound body(final Proportions p, final boolean deep, final int steps) {
+        return body(p, deep, steps, new MuscleState.Drawn());
+    }
+
+    /** The same, its muscles but its sheets in the state {@code state}. */
+    public MuscleBody.Bound body(final Proportions p, final boolean deep, final int steps, final MuscleState state) {
         final Rig bind = new Rig(p, BoundPose.INSTANCE.pose(), false);
-        return MuscleBody.INSTANCE.make(p, deep, steps, muscles -> of(muscles, bind));
+        final Beneath bones = Underneath.INSTANCE.bones(bind, new Detail(BONES));
+        return MuscleBody.INSTANCE.make(p, deep, steps, muscles -> of(muscles, bones),
+                firm -> state.shaped(firm, bones));
     }
 
     /** The bed of {@code muscles} and the bones of the body {@code bind} holds. */
     public Bed of(final Flesh muscles, final Rig bind) {
+        return of(muscles, Underneath.INSTANCE.bones(bind, new Detail(BONES)));
+    }
+
+    /** The bed of {@code muscles} and {@code bones}. */
+    private Bed of(final Flesh muscles, final Beneath bones) {
         final Underneath u = Underneath.INSTANCE;
-        final Nearness near = new Nearness(u.with(u.muscles(muscles), u.bones(bind, new Detail(0.6))));
+        final Nearness near = new Nearness(u.with(u.muscles(muscles), bones));
         return p -> {
             final Nearness.Near n = near.nearest(p, REACH, t -> true);
             if (n.triangle() < 0) {

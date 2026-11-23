@@ -21,9 +21,9 @@ public record MuscleSurface() implements StatelessFunctionalObject {
 
     /**
      * A muscle's surface; how far each of its points is tendon, 0 belly, 1 tendon; the parts it follows, and how much
-     * each point follows each of them, the shares adding to one.
+     * each point follows each of them, the shares adding to one; how deep the muscle lies ({@link Muscle#depth}).
      */
-    public record Surface(Mesher.Mesh mesh, float[] tendon, List<Part> parts, float[][] shares) {
+    public record Surface(Mesher.Mesh mesh, float[] tendon, List<Part> parts, float[][] shares, int depth) {
     }
 
     /** {@code m}'s surface, as big as {@code bulk} has it, on the body {@code rig} holds, smoothed {@code steps}. */
@@ -72,6 +72,6 @@ public record MuscleSurface() implements StatelessFunctionalObject {
         }
         final float[][] shares = new float[parts.size()][];
         System.arraycopy(carried, 1, shares, 0, shares.length);
-        return new Surface(s.mesh(s.times(shape, steps)), carried[0], parts, shares);
+        return new Surface(s.mesh(s.times(shape, steps)), carried[0], parts, shares, m.depth());
     }
 }

@@ -24,6 +24,11 @@ public interface Muscle extends StatelessFunctionalObject {
         return Layer.SUPERFICIAL;
     }
 
+    /** How deep it lies among the muscles about it, the outermost 1 ({@link MuscleDepth}). */
+    default int depth() {
+        return MuscleDepth.INSTANCE.of(this);
+    }
+
     /**
      * Whether it is a sheet, wide and thin, lying over what is under it, bones and other muscles, and following their
      * shape: the platysma, the trapezius, the latissimus; drawn lying on them where the body's muscles are made
