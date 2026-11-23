@@ -2,25 +2,23 @@ package melons.innocent.terrain.bench;
 
 import melons.innocent.terrain.Ground;
 import melons.innocent.terrain.Sample;
-import melons.innocent.terrain.tiles.Chosen;
 import melons.innocent.terrain.tiles.TileData;
 import melons.innocent.terrain.tiles.TileKey;
 import melons.innocent.terrain.tiles.Tiling;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
 /**
- * The tiles wanted, built away from the card's thread, on threads of their own, in the order they are wanted, the
- * nearest first: each sampled from the ground, each point sorted into the painting's topmost layer that lies there.
- * Built, a tile is kept while it is wanted and dropped once it is not; the card's thread takes what is built when it
- * will. Closed, its threads stop, a tile being built left unfinished.
+ * The tiles wanted, built away from the card's thread, on threads of their own: each thread taking, whenever it is
+ * free, the first tile in the latest order wanted that is neither built nor being built, so what is wanted soonest is
+ * built first however often the order changes. Each tile sampled from the ground, each point sorted into the
+ * painting's topmost layer that lies there. Built, a tile is kept while it is wanted and dropped once it is not; the
+ * card's thread takes what is built when it will. Closed, its threads stop, a tile being built left unfinished.
  */
 public final class TileBuilder implements AutoCloseable {
 
@@ -29,10 +27,13 @@ public final class TileBuilder implements AutoCloseable {
     private final Painting painting;
     /** How many layers the painting has, its first among them. */
     private final int layers;
-    private final ExecutorService workers;
     private final Map<TileKey, TileData> built = new ConcurrentHashMap<>();
     private final Set<TileKey> building = ConcurrentHashMap.newKeySet();
+    private final List<Thread> threads = new ArrayList<>();
+    private final Object waiting = new Object();
+    private volatile List<TileKey> order = List.of();
     private volatile Set<TileKey> wanted = Set.of();
+    private volatile boolean open = true;
 
     /** Tiles of {@code tiling} of {@code ground}, painted as {@code painting} says, on {@code threads} threads. */
     public TileBuilder(final Tiling tiling, final Ground ground, final Painting painting, final int threads) {
@@ -40,19 +41,18 @@ public final class TileBuilder implements AutoCloseable {
         this.ground = ground;
         this.painting = painting;
         this.layers = painting.legend().size();
-        this.workers = Executors.newFixedThreadPool(threads, work -> Thread.ofPlatform().daemon().name("tiles")
-                .unstarted(work));
+        for (int k = 0; k < threads; k++) {
+            this.threads.add(Thread.ofPlatform().daemon().name("tiles").start(this::work));
+        }
     }
 
-    /** {@code chosen} wanted, in its order: those not yet built set building; any no longer wanted dropped. */
-    public void want(final List<Chosen> chosen) {
-        wanted = chosen.stream().map(Chosen::key).collect(Collectors.toUnmodifiableSet());
+    /** {@code keys} wanted, in their order, the soonest first; any built and no longer wanted dropped. */
+    public void want(final List<TileKey> keys) {
+        wanted = Set.copyOf(keys);
+        order = List.copyOf(keys);
         built.keySet().retainAll(wanted);
-        for (final Chosen tile : chosen) {
-            final TileKey key = tile.key();
-            if (!built.containsKey(key) && building.add(key)) {
-                workers.submit(() -> build(key));
-            }
+        synchronized (waiting) {
+            waiting.notifyAll();
         }
     }
 
@@ -66,22 +66,48 @@ public final class TileBuilder implements AutoCloseable {
         return built.size();
     }
 
-    private void build(final TileKey key) {
-        try {
-            if (wanted.contains(key)) {
-                final TileData tile = new TileData(tiling, key, ground, this::sort, painting::water);
-                if (wanted.contains(key)) {
-                    built.put(key, tile);
+    @Override
+    public void close() {
+        open = false;
+        synchronized (waiting) {
+            waiting.notifyAll();
+        }
+        threads.forEach(Thread::interrupt);
+    }
+
+    /** A thread's work: the first tile wanted that is neither built nor being built, built; or a wait for more. */
+    private void work() {
+        while (open) {
+            final TileKey key = next();
+            if (key == null) {
+                synchronized (waiting) {
+                    try {
+                        waiting.wait(100);
+                    } catch (final InterruptedException stopped) {
+                        return;
+                    }
+                }
+            } else {
+                try {
+                    final TileData tile = new TileData(tiling, key, ground, this::sort, painting::water);
+                    if (wanted.contains(key)) {
+                        built.put(key, tile);
+                    }
+                } finally {
+                    building.remove(key);
                 }
             }
-        } finally {
-            building.remove(key);
         }
     }
 
-    @Override
-    public void close() {
-        workers.shutdownNow();
+    /** The first tile in the order wanted that is neither built nor being built, taken to be built; none if none. */
+    private TileKey next() {
+        for (final TileKey key : order) {
+            if (!built.containsKey(key) && building.add(key)) {
+                return key;
+            }
+        }
+        return null;
     }
 
     /** The painting's topmost layer that lies at {@code at}: its first, if no other does. */
