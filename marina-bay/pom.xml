@@ -21,10 +21,13 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- the engine's release the bay is built on: the one place it is said -->
         <engine.version>0.1.0-SNAPSHOT</engine.version>
+        <!-- the terrain's release its land is drawn on anew: so too -->
+        <terrain.version>0.1.0-SNAPSHOT</terrain.version>
     </properties>
 
     <modules>
         <module>bay-land</module>
+        <module>bay-terrain</module>
         <module>bay-buildings</module>
         <module>bay-world</module>
     </modules>
@@ -46,6 +49,12 @@
                 <groupId>com.example.fxsuite</groupId>
                 <artifactId>fxsuite-buildings-lab</artifactId>
                 <version>${engine.version}</version>
+            </dependency>
+            <!-- the terrain, as data, its land drawn anew on it -->
+            <dependency>
+                <groupId>melons.innocent.terrain</groupId>
+                <artifactId>terrain-core</artifactId>
+                <version>${terrain.version}</version>
             </dependency>
             <!-- its own modules, at its own version -->
             <dependency>

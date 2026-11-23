@@ -16,7 +16,6 @@ import javafx.application.Platform;
 import melons.innocent.terrain.Ground;
 import melons.innocent.terrain.LandFeatures;
 import melons.innocent.terrain.Seen;
-import melons.innocent.terrain.melon.MelonFeatures;
 import melons.innocent.terrain.tiles.Choice;
 import melons.innocent.terrain.tiles.Chosen;
 import melons.innocent.terrain.tiles.Tiling;
@@ -33,7 +32,7 @@ import java.util.Optional;
  * ahead of it against its coming, so how far ahead is enough at a speed can be tried without a game: the gaps, tiles
  * that should be shown and are not drawn yet, counted as it goes. The route is made on the console's map, waypoint by
  * waypoint, each at its own height; the camera faces the way the route goes, the mouse dragged in the card's window
- * turning it round and tipping it from there. Its land is the Melon country's natural ground from its contours,
+ * turning it round and tipping it from there. Its land is the country its properties ask for ({@link Countries}),
  * seen at a scale, {@code -Dbench.seen=} (metres), 10 m at first, the same for every tile, its features in the lab's
  * materials.
  *
@@ -95,7 +94,7 @@ public final class RouteBench {
     }
 
     public static void main(final String[] args) throws IOException {
-        final LandFeatures features = MelonFeatures.INSTANCE.features();
+        final LandFeatures features = Countries.INSTANCE.chosen();
         new RouteBench(features, new ByMaterials(features)).run();
     }
 

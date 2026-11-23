@@ -43,6 +43,15 @@ final class Traced {
         }
     }
 
+    /** Its points, in order along it. */
+    List<Spot> points() {
+        final List<Spot> points = new ArrayList<>();
+        for (int i = 0; i < xs.length; i++) {
+            points.add(new Spot(xs[i], zs[i]));
+        }
+        return points;
+    }
+
     /** How long it is. */
     double length() {
         return stations[stations.length - 1];

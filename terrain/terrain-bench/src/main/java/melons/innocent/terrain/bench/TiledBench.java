@@ -17,7 +17,6 @@ import melons.innocent.terrain.Extent;
 import melons.innocent.terrain.Ground;
 import melons.innocent.terrain.LandFeatures;
 import melons.innocent.terrain.Seen;
-import melons.innocent.terrain.melon.MelonFeatures;
 import melons.innocent.terrain.tiles.Choice;
 import melons.innocent.terrain.tiles.Tiling;
 
@@ -31,8 +30,9 @@ import java.util.List;
  * the card's thread nearest first and drawn as they are built, each layer's look built once for every tile. The eye
  * stands where it is placed, from outside the scene only, the bench's properties at first, the console's map and its
  * slider for how high after; the mouse dragged in the card's window turns it round and tips it, and moves it not.
- * Its land is the Melon country's natural ground from its contours, seen at a scale, its features in the lab's
- * materials, plain where the lab has none.
+ * Its land is the country its properties ask for ({@link Countries}): a country's text, {@code -Dbench.map=}, or
+ * {@code -Dbench.country=} the Melon country or the meadow; seen at a scale, its features in the lab's materials,
+ * plain where the lab has none.
  *
  * <p>{@code -Dbench.across=}, {@code -Dbench.along=}, {@code -Dbench.height=} (metres), {@code -Dbench.yaw=} and
  * {@code -Dbench.pitch=} (degrees) where the eye is first placed; {@code -Dbench.finest=} (metres) how near together
@@ -87,7 +87,7 @@ public final class TiledBench {
     }
 
     public static void main(final String[] args) throws IOException {
-        final LandFeatures features = MelonFeatures.INSTANCE.features();
+        final LandFeatures features = Countries.INSTANCE.chosen();
         new TiledBench(features, new ByMaterials(features)).run(features.name()
                 + " in tiles around the eye, in the lab's materials, plain where it has none");
     }

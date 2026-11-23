@@ -21,7 +21,6 @@ import melons.innocent.terrain.Seen;
 import melons.innocent.terrain.Terrain;
 import melons.innocent.terrain.Topography;
 import melons.innocent.terrain.melon.MelonCountry;
-import melons.innocent.terrain.melon.MelonFeatures;
 import melons.innocent.terrain.melon.MelonTopography;
 
 import javax.imageio.ImageIO;
@@ -110,11 +109,11 @@ public final class TerrainBench {
             final Terrain melon = MelonCountry.INSTANCE.terrain();
             new TerrainBench(melon, concrete).run(melon.name() + ", its dry ground, in concrete");
         } else if ("materials".equals(System.getProperty("bench.paint", "features"))) {
-            final LandFeatures features = MelonFeatures.INSTANCE.features();
+            final LandFeatures features = Countries.INSTANCE.chosen();
             new TerrainBench(new Seen(features.ground(), every), new ByMaterials(features)).run(features.name()
                     + ", its land features in the lab's materials, plain where it has none");
         } else {
-            final LandFeatures features = MelonFeatures.INSTANCE.features();
+            final LandFeatures features = Countries.INSTANCE.chosen();
             new TerrainBench(new Seen(features.ground(), every), new ByFeatures(features))
                     .run(features.name() + ", its land features in their colours");
         }
