@@ -1,6 +1,7 @@
 package com.example.fxsuite.life.body.muscle.trunk;
 
 import com.example.fxsuite.life.body.bone.spine.Axis;
+import com.example.fxsuite.life.body.bone.spine.C4;
 import com.example.fxsuite.life.body.bone.spine.C6;
 import com.example.fxsuite.life.body.bone.spine.L1;
 import com.example.fxsuite.life.body.bone.spine.L3;
@@ -51,7 +52,8 @@ public record Multifidus() implements Muscle {
                 s.at(T10.INSTANCE, 1.4, 32, -7.2, 1.2, 0.8, 0, 0, -1),
                 s.at(T6.INSTANCE, 1.3, 41, -7.9, 1.0, 0.6, 0, 0, -1),
                 s.at(T2.INSTANCE, 1.3, 49, -7.1, 1.0, 0.6, 0, 0, -1),
-                s.at(C6.INSTANCE, 1.2, 54.2, -4.3, 1.0, 0.6, 0, 0, -1),
+                s.at(C6.INSTANCE, 1.2, 54.2, -4.3, 1.6, 0.95, 0, 0, -1),
+                s.at(C4.INSTANCE, 1.1, 56.6, -4.0, 1.5, 0.9, 0, 0, -1),
                 s.at(Axis.INSTANCE, 1, 58.4, -3.75, 0.8, 0.5, 0, 0, -1));
     }
 }

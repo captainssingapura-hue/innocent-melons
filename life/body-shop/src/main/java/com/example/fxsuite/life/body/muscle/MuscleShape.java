@@ -150,12 +150,13 @@ public record MuscleShape() implements StatelessFunctionalObject {
     }
 
     /**
-     * Whether {@code m}'s {@code i}th section is kept as drawn, whatever the body: a tendon's; or either end of a muscle
-     * of three sections or more, where it holds to its bone, one of two being a sheet all belly.
+     * Whether {@code m}'s {@code i}th section is kept as drawn, whatever the body: a tendon's; one the muscle keeps
+     * ({@link Muscle#keptAsDrawn}); or either end of a muscle of three sections or more, where it holds to its bone,
+     * one of two being a sheet all belly.
      */
     public boolean kept(final Muscle m, final int i) {
         final int n = m.sections().size();
-        return tendon(m, i) || !m.ring() && n > 2 && (i == 0 || i == n - 1);
+        return tendon(m, i) || m.keptAsDrawn(i) || !m.ring() && n > 2 && (i == 0 || i == n - 1);
     }
 
     /**

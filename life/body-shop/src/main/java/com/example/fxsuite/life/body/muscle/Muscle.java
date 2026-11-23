@@ -51,6 +51,14 @@ public interface Muscle extends StatelessFunctionalObject {
         return false;
     }
 
+    /**
+     * Whether its {@code i}th section is kept as drawn, whatever its measured size, not grown with its belly: as
+     * thin as measured where it is thin, the trapezius over the neck, its bulk being elsewhere.
+     */
+    default boolean keptAsDrawn(final int i) {
+        return false;
+    }
+
     /** Whether there is one on each side; else one, down the middle, as written. */
     default boolean paired() {
         return true;

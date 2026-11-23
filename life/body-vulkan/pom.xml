@@ -13,7 +13,8 @@
         The body bench on the card: the body shop's body, its skin, its muscles and tendons and its bones, drawn by
         the card in the material lab's tissues, in daylight, with shadows, still, as the body is bound; each group of
         its parts drawn as deep as chosen. The body shop knows nothing of the card: this depends on it, never the
-        other way round. mvn -pl life/body-vulkan exec:java
+        other way round. The soft bench too: the region to be simulated by finite elements and what it takes in.
+        mvn -pl life/body-vulkan exec:java
     </description>
 
     <properties>
@@ -21,6 +22,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <vulkan.version>0.1.0-SNAPSHOT</vulkan.version>
         <lab.version>0.1.0-SNAPSHOT</lab.version>
+        <!-- which bench exec:java opens: BodyBench, or soft.SoftBench -->
+        <bench.main>BodyBench</bench.main>
     </properties>
 
     <dependencies>
@@ -68,12 +71,12 @@
                 <version>3.5.2</version>
             </plugin>
             <plugin>
-                <!-- mvn -pl life/body-vulkan exec:java opens the body bench on the card -->
+                <!-- mvn -pl life/body-vulkan exec:java opens the body bench on the card; -Dbench.main=soft.SoftBench the soft bench -->
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.6.3</version>
                 <configuration>
-                    <mainClass>com.example.fxsuite.life.body.vulkan.BodyBench</mainClass>
+                    <mainClass>com.example.fxsuite.life.body.vulkan.${bench.main}</mainClass>
                 </configuration>
             </plugin>
         </plugins>
