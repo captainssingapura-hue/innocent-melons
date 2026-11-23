@@ -1,0 +1,19 @@
+shots 1
+# walking up the lane past the yards, seen from beside
+0     beside offset=3,0.2,1.2 fov=42
+# running, as played
+4.5   as played  blend 1
+# taking off and climbing, circled from a little above
+8     orbit distance=9 height=3 speed=25 from=150  blend 1
+# over the 55 m tower, looking down into its hollow core
+14    as played  blend 1.5
+# circling as it heads off for the wood
+20    orbit distance=11 height=2 speed=-35  blend 1.2
+# from among the trees, looking up as it comes down
+25    fixed at=-106,1.7,-17 fov=58  cut
+# walking up to a car parked in the wood
+30    as played  blend 1.2
+# flying alongside it across the lake
+34    beside offset=7,1.5,-5 fov=45  blend 1.5
+# from south of the car park, as it comes down among the cars
+46    fixed at=100,14,-75 fov=22  blend 1

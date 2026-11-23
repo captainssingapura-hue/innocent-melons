@@ -9,6 +9,7 @@ import com.example.fxsuite.avatar.sim.Controls;
 import com.example.fxsuite.avatar.sim.Obstacles;
 import com.example.fxsuite.vulkan.bench.Cast;
 import com.example.fxsuite.vulkan.bench.subject.Bot;
+import com.example.fxsuite.vulkan.bench.subject.Build;
 import com.example.fxsuite.vulkan.bench.subject.Courier;
 import com.example.fxsuite.vulkan.bench.subject.Finish;
 import com.example.fxsuite.vulkan.device.Canvas;
@@ -33,7 +34,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * The bot on the card, by day, for the eye to judge: standing, from the front and from its right; walking and
  * running, caught mid-stride, from its right; and standing beside the engine's courier at its own size, for the two
- * to be compared. The validation layer has nothing to say of any of it. The pictures are kept in {@code target/card}.
+ * to be compared; and the woman, 1.70 m in metallic pink, from the front, turned, walking, and beside the man. The
+ * validation layer has nothing to say of any of it. The pictures are kept in {@code target/card}.
  */
 class BotOnTheCardTest {
 
@@ -53,8 +55,22 @@ class BotOnTheCardTest {
         try (Card card = new Card(); Canvas canvas = card.canvas(WIDE, TALL); Cast cast = new Cast(card, laid)) {
             pictured(canvas, cast, bot.placed(standing, 0, still), 180, folder.resolve("bot-front.png"));
             pictured(canvas, cast, bot.placed(standing, 0, still), 270, folder.resolve("bot-side.png"));
-            pictured(canvas, cast, strode(false, 0.32), 270, folder.resolve("bot-walking.png"));
-            pictured(canvas, cast, strode(true, 0.4), 270, folder.resolve("bot-running.png"));
+            pictured(canvas, cast, strode(bot, false, 0.32), 270, folder.resolve("bot-walking.png"));
+            pictured(canvas, cast, strode(bot, true, 0.4), 270, folder.resolve("bot-running.png"));
+            final Bot woman = new Bot(Build.WOMAN);
+            pictured(canvas, cast, woman.placed(standing, 0, still), 180, folder.resolve("bot-woman-front.png"));
+            pictured(canvas, cast, woman.placed(standing, 0, still), 225, folder.resolve("bot-woman-turned.png"));
+            pictured(canvas, cast, strode(woman, false, 0.32), 270, folder.resolve("bot-woman-walking.png"));
+            final List<Courier.Placed> pair = new ArrayList<>(bot.placed(Body.standing(
+                    new com.example.fxsuite.avatar.sim.Vec3(-40, 0, 0), 0), 0, still));
+            pair.addAll(woman.placed(Body.standing(new com.example.fxsuite.avatar.sim.Vec3(40, 0, 0), 0), 0, still));
+            pictured(canvas, cast, pair, 180, folder.resolve("bots-together.png"));
+            // turned to face the bench's sun, low in the south-west, and seen from its side
+            final List<Courier.Placed> sunlit = new ArrayList<>(bot.placed(Body.standing(
+                    new com.example.fxsuite.avatar.sim.Vec3(-40, 0, 0), 232), 0, still));
+            sunlit.addAll(woman.placed(Body.standing(new com.example.fxsuite.avatar.sim.Vec3(40, 0, 0), 232), 0,
+                    still));
+            pictured(canvas, cast, sunlit, 52, folder.resolve("bots-in-the-sun.png"));
             final List<Courier.Placed> both = new ArrayList<>(bot.placed(Body.standing(
                     new com.example.fxsuite.avatar.sim.Vec3(-45, 0, 0), 0), 0, still));
             both.addAll(new Courier(190, Finish.GILT).placed(Body.standing(
@@ -65,7 +81,7 @@ class BotOnTheCardTest {
     }
 
     /** The bot walking, or running, ahead from a standstill, after so many seconds, as it is then. */
-    private List<Courier.Placed> strode(final boolean running, final double seconds) {
+    private List<Courier.Placed> strode(final Bot of, final boolean running, final double seconds) {
         Avatar avatar = new Avatar(Body.standing(new com.example.fxsuite.avatar.sim.Vec3(0, 0, 0), 0), false);
         for (int step = 0; step < (2 + seconds) * 120; step++) {
             avatar = avatar.step(new Controls(1, 0, 0, 0, running), Clock.STEP, Obstacles.NONE).avatar();
@@ -73,7 +89,7 @@ class BotOnTheCardTest {
         final Body body = avatar.body();
         final Body there = Body.standing(new com.example.fxsuite.avatar.sim.Vec3(0, 0, 0), 0);
         // drawn where it began, so the camera need not follow it
-        return bot.placed(new Body(there.position(), body.yaw(), body.travel(), body.speed(), body.drift(),
+        return of.placed(new Body(there.position(), body.yaw(), body.travel(), body.speed(), body.drift(),
                 body.turnRate(), body.climb(), body.flying(), body.onGround(), body.phase(), body.time()), 0,
                 Gait.of(avatar, body.yaw(), 0));
     }

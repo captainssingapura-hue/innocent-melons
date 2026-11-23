@@ -1,10 +1,11 @@
-package com.example.fxsuite.texture.materials;
+package com.example.fxsuite.vulkan.bench.subject;
 
 import com.example.fxsuite.vulkan.term.Colour;
 import com.example.fxsuite.vulkan.term.Flakes;
 import com.example.fxsuite.vulkan.term.Real;
 import com.example.fxsuite.vulkan.term.Surface;
 import com.example.fxsuite.vulkan.term.Tint;
+import com.example.fxsuite.vulkan.space.Vec3;
 
 import java.util.List;
 
@@ -20,6 +21,10 @@ import java.util.List;
  * <p>The lacquer over it is gloss paint's: a small hard glint, and the sky's light and the ground's mirrored
  * faintly seen square on and nearly wholly at a glancing angle. Nothing that stands beside the thing is seen in
  * it. A colour that shifts as the thing turns, as a pearl's does, is another paint and not this one.
+ *
+ * <p>It is the material lab's metallic paint ({@code Materials.MetallicPaint}), kept here beside the bot's metals
+ * because the bot wears it too and the lab's core sits above this module; the lab binds its leaf to this one
+ * surface, as it binds its metals to {@link Tone}'s.
  */
 public record FlakedLacquer() {
 
@@ -41,5 +46,14 @@ public record FlakedLacquer() {
                 .mirroring(new Colour(0.05, 0.05, 0.05)).glancing(new Colour(0.72, 0.72, 0.72))
                 .flaked(new Flakes(said.mixed(new Colour("#ffffff"), new Real(SILVERED)).scaled(new Real(SHINING)),
                         SPREAD, FLOP, APART, FEW));
+    }
+
+    /**
+     * The colour to tell it so that its coat itself is {@code coat}: brighter than that by as much as the coat
+     * darkens what it is told, and so, for a light coat, brighter than white. The flakes' shine, paler still, is
+     * then as bright as a picture's brightest wherever it is full. A light metallic paint is told so.
+     */
+    public Vec3 toShow(final Vec3 coat) {
+        return new Vec3(coat.x() / COAT, coat.y() / COAT, coat.z() / COAT);
     }
 }

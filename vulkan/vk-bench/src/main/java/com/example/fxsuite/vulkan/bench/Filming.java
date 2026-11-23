@@ -21,9 +21,12 @@ import java.util.List;
  */
 public record Filming(double rate, int width, int height, Shots shots) {
 
-    /** How a frame is drawn: on {@code target}, the avatar where {@code shown} has it, as {@code camera} sees it. */
+    /**
+     * How a frame is drawn: on {@code target}, the lead where {@code shown} has it, as {@code camera} sees it, and
+     * everyone else {@code blend} of the way between their last two steps.
+     */
     public interface Drawing {
-        void drawn(Target target, Avatar shown, Camera camera);
+        void drawn(Target target, Avatar shown, Camera camera, double blend);
     }
 
     public Filming {
@@ -37,8 +40,12 @@ public record Filming(double rate, int width, int height, Shots shots) {
         return new Encoder(film, width, height, rate, ffmpeg);
     }
 
-    /** {@code run}, from where it stands to its end, drawn on {@code card} by {@code drawing} into {@code encoder}. */
-    public void filmed(final Card card, final Run run, final Encoder encoder, final Drawing drawing) {
+    /**
+     * {@code company}, from where it stands to its end, drawn on {@code card} by {@code drawing} into
+     * {@code encoder}.
+     */
+    public void filmed(final Card card, final Company company, final Encoder encoder, final Drawing drawing) {
+        final Run run = company.lead();
         final Shots ending = shots.endingAt(run.seconds());
         try (Canvas canvas = card.canvas(width, height)) {
             double blend = 1;
@@ -47,17 +54,17 @@ public record Filming(double rate, int width, int height, Shots shots) {
                 final Avatar shown = run.shown(blend);
                 final Camera camera = ending.camera(frame / rate, run.head(shown), shown.body().yaw(),
                         run.following().camera(run.inTheWay(), blend));
-                drawing.drawn(canvas, shown, camera);
+                drawing.drawn(canvas, shown, camera, blend);
                 encoder.frame(canvas.pixels());
                 final List<String> said = card.heard();
                 if (!said.isEmpty()) {
                     throw new Refused("the validation layer", String.join("\n", said));
                 }
                 frame++;
-                if (run.over()) {
+                if (company.over()) {
                     return;
                 }
-                blend = run.stepped(1 / rate);
+                blend = company.stepped(1 / rate);
             }
         }
     }

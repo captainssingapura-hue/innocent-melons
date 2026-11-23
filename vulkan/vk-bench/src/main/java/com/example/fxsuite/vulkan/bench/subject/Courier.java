@@ -34,12 +34,30 @@ public record Courier(double tall, Finish finish) {
         this(ENGINES, Finish.PLAIN);
     }
 
-    /** One box of it: the limb it is part of, what it is made of, how big it is and where its middle is. */
-    public record Piece(Limb limb, Tone tone, double across, double up, double along, double x, double y, double z) {
+    /**
+     * One part of a figure: the limb it is part of, what it is made of, how big it is and where its middle is; and
+     * whether it is round, a drum standing on its end, or, as every part of the courier is, a box.
+     */
+    public record Piece(Limb limb, Tone tone, double across, double up, double along, double x, double y, double z,
+                        boolean round) {
+
+        /** A box. */
+        public Piece(final Limb limb, final Tone tone, final double across, final double up, final double along,
+                     final double x, final double y, final double z) {
+            this(limb, tone, across, up, along, x, y, z, false);
+        }
     }
 
-    /** One box of it as it is drawn: what it is made of, and what takes a box a unit each way to where it is. */
-    public record Placed(Tone tone, Mat4 stands) {
+    /**
+     * One part of a figure as it is drawn: what it is made of, and what takes a unit box, or a unit drum, to where
+     * it is; whether it is round; and, for a part whose material takes its colour from the thing, its colour.
+     */
+    public record Placed(Tone tone, Mat4 stands, boolean round, Vec3 tint) {
+
+        /** A box of a material that has its own colour. */
+        public Placed(final Tone tone, final Mat4 stands) {
+            this(tone, stands, false, new Vec3(1, 1, 1));
+        }
     }
 
     /** How far down a forearm its hand is. */

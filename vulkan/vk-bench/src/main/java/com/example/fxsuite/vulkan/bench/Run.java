@@ -30,12 +30,12 @@ public final class Run {
 
     private final Source source;
     private final Optional<Keeping> keeping;
-    private final Skies skies;
-    private Avatar avatar = new Avatar(Body.standing(new com.example.fxsuite.avatar.sim.Vec3(0, 0, 0), 0), false);
-    private Avatar before = avatar;
+    private final Optional<Skies> skies;
+    private Avatar avatar;
+    private Avatar before;
     private Clock clock = Clock.START;
     private long step;
-    private final Following following = new Following(avatar.body());
+    private final Following following;
     /** What happens in the simulation, step by step, as the engine keeps it: read by the sound alone. */
     private final Journal journal = new Journal();
     private final Journal.Reader forSound = journal.reader();
@@ -46,9 +46,21 @@ public final class Run {
      * moved on with its steps. The avatar starts at the world's middle, facing along the world.
      */
     public Run(final Source source, final Optional<Keeping> keeping, final Skies skies) {
+        this(source, keeping, Optional.of(skies), Body.standing(new com.example.fxsuite.avatar.sim.Vec3(0, 0, 0), 0));
+    }
+
+    /**
+     * A run told by {@code source}, kept by {@code keeping} where there is one, the avatar standing at first as
+     * {@code start} has it; moving {@code skies}' clock on with its steps where it is given one, as a companion's
+     * run, which goes with another, is not.
+     */
+    public Run(final Source source, final Optional<Keeping> keeping, final Optional<Skies> skies, final Body start) {
         this.source = source;
         this.keeping = keeping;
         this.skies = skies;
+        this.avatar = new Avatar(start, false);
+        this.before = avatar;
+        this.following = new Following(start);
     }
 
     /** What is in the avatar's way from now on. */
@@ -87,7 +99,7 @@ public final class Run {
         step++;
         following.stepped(avatar.body(), told.tilt(), told.circling(), told.scrolled(), told.behind());
         journal.append(step, stepped.events());
-        skies.stepped(Clock.STEP);
+        skies.ifPresent(sky -> sky.stepped(Clock.STEP));
         final com.example.fxsuite.avatar.sim.Vec3 at = avatar.body().position();
         final Where stood = new Where(at.x(), at.y(), at.z());
         keeping.ifPresent(kept -> kept.kept(step, told, stood));

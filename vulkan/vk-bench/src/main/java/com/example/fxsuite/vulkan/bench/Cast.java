@@ -5,8 +5,11 @@ import com.example.fxsuite.vulkan.bench.subject.Tone;
 import com.example.fxsuite.vulkan.device.Card;
 import com.example.fxsuite.vulkan.device.Pass;
 import com.example.fxsuite.vulkan.form.Cuboid;
+import com.example.fxsuite.vulkan.form.Drum;
 import com.example.fxsuite.vulkan.form.Mesh;
 import com.example.fxsuite.vulkan.render.Formed;
+import com.example.fxsuite.vulkan.render.Looked;
+import com.example.fxsuite.vulkan.render.Shaped;
 import com.example.fxsuite.vulkan.shade.Laid;
 import com.example.fxsuite.vulkan.shade.Look;
 import com.example.fxsuite.vulkan.space.Mat4;
@@ -22,9 +25,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * What is drawn of boxes, on the card: one box a unit each way for each of the courier's tones, and one for the
- * ground, each built once and then drawn at whatever size and place it is asked for. Closed, all are gone from the
- * card.
+ * What figures are drawn of, on the card, and the ground: one look for each tone a figure's parts are made of,
+ * drawn on a box a unit each way or on a drum as big, each built once and then drawn at whatever size, place and
+ * colour a part asks for; and a box for the ground. Closed, all are gone from the card.
  */
 public final class Cast implements AutoCloseable {
 
@@ -34,22 +37,32 @@ public final class Cast implements AutoCloseable {
     private static final String GRASS = "#8fa66f";
 
     private final List<Formed> made = new ArrayList<>();
-    private final Map<Tone, Formed> boxes = new EnumMap<>(Tone.class);
+    private final Map<Tone, Looked> looks = new EnumMap<>(Tone.class);
+    private final List<Shaped> shapes = new ArrayList<>();
+    private Shaped box;
+    private Shaped drum;
     private final Formed ground;
 
     /** The boxes, on {@code card}, their layouts as {@code laid} says. */
     public Cast(final Card card, final Laid laid) {
-        final Mesh box = new Cuboid(1, 1, 1).formed();
+        final Mesh unit = new Cuboid(1, 1, 1).formed();
         try {
             for (final Tone tone : Tone.values()) {
-                boxes.put(tone, kept(new Formed(card, new Look(laid, tone.surface()), box)));
+                looks.put(tone, new Looked(card, new Look(laid, tone.surface())));
             }
             this.ground = kept(new Formed(card, new Look(laid,
-                    new Surface(new Colour(GRASS), List.of(), new Colour(0, 0, 0), 1)), box));
+                    new Surface(new Colour(GRASS), List.of(), new Colour(0, 0, 0), 1)), unit));
+            this.box = shaped(new Shaped(card, laid, unit));
+            this.drum = shaped(new Shaped(card, laid, new Drum().formed()));
         } catch (final RuntimeException refused) {
             close();
             throw refused;
         }
+    }
+
+    private Shaped shaped(final Shaped shaped) {
+        shapes.add(shaped);
+        return shaped;
     }
 
     private Formed kept(final Formed formed) {
@@ -63,15 +76,19 @@ public final class Cast implements AutoCloseable {
                 camera, 1);
     }
 
-    /** The courier drawn by {@code pass}, each of its boxes where {@code placed} has it. */
+    /** A figure drawn by {@code pass}, each of its parts where {@code placed} has it, box or drum, of its colour. */
     public void figure(final Pass pass, final List<Courier.Placed> placed, final Camera camera) {
         for (final Courier.Placed one : placed) {
-            boxes.get(one.tone()).drawn(pass, one.stands(), camera, 1);
+            looks.get(one.tone()).drawn(pass, one.round() ? drum : box, one.stands(), camera, 1, one.tint());
         }
     }
 
     @Override
     public void close() {
+        shapes.reversed().forEach(Shaped::close);
+        shapes.clear();
+        looks.values().forEach(Looked::close);
+        looks.clear();
         made.reversed().forEach(Formed::close);
         made.clear();
     }

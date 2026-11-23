@@ -29,6 +29,11 @@ public enum Tone {
     GUNMETAL("#18191c", "#a0a0a8", 20, "#5c5d62", false),
     /** Steel, bare: a cool grey that mirrors a good deal. */
     STEEL("#34373b", "#e8eaee", 26, "#a2a7ad", false),
+    /**
+     * Metallic paint, as a car's body wears it ({@link FlakedLacquer}): its colour is the thing's own, told with each
+     * part drawn, so one look paints a figure any colour.
+     */
+    PAINT("#000000", "#000000", 32, "#000000", false),
     /** A jet's flame: its own light, whatever falls on it. */
     FLAME("#ffb347", "#000000", 32, "#000000", true);
 
@@ -48,6 +53,9 @@ public enum Tone {
 
     /** How a part of this tone is coloured, shines, mirrors and glows. */
     public Surface surface() {
+        if (this == PAINT) {
+            return new FlakedLacquer().surface();
+        }
         final Colour own = new Colour(colour);
         final Surface made = new Surface(own, List.of(), new Colour(shine), tight).mirroring(new Colour(mirror));
         return lit ? made.glowing(own) : made;

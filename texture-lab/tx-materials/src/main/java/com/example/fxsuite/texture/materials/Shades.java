@@ -3,6 +3,7 @@ package com.example.fxsuite.texture.materials;
 import com.example.fxsuite.texture.brick.Brickwork;
 import com.example.fxsuite.texture.stone.CoursedStone;
 import com.example.fxsuite.texture.stone.RubbleWall;
+import com.example.fxsuite.vulkan.bench.subject.FlakedLacquer;
 import com.example.fxsuite.vulkan.bench.subject.Tone;
 import com.example.fxsuite.vulkan.bench.subject.Watermelon;
 import com.example.fxsuite.vulkan.term.Surface;

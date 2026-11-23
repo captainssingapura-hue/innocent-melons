@@ -32,7 +32,7 @@ class BotTest {
     @Test
     void standingItIsAsTallAndAsWideAsAManOfItsHeightAndItsLimbsAsSlim() {
         final List<Courier.Placed> boxes = bot.placed(standing, 0, still);
-        final double top = boxes.stream().filter(box -> box.tone() != Tone.BEACON && box.tone() != Tone.BRONZE)
+        final double top = boxes.stream()
                 .mapToDouble(box -> highest(box, 1)).filter(y -> y < 190).max().orElseThrow();
         assertTrue(top > 186 && top < 190, "the top of its helmet: " + top);
         assertEquals(0, lowest(boxes), 0.5, "its soles on the ground");
@@ -47,6 +47,43 @@ class BotTest {
             if (piece.limb() == Limb.LEFT_ARM || piece.limb() == Limb.LEFT_FOREARM) {
                 assertTrue(piece.across() <= 12, "an arm no thicker than a man's: " + piece);
             }
+        }
+    }
+
+    @Test
+    void theWomanIsOneSeventyNarrowerAtTheShouldersWiderAtTheHipsAndPaintedPink() {
+        final Bot woman = new Bot(Build.WOMAN);
+        final List<Courier.Placed> boxes = woman.placed(standing, 0, still);
+        final double top = boxes.stream().mapToDouble(box -> highest(box, 1)).max().orElseThrow();
+        assertTrue(top > 168 && top < 172, "the top of her head: " + top);
+        assertEquals(0, lowest(boxes), 0.5, "her soles on the ground");
+        final double scale = 170 / 188.0;
+        assertTrue(Build.WOMAN.shoulders() * scale < Build.MAN.shoulders() * 0.85, "narrower at the shoulders");
+        assertTrue(Build.WOMAN.hips() > Build.MAN.hips() && Build.WOMAN.pelvis() > Build.MAN.pelvis(),
+                "wider at the hips, for her height and more");
+        assertTrue(boxes.stream().anyMatch(box -> box.tone() == Tone.PAINT), "painted");
+        final Courier.Placed painted = boxes.stream().filter(box -> box.tone() == Tone.PAINT).findFirst()
+                .orElseThrow();
+        assertTrue(painted.tint().x() > painted.tint().z() && painted.tint().x() > painted.tint().y() + 0.2,
+                "pink: " + painted.tint());
+        assertTrue(painted.tint().y() > 0.5, "a light pink: " + painted.tint());
+        assertEquals(Tone.PAINT, Finish.ROSE.of(Limb.BODY, Tone.SHELL), "her body painted");
+        assertEquals(Tone.TITANIUM, Finish.ROSE.of(Limb.LEFT_SHIN, Tone.SHELL), "her limbs titanium");
+        assertEquals(Tone.TITANIUM, Finish.ROSE.of(Limb.RIGHT_ARM, Tone.TRIM), "her limbs titanium");
+    }
+
+    @Test
+    void neitherHasAnAntennaAndEachHeadIsRoundWithAStudOnTop() {
+        for (final Bot bot : List.of(new Bot(), new Bot(Build.WOMAN))) {
+            final List<Courier.Placed> boxes = bot.placed(standing, 0, still);
+            assertTrue(boxes.stream().noneMatch(box -> box.tone() == Tone.BEACON), "no beacon");
+            final long round = bot.pieces().stream().filter(piece -> piece.limb() == Limb.HEAD && piece.round())
+                    .count();
+            assertEquals(3, round, "a round neck, head and stud");
+            final double top = boxes.stream().mapToDouble(box -> highest(box, 1)).max().orElseThrow();
+            final double head = boxes.stream().filter(Courier.Placed::round).mapToDouble(box -> highest(box, 1))
+                    .max().orElseThrow();
+            assertEquals(top, head, 1e-9, "the stud is the top of it");
         }
     }
 
@@ -80,7 +117,7 @@ class BotTest {
         final Joints joints = new Joints(bent, new Knees(standing));
         final double hand = joints.of(Limb.LEFT_FOREARM).times(new Mat4(new Vec3(0, 30, 0))).at(2, 3);
         assertTrue(hand > 25, "the hand forward of the elbow: " + hand);
-        final double tall = new Bot(200, Finish.GILT).placed(standing, 0, still).stream()
+        final double tall = new Bot(Build.MAN, 200, Finish.GILT).placed(standing, 0, still).stream()
                 .mapToDouble(box -> highest(box, 1)).max().orElseThrow();
         final double own = bot.placed(standing, 0, still).stream().mapToDouble(box -> highest(box, 1)).max()
                 .orElseThrow();

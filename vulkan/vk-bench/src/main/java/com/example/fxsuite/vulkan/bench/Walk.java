@@ -11,6 +11,7 @@ import com.example.fxsuite.vulkan.bench.play.Replayed;
 import com.example.fxsuite.vulkan.bench.play.Scripted;
 import com.example.fxsuite.vulkan.bench.play.Source;
 import com.example.fxsuite.vulkan.bench.subject.Bot;
+import com.example.fxsuite.vulkan.bench.subject.Build;
 import com.example.fxsuite.vulkan.bench.subject.Courier;
 import com.example.fxsuite.vulkan.device.Canvas;
 import com.example.fxsuite.vulkan.device.Card;
@@ -38,6 +39,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -107,8 +109,11 @@ public final class Walk {
     private final BiFunction<Card, Laid, Place> placing;
     /** The layouts of every look: asking rays, once the card is open, where the card answers them. */
     private Laid laid = new Laid();
-    /** The avatar as it is drawn here: a bot of a man's proportions, 1.88 m tall, gold and titanium. */
-    private final Bot bot = new Bot();
+    /**
+     * The avatar as it is drawn here: a bot of a man's proportions, 1.88 m tall, gold and titanium; or, told
+     * {@code -Dbench.bot=woman}, of a woman's, 1.70 m tall, in metallic pink.
+     */
+    private final Bot bot = new Bot(Build.valueOf(System.getProperty("bench.bot", "man").toUpperCase(Locale.ROOT)));
     /** The bench's day, for where its sun stands: where the sliders begin unless the run is told otherwise. */
     private final Light noon = new Daylight().light();
     /** What the JavaFX window asks: shadows or none, and where the sun stands; to begin with, as the run is told. */
@@ -145,14 +150,32 @@ public final class Walk {
                 System.getProperty("bench.sky.when", ""), System.getProperty("bench.sky.zone", "")));
         final String kept = System.getProperty("bench.record", "");
         try (Keeping keeping = kept.isEmpty() ? null : new Keeping(Path.of(kept), title)) {
-            final Run run = new Run(source(), Optional.ofNullable(keeping), skies);
+            final Company company = new Company(new Run(source(), Optional.ofNullable(keeping), Optional.of(skies),
+                    new Start(System.getProperty("bench.at", "")).body()), companion());
             final String film = System.getProperty("bench.film", "");
             if (film.isEmpty()) {
-                walked(run);
+                walked(company);
             } else {
-                filmed(run, Path.of(film));
+                filmed(company, Path.of(film));
             }
         }
+    }
+
+    /**
+     * The companion the run is told of, if any: a bot of {@code -Dbench.companion.bot=} (a woman unless said),
+     * starting where {@code -Dbench.companion.at=} says, moved by {@code -Dbench.companion.script=} or by a run
+     * kept earlier, {@code -Dbench.companion.replay=}.
+     */
+    private Optional<Company.Companion> companion() {
+        final String replay = System.getProperty("bench.companion.replay", "");
+        final String script = System.getProperty("bench.companion.script", "");
+        if (replay.isEmpty() && script.isEmpty()) {
+            return Optional.empty();
+        }
+        final Source moves = !replay.isEmpty() ? new Replayed(Path.of(replay)) : new Scripted(script);
+        return Optional.of(new Company.Companion(new Run(moves, Optional.empty(), Optional.empty(),
+                new Start(System.getProperty("bench.companion.at", "")).body()),
+                new Bot(Build.valueOf(System.getProperty("bench.companion.bot", "woman").toUpperCase(Locale.ROOT)))));
     }
 
     /** Where the run's steps come from: a kept run, a script, or the keys and the mouse. */
@@ -163,7 +186,8 @@ public final class Walk {
     }
 
     /** The walk in its windows, the card's and JavaFX's, until it ends. */
-    private void walked(final Run run) throws IOException {
+    private void walked(final Company company) throws IOException {
+        final Run run = company.lead();
         try (Desk desk = new Desk();
              Card card = new Card(desk);
              Window window = card.window(title + ", drawn on " + card.name(), WIDTH, HEIGHT);
@@ -179,12 +203,12 @@ public final class Walk {
             Platform.startup(() -> guide.shown(LEFT, TOP));
             window.shown(LEFT + BESIDE, TOP);
             final Staged staged = new Staged(place, cast, shadows);
-            drawn(desk, card, window, staged, guide, hearing, run);
+            drawn(desk, card, window, staged, guide, hearing, company);
             final String snapshot = System.getProperty("bench.snapshot", "");
             if (!snapshot.isEmpty()) {
                 try (Canvas canvas = card.canvas(window.width(), window.height())) {
                     final Avatar shown = run.shown(1);
-                    frame(canvas, staged, shown, run, run.following().camera(run.inTheWay(), 1));
+                    frame(canvas, staged, shown, run, run.following().camera(run.inTheWay(), 1), company.others(1));
                     ImageIO.write(new Picture(canvas.width(), canvas.pixels()).image(), "png", new File(snapshot));
                 }
             }
@@ -194,13 +218,14 @@ public final class Walk {
     }
 
     private void drawn(final Desk desk, final Card card, final Window window, final Staged staged,
-                       final Guide guide, final Hearing hearing, final Run run) {
-        run.inTheWay(staged.place().inTheWay());
+                       final Guide guide, final Hearing hearing, final Company company) {
+        final Run run = company.lead();
+        company.inTheWay(staged.place().inTheWay());
         final long began = System.nanoTime();
         long last = began;
         long told = began;
         int frames = 0;
-        while (window.open() && !asked.stopped() && !run.over()) {
+        while (window.open() && !asked.stopped() && !company.over()) {
             desk.heard();
             driven.heard(window);
             if (driven.taken(Key.ESCAPE) || frames == 0 && !run.ends() && settle < 0) {
@@ -211,10 +236,10 @@ public final class Walk {
             played.told(driven.held(), driven.pressed(), taken ? mouse.across() * SENSITIVITY : 0,
                     taken ? -mouse.down() * SENSITIVITY : 0, mouse.scrolled());
             final long now = System.nanoTime();
-            final double blend = run.stepped((now - last) / BILLION);
+            final double blend = company.stepped((now - last) / BILLION);
             last = now;
             final Avatar shown = run.shown(blend);
-            frame(window, staged, shown, run, run.following().camera(run.inTheWay(), blend));
+            frame(window, staged, shown, run, run.following().camera(run.inTheWay(), blend), company.others(blend));
             // heard as the engine's game hears it: what happened in the steps just taken, from where the view is
             hearing.hear(shown, run.happened(), run.following().chase());
             final List<String> said = card.heard();
@@ -234,7 +259,8 @@ public final class Walk {
     }
 
     /** The run made into a film in {@code film}, with no windows, drawn at the run's own time. */
-    private void filmed(final Run run, final Path film) throws IOException {
+    private void filmed(final Company company, final Path film) throws IOException {
+        final Run run = company.lead();
         if (!run.ends()) {
             throw new IllegalArgumentException("a film is made of a run that ends of itself: give -Dbench.script= or"
                     + " -Dbench.replay=");
@@ -250,8 +276,9 @@ public final class Walk {
              Encoder encoder = filming.encoder(film, System.getProperty("bench.film.ffmpeg", "ffmpeg"))) {
             asked.offered(shadows.offered());
             final Staged staged = new Staged(place, cast, shadows);
-            run.inTheWay(place.inTheWay());
-            filming.filmed(card, run, encoder, (target, shown, camera) -> frame(target, staged, shown, run, camera));
+            company.inTheWay(place.inTheWay());
+            filming.filmed(card, company, encoder, (target, shown, camera, blend) -> frame(target, staged, shown, run,
+                    camera, company.others(blend)));
             System.out.printf("filmed %d frames, %.1f s of the run, to %s%n", encoder.frames(),
                     encoder.frames() / filming.rate(), film.toAbsolutePath());
         }
@@ -264,7 +291,7 @@ public final class Walk {
      * sun's picture of the ground round the avatar, drawn first, or by rays toward the sun.
      */
     private void frame(final Target target, final Staged staged, final Avatar shown, final Run run,
-                       final Camera camera) {
+                       final Camera camera, final List<Courier.Placed> others) {
         final Following following = run.following();
         final List<Courier.Placed> figure = bot.placed(shown.body(), shown.body().thrust(),
                 Gait.of(shown, following.yaw(), following.lookUp()));
@@ -275,6 +302,7 @@ public final class Walk {
         final Consumer<Pass> standing = pass -> {
             staged.place().drawn(pass, camera);
             staged.cast().figure(pass, figure, camera);
+            staged.cast().figure(pass, others, camera);
             // last, what is seen through: it is laid over all the rest, and leaves nothing in the sun's picture
             staged.place().seenThrough(pass, camera);
         };
