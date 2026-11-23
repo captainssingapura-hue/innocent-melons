@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.forms</groupId>
+        <artifactId>forms</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>forms-data</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        What a built thing is made of, as plain data depending on nothing: a solid, a box of eight corners, named, of a
+        material, in a role; a point, so far across, along and up; the roles a solid plays and the materials it may be.
+        Taken out of the engine (avatar-demo) whole, its package kept, so all that built from them builds as it did.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+        </dependency>
+    </dependencies>
+</project>

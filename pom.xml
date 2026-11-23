@@ -19,6 +19,7 @@
         <module>taxonomy</module>
         <module>math</module>
         <module>road</module>
+        <module>forms</module>
         <module>avatar-demo</module>
         <module>vulkan</module>
         <module>texture-lab</module>

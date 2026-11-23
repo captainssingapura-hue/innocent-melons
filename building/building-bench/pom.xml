@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.example.fxsuite</groupId>
+        <artifactId>fxsuite-building</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>building-bench</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        The buildings bench: what can be built, found in the taxonomy of what is made, in a tree that can be searched;
+        the one built picked, its specification set field by field, and it drawn by JavaFX 3D as one object, a mesh to
+        each material; and looked into closely in a window of the card's, drawn by Vulkan, as finely as it is built.
+        No game engine. mvn -pl building/building-bench exec:java
+    </description>
+
+    <properties>
+        <vulkan.version>0.1.0-SNAPSHOT</vulkan.version>
+        <javafx.version>25</javafx.version>
+        <javafx.classifier>win</javafx.classifier>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>fxsuite-building-chinese</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>building-generic</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- the lab's materials: what a building is drawn in when looked into closely -->
+        <dependency>
+            <groupId>com.example.fxsuite.texture</groupId>
+            <artifactId>tx-materials</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.forms</groupId>
+            <artifactId>forms-fx</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-render</artifactId>
+            <version>${vulkan.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${javafx.version}</version>
+            <classifier>${javafx.classifier}</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <!-- mvn -pl building/building-bench exec:java opens the bench -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.6.3</version>
+                <configuration>
+                    <mainClass>melons.innocent.building.bench.BuildingBench</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
