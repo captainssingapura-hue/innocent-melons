@@ -21,9 +21,18 @@ public final class GroveDrawn implements AutoCloseable {
 
     /** {@code grove}, on {@code card}, its layouts as {@code laid} says. */
     public GroveDrawn(final Card card, final Laid laid, final Grove grove) {
+        this(card, laid, List.of(grove));
+    }
+
+    /**
+     * {@code groves}, all of their trees one wood on {@code card}, their layouts as {@code laid} says: so many
+     * woods cost no more draws than one. Every grove grows the same few trees, so the first's are sent.
+     */
+    public GroveDrawn(final Card card, final Laid laid, final List<Grove> groves) {
         this.wood = new WoodDrawn(card, laid,
-                grove.kinds().stream().map(grown -> new WoodDrawn.Grown(grown.kind(), grown.tree())).toList(),
-                grove.standing().stream()
+                groves.getFirst().kinds().stream().map(grown -> new WoodDrawn.Grown(grown.kind(), grown.tree()))
+                        .toList(),
+                groves.stream().flatMap(grove -> grove.standing().stream())
                         .map(tree -> new WoodDrawn.Planted(tree.kind(), tree.placed(), tree.times())).toList());
     }
 

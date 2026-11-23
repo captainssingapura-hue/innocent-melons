@@ -66,6 +66,19 @@ public final class Pass {
      * are refused.
      */
     public void draw(final Drawing drawing, final Sent mesh, final Filling placed) {
+        draw(drawing, mesh, placed, Optional.empty());
+    }
+
+    /**
+     * {@code mesh} drawn with {@code drawing} once for each of {@code copies}, in one draw: each copy where it takes
+     * the mesh, and then where {@code placed} says the whole stands, as the camera sees it. None, and nothing is
+     * drawn. Gathered for rays, each copy stands of itself.
+     */
+    public void draw(final Drawing drawing, final Sent mesh, final Filling placed, final Copies copies) {
+        draw(drawing, mesh, placed, Optional.of(copies));
+    }
+
+    private void draw(final Drawing drawing, final Sent mesh, final Filling placed, final Optional<Copies> asked) {
         if (ended) {
             throw new IllegalStateException("drawing on this picture has ended, and nothing more is drawn on it");
         }
@@ -73,8 +86,12 @@ public final class Pass {
             // what is seen through is nowhere in a picture of depths, and stands in the way of no ray
             return;
         }
+        final Copies copies = asked.orElse(drawing.once());
+        if (copies.count() == 0) {
+            return;
+        }
         if (gathered.isPresent()) {
-            gathered.get().stood(drawing.laid(), mesh, placed);
+            gathered.get().stood(drawing.laid(), mesh, placed, copies.each());
             return;
         }
         if (mixing && !drawing.mixes()) {
@@ -100,10 +117,11 @@ public final class Pass {
             vkCmdBindPipeline(commands, VK_PIPELINE_BIND_POINT_GRAPHICS, with.pipeline().raw());
             vkCmdBindDescriptorSets(commands, VK_PIPELINE_BIND_POINT_GRAPHICS, with.telling().raw(), 0,
                     stack.longs(with.bound().raw()), null);
-            vkCmdBindVertexBuffers(commands, 0, stack.longs(mesh.points().buffer().raw()), stack.longs(0));
+            vkCmdBindVertexBuffers(commands, 0,
+                    stack.longs(mesh.points().buffer().raw(), copies.bytes().buffer().raw()), stack.longs(0, 0));
             vkCmdBindIndexBuffer(commands, mesh.corners().buffer().raw(), 0, VK_INDEX_TYPE_UINT32);
             vkCmdPushConstants(commands, with.telling().raw(), Described.PUSHED, 0, pushed);
-            vkCmdDrawIndexed(commands, mesh.count(), 1, 0, 0, 0);
+            vkCmdDrawIndexed(commands, mesh.count(), copies.count(), 0, 0, 0);
         }
     }
 

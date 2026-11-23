@@ -148,6 +148,14 @@ public final class Card implements AutoCloseable {
         return made(() -> new Tracing(reach, compiler, answered(laid), vertex));
     }
 
+    /**
+     * Room for {@code most} copies of what is drawn, laid out as {@code laid} lays a copy out, to be filled and drawn
+     * many at once; more room is made as more are filled.
+     */
+    public Copies copies(final Laid laid, final int most) {
+        return made(() -> new Copies(reach, laid.copy(), most));
+    }
+
     /** {@code mesh} sent to the card, to be drawn from. */
     public Sent sent(final Packed mesh) {
         return made(() -> new Sent(reach, recording, mesh));

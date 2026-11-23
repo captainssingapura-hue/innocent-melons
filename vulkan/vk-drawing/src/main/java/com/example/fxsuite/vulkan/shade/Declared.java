@@ -1,6 +1,7 @@
 package com.example.fxsuite.vulkan.shade;
 
 import com.example.fxsuite.vulkan.layout.Field;
+import com.example.fxsuite.vulkan.layout.Kind;
 import com.example.fxsuite.vulkan.layout.Layout;
 
 import java.util.ArrayList;
@@ -13,6 +14,9 @@ import java.util.List;
  */
 public record Declared(Layout layout) {
 
+    /** How many places a matrix takes, a column in each. */
+    private static final int COLUMNS = 4;
+
     /** As what a vertex shader takes in from a mesh's points: each field at the place it has in the layout. */
     public List<String> taken() {
         return each("in");
@@ -23,6 +27,20 @@ public record Declared(Layout layout) {
         only.forEach(layout::field);
         return each("in").stream().filter(line -> only.stream().anyMatch(name -> line.endsWith(" " + name + ";")))
                 .toList();
+    }
+
+    /**
+     * As what a vertex shader takes in for each copy drawn, from the place {@code first} on: each field after the
+     * one before, a matrix taking four places, as the card takes it in four columns.
+     */
+    public List<String> takenFrom(final int first) {
+        final List<String> lines = new ArrayList<>();
+        int place = first;
+        for (final Field field : layout.fields()) {
+            lines.add("layout(location = " + place + ") in " + field.kind().written() + " " + field.name() + ";");
+            place += field.kind() == Kind.MATRIX ? COLUMNS : 1;
+        }
+        return lines;
     }
 
     /** As what a vertex shader hands on. */
