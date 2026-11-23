@@ -45,12 +45,7 @@ public final class TileData implements Sampled {
         this.spacing = tiling.spacing(key.level());
         this.points = tiling.cells() + 1;
         final int ringed = points + 2;
-        final double[] ring = new double[ringed * ringed];
-        for (int j = 0; j < ringed; j++) {
-            for (int i = 0; i < ringed; i++) {
-                ring[j * ringed + i] = ground.height(x0 + (i - 1) * spacing, z0 + (j - 1) * spacing);
-            }
-        }
+        final double[] ring = ground.heights(x0 - spacing, z0 - spacing, spacing, ringed, ringed);
         this.heights = new double[points * points];
         this.across = new double[points * points];
         this.along = new double[points * points];

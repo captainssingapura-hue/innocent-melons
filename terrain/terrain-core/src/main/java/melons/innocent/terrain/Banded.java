@@ -23,6 +23,8 @@ final class Banded {
     private static final double ROOT_REACH = 100_000;
     /** How near a line counts as on it, in the weights, in centimetres. */
     private static final double TOUCH = 1;
+    /** How many times as far off as the band's nearest line a break line is when it has faded to nothing. */
+    private static final double FADING = 4;
 
     private final Nesting nesting;
     private final List<BreakLine> breakLines;
@@ -104,17 +106,40 @@ final class Banded {
             lowest = Math.min(lowest, height);
             highest = Math.max(highest, height);
         }
+        breaks(x, z, lines, lowest, highest);
+        return lines;
+    }
+
+    /**
+     * The stretches of the break lines near ({@code x}, {@code z}) as high as the band, from {@code lowest} to
+     * {@code highest}, added to its {@code lines}: each counting the less the nearer its height is to the band's top
+     * or bottom, and the less the further it is past three times as far off as the band's nearest line, nothing at four
+     * times, where it would count for less than a four-thousandth of that line; so one far off is not looked at.
+     */
+    private void breaks(final double x, final double z, final List<Line> lines, final double lowest,
+                        final double highest) {
+        final double margin = (highest - lowest) / 4;
+        if (!(margin > 0)) {
+            return;
+        }
+        double nearest = Double.MAX_VALUE;
+        for (final Line line : lines) {
+            nearest = Math.min(nearest, line.distance());
+        }
+        final double far = FADING * nearest;
         for (final BreakLine line : breakLines) {
+            if (line.highest() < lowest || line.lowest() > highest || line.outside(x, z) >= far) {
+                continue;
+            }
             final BreakLine.Reach reach = line.reach(x, z);
-            final double margin = (highest - lowest) / 4;
-            final double share = margin > 0 ? Math.min(1, Math.min(reach.height() - lowest, highest - reach.height())
-                    / margin) : 0;
+            final double within = Math.min(1, Math.min(reach.height() - lowest, highest - reach.height()) / margin);
+            final double near = Math.clamp((far - reach.distance()) / nearest, 0, 1);
+            final double share = within * within * near * near * (3 - 2 * near);
             if (share > 0) {
                 final boolean crest = line.kind() == BreakLine.Kind.CREST;
-                lines.add(new Line(reach.distance(), reach.height(), !crest, crest, true, 0, 0, share * share));
+                lines.add(new Line(reach.distance(), reach.height(), !crest, crest, true, 0, 0, share));
             }
         }
-        return lines;
     }
 
     /**

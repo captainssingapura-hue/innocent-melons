@@ -33,6 +33,9 @@ public final class BreakLine {
     private final double[] stations;
     private final double[] box;
     private final Monotone along;
+    private final Segments segments;
+    private final double low;
+    private final double high;
 
     /** {@code name}, a {@code kind}, through {@code spots} in order, the ground as high at each as {@code heights}. */
     public BreakLine(final String name, final Kind kind, final List<Spot> spots, final List<Double> heights) {
@@ -60,6 +63,9 @@ public final class BreakLine {
             box[3] = Math.max(box[3], zs[i]);
         }
         this.along = new Monotone(new Knots(knots));
+        this.segments = new Segments(xs, zs, false);
+        this.low = this.heights.stream().mapToDouble(Double::doubleValue).min().orElseThrow();
+        this.high = this.heights.stream().mapToDouble(Double::doubleValue).max().orElseThrow();
     }
 
     /** Its name. */
@@ -82,6 +88,16 @@ public final class BreakLine {
         return heights;
     }
 
+    /** How low the ground is along it, at the lowest. */
+    public double lowest() {
+        return low;
+    }
+
+    /** How high the ground is along it, at the highest. */
+    public double highest() {
+        return high;
+    }
+
     /** How far ({@code x}, {@code z}) is from the box round it, nothing inside it. */
     public double outside(final double x, final double z) {
         return Math.hypot(Math.max(0, Math.max(box[0] - x, x - box[2])), Math.max(0, Math.max(box[1] - z, z - box[3])));
@@ -89,20 +105,10 @@ public final class BreakLine {
 
     /** Where on it ({@code x}, {@code z}) is nearest: how far off that is, and how high the ground is there. */
     public Reach reach(final double x, final double z) {
-        double least = Double.MAX_VALUE;
-        double station = 0;
-        for (int i = 0; i + 1 < xs.length; i++) {
-            final double dx = xs[i + 1] - xs[i];
-            final double dz = zs[i + 1] - zs[i];
-            final double t = Math.clamp(((x - xs[i]) * dx + (z - zs[i]) * dz) / (dx * dx + dz * dz), 0, 1);
-            final double ex = x - xs[i] - t * dx;
-            final double ez = z - zs[i] - t * dz;
-            if (ex * ex + ez * ez < least) {
-                least = ex * ex + ez * ez;
-                station = stations[i] + t * (stations[i + 1] - stations[i]);
-            }
-        }
-        return new Reach(Math.sqrt(least), along.held(station));
+        final double[] near = new double[3];
+        segments.nearest(x, z, near);
+        final int k = (int) near[1];
+        return new Reach(near[0], along.held(stations[k] + near[2] * (stations[k + 1] - stations[k])));
     }
 
     /**

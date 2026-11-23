@@ -15,6 +15,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.IntFunction;
 
 /**
  * The land on the card in tiles: the tiles shown, drawn as they are built, so many a frame, an old one kept until
@@ -39,11 +40,20 @@ public final class TiledLand implements AutoCloseable {
     /** The land of {@code ground}, tiled as {@code tiling} says, painted as {@code painting} says. */
     public TiledLand(final Card card, final Laid laid, final Painting painting, final Tiling tiling,
                      final Ground ground, final double up) {
+        this(card, laid, painting, tiling, level -> ground, up);
+    }
+
+    /**
+     * The land tiled as {@code tiling} says, each tile of the ground {@code grounds} says its level is seen as,
+     * painted as {@code painting} says.
+     */
+    public TiledLand(final Card card, final Laid laid, final Painting painting, final Tiling tiling,
+                     final IntFunction<Ground> grounds, final double up) {
         this.card = card;
         this.laid = laid;
         this.painting = painting;
         this.up = up;
-        this.builder = new TileBuilder(tiling, ground, painting,
+        this.builder = new TileBuilder(tiling, grounds, painting,
                 Math.max(1, Runtime.getRuntime().availableProcessors() - 2));
         this.looks = new Looks(card, laid, painting);
     }
@@ -114,6 +124,11 @@ public final class TiledLand implements AutoCloseable {
     /** How many tiles are built and kept, shown or ahead. */
     public int built() {
         return builder.done();
+    }
+
+    /** How many tiles are built and stored, wanted or not. */
+    public int stored() {
+        return builder.kept();
     }
 
     /** How many tiles are on the card. */

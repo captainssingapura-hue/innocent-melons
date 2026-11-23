@@ -18,6 +18,7 @@ public final class Loop implements Vector<Spot> {
     private final double[] box;
     private final double area;
     private final double length;
+    private final Segments segments;
 
     /** Round {@code spots}, in order. */
     public Loop(final List<Spot> spots) {
@@ -43,6 +44,7 @@ public final class Loop implements Vector<Spot> {
         }
         area = Math.abs(twice) / 2;
         length = around;
+        segments = new Segments(xs, zs, true);
         if (n < 3 || !(area > 0)) {
             throw new IllegalArgumentException("a loop goes round some ground, through three spots at least: "
                     + this.spots);
@@ -79,30 +81,14 @@ public final class Loop implements Vector<Spot> {
      * times.
      */
     public boolean inside(final double x, final double z) {
-        if (!boxed(x, z)) {
-            return false;
-        }
-        boolean inside = false;
-        for (int i = 0, j = xs.length - 1; i < xs.length; j = i++) {
-            if (zs[i] > z != zs[j] > z && x < xs[i] + (z - zs[i]) * (xs[j] - xs[i]) / (zs[j] - zs[i])) {
-                inside = !inside;
-            }
-        }
-        return inside;
+        return boxed(x, z) && segments.inside(x, z);
     }
 
     /** How far ({@code x}, {@code z}) is from its line. */
     public double distance(final double x, final double z) {
-        double least = Double.MAX_VALUE;
-        for (int i = 0, j = xs.length - 1; i < xs.length; j = i++) {
-            final double dx = xs[i] - xs[j];
-            final double dz = zs[i] - zs[j];
-            final double t = Math.clamp(((x - xs[j]) * dx + (z - zs[j]) * dz) / (dx * dx + dz * dz), 0, 1);
-            final double ex = x - xs[j] - t * dx;
-            final double ez = z - zs[j] - t * dz;
-            least = Math.min(least, ex * ex + ez * ez);
-        }
-        return Math.sqrt(least);
+        final double[] near = new double[3];
+        segments.nearest(x, z, near);
+        return near[0];
     }
 
     /**
