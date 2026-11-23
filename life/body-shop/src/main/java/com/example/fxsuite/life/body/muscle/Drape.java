@@ -1,0 +1,56 @@
+package com.example.fxsuite.life.body.muscle;
+
+import com.example.fxsuite.life.body.V3;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * A section of a sheet of muscle laid on its bed ({@link Bed}): its oval's points, each where it would be across the
+ * sheet, taken down to the nearest of the bed in the section's own plane, not up or down the way the muscle runs, and
+ * out from there as far as it is through the sheet; so that the sheet bends as what it lies on does, not running
+ * straight past it. A point with nothing of the bed near, where it is drawn.
+ */
+public record Drape() implements StatelessFunctionalObject {
+
+    public static final Drape INSTANCE = new Drape();
+
+    /** How far off its bed a sheet lies, cm. */
+    private static final double GAP = 0.05;
+
+    /**
+     * The ring of a section lying at {@code on}, its middle at {@code middle}, {@code wide} across, {@code across},
+     * and {@code deep} out, {@code face}, the muscle running {@code along}, laid on {@code bed}:
+     * {@link MuscleShape#ROUND} points round it; those with nothing of the bed near on its oval as drawn.
+     */
+    public List<V3> ring(final V3 on, final V3 middle, final V3 across, final V3 face, final V3 along,
+            final double wide, final double deep, final Bed bed) {
+        final List<V3> ring = new ArrayList<>();
+        for (int q = 0; q < MuscleShape.ROUND; q++) {
+            final double a = 2 * Math.PI * q / MuscleShape.ROUND;
+            final double u = Math.cos(a) * wide / 2;
+            final double out = deep / 2 + Math.sin(a) * deep / 2;
+            final V3 line = on.plus(across.times(u));
+            final Optional<Bed.Laid> laid = bed.under(line);
+            final V3 drawn = middle.plus(across.times(u)).plus(face.times(Math.sin(a) * deep / 2));
+            ring.add(laid.map(l -> laid(l, line, along, face, out)).orElse(drawn));
+        }
+        return ring;
+    }
+
+    /**
+     * {@code out} off {@code l}, both taken into the plane through {@code line} square to {@code along}; the way out of
+     * it there, as near square to the plane as it is, {@code face} instead.
+     */
+    private V3 laid(final Bed.Laid l, final V3 line, final V3 along, final V3 face, final double out) {
+        final V3 way = flat(l.out(), V3.ZERO, along);
+        return flat(l.at(), line, along).plus((way.length() < 0.3 ? face : way.unit()).times(GAP + out));
+    }
+
+    /** {@code p} taken back into the plane through {@code o} square to {@code along}. */
+    private V3 flat(final V3 p, final V3 o, final V3 along) {
+        return p.minus(along.times(p.minus(o).dot(along)));
+    }
+}

@@ -32,8 +32,9 @@ class MuscularityTest {
             final Cage a = MuscleShape.INSTANCE.cage(m, rig, false);
             final Cage b = MuscleShape.INSTANCE.cage(m, twice, rig, false);
             final int last = a.size() - MuscleShape.ROUND;
+            final int[] of = MuscleRings.INSTANCE.sectionOf(m, rig, false);
             for (final int i : new int[] {0, last}) {
-                if (!MuscleShape.INSTANCE.kept(m, i / MuscleShape.ROUND)) {
+                if (!MuscleShape.INSTANCE.kept(m, of[i / MuscleShape.ROUND])) {
                     continue;
                 }
                 assertEquals(0, middle(a, i).minus(middle(b, i)).length(), 1e-9, m.name() + "'s ends");

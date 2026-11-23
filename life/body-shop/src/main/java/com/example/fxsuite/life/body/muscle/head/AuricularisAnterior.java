@@ -1,6 +1,6 @@
 package com.example.fxsuite.life.body.muscle.head;
 
-import com.example.fxsuite.life.body.bone.skull.Temporal;
+import com.example.fxsuite.life.body.bone.skull.Skull;
 import com.example.fxsuite.life.body.muscle.Muscle;
 import com.example.fxsuite.life.body.muscle.MuscleRegion;
 import com.example.fxsuite.life.body.muscle.Section;
@@ -29,7 +29,7 @@ public record AuricularisAnterior() implements Muscle {
     public List<Section> sections() {
         final Sections s = Sections.INSTANCE;
         return List.of(
-                s.at(Temporal.INSTANCE, 6.502, 4, 3.38, 1.0, 0.2, 1, 0, 0.2),
-                s.at(Temporal.INSTANCE, 6.9, 2.8, 0.6, 0.8, 0.2, 1, 0, 0));
+                s.at(Skull.INSTANCE, 6.502, 4, 3.38, 1.0, 0.2, 1, 0, 0.2),
+                s.at(Skull.INSTANCE, 6.9, 2.8, 0.6, 0.8, 0.2, 1, 0, 0));
     }
 }

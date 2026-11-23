@@ -5,6 +5,7 @@ import com.example.fxsuite.life.body.Proportions;
 import com.example.fxsuite.life.body.Rig;
 import com.example.fxsuite.life.body.V3;
 import com.example.fxsuite.life.body.BoundPose;
+import com.example.fxsuite.life.body.muscle.head.NeckVolumes;
 import com.example.fxsuite.life.body.muscle.leg.LegVolumes;
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +14,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * The muscles as measured: the whole leg's muscle as Handsfield's subjects had it for their height and mass;
- * each leg and arm muscle drawn within a fifth of what it was measured; a heavier body more muscle.
+ * the whole neck's as Zheng's, its muscles' shares theirs; each leg, arm and neck muscle drawn within a fifth of what
+ * it was measured; a heavier body more muscle.
  */
 class MeasuredTest {
 
@@ -24,6 +26,16 @@ class MeasuredTest {
         // their mean subject, 1.71 m and 71.8 kg, had 7,057 cm3 of muscle in a leg by their own line
         assertEquals(7060, LegVolumes.INSTANCE.whole(1.71, 71.8), 20);
         assertEquals(849, LegVolumes.INSTANCE.volume("gluteus maximus", 7057).orElseThrow(), 15);
+    }
+
+    @Test
+    void theWholeNeckIsAsTheirSubjectsWere() {
+        // their seven men, 1.748 m and 75.2 kg on average, had 813.9 cm3 of neck muscle, both sides
+        assertEquals(814, 2 * NeckVolumes.INSTANCE.whole(1.748, 75.2), 15);
+        assertEquals(56, NeckVolumes.INSTANCE.volume("sternocleidomastoid", 400).orElseThrow(), 0.1);
+        assertEquals(39.6, NeckVolumes.INSTANCE.volume("splenius capitis", 400).orElseThrow()
+                + NeckVolumes.INSTANCE.volume("splenius cervicis", 400).orElseThrow(), 0.1,
+                "the splenius shared out whole");
     }
 
     @Test

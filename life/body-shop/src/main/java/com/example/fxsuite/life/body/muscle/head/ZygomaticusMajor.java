@@ -1,7 +1,6 @@
 package com.example.fxsuite.life.body.muscle.head;
 
-import com.example.fxsuite.life.body.bone.skull.Maxilla;
-import com.example.fxsuite.life.body.bone.skull.Zygomatic;
+import com.example.fxsuite.life.body.bone.skull.Skull;
 import com.example.fxsuite.life.body.muscle.Muscle;
 import com.example.fxsuite.life.body.muscle.MuscleRegion;
 import com.example.fxsuite.life.body.muscle.Section;
@@ -30,8 +29,8 @@ public record ZygomaticusMajor() implements Muscle {
     public List<Section> sections() {
         final Sections s = Sections.INSTANCE;
         return List.of(
-                s.at(Zygomatic.INSTANCE, 5.088, 2.4, 7.176, 1.0, 0.5, 0.5, 0, 1),
-                s.at(Maxilla.INSTANCE, 3.728, 0, 8.561, 0.8, 0.5, 0.3, 0, 1),
-                s.at(Maxilla.INSTANCE, 2.6, -1.6, 9.4, 0.6, 0.4, 0, 0, 1));
+                s.at(Skull.INSTANCE, 5.088, 2.4, 7.176, 1.0, 0.5, 0.5, 0, 1),
+                s.at(Skull.INSTANCE, 3.728, 0, 8.561, 0.8, 0.5, 0.3, 0, 1),
+                s.at(Skull.INSTANCE, 2.6, -1.6, 9.4, 0.6, 0.4, 0, 0, 1));
     }
 }

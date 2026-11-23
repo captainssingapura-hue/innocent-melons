@@ -97,7 +97,7 @@ public record CostalCartilages() implements Bone {
     @Override
     public void draw(final Sketch s, final double female) {
         for (final Rib rib : Rib.values()) {
-            Ribs.INSTANCE.cartilage(s, rib, 1 - 0.05 * female);
+            Ribs.INSTANCE.cartilage(s, rib, female);
         }
     }
 }

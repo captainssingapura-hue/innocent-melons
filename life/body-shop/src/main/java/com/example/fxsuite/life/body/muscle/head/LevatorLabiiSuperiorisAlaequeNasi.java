@@ -1,6 +1,6 @@
 package com.example.fxsuite.life.body.muscle.head;
 
-import com.example.fxsuite.life.body.bone.skull.Maxilla;
+import com.example.fxsuite.life.body.bone.skull.Skull;
 import com.example.fxsuite.life.body.muscle.Muscle;
 import com.example.fxsuite.life.body.muscle.MuscleRegion;
 import com.example.fxsuite.life.body.muscle.Section;
@@ -30,8 +30,8 @@ public record LevatorLabiiSuperiorisAlaequeNasi() implements Muscle {
     public List<Section> sections() {
         final Sections s = Sections.INSTANCE;
         return List.of(
-                s.at(Maxilla.INSTANCE, 1.2, 5, 9.45, 0.7, 0.3, 0, 0, 1),
-                s.at(Maxilla.INSTANCE, 1.6, 2.6, 10.05, 0.7, 0.3, 0, 0, 1),
-                s.at(Maxilla.INSTANCE, 1.8, 0.4, 10.45, 0.7, 0.3, 0, 0, 1));
+                s.at(Skull.INSTANCE, 1.2, 5, 9.45, 0.7, 0.3, 0, 0, 1),
+                s.at(Skull.INSTANCE, 1.6, 2.6, 10.05, 0.7, 0.3, 0, 0, 1),
+                s.at(Skull.INSTANCE, 1.8, 0.4, 10.45, 0.7, 0.3, 0, 0, 1));
     }
 }

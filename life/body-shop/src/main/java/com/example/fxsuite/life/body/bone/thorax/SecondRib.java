@@ -73,6 +73,6 @@ public record SecondRib() implements Bone {
 
     @Override
     public void draw(final Sketch s, final double female) {
-        Ribs.INSTANCE.draw(s, Rib.SECOND, 1 - 0.05 * female, 1 - 0.12 * female);
+        Ribs.INSTANCE.draw(s, Rib.SECOND, female, 1 - 0.12 * female);
     }
 }

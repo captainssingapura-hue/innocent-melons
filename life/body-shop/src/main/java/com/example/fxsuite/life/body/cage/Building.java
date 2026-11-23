@@ -1,5 +1,6 @@
 package com.example.fxsuite.life.body.cage;
 
+import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.V3;
 
 import java.util.ArrayList;
@@ -8,7 +9,7 @@ import java.util.List;
 /**
  * A cage as it is put together ({@link Cage}): points added one at a time, each its name; faces between them; creases;
  * what was put together on the right then mirrored onto the left, each point its fellow, each face turned round so that
- * it still faces out.
+ * it still faces out. Each face of the part being made as it was put in, the left's of the left's.
  */
 public final class Building {
 
@@ -17,6 +18,8 @@ public final class Building {
     private final List<int[]> faces = new ArrayList<>();
     private final List<Crease> creases = new ArrayList<>();
     private final List<Integer> fellows = new ArrayList<>();
+    private final List<Part> parts = new ArrayList<>();
+    private Part making;
 
     /** Point {@code p}, called {@code said}, added; its number. */
     public int add(final V3 p, final String said) {
@@ -41,9 +44,15 @@ public final class Building {
         return faces.size();
     }
 
+    /** The part the faces put in from now on are of. */
+    public void making(final Part p) {
+        making = p;
+    }
+
     /** A face through {@code corners}, round the way it faces out. */
     public void face(final int... corners) {
         faces.add(corners.clone());
+        parts.add(making);
     }
 
     /** A crease. */
@@ -77,6 +86,7 @@ public final class Building {
                 m[k] = fellows.get(c[c.length - 1 - k]);
             }
             faces.add(m);
+            parts.add(parts.get(f) == null ? null : parts.get(f).other());
         }
     }
 
@@ -142,6 +152,11 @@ public final class Building {
     /** Point {@code i}'s fellow across the middle. */
     public int fellow(final int i) {
         return fellows.get(i);
+    }
+
+    /** The part each face is of, by number, as they were put in; none, if none was being made. */
+    public Part[] parts() {
+        return parts.toArray(new Part[0]);
     }
 
     /** The cage put together. */

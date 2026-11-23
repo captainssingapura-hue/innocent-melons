@@ -32,6 +32,14 @@ public interface Bone extends StatelessFunctionalObject {
         return false;
     }
 
+    /**
+     * How many of the body's 206 bones it is, if it is a bone: one, two if there is one on each side; the skull,
+     * its twenty-one but the jaw knit into one, so many.
+     */
+    default int count() {
+        return paired() ? 2 : 1;
+    }
+
     /** What it is: a bone, counted among the body's 206, or teeth or cartilage. */
     default Kind kind() {
         return Kind.BONE;

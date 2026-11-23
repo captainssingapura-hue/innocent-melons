@@ -1,7 +1,7 @@
 package com.example.fxsuite.life.body.muscle.head;
 
+import com.example.fxsuite.life.body.bone.skull.Skull;
 import com.example.fxsuite.life.body.bone.skull.Mandible;
-import com.example.fxsuite.life.body.bone.skull.Zygomatic;
 import com.example.fxsuite.life.body.muscle.Muscle;
 import com.example.fxsuite.life.body.muscle.MuscleRegion;
 import com.example.fxsuite.life.body.muscle.Section;
@@ -31,7 +31,7 @@ public record Masseter() implements Muscle {
     public List<Section> sections() {
         final Sections s = Sections.INSTANCE;
         return List.of(
-                s.at(Zygomatic.INSTANCE, 5.408, 2.2, 3.922, 2.4, 0.8, 1, 0, 0.2),
+                s.at(Skull.INSTANCE, 5.408, 2.2, 3.922, 2.4, 0.8, 1, 0, 0.2),
                 s.at(Mandible.INSTANCE, 5.4, -1, 2, 3.0, 1.2, 1, 0, 0),
                 s.at(Mandible.INSTANCE, 5.106, -3.4, 0.459, 2.6, 0.6, 1, 0, -0.2));
     }

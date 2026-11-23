@@ -11,8 +11,7 @@ import static com.example.fxsuite.life.body.Sketch.v;
  * atlas, z ahead), its lower jaw apart: the vault, a shell of bone round the brain, hollow, broad low at the ears; its
  * base pierced by the foramen magnum, the condyles beside it; the face before it, its orbits, its cheekbones and their
  * arches back to the ears, its nose's bones over its opening and cavity, its upper teeth's arch and the hard palate.
- * Each bone of the skull is this, cut along its sutures ({@link Cuts}). A woman's lighter: her brow and her mastoids
- * less.
+ * The skull is this whole, its bones knit into one ({@link Skull}). A woman's lighter: her brow and her mastoids less.
  */
 public record Cranium() implements StatelessFunctionalObject {
 
@@ -49,7 +48,7 @@ public record Cranium() implements StatelessFunctionalObject {
         for (final int side : new int[] {1, -1}) {
             s.egg(v(side * 1.3, 0.05, -0.6), 0.55, 0.45, 1.05, 0, side * 20, 0);
         }
-        s.ball(v(0, 3.6, -8.9), 0.55 * brow);
+        s.ball(v(0, 3.6, -8.55), 0.55 * brow);
         s.blend(1.4).egg(v(0, 2.6, 6.6), 4.2, 3.0, 3.3);
     }
 

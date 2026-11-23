@@ -32,7 +32,7 @@ public record PectoralisMajorClavicular() implements Muscle {
     public List<Section> sections() {
         final Sections s = Sections.INSTANCE;
         return List.of(
-                s.at(Clavicle.INSTANCE, 6, 46.214, 7.736, 6.0, 1.0, 0, 0.4, 1),
+                s.at(Clavicle.INSTANCE, 6, 45.714, 7.736, 6.0, 0.4, 0, 0.4, 1),
                 s.at(Sternum.INSTANCE, 12.174, 43.049, 7.047, 5.0, 1.6, 0.3, 0.2, 1),
                 s.at(Humerus.INSTANCE, 1.666, -5, 2.132, 2.4, 0.6, 0.5, 0, 1));
     }

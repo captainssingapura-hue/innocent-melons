@@ -8,7 +8,7 @@ import com.example.fxsuite.life.body.bone.arm.Scapula;
 import com.example.fxsuite.life.body.bone.foot.Talus;
 import com.example.fxsuite.life.body.bone.hip.HipBone;
 import com.example.fxsuite.life.body.bone.leg.Femur;
-import com.example.fxsuite.life.body.bone.skull.Occipital;
+import com.example.fxsuite.life.body.bone.skull.Skull;
 import org.junit.jupiter.api.Test;
 
 import java.util.EnumMap;
@@ -35,7 +35,7 @@ class BoneTest {
         final Map<Region, Integer> by = new EnumMap<>(Region.class);
         for (final Bone b : bones) {
             if (b.kind() == Kind.BONE) {
-                by.merge(b.region(), b.paired() ? 2 : 1, Integer::sum);
+                by.merge(b.region(), b.count(), Integer::sum);
             }
         }
         assertEquals(Map.of(Region.SKULL, 22, Region.EAR, 6, Region.THROAT, 1, Region.SPINE, 26, Region.THORAX, 25,
@@ -63,7 +63,7 @@ class BoneTest {
         assertTrue(inside(Humerus.INSTANCE, V3.ZERO));
         assertTrue(inside(Talus.INSTANCE, new V3(0, -0.6, 0.3)));
         // the skull's condyles on the atlas, at the joint the head nods on
-        assertTrue(inside(Occipital.INSTANCE, new V3(1.3, 0.05, -0.6)));
+        assertTrue(inside(Skull.INSTANCE, new V3(1.3, 0.05, -0.6)));
         // the hip joint and the shoulder joint each in their socket's hollow, not in its bone
         assertFalse(inside(HipBone.INSTANCE, HipBone.JOINT));
         assertFalse(inside(Scapula.INSTANCE, Scapula.JOINT.minus(new V3(2, 45, 6.5))));

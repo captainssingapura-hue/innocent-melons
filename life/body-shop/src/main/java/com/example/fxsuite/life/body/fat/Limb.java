@@ -1,5 +1,6 @@
 package com.example.fxsuite.life.body.fat;
 
+import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.V3;
 import com.example.fxsuite.life.body.cage.Building;
 
@@ -11,8 +12,8 @@ import java.util.function.IntPredicate;
  * plane of its own ({@link Ring}), as many points round as its loop, evenly round, the first at the angle round of the
  * loop's first and on the way the loop goes; each point on the fat's outside along a line in to the ring's middle,
  * among what of the limb counts ({@link FatTarget}); where a line meets nothing, as far out as the ring before.
- * Four-sided faces between one ring and the next, the first ring's and the loop's; its end shut by one face, or left
- * open for what goes on from it, a hand. On the right.
+ * Four-sided faces between one ring and the next, the first ring's and the loop's, of the next ring's part; its end
+ * shut by one face, or left open for what goes on from it, a hand. On the right.
  */
 final class Limb {
 
@@ -22,9 +23,14 @@ final class Limb {
     /**
      * A ring's plane: its middle; its two ways, {@code u} to the body's right and {@code w} to its front, or what the
      * front turns into round a heel; no further out toward {@code w} than {@code toward}, the line it turns through;
-     * how far out its lines start, {@code out}.
+     * how far out its lines start, {@code out}; the part the faces up to it are of, {@code part}.
      */
-    record Ring(V3 middle, V3 u, V3 w, double toward, double out, String said) {
+    record Ring(V3 middle, V3 u, V3 w, double toward, double out, String said, Part part) {
+
+        /** The same ring, the faces up to it of part {@code p}. */
+        Ring of(final Part p) {
+            return new Ring(middle, u, w, toward, out, said, p);
+        }
     }
 
     Limb(final FatTarget target) {
@@ -66,6 +72,7 @@ final class Limb {
                 at[k] = b.add(p, ring.said() + ", " + k);
             }
             reach = Math.min(ring.out(), far);
+            b.making(ring.part());
             for (int k = 0; k < n; k++) {
                 final int next = (k + 1) % n;
                 b.face(at[k], at[next], above[next], above[k]);
@@ -93,15 +100,15 @@ final class Limb {
         for (final int p : loop) {
             mid = mid.plus(b.point(p).times(1.0 / n));
         }
+        V3 across = V3.ZERO;
         for (int k = 0; k < n; k++) {
             final V3 v = b.point(loop[k]).minus(mid);
             round[k] = Math.atan2(v.dot(first.u()), v.dot(first.w()));
+            across = across.plus(v.cross(b.point(loop[(k + 1) % n]).minus(mid)));
         }
-        double turned = 0;
-        for (int k = 0; k < n; k++) {
-            turned += Math.IEEEremainder(round[(k + 1) % n] - round[k], 2 * Math.PI);
-        }
-        return turned;
+        // the way they go round told by the area they span, not by how far round they wind seen in the ring's plane,
+        // which a loop seen nearly edge on, folded over, may make nothing
+        return 2 * Math.PI * Math.signum(across.dot(first.w().cross(first.u())));
     }
 
 

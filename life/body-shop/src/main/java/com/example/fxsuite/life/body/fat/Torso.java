@@ -32,8 +32,11 @@ final class Torso {
         return crotch;
     }
 
-    /** The torso's rings at {@code heights} added to {@code b}, every point numbered by ring and column. */
-    int[][] rings(final Building b, final double[] heights) {
+    /**
+     * The torso's rings at {@code heights} added to {@code b}, every point numbered by ring and column; the faces between
+     * ring {@code r} and the next of part {@code bands[r]}, over the last of the last.
+     */
+    int[][] rings(final Building b, final double[] heights, final Part[] bands) {
         final int[][] grid = new int[heights.length][COLUMNS];
         double last = middle(heights[0] + 3);
         for (int r = 0; r < heights.length; r++) {
@@ -63,7 +66,7 @@ final class Torso {
                 }
             }
         }
-        faces(b, grid);
+        faces(b, grid, bands);
         return grid;
     }
 
@@ -81,9 +84,10 @@ final class Torso {
         right[right.length - 1] = new V3(0, right[right.length - 1].y(), right[right.length - 1].z());
     }
 
-    private void faces(final Building b, final int[][] grid) {
+    private void faces(final Building b, final int[][] grid, final Part[] bands) {
         final int a = FatCage.ARMPITS;
         for (int r = 0; r + 1 < grid.length; r++) {
+            b.making(bands[r]);
             for (int j = 0; j < COLUMNS; j++) {
                 final int n = (j + 1) % COLUMNS;
                 final boolean opening = (r == a || r == a + 1) && (j == FatCage.ARM - 1 || j == FatCage.ARM

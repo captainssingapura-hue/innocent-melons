@@ -1,6 +1,6 @@
 package com.example.fxsuite.life.body.muscle.head;
 
-import com.example.fxsuite.life.body.bone.skull.Frontal;
+import com.example.fxsuite.life.body.bone.skull.Skull;
 import com.example.fxsuite.life.body.muscle.Layer;
 import com.example.fxsuite.life.body.muscle.Muscle;
 import com.example.fxsuite.life.body.muscle.MuscleRegion;
@@ -36,7 +36,7 @@ public record CorrugatorSupercilii() implements Muscle {
     public List<Section> sections() {
         final Sections s = Sections.INSTANCE;
         return List.of(
-                s.at(Frontal.INSTANCE, 0.9, 7.361, 9.404, 0.6, 0.4, 0, 0.2, 1),
-                s.at(Frontal.INSTANCE, 2.6, 7.961, 9.404, 0.6, 0.4, 0, 0.2, 1));
+                s.at(Skull.INSTANCE, 0.9, 7.361, 9.404, 0.6, 0.4, 0, 0.2, 1),
+                s.at(Skull.INSTANCE, 2.6, 7.961, 9.404, 0.6, 0.4, 0, 0.2, 1));
     }
 }

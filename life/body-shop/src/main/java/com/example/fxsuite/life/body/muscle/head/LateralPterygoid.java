@@ -1,7 +1,7 @@
 package com.example.fxsuite.life.body.muscle.head;
 
+import com.example.fxsuite.life.body.bone.skull.Skull;
 import com.example.fxsuite.life.body.bone.skull.Mandible;
-import com.example.fxsuite.life.body.bone.skull.Sphenoid;
 import com.example.fxsuite.life.body.muscle.Layer;
 import com.example.fxsuite.life.body.muscle.Muscle;
 import com.example.fxsuite.life.body.muscle.MuscleRegion;
@@ -37,7 +37,7 @@ public record LateralPterygoid() implements Muscle {
     public List<Section> sections() {
         final Sections s = Sections.INSTANCE;
         return List.of(
-                s.at(Sphenoid.INSTANCE, 1.9, -0.6, 3, 1.4, 1.0, 1, 0, 0),
+                s.at(Skull.INSTANCE, 1.9, -0.6, 3, 1.4, 1.0, 1, 0, 0),
                 s.at(Mandible.INSTANCE, 5, 0.6, 0.4, 1.0, 0.8, 1, 0, 0));
     }
 }

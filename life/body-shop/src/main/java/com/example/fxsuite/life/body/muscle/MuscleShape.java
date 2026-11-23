@@ -4,18 +4,20 @@ import com.example.fxsuite.life.body.Mesher;
 import com.example.fxsuite.life.body.Rig;
 import com.example.fxsuite.life.body.V3;
 import com.example.fxsuite.life.body.cage.Cage;
+import com.example.fxsuite.life.body.cage.Crease;
 import com.example.fxsuite.life.body.cage.Fitting;
 import com.example.fxsuite.life.body.cage.Subdivision;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
- * A muscle's shape on a body ({@link Muscle}): a cage of rings, one at each of its sections, each an oval of
- * {@link #ROUND} points, so wide across and so deep the way it faces, its middle half its depth out from where it lies,
- * square to the way the muscle runs there; four-sided faces from ring to ring, its ends shut; found so that its
- * surface, smoothed, passes through its rings ({@link Fitting}). Its belly as big as the body has it
+ * A muscle's shape on a body ({@link Muscle}): a cage of rings, as its form has them ({@link MuscleRings}), each an
+ * oval of {@link #ROUND} points, so wide across and so deep the way it faces, its middle half its depth out from where
+ * it lies, square to the way the muscle runs there; four-sided faces from ring to ring, its ends shut; found so that
+ * its surface, smoothed, passes through its rings ({@link Fitting}). Its belly as big as the body has it
  * ({@link Muscularity}), every section but its tendons' grown or shrunk alike, wider and deeper as one, and so lying
  * further out from what is under it; its tendons, at either end, as they are drawn. A band or a tendon all as drawn.
  * Where its bones are as {@code rig} holds them, on the right or the left.
@@ -26,6 +28,8 @@ public record MuscleShape() implements StatelessFunctionalObject {
 
     /** How many points round each ring. */
     public static final int ROUND = 8;
+    /** How sharp a muscle's ends are kept, as a crease is. */
+    private static final double END = 2;
 
     /** {@code m}'s surface as drawn, on the body {@code rig} holds, on the right or the left, smoothed so often. */
     public Mesher.Mesh mesh(final Muscle m, final Rig rig, final boolean left, final int steps) {
@@ -46,6 +50,14 @@ public record MuscleShape() implements StatelessFunctionalObject {
 
     /** {@code m}'s cage, as big as {@code bulk} has it, on the body {@code rig} holds, its points where its skin is. */
     public Cage cage(final Muscle m, final Muscularity bulk, final Rig rig, final boolean left) {
+        return cage(m, bulk, rig, left, p -> Optional.empty());
+    }
+
+    /**
+     * {@code m}'s cage, as big as {@code bulk} has it, on the body {@code rig} holds; a sheet laid on {@code bed}
+     * ({@link Drape}).
+     */
+    public Cage cage(final Muscle m, final Muscularity bulk, final Rig rig, final boolean left, final Bed bed) {
         final List<Section> sections = m.sections();
         final int n = sections.size();
         final V3[] on = new V3[n];
@@ -55,39 +67,78 @@ public record MuscleShape() implements StatelessFunctionalObject {
             on[i] = s.at().in(rig, left);
             way[i] = s.at().way(s.facing(), rig, left).unit();
         }
-        return cageAt(m, on, way, grown(m, bulk, on, way));
+        final V3[] ends = MuscleRings.INSTANCE.ends(m, rig, left);
+        return cageAt(m, on, way, ends, grown(m, bulk, on, way, ends), bed);
     }
 
-    /** {@code m}'s cage where its sections lie at {@code on}, facing {@code way}, its belly {@code grown} times. */
-    private Cage cageAt(final Muscle m, final V3[] on, final V3[] way, final double grown) {
-        final List<Section> sections = m.sections();
-        final int n = sections.size();
-        final V3[] at = new V3[n];
-        final double[] k = new double[n];
-        for (int i = 0; i < n; i++) {
-            k[i] = kept(m, i) ? 1 : grown;
-            at[i] = on[i].plus(way[i].times(sections.get(i).deep() * k[i] / 2));
-        }
+    /**
+     * {@code m}'s cage where its sections lie at {@code on}, facing {@code way}, its lines' posed {@code ends}, if a
+     * spread, its belly {@code grown} times ({@link MuscleRings}); a sheet laid on {@code bed}, ring by ring.
+     */
+    private Cage cageAt(final Muscle m, final V3[] on, final V3[] way, final V3[] ends, final double grown,
+                        final Bed bed) {
+        final List<MuscleRings.Ring> rings = MuscleRings.INSTANCE.rings(m, on, way, ends, grown);
+        final int n = rings.size();
         final List<V3> points = new ArrayList<>();
         final List<String> names = new ArrayList<>();
         for (int i = 0; i < n; i++) {
-            final Section s = sections.get(i);
-            final V3 along = m.ring() ? at[(i + 1) % n].minus(at[(i + n - 1) % n]).unit()
-                    : at[Math.min(i + 1, n - 1)].minus(at[Math.max(i - 1, 0)]).unit();
-            V3 face = way[i].minus(along.times(way[i].dot(along)));
-            if (face.length() < 1e-6) {
-                face = Math.abs(along.y()) < 0.9 ? along.cross(V3.Y) : along.cross(V3.X);
+            final MuscleRings.Ring r = rings.get(i);
+            final V3 along = m.ring() ? rings.get((i + 1) % n).at().minus(rings.get((i + n - 1) % n).at()).unit()
+                    : rings.get(Math.min(i + 1, n - 1)).at().minus(rings.get(Math.max(i - 1, 0)).at()).unit();
+            final V3[] frame = frame(r, along);
+            final double wide = r.span().map(V3::length).orElse(r.wide());
+            if (m.sheet()) {
+                points.addAll(Drape.INSTANCE.ring(r.on(), r.at(), frame[0], frame[1], frame[2], wide, r.deep(), bed));
             }
-            face = face.unit();
-            final V3 across = along.cross(face).unit();
             for (int q = 0; q < ROUND; q++) {
                 final double a = 2 * Math.PI * q / ROUND;
-                points.add(at[i].plus(across.times(Math.cos(a) * s.wide() * k[i] / 2))
-                        .plus(face.times(Math.sin(a) * s.deep() * k[i] / 2)));
-                names.add(m.name() + ", section " + (i + 1) + ", " + q);
+                if (!m.sheet()) {
+                    points.add(r.at().plus(frame[0].times(Math.cos(a) * wide / 2))
+                            .plus(frame[1].times(Math.sin(a) * r.deep() / 2)));
+                }
+                names.add(m.name() + ", ring " + (i + 1) + ", " + q);
             }
         }
-        return new Cage(points, names, faces(n, m.ring(), outward(points, n, m.ring())), List.of());
+        return new Cage(points, names, faces(n, m.ring(), outward(points, n, m.ring())), ends(m, n));
+    }
+
+    /**
+     * Across {@code r}, the way it faces, and the way through it, its plane's: a strap's square to the way the muscle
+     * runs, {@code along}, across it square to the way it faces; a spread's through its span, from one line to the
+     * other, end to end, whichever way its fibres run, so that its ends are its lines'.
+     */
+    private V3[] frame(final MuscleRings.Ring r, final V3 along) {
+        if (r.span().isPresent()) {
+            final V3 across = r.span().get().unit();
+            final V3 face = square(r.way(), across, along);
+            final V3 through = across.cross(face).unit();
+            return new V3[] {across, face, through.dot(along) < 0 ? through.times(-1) : through};
+        }
+        final V3 face = square(r.way(), along, Math.abs(along.y()) < 0.9 ? along.cross(V3.Y) : along.cross(V3.X));
+        return new V3[] {along.cross(face).unit(), face, along};
+    }
+
+    /** {@code way} square to {@code to}, a unit; {@code or} square to it, should it run along it. */
+    private V3 square(final V3 way, final V3 to, final V3 or) {
+        final V3 v = way.minus(to.times(way.dot(to)));
+        return (v.length() < 1e-6 ? or.minus(to.times(or.dot(to))) : v).unit();
+    }
+
+    /**
+     * Its ends kept where their sections are: each end's ring a crease as sharp as {@link #END} says, so that,
+     * smoothed, it does not round out past its attachment; a ring's, none.
+     */
+    private List<Crease> ends(final Muscle m, final int n) {
+        if (m.ring()) {
+            return List.of();
+        }
+        final List<Integer> first = new ArrayList<>();
+        final List<Integer> last = new ArrayList<>();
+        for (int q = 0; q <= ROUND; q++) {
+            first.add(q % ROUND);
+            last.add((n - 1) * ROUND + q % ROUND);
+        }
+        return List.of(new Crease("its origin", first, END, false), new Crease("its insertion", last, END, false));
     }
 
     /**
@@ -129,11 +180,11 @@ public record MuscleShape() implements StatelessFunctionalObject {
      * How much wider and deeper {@code m}'s belly is than drawn, to be as much as {@code bulk} has it: found on its
      * sections' frustums, then put right by its surface, smoothed twice, a few times, and then by that surface alone.
      */
-    private double grown(final Muscle m, final Muscularity bulk, final V3[] on, final V3[] way) {
+    private double grown(final Muscle m, final Muscularity bulk, final V3[] on, final V3[] way, final V3[] ends) {
         if (m.layer() == Layer.TENDON) {
             return 1;
         }
-        final double drawn = smoothed(m, on, way, 1);
+        final double drawn = smoothed(m, on, way, ends, 1);
         final double wanted = bulk.volume(m, drawn);
         if (Math.abs(wanted - drawn) <= 1e-9 * drawn) {
             return 1;
@@ -141,19 +192,20 @@ public record MuscleShape() implements StatelessFunctionalObject {
         double target = asDrawn(m, on) * wanted / drawn;
         double k = frustums(m, on, target);
         for (int round = 0; round < 3; round++) {
-            target *= wanted / smoothed(m, on, way, k);
+            target *= wanted / smoothed(m, on, way, ends, k);
             k = frustums(m, on, target);
         }
         for (int round = 0; round < 4; round++) {
-            k *= Math.sqrt(wanted / smoothed(m, on, way, k));
+            k *= Math.sqrt(wanted / smoothed(m, on, way, ends, k));
         }
         return k;
     }
 
     /** How much {@code m} holds, its belly {@code k} times, its surface smoothed twice, as it is drawn. */
-    private double smoothed(final Muscle m, final V3[] on, final V3[] way, final double k) {
+    private double smoothed(final Muscle m, final V3[] on, final V3[] way, final V3[] ends, final double k) {
         final Subdivision s = Subdivision.INSTANCE;
-        return volume(s.mesh(s.times(s.of(Fitting.INSTANCE.fitted(cageAt(m, on, way, k), 1), 1), 2)));
+        final Cage cage = cageAt(m, on, way, ends, k, p -> Optional.empty());
+        return volume(s.mesh(s.times(s.of(Fitting.INSTANCE.fitted(cage, 1), 1), 2)));
     }
 
     /** How much wider and deeper {@code m}'s belly is than drawn, for its frustums to come to {@code target}. */

@@ -26,6 +26,8 @@ public record Viscera() implements StatelessFunctionalObject {
     /** How many points round, and how many rings. */
     private static final int ROUND = 32;
     private static final int RINGS = 16;
+    /** How far ahead of the line from the neck's joint to the head's the front of its vertebrae may be, cm. */
+    private static final double COLUMN = 2;
 
     /** The belly's bulk, between the bones {@code bones} where {@code bind} holds them. */
     public Beneath of(final Beneath bones, final Rig bind) {
@@ -55,16 +57,21 @@ public record Viscera() implements StatelessFunctionalObject {
     /**
      * The throat: the windpipe, the larynx and the gullet before the neck's bones, as one tube, from behind the top of
      * the breastbone up to under the jaw, broadest at the larynx; so that the front of the neck has something under its
-     * strap muscles. Following the neck, the chest at its foot.
+     * strap muscles. Following the neck, the chest at its foot. Before the neck's vertebrae: the front of its bones
+     * down its middle, of those near the line from the neck's joint to the head's, no more than {@link #COLUMN} ahead
+     * of it; the hyoid, well ahead of it, left out.
      */
     public Beneath throat(final Beneath bones, final Rig bind) {
-        final double neck = bind.frame(Part.NECK).at().y();
-        final double jaw = bind.frame(Part.HEAD).at().y() - 1;
+        final V3 neckJoint = bind.frame(Part.NECK).at();
+        final V3 headJoint = bind.frame(Part.HEAD).at();
+        final double neck = neckJoint.y();
+        final double jaw = headJoint.y() - 1;
         double spine = Double.NEGATIVE_INFINITY;
         for (int i = 0; i < bones.size(); i++) {
             final V3 p = bones.point(i);
+            final double line = neckJoint.z() + (headJoint.z() - neckJoint.z()) * (p.y() - neck) / (headJoint.y() - neck);
             spine = bones.main()[i] == Part.NECK && p.y() > neck && p.y() < neck + 6 && Math.abs(p.x()) < 1.5
-                    ? Math.max(spine, p.z()) : spine;
+                    && p.z() < line + COLUMN ? Math.max(spine, p.z()) : spine;
         }
         final List<V3> points = new ArrayList<>();
         final List<Weights> weights = new ArrayList<>();

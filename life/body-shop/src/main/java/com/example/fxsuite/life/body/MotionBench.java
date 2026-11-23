@@ -3,11 +3,13 @@ package com.example.fxsuite.life.body;
 import com.example.fxsuite.avatar.bench.kit.Bus;
 import com.example.fxsuite.avatar.bench.kit.ModelView;
 import com.example.fxsuite.avatar.bench.kit.Shell;
+import com.example.fxsuite.life.body.head.ClayHead;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
@@ -32,13 +34,16 @@ import java.util.Locale;
  * exposed or shelled, moving the same. With the Gatling gun slung from its strap ({@link GatlingHold}), aimed up or
  * down, the only weapon it holds for now.
  *
- * <p>{@code -Dmotion.look} (exposed, shelled, skeleton, muscles), {@code -Dskeleton.detail} (mm,
- * a skeleton's grid), {@code -Dmotion.deep=true} (its deep muscles too),
+ * <p>{@code -Dmotion.look} (exposed, shelled, skeleton, muscles, skin), {@code -Dskeleton.detail} (mm,
+ * a skeleton's grid), {@code -Dmotion.deep=true} (its deep muscles too), {@code -Dmotion.head} and so the neck's,
+ * the trunk's, the arms', the legs' (each a layer of its own, {@link LayerChoice}),
  * {@code -Dmotion.move} (walk, quick, parade), {@code -Dmotion.speed} (cm/s), {@code -Dmotion.tour=true},
  * {@code -Dmotion.gatling=true}, {@code -Dmotion.aim} (degrees), {@code -Dmotion.slow} (a share of real time) what
  * it plays first;
  * {@code -Dmotion.at} (0 to 1) stops it at that point of its stride; {@code -Dmotion.yaw}, {@code -Dmotion.pitch},
- * {@code -Dmotion.distance} (m) where it is seen from; {@code -Dbench.snapshot=out.png} saves the window after
+ * {@code -Dmotion.distance} (m), {@code -Dmotion.height} (cm) where it is seen from and looks at;
+ * {@code -Dhead.reference} (a reference head's path: its skin with the clay head made from it, {@link ClayHead});
+ * {@code -Dbench.snapshot=out.png} saves the window after
  * {@code -Dbench.settle} ms and exits.
  */
 public final class MotionBench extends Application {
@@ -77,6 +82,7 @@ public final class MotionBench extends Application {
     private Pose arms = GatlingHold.ready(Pose.REST);
 
     private final ChoiceBox<Puppet.Kind> look = new ChoiceBox<>();
+    private final LayerChoice layered = new LayerChoice(this::dress);
     private final ChoiceBox<Move> how = new ChoiceBox<>();
     private final Slider speed = new Slider(0, 800, 140);
     private final Label speedSaid = new Label();
@@ -90,6 +96,7 @@ public final class MotionBench extends Application {
     private final CheckBox forces = new CheckBox("The forces on the gun, as arrows");
     private final CheckBox deep = new CheckBox("Its deep muscles too");
     private final Label muscleSaid = new Label();
+    private final com.example.fxsuite.life.body.skin.Skins skins = new com.example.fxsuite.life.body.skin.Skins();
     private final java.util.Map<String, com.example.fxsuite.life.body.muscle.MuscleBody.Bound> muscleBodies =
             new java.util.concurrent.ConcurrentHashMap<>();
     private final Slider grid = new Slider(2, 16, Double.parseDouble(System.getProperty("skeleton.detail", "8")));
@@ -124,6 +131,7 @@ public final class MotionBench extends Application {
         speed.setPrefWidth(220);
         speed.valueProperty().addListener((o, was, is) -> said());
         tour.setSelected(Boolean.getBoolean("motion.tour"));
+        deep.setSelected(Boolean.getBoolean("motion.deep"));
         gatling.setSelected(Boolean.getBoolean("motion.gatling"));
         gatling.selectedProperty().addListener((o, was, is) -> {
             gun.setVisible(is);
@@ -193,7 +201,8 @@ public final class MotionBench extends Application {
                 + " Stop it and move the point of its stride to look at a moment. Drag to turn the view, right-drag"
                 + " to move it, scroll to come nearer.");
         hint.setWrapText(true);
-        final VBox side = new VBox(10, new Label("Drawn as"), look, new Label("How it goes"), how,
+        final VBox side = new VBox(10, new Label("Drawn as"), look, new Label("Each part drawn as"), layered.node(),
+                new Label("How it goes"), how,
                 new Label("How fast"), paces, tour, knobs, new FlowPane(10, 6, play), deep, muscleSaid, gatling,
                 forces, treadmill, hint);
         side.setPadding(new Insets(8));
@@ -204,7 +213,7 @@ public final class MotionBench extends Application {
         shell.middle(view.node());
         view.grid(0, 0, 0, 1_200, 10, 5);
         view.zoom(60, 2_000);
-        view.lookAt(0, 95, 0);
+        view.lookAt(0, Double.parseDouble(System.getProperty("motion.height", "95")), 0);
         view.from("motion", Double.parseDouble(System.getProperty("motion.yaw", "70")),
                 Double.parseDouble(System.getProperty("motion.pitch", "8")),
                 Double.parseDouble(System.getProperty("motion.distance", "4")));
@@ -246,6 +255,9 @@ public final class MotionBench extends Application {
 
     private static Puppet.Kind kind(final String said) {
         final String s = said.toLowerCase(Locale.ROOT);
+        if (s.startsWith("ski")) {
+            return Puppet.Kind.SKIN;
+        }
         if (s.startsWith("sk")) {
             return Puppet.Kind.SKELETON;
         }
@@ -261,11 +273,13 @@ public final class MotionBench extends Application {
         walker = new Walker(proportions);
         walker.move(how.getValue());
         hold = new GatlingHold(proportions);
-        puppet = new Puppet(look.getValue(), proportions, RobotDesign.DEFAULT, Palette.DEFAULT, new V3(-1, -1, -1));
+        puppet = new Puppet(look.getValue(), proportions, RobotDesign.DEFAULT, Palette.DEFAULT, new V3(-1, -1, -1),
+                layered.layers());
         shown.getChildren().setAll(puppet.node(), gun, strap, loads);
         draw(walker.rig(), 0);
         regrid();
         muscled();
+        skinned();
     }
 
     /**
@@ -273,7 +287,7 @@ public final class MotionBench extends Application {
      * drawn over it; kept, to be drawn again without finding them afresh. None for any other kind.
      */
     private void muscled() {
-        if (puppet.kind() != Puppet.Kind.MUSCLES) {
+        if (!puppet.shows(Layer.MUSCLES)) {
             muscleSaid.setText("");
             return;
         }
@@ -285,7 +299,7 @@ public final class MotionBench extends Application {
         new Thread(() -> {
             final long t0 = System.nanoTime();
             final com.example.fxsuite.life.body.muscle.MuscleBody.Bound b = muscleBodies.computeIfAbsent(key,
-                    k -> com.example.fxsuite.life.body.muscle.MuscleBody.INSTANCE.make(p, withDeep, 1));
+                    k -> com.example.fxsuite.life.body.fat.SheetBed.INSTANCE.body(p, withDeep, 1));
             final long ms = (System.nanoTime() - t0) / 1_000_000;
             javafx.application.Platform.runLater(() -> {
                 if (mine == puppet) {
@@ -297,9 +311,56 @@ public final class MotionBench extends Application {
         }, "muscles").start();
     }
 
+    /** Its skin found away from the screen, if it is drawn as one, then drawn; kept, to be drawn again at once. */
+    private void skinned() {
+        if (!puppet.shows(Layer.SKIN)) {
+            return;
+        }
+        final Puppet mine = puppet;
+        final Proportions p = proportions;
+        muscleSaid.setText("finding its skin");
+        new Thread(() -> {
+            final long t0 = System.nanoTime();
+            final boolean clayed = mine.layer(Part.HEAD).equals(java.util.Optional.of(Layer.SKIN));
+            final com.example.fxsuite.life.body.flesh.Flesh skin = clayed ? clay(skins.moving(p)) : skins.moving(p);
+            final long ms = (System.nanoTime() - t0) / 1_000_000;
+            javafx.application.Platform.runLater(() -> {
+                if (mine == puppet) {
+                    mine.skin(skin);
+                    muscleSaid.setText(String.format(Locale.ROOT, "Skin: %,d points, %,d triangles, found in %,d ms",
+                            skin.size(), skin.triangleCount(), ms));
+                }
+            });
+        }, "skin").start();
+    }
+
+    /**
+     * {@code skin} with the clay head made from the reference head {@code -Dhead.reference} names, if it does, joined
+     * on at its neck in place of its own head ({@link com.example.fxsuite.life.body.head.NeckJoin}): where the skull
+     * fitted under it sets it, at its own size; else as big as the skin's head. As it is, if it names none or it cannot
+     * be read.
+     */
+    private com.example.fxsuite.life.body.flesh.Flesh clay(final com.example.fxsuite.life.body.flesh.Flesh skin) {
+        final String path = System.getProperty("head.reference");
+        if (path == null) {
+            return skin;
+        }
+        try {
+            final Mesher.Mesh head = ClayHead.INSTANCE.of(java.nio.file.Path.of(path));
+            final V3 at = com.example.fxsuite.life.body.bone.skull.SkullForm.INSTANCE.headAt().orElse(V3.ZERO);
+            final double k = com.example.fxsuite.life.body.bone.skull.SkullForm.INSTANCE.headAt().isPresent() ? 1
+                    : ClayHead.INSTANCE.scale(head, skin);
+            System.out.printf(Locale.ROOT, "clay head made %.3f times as big%n", k);
+            return com.example.fxsuite.life.body.head.NeckJoin.INSTANCE.joined(skin, head, at, k);
+        } catch (final java.io.IOException e) {
+            System.out.println("the clay head not made: " + e.getMessage());
+            return skin;
+        }
+    }
+
     /** A skeleton found afresh on the grid asked for, away from the screen, then drawn; how many triangles, said. */
     private void regrid() {
-        if (puppet.kind() != Puppet.Kind.SKELETON && puppet.kind() != Puppet.Kind.MUSCLES) {
+        if (!puppet.shows(Layer.SKELETON) && !puppet.shows(Layer.MUSCLES)) {
             gridSaid.setText("for a skeleton");
             return;
         }
