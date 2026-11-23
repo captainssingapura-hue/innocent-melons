@@ -17,6 +17,14 @@ public record Point(Node node) {
         return new Point(new Three(node).plus(new Three(across, up, 0)).node());
     }
 
+    /**
+     * The place with each of its numbers made so many times as much: what is laid out over it in even cells then
+     * lies in cells drawn out the way a number was made smaller, and squeezed the way one was made larger.
+     */
+    public Point scaled(final double across, final double up, final double along) {
+        return new Point(new Three(node).times(new Three(across, up, along)).node());
+    }
+
     public Real across() {
         return new Three(node).picked(Shaped.FIRST);
     }
