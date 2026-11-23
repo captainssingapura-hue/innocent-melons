@@ -17,19 +17,22 @@ import com.example.fxsuite.building.spec.CityWallSpec;
 import com.example.fxsuite.building.spec.FarmhouseSpec;
 import com.example.fxsuite.building.spec.GateTowerSpec;
 import com.example.fxsuite.building.spec.HallSpec;
+import com.example.fxsuite.building.spec.HouseSpec;
 import com.example.fxsuite.building.spec.QuaySpec;
 import com.example.fxsuite.building.spec.Roofing;
 import com.example.fxsuite.building.spec.ShopHouseSpec;
 import com.example.fxsuite.building.spec.StallSpec;
 import com.example.fxsuite.building.spec.WineHouseSpec;
 import com.example.fxsuite.taxonomy.Leaf;
+import melons.innocent.building.generic.GenericHouse;
 
 import java.util.List;
 import java.util.Optional;
 
 /**
  * What the bench offers to build, each thing by its default implementation and a specification to build it from at
- * first: for now the Northern Song's, as their tests build them. One to a thing; other civilizations and eras later.
+ * first: anyone's house of today, and the Northern Song's buildings and works, as their tests build them. One to a
+ * thing; other civilizations and eras later.
  *
  * @param offered each thing offered
  */
@@ -42,6 +45,7 @@ public record Catalogue(List<Offered> offered) {
     /** The Northern Song's buildings and works, each from a specification as its tests have it. */
     public Catalogue() {
         this(List.of(
+                new Offered(new GenericHouse(), new HouseSpec<>(900, 700, 2, 300, 3)),
                 new Offered(new SongFarmhouse(), new FarmhouseSpec<>(3, 330, 600, Roofing.THATCH, 800)),
                 new Offered(new SongShopHouse(), new ShopHouseSpec<>(3, 360, 600, Roofing.TILE)),
                 new Offered(new SongTeaHouse(), new HallSpec<>(3, 380, 600, Roofing.THATCH)),

@@ -57,6 +57,19 @@ public final class ThingTree {
         return new VBox(6, search, view);
     }
 
+    /** The first thing offered whose name begins with {@code name}, picked; or, if none does, the first. */
+    public void picked(final String name) {
+        final String wanted = name.strip().toLowerCase(Locale.ROOT);
+        for (int row = 0; row < view.getExpandedItemCount() && !wanted.isEmpty(); row++) {
+            final Node node = view.getTreeItem(row).getValue();
+            if (node instanceof Leaf<?> && spoken(node).toLowerCase(Locale.ROOT).startsWith(wanted)) {
+                view.getSelectionModel().select(row);
+                return;
+            }
+        }
+        first();
+    }
+
     /** The first thing offered, picked. */
     public void first() {
         for (int row = 0; row < view.getExpandedItemCount(); row++) {

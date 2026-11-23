@@ -1,10 +1,12 @@
 package melons.innocent.building.bench;
 
 import com.example.fxsuite.building.Structure;
+import com.example.fxsuite.vulkan.device.Canvas;
 import com.example.fxsuite.vulkan.device.Card;
 import com.example.fxsuite.vulkan.device.Desk;
 import com.example.fxsuite.vulkan.device.Moved;
 import com.example.fxsuite.vulkan.device.Refused;
+import com.example.fxsuite.vulkan.device.Target;
 import com.example.fxsuite.vulkan.device.Window;
 import com.example.fxsuite.vulkan.form.Mesh;
 import com.example.fxsuite.vulkan.render.Formed;
@@ -12,15 +14,16 @@ import com.example.fxsuite.vulkan.render.Framed;
 import com.example.fxsuite.vulkan.shade.Laid;
 import com.example.fxsuite.vulkan.shade.Look;
 import com.example.fxsuite.vulkan.space.Vec3;
-import com.example.fxsuite.vulkan.term.Colour;
-import com.example.fxsuite.vulkan.term.Surface;
 import com.example.fxsuite.vulkan.view.Camera;
 import com.example.fxsuite.vulkan.view.Orbit;
 import com.example.fxsuite.vulkan.worked.Daylight;
-import javafx.scene.paint.Color;
+import com.example.fxsuite.vulkan.worked.Picture;
 import melons.innocent.forms.Facets;
-import melons.innocent.forms.fx.Hues;
 
+import javax.imageio.ImageIO;
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -29,19 +32,23 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * A building looked into closely, in a window of the card's, drawn by Vulkan as finely as it is built: every solid,
- * however small, a mesh to each material in its colour, lit by the day; the eye going round it as the mouse is dragged
- * and nearer or further as the wheel turns. Asked for from the bench's thread, served on the thread the bench began
- * on, which the card's windows want: one at a time, a new one asked for closing the one open; served till the bench
- * ends.
+ * however small, a mesh to each material in the texture lab's look for it, where it has one ({@link LabLooks}), lit
+ * by the day; the eye going round it as the mouse is dragged and nearer or further as the wheel turns. Asked for from
+ * the bench's thread, served on the thread the bench began on, which the card's windows want: one at a time, a new one
+ * asked for closing the one open; served till the bench ends.
  */
 public final class Inspector {
 
     private static final int WIDTH = 1100;
     private static final int HEIGHT = 720;
     private static final double FIELD = 45;
+    /** How many frames are drawn before what is looked into is saved, so all of it is on the card. */
+    private static final int SETTLED = 30;
 
     private final BlockingQueue<Optional<Asked>> asked = new LinkedBlockingQueue<>();
-    private final Hues hues = new Hues();
+    private final LabLooks looks = new LabLooks();
+    /** A file to save what is first looked into to, and then end: {@code -Dbench.inspectSnapshot=}; none, at first. */
+    private final String shot = System.getProperty("bench.inspectSnapshot", "");
 
     /** A building asked to be looked into: what it is called, and it. */
     private record Asked(String title, Structure structure) {
@@ -75,9 +82,10 @@ public final class Inspector {
             final Daylight day = new Daylight();
             final List<Formed> parts = new ArrayList<>();
             facets.sheets().forEach((material, sheet) -> parts.add(new Formed(card, new Look(laid,
-                    surface(hues.of(material))), mesh(sheet))));
+                    looks.surface(material)), mesh(sheet))));
             Orbit orbit = orbit(facets);
             window.shown(80, 80);
+            int frames = 0;
             try {
                 while (window.open() && asked.isEmpty()) {
                     desk.heard();
@@ -86,11 +94,14 @@ public final class Inspector {
                     orbit = mouse.scrolled() == 0 ? orbit
                             : orbit.scrolled(mouse.scrolled(), orbit.distance() / 100, orbit.distance() * 100);
                     final Camera camera = orbit.camera(FIELD, 10);
-                    window.drawn(day.sky(), new Framed(laid, camera, day.light()).filling((double) WIDTH / HEIGHT),
-                            pass -> parts.forEach(part -> part.drawn(pass, new Vec3(0, 0, 0), camera)));
+                    drawnOn(window, laid, day, parts, camera);
                     final List<String> said = card.heard();
                     if (!said.isEmpty()) {
                         throw new Refused("the validation layer", String.join("\n", said));
+                    }
+                    if (!shot.isEmpty() && ++frames == SETTLED) {
+                        saved(card, laid, day, parts, camera);
+                        return Optional.empty();
                     }
                 }
             } finally {
@@ -98,6 +109,25 @@ public final class Inspector {
             }
         }
         return asked.take();
+    }
+
+    /** {@code parts} drawn on {@code target}, lit by {@code day}, seen by {@code camera}. */
+    private void drawnOn(final Target target, final Laid laid, final Daylight day, final List<Formed> parts,
+                         final Camera camera) {
+        final double aspect = (double) target.width() / target.height();
+        target.drawn(day.sky(), new Framed(laid, camera, day.light()).filling(aspect),
+                pass -> parts.forEach(part -> part.drawn(pass, new Vec3(0, 0, 0), camera)));
+    }
+
+    /** What the window shows, drawn again on a canvas and saved to the file {@link #shot} names. */
+    private void saved(final Card card, final Laid laid, final Daylight day, final List<Formed> parts,
+                       final Camera camera) {
+        try (Canvas canvas = card.canvas(WIDTH, HEIGHT)) {
+            drawnOn(canvas, laid, day, parts, camera);
+            ImageIO.write(new Picture(canvas.width(), canvas.pixels()).image(), "png", new File(shot));
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     /** Where the eye first looks from: round the middle of {@code facets}, far enough off to see them whole. */
@@ -116,12 +146,6 @@ public final class Inspector {
         final double size = Math.max(high[0] - low[0], Math.max(high[1] - low[1], high[2] - low[2]));
         return new Orbit(new Vec3((low[0] + high[0]) / 2, (low[1] + high[1]) / 2, (low[2] + high[2]) / 2), 30, 20,
                 Math.max(500, size * 2));
-    }
-
-    /** {@code colour} as a plain surface, a little shine. */
-    private Surface surface(final Color colour) {
-        return new Surface(new Colour(colour.getRed(), colour.getGreen(), colour.getBlue()), List.of(),
-                new Colour(0.05, 0.05, 0.05), 8);
     }
 
     /** {@code sheet} as the card's mesh. */

@@ -4,6 +4,7 @@ import com.example.fxsuite.avatar.build.Solid;
 import com.example.fxsuite.building.Spec;
 import com.example.fxsuite.building.Structure;
 import com.example.fxsuite.existence.Made;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -16,6 +17,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import melons.innocent.forms.Facets;
 
 import java.util.List;
@@ -83,7 +85,29 @@ public final class BuildingBench {
         stage.setScene(new Scene(pane));
         stage.setOnHidden(event -> inspector.end());
         stage.show();
-        tree.first();
+        tree.picked(System.getProperty("bench.pick", ""));
+        snapshot(stage);
+    }
+
+    /**
+     * For a run with nobody watching: {@code -Dbench.snapshot=} a file, the bench saved to it once it has settled, and
+     * then closed; or, with {@code -Dbench.inspect=true}, what is picked looked into, and that saved as the inspector
+     * says, before it all ends.
+     */
+    private void snapshot(final Stage stage) {
+        final String shot = System.getProperty("bench.snapshot", "");
+        if (!shot.isEmpty()) {
+            final PauseTransition settling = new PauseTransition(Duration.seconds(2));
+            settling.setOnFinished(event -> {
+                new Snapshot().saved(stage.getScene(), shot);
+                if (Boolean.getBoolean("bench.inspect") && structure != null) {
+                    inspector.ask(picked.title(), structure);
+                } else {
+                    stage.close();
+                }
+            });
+            settling.play();
+        }
     }
 
     /** {@code offered} picked: its sample built and shown, its specification in the form. */
