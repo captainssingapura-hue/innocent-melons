@@ -1,5 +1,6 @@
 package melons.innocent.building.bench;
 
+import com.example.fxsuite.avatar.build.Material;
 import com.example.fxsuite.building.Structure;
 import com.example.fxsuite.vulkan.device.Canvas;
 import com.example.fxsuite.vulkan.device.Card;
@@ -25,7 +26,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -64,11 +67,20 @@ public final class Inspector {
         asked.add(Optional.empty());
     }
 
-    /** What is asked, served, one after another, till the end is asked: on the thread the bench began on. */
+    /**
+     * What is asked, served, one after another, till the end is asked: on the thread the bench began on. A building
+     * the card refuses to draw is told of, and the next served all the same, so the bench goes on.
+     */
     public void served() throws InterruptedException {
         Optional<Asked> next = asked.take();
         while (next.isPresent()) {
-            next = inspected(next.get());
+            try {
+                next = inspected(next.get());
+            } catch (final RuntimeException refused) {
+                System.err.println("Not looked into: " + next.get().title());
+                refused.printStackTrace();
+                next = asked.take();
+            }
         }
     }
 
@@ -81,8 +93,11 @@ public final class Inspector {
             final Laid laid = new Laid();
             final Daylight day = new Daylight();
             final List<Formed> parts = new ArrayList<>();
-            facets.sheets().forEach((material, sheet) -> parts.add(new Formed(card, new Look(laid,
-                    looks.surface(material)), mesh(sheet))));
+            // what is seen through, glass, drawn after all that is not, as the card has it
+            final List<Map.Entry<Material, Facets.Sheet>> sheets = new ArrayList<>(facets.sheets().entrySet());
+            sheets.sort(Comparator.comparing(sheet -> looks.surface(sheet.getKey()).seenThrough()));
+            sheets.forEach(sheet -> parts.add(new Formed(card, new Look(laid, looks.surface(sheet.getKey())),
+                    mesh(sheet.getValue()))));
             Orbit orbit = orbit(facets);
             window.shown(80, 80);
             int frames = 0;

@@ -7,24 +7,30 @@ import com.example.fxsuite.existence.Buildings;
 import com.example.fxsuite.historian.Civilization;
 import com.example.fxsuite.historian.CommonEras;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * How a point block of public housing was built in the modern era, as Singapore's housing board built them, as bare
- * structure: its floor plan of shear walls, raised storey on storey ({@link Raised}). Square in plan; at its middle a
- * square core of stairs and lifts, closed all round by its four walls; from the middle of each of the core's sides a
- * party wall out to the block's edge, so four flats lie round the core, one to each corner, each reached from it
- * straight; each storey's slab over the whole square. Its first storey 3.6 m, open below as a void deck, the rest
- * 2.8 m, as the board's own guide gives them; its walls and slabs 20 cm.
+ * How a point block of public housing was built in the modern era, as Singapore's housing board built them: four
+ * executive flats ({@link ExecutiveFlat}) round a lift lobby they share, raised storey on storey ({@link Raised}). At
+ * its middle the lobby, square, walled all round in concrete but for a door to each flat's porch, the lifts' shaft
+ * at its middle; west of it the first flat, its porch on the lobby's west wall, and the others each a quarter turn on
+ * from the last, a pinwheel, the gaps between them open to the sky. Each storey's slabs under the flats and the
+ * lobby; its structure the flats' pillars, the lobby's walls and the shaft. Its first storey 3.6 m, open below as a
+ * void deck, the rest 2.8 m, as the board's own guide gives them; its slabs 20 cm.
  */
 public final class GenericPointBlock
         implements ThingImpl<Buildings.PointBlock, Civilization, CommonEras.Modern, PointBlockSpec<Civilization,
         CommonEras.Modern>> {
 
-    static final double WALL = 20;
     static final double SLAB = 20;
     static final double GROUND = 360;
     static final double TYPICAL = 280;
+    /** How thick the lobby's walls are, and the shaft's; how big the shaft is, across and along. */
+    static final double CORE_WALL = 30;
+    static final double SHAFT_WALL = 20;
+    static final double SHAFT_ACROSS = 400;
+    static final double SHAFT_ALONG = 250;
 
     @Override
     public Buildings.PointBlock thing() {
@@ -46,19 +52,50 @@ public final class GenericPointBlock
         return new Raised(SLAB).of(plan(s), s.storeys(), GROUND, TYPICAL);
     }
 
-    /** {@code s}'s floor plan: its core's four walls, its four party walls out from them, and its slab. */
+    /**
+     * {@code s}'s floor plan: each flat, turned to its quarter, and the lobby's wall that side; the shaft; the lobby's
+     * slab. The first flat west of the lobby, its porch's face on the lobby's west wall, its corner nearest the lobby
+     * level with the lobby's south side, so that the next flat, a quarter on, clears it.
+     */
     public FloorPlan plan(final PointBlockSpec<?, ?> s) {
-        final double h = s.side() / 2;
         final double c = s.core() / 2;
-        return new FloorPlan(List.of(
-                new FloorPlan.Wall(-c, -c, c, -c, WALL, "core wall"),
-                new FloorPlan.Wall(c, -c, c, c, WALL, "core wall"),
-                new FloorPlan.Wall(c, c, -c, c, WALL, "core wall"),
-                new FloorPlan.Wall(-c, c, -c, -c, WALL, "core wall"),
-                new FloorPlan.Wall(c, 0, h, 0, WALL, "party wall"),
-                new FloorPlan.Wall(-c, 0, -h, 0, WALL, "party wall"),
-                new FloorPlan.Wall(0, c, 0, h, WALL, "party wall"),
-                new FloorPlan.Wall(0, -c, 0, -h, WALL, "party wall")),
-                List.of(new FloorPlan.Slab(-h, -h, h, h)));
+        final FloorPlan flat = new ExecutiveFlat().plan();
+        final List<FloorPlan.Wall> walls = new ArrayList<>();
+        final List<FloorPlan.Slab> slabs = new ArrayList<>();
+        final List<FloorPlan.Cover> covers = new ArrayList<>();
+        for (int q = 0; q < 4; q++) {
+            final FloorPlan turned = new Turned(q, -ExecutiveFlat.LOBBY - c, -c).plan(flat);
+            walls.addAll(turned.walls());
+            slabs.addAll(turned.slabs());
+            covers.addAll(turned.covers());
+            walls.addAll(new Turned(q, 0, 0).walls(lobbyWall(c)));
+        }
+        walls.addAll(shaft());
+        slabs.add(new FloorPlan.Slab(-c, -c, c, c));
+        return new FloorPlan(walls, slabs, covers);
+    }
+
+    /** The lobby's west wall, the lobby {@code c} each way from its middle: inside it, either side of the door. */
+    private List<FloorPlan.Wall> lobbyWall(final double c) {
+        final double x = -c + CORE_WALL / 2;
+        final List<FloorPlan.Wall> wall = new ArrayList<>();
+        final double door = ExecutiveFlat.DOOR_FROM - c;
+        final double past = ExecutiveFlat.DOOR_TO - c;
+        wall.add(new FloorPlan.Wall(x, -c, x, door, CORE_WALL, "lobby wall"));
+        if (c - past > CORE_WALL) {
+            wall.add(new FloorPlan.Wall(x, past, x, c, CORE_WALL, "lobby wall"));
+        }
+        return wall;
+    }
+
+    /** The lifts' shaft, at the lobby's middle, closed all round. */
+    private List<FloorPlan.Wall> shaft() {
+        final double a = (SHAFT_ACROSS - SHAFT_WALL) / 2;
+        final double b = (SHAFT_ALONG - SHAFT_WALL) / 2;
+        return List.of(
+                new FloorPlan.Wall(-a - SHAFT_WALL / 2, -b, a + SHAFT_WALL / 2, -b, SHAFT_WALL, "lift shaft"),
+                new FloorPlan.Wall(-a - SHAFT_WALL / 2, b, a + SHAFT_WALL / 2, b, SHAFT_WALL, "lift shaft"),
+                new FloorPlan.Wall(-a, -b + SHAFT_WALL / 2, -a, b - SHAFT_WALL / 2, SHAFT_WALL, "lift shaft"),
+                new FloorPlan.Wall(a, -b + SHAFT_WALL / 2, a, b - SHAFT_WALL / 2, SHAFT_WALL, "lift shaft"));
     }
 }
