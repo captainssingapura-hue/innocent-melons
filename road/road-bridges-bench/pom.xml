@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.example.fxsuite</groupId>
+        <artifactId>fxsuite-road</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>road-bridges-bench</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        The bridges bench: each kind of bridge, a viaduct and a flyover, found in the taxonomy of what is made, its
+        specification set field by field, drawn by JavaFX 3D, looked into closely in a window of the card's drawn by
+        Vulkan, and walked round and under on the test kit's level ground; the buildings bench's own, offering
+        bridges.
+        mvn -pl road/road-bridges-bench exec:java
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>road-bridges</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>building-bench</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <!-- mvn -pl road/road-bridges-bench exec:java opens the bench -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.6.3</version>
+                <configuration>
+                    <mainClass>melons.innocent.road.bridge.bench.BridgesBench</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

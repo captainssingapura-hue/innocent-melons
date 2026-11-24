@@ -9,7 +9,7 @@ import com.example.fxsuite.taxonomy.Taxonomy;
 import java.util.List;
 
 /**
- * Elements: the parts a building is made of, by what each does.
+ * Elements: the parts a building or a work is made of, by what each does: a road's among them.
  *
  * <p>Each node is a record, its parent in its type; what each means is beside this class, in {@code Elements.md}.
  */
@@ -23,7 +23,8 @@ public final class Elements {
             new Arch(), new Abutment(), new Platform(), new Bracket(), new Beam(), new Floor(), new Decking(),
             new Rib(), new Roof(), new Eave(), new Canopy(), new Crown(), new Wall(), new CurtainWall(), new Spandrel(),
             new Louvre(), new Screen(), new Door(), new Window(), new Shopfront(), new Archway(), new Railing(),
-            new Parapet(), new Steps(), new LiftBank(), new Incline(), new Pole(), new Sign(),
+            new Parapet(), new Barrier(), new Kerb(), new TrafficLane(), new Shoulder(), new Marking(), new Steps(),
+            new LiftBank(), new Incline(), new Pole(), new Sign(),
             new Finial(), new Counter(),
             new Bench()), Meanings.INSTANCE.beside(Elements.class));
 
@@ -73,6 +74,16 @@ public final class Elements {
     public record Guard() implements L1<Element> { public Element parent() { return new Element(); } }
     public record Railing() implements Leaf<Guard> { public Guard parent() { return new Guard(); } }
     public record Parapet() implements Leaf<Guard> { public Guard parent() { return new Guard(); } }
+    public record Barrier() implements Leaf<Guard> { public Guard parent() { return new Guard(); } }
+    public record Kerb() implements Leaf<Guard> { public Guard parent() { return new Guard(); } }
+
+    // Carriageway
+    public record Carriageway() implements L1<Element> { public Element parent() { return new Element(); } }
+    public record TrafficLane() implements Leaf<Carriageway> {
+        public Carriageway parent() { return new Carriageway(); }
+    }
+    public record Shoulder() implements Leaf<Carriageway> { public Carriageway parent() { return new Carriageway(); } }
+    public record Marking() implements Leaf<Carriageway> { public Carriageway parent() { return new Carriageway(); } }
 
     // Conveyance
     public record Conveyance() implements L1<Element> { public Element parent() { return new Element(); } }

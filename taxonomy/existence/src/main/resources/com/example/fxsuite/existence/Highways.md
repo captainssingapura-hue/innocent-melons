@@ -16,6 +16,10 @@ A way along the ground, gone along on foot, by cart or by car.
 
 A way between places, across the country.
 
+## Expressway
+
+A road for fast traffic only, its two ways kept apart, come onto and left only where it is joined.
+
 ## Street
 
 A way through a town, lined with what is built along it.
