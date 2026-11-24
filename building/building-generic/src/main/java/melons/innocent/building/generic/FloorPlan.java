@@ -3,21 +3,32 @@ package melons.innocent.building.generic;
 import java.util.List;
 
 /**
- * A storey's plan: its structure, its shear walls, each a straight line in plan so thick, and its slabs, each a
- * rectangle in plan; and its cover, the walls that close it in from outside and hold nothing up, each a straight run
- * in plan, so thick, of its kind. The same plan, storey on storey, is the building ({@link Raised}). In centimetres,
- * across and along, its front toward along.
+ * A storey's plan: its structure, its shear walls, each a straight line in plan so thick, its cores' among them
+ * apart, the walls round its stairs and lifts, and its slabs, each a rectangle in plan; and its cover, the walls that
+ * close it in from outside and hold nothing up, each a straight run in plan, so thick, of its kind; and its stairs,
+ * each up from every storey to the next ({@link DogLeg}). The same plan, storey on storey, is the building
+ * ({@link Raised}). In centimetres, across and along, its front toward along.
  *
- * @param walls  its shear walls
+ * @param walls  its shear walls but its cores'
+ * @param cores  its cores' shear walls, round its stairs and lifts
  * @param slabs  its slabs
  * @param covers its cover
+ * @param stairs its stairs
  */
-public record FloorPlan(List<Wall> walls, List<Slab> slabs, List<Cover> covers) {
+public record FloorPlan(List<Wall> walls, List<Wall> cores, List<Slab> slabs, List<Cover> covers,
+                        List<DogLeg> stairs) {
 
     public FloorPlan {
         walls = List.copyOf(walls);
+        cores = List.copyOf(cores);
         slabs = List.copyOf(slabs);
         covers = List.copyOf(covers);
+        stairs = List.copyOf(stairs);
+    }
+
+    /** One with no cores nor stairs. */
+    public FloorPlan(final List<Wall> walls, final List<Slab> slabs, final List<Cover> covers) {
+        this(walls, List.of(), slabs, covers, List.of());
     }
 
     /** Its structure, bare: no cover. */

@@ -7,10 +7,10 @@ import java.util.List;
  * A slab block's cover, of its bays from one end to the other, so deep behind its corridor, its corridor so wide: in
  * lightweight walls between the pillars and the cores' walls ({@link Infill}), {@link #COVER} thick. Each bay windowed
  * across its back, and solid behind each core; a party wall on each line between a bay and its neighbour. Each home
- * along the access balcony windowed across its face on it, its door in that face, in the middle of it. Each corner home,
- * at an end, has the balcony's end too: its face out at the balcony's edge, windowed, and across the balcony a wall
- * facing along it, toward the block's middle, its door in the middle of that; its end wall, the block's, windowed. The
- * balcony between the corner homes guarded by a parapet along its edge. Every door {@link #DOOR} wide.
+ * along the access balcony windowed across its face on it, its door in that face, in the middle of it. Each corner
+ * home, at an end, has the balcony's end too: its face out at the balcony's edge, windowed, and across the balcony a
+ * wall facing along it, toward the block's middle, its door in the middle of that; its end wall, the block's,
+ * windowed. The balcony between the corner homes guarded by a parapet along its edge. Every door {@link #DOOR} wide.
  *
  * @param bays     its bays, from one end to the other
  * @param deep     how deep it is behind its corridor
