@@ -19,6 +19,11 @@ record Turned(int quarters, double dx, double dz) {
                 plan.covers().stream().map(c -> new FloorPlan.Cover(wall(c.wall()), c.kind())).toList());
     }
 
+    /** {@code covers}, moved and turned. */
+    List<FloorPlan.Cover> covers(final List<FloorPlan.Cover> covers) {
+        return covers.stream().map(c -> new FloorPlan.Cover(wall(c.wall()), c.kind())).toList();
+    }
+
     /** {@code walls}, moved and turned. */
     List<FloorPlan.Wall> walls(final List<FloorPlan.Wall> walls) {
         return walls.stream().map(this::wall).toList();

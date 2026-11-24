@@ -13,11 +13,11 @@ import java.util.List;
 /**
  * How a point block of public housing was built in the modern era, as Singapore's housing board built them: four
  * executive flats ({@link ExecutiveFlat}) round a lift lobby they share, raised storey on storey ({@link Raised}). At
- * its middle the lobby, square, walled all round in concrete but for a door to each flat's porch, the lifts' shaft
- * at its middle; west of it the first flat, its porch on the lobby's west wall, and the others each a quarter turn on
- * from the last, a pinwheel, the gaps between them open to the sky. Each storey's slabs under the flats and the
- * lobby; its structure the flats' pillars, the lobby's walls and the shaft. Its first storey 3.6 m, open below as a
- * void deck, the rest 2.8 m, as the board's own guide gives them; its slabs 20 cm.
+ * its middle the lobby, square, walled all round in concrete but for a gap to each flat's porch, its timber door in
+ * it, the lifts' shaft at its middle; west of it the first flat, its porch on the lobby's west wall, and the others
+ * each a quarter turn on from the last, a pinwheel, the gaps between them open to the sky. Each storey's slabs under
+ * the flats and the lobby; its structure the flats' pillars, the lobby's walls and the shaft. Its first storey 3.6 m,
+ * open below as a void deck, the rest 2.8 m, as the board's own guide gives them; its slabs 20 cm.
  */
 public final class GenericPointBlock
         implements ThingImpl<Buildings.PointBlock, Civilization, CommonEras.Modern, PointBlockSpec<Civilization,
@@ -69,6 +69,7 @@ public final class GenericPointBlock
             slabs.addAll(turned.slabs());
             covers.addAll(turned.covers());
             walls.addAll(new Turned(q, 0, 0).walls(lobbyWall(c)));
+            covers.addAll(new Turned(q, 0, 0).covers(List.of(door(c))));
         }
         walls.addAll(shaft());
         slabs.add(new FloorPlan.Slab(-c, -c, c, c));
@@ -86,6 +87,16 @@ public final class GenericPointBlock
             wall.add(new FloorPlan.Wall(x, past, x, c, CORE_WALL, "lobby wall"));
         }
         return wall;
+    }
+
+    /**
+     * The door in the lobby's west wall, the lobby {@code c} each way from its middle: the first flat's, from its
+     * porch, as wide as the gap the wall leaves for it, in the wall's thickness.
+     */
+    private FloorPlan.Cover door(final double c) {
+        final double x = -c + CORE_WALL / 2;
+        return new FloorPlan.Cover(new FloorPlan.Wall(x, ExecutiveFlat.DOOR_FROM - c, x, ExecutiveFlat.DOOR_TO - c,
+                CORE_WALL, "front door"), FloorPlan.Kind.DOOR);
     }
 
     /** The lifts' shaft, at the lobby's middle, closed all round. */

@@ -125,6 +125,15 @@ class BlocksTest {
         assertEquals(360 + 19 * 280 + GenericPointBlock.SLAB, size[2], 1e-6);
         assertThrows(IllegalArgumentException.class, () -> new PointBlockSpec<>(20, 800));
         assertThrows(IllegalArgumentException.class, () -> new PointBlockSpec<>(20, 1_300));
+        // a door to each flat from the lobby, in the gap its wall leaves, on the lobby's edge
+        final List<FloorPlan.Wall> doors = plan.covers().stream().filter(d -> d.kind() == FloorPlan.Kind.DOOR)
+                .map(FloorPlan.Cover::wall).toList();
+        assertEquals(4, doors.size());
+        final double edge = point.core() / 2 - GenericPointBlock.CORE_WALL / 2;
+        assertTrue(doors.stream().allMatch(d -> Math.abs(d.length() - (ExecutiveFlat.DOOR_TO - ExecutiveFlat.DOOR_FROM))
+                < 1e-9 && (Math.abs(Math.abs(d.x0()) - edge) < 1e-9 && d.x0() == d.x1()
+                || Math.abs(Math.abs(d.z0()) - edge) < 1e-9 && d.z0() == d.z1())), "in the lobby's walls");
+        assertEquals(4 * 19, block.solids(new Elements.Door()).size(), "on every storey over the void deck");
     }
 
     @Test
