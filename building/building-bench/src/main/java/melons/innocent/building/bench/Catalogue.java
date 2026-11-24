@@ -22,6 +22,7 @@ import com.example.fxsuite.building.spec.PointBlockSpec;
 import com.example.fxsuite.building.spec.QuaySpec;
 import com.example.fxsuite.building.spec.Roofing;
 import com.example.fxsuite.building.spec.SlabBlockSpec;
+import com.example.fxsuite.building.spec.Walling;
 import com.example.fxsuite.building.spec.ShopHouseSpec;
 import com.example.fxsuite.building.spec.StallSpec;
 import com.example.fxsuite.building.spec.WineHouseSpec;
@@ -51,7 +52,8 @@ public record Catalogue(List<Offered> offered) {
     public Catalogue() {
         this(List.of(
                 new Offered(new GenericHouse(), new HouseSpec<>(900, 700, 2, 300, 3)),
-                new Offered(new GenericSlabBlock(), new SlabBlockSpec<>(14_040, 1_205, 180, 12, 360, 280)),
+                new Offered(new GenericSlabBlock(), new SlabBlockSpec<>(14_040, 1_205, 180, 12, 360, 280,
+                        Walling.BRICK)),
                 new Offered(new GenericPointBlock(), new PointBlockSpec<>(20, 900)),
                 new Offered(new SongFarmhouse(), new FarmhouseSpec<>(3, 330, 600, Roofing.THATCH, 800)),
                 new Offered(new SongShopHouse(), new ShopHouseSpec<>(3, 360, 600, Roofing.TILE)),

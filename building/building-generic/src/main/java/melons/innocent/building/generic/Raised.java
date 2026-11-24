@@ -25,9 +25,14 @@ import java.util.List;
  */
 public record Raised(double slab, int open, Covered covered) {
 
-    /** Its slabs so thick, its first storey left open, its cover as flats commonly have it. */
+    /** Its slabs so thick, its first storey left open, its cover as flats commonly have it, of {@code infill}. */
+    public Raised(final double slab, final Material infill) {
+        this(slab, 1, new Covered(infill));
+    }
+
+    /** Its slabs so thick, its first storey left open, its cover as flats commonly have it, of brick. */
     public Raised(final double slab) {
-        this(slab, 1, new Covered());
+        this(slab, Material.BRICK);
     }
 
     /** {@code plan} raised {@code storeys} high, the first {@code ground}, the rest {@code typical}. */

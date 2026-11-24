@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A storey's cover, of lightweight brick: each run, from the storey's floor to the underside of the slab over it, as
+ * A storey's cover, of {@code infill}: each run, from the storey's floor to the underside of the slab over it, as
  * its kind is. A windowed run a sill wall {@code sill} high, over it a window as wide as the run up to {@code head},
  * its glass in a frame of metal and parted by mullions no more than {@link #PANE} apart, and over the window a band of
  * wall up to the slab; a solid run wall all the way up; a parapet a wall {@code parapet} high and no more, an open edge
@@ -18,17 +18,18 @@ import java.util.List;
  * @param sill    how high a window's sill is over the floor
  * @param head    how high a window's head is over the floor
  * @param parapet how high a parapet is over the floor
+ * @param infill  what its walls are of
  */
-public record Covered(double sill, double head, double parapet) {
+public record Covered(double sill, double head, double parapet, Material infill) {
 
     /** How wide a window's panes are, at most, its mullions between them; how thick its frame and its glass. */
     static final double PANE = 150;
     static final double FRAME = 5;
     static final double GLASS = 2;
 
-    /** Sills at 90 cm, heads at 2.1 m, parapets 1 m: as flats commonly have them. */
-    public Covered() {
-        this(90, 210, 100);
+    /** Sills at 90 cm, heads at 2.1 m, parapets 1 m, as flats commonly have them; its walls of {@code infill}. */
+    public Covered(final Material infill) {
+        this(90, 210, 100, infill);
     }
 
     /** Run {@code cover}, from {@code floor} to {@code ceiling}, the underside of the slab over it. */
@@ -37,15 +38,15 @@ public record Covered(double sill, double head, double parapet) {
         final FloorPlan.Wall run = cover.wall();
         final List<Part> parts = new ArrayList<>();
         switch (cover.kind()) {
-            case SOLID -> parts.add(new Part(new Elements.Wall(), along.whole(run.name(), Role.WALL, Material.BRICK,
+            case SOLID -> parts.add(new Part(new Elements.Wall(), along.whole(run.name(), Role.WALL, infill,
                     run, floor, ceiling)));
             case PARAPET -> parts.add(new Part(new Elements.Parapet(), along.whole(run.name(), Role.DRESSING,
-                    Material.BRICK, run, floor, floor + parapet)));
+                    infill, run, floor, floor + parapet)));
             case WINDOWED -> {
                 parts.add(new Part(new Elements.Wall(), along.whole(run.name() + " under its window", Role.WALL,
-                        Material.BRICK, run, floor, floor + sill)));
+                        infill, run, floor, floor + sill)));
                 parts.add(new Part(new Elements.Wall(), along.whole(run.name() + " over its window", Role.WALL,
-                        Material.BRICK, run, floor + head, ceiling)));
+                        infill, run, floor + head, ceiling)));
                 parts.addAll(window(along, run, floor + sill, floor + head));
             }
         }

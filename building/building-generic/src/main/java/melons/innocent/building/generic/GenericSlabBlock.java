@@ -1,8 +1,10 @@
 package melons.innocent.building.generic;
 
+import com.example.fxsuite.avatar.build.Material;
 import com.example.fxsuite.building.Structure;
 import com.example.fxsuite.building.ThingImpl;
 import com.example.fxsuite.building.spec.SlabBlockSpec;
+import com.example.fxsuite.building.spec.Walling;
 import com.example.fxsuite.existence.Buildings;
 import com.example.fxsuite.historian.Civilization;
 import com.example.fxsuite.historian.CommonEras;
@@ -20,7 +22,8 @@ import java.util.List;
  * ({@link SlabBay}), every other one of a run mirrored, so two lie bathroom to bathroom and the pillars on the line
  * between them serve both. Each core a shaft for its stairs and lifts, walled in concrete either side the whole depth
  * of the block, and behind across it, open on the corridor. Each storey's slab over bays and corridor alike. Covered,
- * above its first storey, in lightweight brick ({@link Covered}) between the pillars ({@link Infill}): each bay
+ * above its first storey, in what it is asked to be filled in with ({@link Covered}), brick, precast panels, concrete
+ * or stone, between the pillars ({@link Infill}): each bay
  * windowed across its back and across its face on the corridor, a party wall on each line between bays; the back
  * closed behind each core; and the corridor an access balcony along its front, guarded by a parapet half a storey
  * high. Its first storey open below as a void deck; its storeys as high as asked; its cores' walls and its slabs
@@ -63,7 +66,17 @@ public final class GenericSlabBlock
 
     @Override
     public Structure build(final SlabBlockSpec<Civilization, CommonEras.Modern> s) {
-        return new Raised(SLAB).of(plan(s), s.storeys(), s.ground(), s.storey());
+        return new Raised(SLAB, infill(s.walling())).of(plan(s), s.storeys(), s.ground(), s.storey());
+    }
+
+    /** What its walls are of, filled in with {@code walling}. */
+    private Material infill(final Walling walling) {
+        return switch (walling) {
+            case BRICK -> Material.BRICK;
+            case PRECAST -> Material.PRECAST;
+            case CONCRETE -> Material.CONCRETE;
+            case STONE -> Material.STONE;
+        };
     }
 
     /**
