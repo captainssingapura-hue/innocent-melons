@@ -30,6 +30,8 @@
         <module>plants-tree</module>
         <!-- A place to walk round a tree, drawn by the card. -->
         <module>plants-walk</module>
+        <!-- The plants bench: a tree or a patch at any stage, from any side, beside the same as grown. -->
+        <module>plants-bench</module>
     </modules>
 
     <dependencyManagement>
@@ -55,6 +57,11 @@
             <dependency>
                 <groupId>melons.innocent.plants</groupId>
                 <artifactId>plants-tree</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.plants</groupId>
+                <artifactId>plants-walk</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

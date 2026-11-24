@@ -30,7 +30,7 @@ import java.util.List;
  * once for each. Before the village is its lake: a kerb of rubble, and still water within it, each drawn in one call
  * with the surface its material has. Off the lake's end is a car park of concrete with a hundred cars standing in
  * it ({@link CarParkDrawn}), whose windows are seen through and so are drawn after everything else; and off its
- * other end a small wood of bare trees, and west of the towers a forest of four thousand, drawn as one wood
+ * other end a small wood of bare trees, and west of the towers a forest of forty thousand, drawn as one wood
  * ({@link GroveDrawn}). What is in the way is the same walls, the same houses, the same kerb, the same cars and
  * the same trees' trunks.
  */

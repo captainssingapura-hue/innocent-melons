@@ -28,9 +28,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The village's forest: four thousand trees west of the towers, every one clear of them, drawn with the rest of the
+ * The village's forest: forty thousand trees west of the towers, every one clear of them, drawn with the rest of the
  * village as one wood, its trees as copies. It is drawn on the card with its shadows, each way the card finds them,
- * from its edge, from the sky and from within, with nothing said by the validation layer; the pictures are written
+ * from its edge, from the sky, from within and flying low over it, with nothing said by the validation layer; the pictures are written
  * to {@code target/card/village-forest-*.png}, and how long a frame takes from each is told.
  */
 class VillageForestTest {
@@ -40,7 +40,7 @@ class VillageForestTest {
 
     @Test
     void itsFourThousandTreesStandClearOfTheTowers() {
-        assertEquals(4_000, forest.standing().size());
+        assertEquals(40_000, forest.standing().size());
         for (final Grove.Standing tree : forest.standing()) {
             for (final Tower tower : village.towers()) {
                 final Vec3 off = tree.stands().minus(tower.walls().middle());
@@ -58,8 +58,9 @@ class VillageForestTest {
                 new Orbit(middle.plus(new Vec3(forest.across() / 2 + 3_000, 300, 0)), -90, 4, 2_000).camera(48, 10),
                 new Orbit(middle.plus(new Vec3(0, 600, 0)), 120, 30, 45_000).camera(48, 10),
                 new Orbit(forest.standing().get(2_010).stands().plus(new Vec3(300, 170, 200)), 70, -4, 300)
-                        .camera(48, 10));
-        final List<String> named = List.of("edge", "sky", "within");
+                        .camera(48, 10),
+                new Orbit(middle.plus(new Vec3(forest.across() / 2 - 12_000, 1_500, 0)), -90, 22, 9_000).camera(48, 10));
+        final List<String> named = List.of("edge", "sky", "within", "over");
         try (Card card = new Card(); Canvas canvas = card.canvas(1280, 720)) {
             final Laid laid = new Laid().asking(card.rays());
             try (Place place = new VillagePlace(card, laid); Shaded shadows = new Shaded(card, laid, 4096)) {

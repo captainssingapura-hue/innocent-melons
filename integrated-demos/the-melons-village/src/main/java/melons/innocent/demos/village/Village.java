@@ -84,12 +84,12 @@ public record Village(int homes) {
     }
 
     /**
-     * The village's forest: four thousand trees of the wood's same few, on 400 m by 500 m of ground west of the
-     * towers, its near edge some 25 m beyond them, about seven metres from tree to tree. Where it lies, how big and
-     * how thick are its author's.
+     * The village's forest: forty thousand trees of the wood's same few, on some 1.27 km by 1.58 km of ground west of
+     * the towers, its near edge some 25 m beyond them, about seven metres from tree to tree. Where it lies, how big
+     * and how thick are its author's.
      */
     public Grove forest() {
-        return new Grove(new Vec3(-36_000, 0, 0), 40_000, 50_000, 4_000);
+        return new Grove(new Vec3(-79_200, 0, 0), 126_500, 158_100, 40_000);
     }
 
     /** Its woods: the small wood beside the lake, and the forest. */

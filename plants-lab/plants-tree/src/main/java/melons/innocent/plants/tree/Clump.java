@@ -21,8 +21,6 @@ public record Clump(Vec3 middle, List<Vec3> ways, List<Double> reach, double hid
     /** The fewest centimetres a clump reaches any way, and the least share of its longest reach. */
     private static final double THINNEST = 4;
     private static final double SHARE = 0.2;
-    /** Knud Thomsen's power, for an egg's surface to within one part in a hundred. */
-    private static final double THOMSEN = 1.6075;
 
     public Clump {
         ways = List.copyOf(ways);
@@ -106,22 +104,7 @@ public record Clump(Vec3 middle, List<Vec3> ways, List<Double> reach, double hid
          * the share is filled by the bars as a haze of them is, {@code 1 - e^-(wood / clump)}.
          */
         double hides() {
-            double filled = 0;
-            for (final Bough bough : wood) {
-                for (int point = 1; point < bough.points().size(); point++) {
-                    final double length = bough.points().get(point).minus(bough.points().get(point - 1)).length();
-                    filled += Math.PI * length * (bough.thick().get(point) + bough.thick().get(point - 1)) / 4;
-                }
-            }
-            return 1 - Math.exp(-filled / (surface() / 4));
-        }
-
-        /** Its surface, as Thomsen gives an egg's. */
-        private double surface() {
-            final double a = Math.pow(reach.get(0), THOMSEN);
-            final double b = Math.pow(reach.get(1), THOMSEN);
-            final double c = Math.pow(reach.get(2), THOMSEN);
-            return 4 * Math.PI * Math.pow((a * b + a * c + b * c) / 3, 1 / THOMSEN);
+            return new SideOn(wood).hidesWithin(new Egg(reach.get(0), reach.get(1), reach.get(2)).sideOn());
         }
     }
 

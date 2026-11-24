@@ -4,7 +4,6 @@ import com.example.fxsuite.texture.materials.Shades;
 import com.example.fxsuite.vulkan.device.Card;
 import com.example.fxsuite.vulkan.device.Copies;
 import com.example.fxsuite.vulkan.device.Pass;
-import com.example.fxsuite.vulkan.layout.Filling;
 import com.example.fxsuite.vulkan.render.Looked;
 import com.example.fxsuite.vulkan.shade.Laid;
 import com.example.fxsuite.vulkan.shade.Look;
@@ -20,14 +19,12 @@ import melons.innocent.plants.tree.Staging;
 import melons.innocent.plants.tree.Tree;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.IntStream;
 
 /**
  * Trees on the card, each drawn at the stage its distance calls for ({@link Staging}): a few different trees, each
@@ -39,8 +36,16 @@ import java.util.stream.IntStream;
  * rough where they cross). One look serves every tree of a kind, and one look each level of hiding, the clumps'
  * colour told with each draw.
  *
- * <p>A tree further than {@value #KEPT} metres from the eye and wholly outside the widest view a picture could have
- * is not drawn, nor gathered for rays: so a tree well behind the eye casts no shadow into the view.
+ * <p>Far off, a tree is drawn as its coarsest stage, its trunk and its crown's haze, and not sorted (its trunk hides
+ * what is behind it, and one colour of haze over another is the same whichever is laid first), so a far wood costs
+ * nothing tree by tree but copying; nor is it gathered for rays. Where each tree stands, when it turns far and how
+ * the far trees are found in view are its planting's ({@link Planting}). The wood may be planted afresh, the trees
+ * as grown kept on the card; and a tree may be planted held at one stage of its own, as a bench holds one beside
+ * another to compare them.
+ *
+ * <p><b>The haze is not drawn for now</b> (the owner's word, 24 Nov 2026: it came out lighter than the wood it stands
+ * for, and the more so the more trees), so a coarse stage is its kept wood alone; {@code -Dbench.trees.haze=true}
+ * draws it again.
  *
  * <p>The stage is chosen as for a picture 1080 pixels high in the game's view of 48 degrees: on a lower picture a tree
  * is drawn finer than it need be, never coarser. {@code -Dbench.trees.stage=fine} (or any stage) holds every tree
@@ -50,34 +55,37 @@ public final class WoodDrawn implements AutoCloseable {
 
     /** How much the clumps hide, each drawn at the nearest of these: doubling, so few are drawn far darker. */
     private final List<Double> levels = List.of(0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64, 0.9);
-    private static final double FIELD = 48;
-    private static final int PIXELS = 1080;
-    /** Within so many metres of the eye every tree is drawn, in view or not. */
-    private static final int KEPT = 60;
-    /** The widest a picture is taken to be, for its height. */
-    private static final double WIDEST = 2.4;
-    private static final String COPIED = "copied";
 
     /** A tree as grown, of {@code kind}. */
     public record Grown(Kind kind, Tree tree) {
     }
 
-    /** A tree planted: which of the grown it is, by number, and what takes it to where it stands, {@code times} big. */
-    public record Planted(int grown, Mat4 placed, double times) {
+    /**
+     * A tree planted: which of the grown it is, by number, what takes it to where it stands, {@code times} big;
+     * and the stage it is held at, if it is held at one whatever its distance.
+     */
+    public record Planted(int grown, Mat4 placed, double times, Optional<Stage> held) {
+
+        /** A tree planted to be drawn at whatever stage its distance calls for. */
+        public Planted(final int grown, final Mat4 placed, final double times) {
+            this(grown, placed, times, Optional.empty());
+        }
     }
 
-    private final List<Planted> planted;
+    private final Laid laid;
     private final List<Kind> kinds;
     private final List<StagedTree> trees = new ArrayList<>();
     private final Map<Kind, Looked> barks = new EnumMap<>(Kind.class);
     private final Map<Double, Looked> hazes = new LinkedHashMap<>();
     private final List<Map<Stage, Copies>> copies = new ArrayList<>();
-    private final Staging staging = new Staging(FIELD, PIXELS);
+    /** The far trees, as copies, by which grown tree each is: drawn, not gathered for rays. */
+    private final List<Copies> far = new ArrayList<>();
     private final Optional<Stage> held;
-    private final Stage[] at;
-    /** Where the wood's middle is: every tree is a copy placed from there, so all are drawn as steadily. */
-    private final Mat4 middle;
-    private final List<Filling> fromTheMiddle = new ArrayList<>();
+    private Planting planting;
+    /** The coarsest stage a tree left to its distance is drawn at. */
+    private Stage coarsest = Stage.WHOLE;
+    /** The camera the trees were last chosen for. */
+    private Camera last;
 
     /**
      * {@code planted} of {@code grown} on {@code card}, their layouts as {@code laid} says, each at the stage its
@@ -100,15 +108,9 @@ public final class WoodDrawn implements AutoCloseable {
     /** The same, every tree held at {@code held} where one is given. */
     public WoodDrawn(final Card card, final Laid laid, final List<Grown> grown, final List<Planted> planted,
                      final Optional<Stage> held) {
-        this.planted = List.copyOf(planted);
+        this.laid = laid;
         this.kinds = grown.stream().map(Grown::kind).toList();
-        this.at = new Stage[planted.size()];
         this.held = held;
-        this.middle = new Mat4(planted.stream().map(one -> new Vec3(one.placed().at(0, 3), one.placed().at(1, 3),
-                one.placed().at(2, 3))).reduce(new Vec3(0, 0, 0), Vec3::plus).times(1.0 / Math.max(1, planted.size())));
-        final Mat4 back = new Mat4(new Vec3(-middle.at(0, 3), -middle.at(1, 3), -middle.at(2, 3)));
-        planted.forEach(one -> fromTheMiddle.add(new Filling(laid.copy()).with(COPIED,
-                back.times(one.placed()).columns())));
         try {
             for (final Grown tree : grown) {
                 final Surface bark = new Shades().of(new Barks().of(tree.kind()));
@@ -121,11 +123,13 @@ public final class WoodDrawn implements AutoCloseable {
                 for (final Stage stage : Stage.values()) {
                     each.put(stage, card.copies(laid, 16));
                 }
+                far.add(card.copies(laid, 16).standing(false));
             }
             for (final double hides : levels) {
                 final Surface haze = new Surface(new Tint().colour(), List.of(), new Colour("#000000"), 1);
                 hazes.put(hides, new Looked(card, new Look(laid, haze.clear(1 - hides).hazy())));
             }
+            replanted(planted);
         } catch (final RuntimeException refused) {
             close();
             throw refused;
@@ -133,59 +137,68 @@ public final class WoodDrawn implements AutoCloseable {
     }
 
     /**
+     * No tree left to its distance is drawn coarser than {@code stage} from now on, however far off: for a wood
+     * whose far parts are drawn by something else, which its trees must match where they meet it.
+     */
+    public void capped(final Stage stage) {
+        this.coarsest = stage;
+        this.last = null;
+    }
+
+    /** The wood planted afresh as {@code planted}: the trees as grown, and what is on the card, kept. */
+    public void replanted(final List<Planted> planted) {
+        this.planting = new Planting(planted, trees.stream().map(StagedTree::height).toList(), laid);
+        this.last = null;
+    }
+
+    /**
      * Every tree's wood, drawn by {@code pass} as {@code camera} sees it, each at the stage its distance calls for:
      * the same in every pass of a frame, so a tree casts the shadow of what is drawn of it.
      */
     public void drawn(final Pass pass, final Camera camera) {
-        sorted(camera);
+        chosen(camera);
+        final Mat4 middle = planting.middle();
         for (int grown = 0; grown < trees.size(); grown++) {
             for (final Stage stage : Stage.values()) {
                 barks.get(kinds.get(grown)).drawn(pass, trees.get(grown).wood(stage), middle, camera, 1,
                         new Vec3(1, 1, 1), copies.get(grown).get(stage));
             }
+            // the far trees' trunks, their coarsest wood: it hides what is behind it, so needs no sorting
+            barks.get(kinds.get(grown)).drawn(pass, trees.get(grown).wood(Stage.WHOLE), middle, camera, 1,
+                    new Vec3(1, 1, 1), far.get(grown));
         }
     }
 
-    /** Each tree's stage chosen, and the copies of each grown tree at each stage filled, the furthest first. */
-    private void sorted(final Camera camera) {
-        final List<List<List<Filling>>> into = new ArrayList<>();
-        for (int grown = 0; grown < trees.size(); grown++) {
-            into.add(IntStream.range(0, Stage.values().length)
-                    .mapToObj(stage -> (List<Filling>) new ArrayList<Filling>()).toList());
+    /** Each tree chosen for {@code camera} and its copies filled: once for a camera, however many passes ask. */
+    private void chosen(final Camera camera) {
+        if (camera.equals(last)) {
+            return;
         }
-        final double[] far = new double[planted.size()];
-        IntStream.range(0, planted.size()).forEach(tree -> far[tree] = distance(planted.get(tree), camera));
-        final List<Integer> order = IntStream.range(0, planted.size()).boxed()
-                .sorted(Comparator.comparingDouble((Integer tree) -> far[tree]).reversed()).toList();
-        for (final int tree : order) {
-            final Planted one = planted.get(tree);
-            at[tree] = held.isPresent() ? held.get() : staging.of(tree, far[tree], one.times());
-            if (seen(one, far[tree], camera)) {
-                into.get(one.grown()).get(at[tree].ordinal()).add(fromTheMiddle.get(tree));
-            }
-        }
+        last = camera;
+        final Planting.Chosen chosen = planting.chosen(camera, held, trees.size(), coarsest);
         for (int grown = 0; grown < trees.size(); grown++) {
+            far.get(grown).filled(chosen.far().get(grown));
             for (final Stage stage : Stage.values()) {
-                copies.get(grown).get(stage).filled(into.get(grown).get(stage.ordinal()));
+                copies.get(grown).get(stage).filled(chosen.near().get(grown).get(stage.ordinal()));
             }
         }
     }
 
-    /** Whether {@code tree}, {@code far} from the eye, is near it or may be in the widest view it could have. */
-    private boolean seen(final Planted tree, final double far, final Camera camera) {
-        if (far < KEPT * 100) {
-            return true;
-        }
-        final double half = Math.atan(Math.tan(Math.toRadians(camera.fieldOfView()) / 2)
-                * Math.sqrt(1 + WIDEST * WIDEST));
-        final double reach = trees.get(tree.grown()).height() * tree.times();
-        final Vec3 towards = middleOf(tree).minus(camera.eye());
-        final double off = Math.acos(Math.clamp(towards.unit().dot(camera.ahead().unit()), -1, 1));
-        return off < half + Math.asin(Math.min(1, reach / far));
-    }
-
-    /** Every tree's clumps, drawn by {@code pass} as {@code camera} sees them: as {@link #drawn} chose and sorted. */
+    /**
+     * The far trees' crowns, and then every other tree's clumps, drawn by {@code pass} as {@code camera} sees them:
+     * as {@link #drawn} chose and sorted, the far ones first.
+     */
     public void seenThrough(final Pass pass, final Camera camera) {
+        if (!Boolean.getBoolean("bench.trees.haze")) {
+            return;
+        }
+        final Mat4 middle = planting.middle();
+        for (int grown = 0; grown < trees.size(); grown++) {
+            final StagedTree staged = trees.get(grown);
+            final Copies these = far.get(grown);
+            staged.hazes(Stage.WHOLE).forEach((hides, mesh) ->
+                    hazes.get(hides).drawn(pass, mesh, middle, camera, 1, staged.hue(Stage.WHOLE), these));
+        }
         for (final Stage stage : List.of(Stage.values()).reversed()) {
             for (int grown = 0; grown < trees.size(); grown++) {
                 final StagedTree staged = trees.get(grown);
@@ -198,22 +211,18 @@ public final class WoodDrawn implements AutoCloseable {
 
     /** The stage each tree was last drawn at, in the order planted; a tree not yet drawn, as grown. */
     public List<Stage> stages() {
-        return IntStream.range(0, at.length).mapToObj(tree -> at[tree] == null ? Stage.FINE : at[tree]).toList();
+        return planting.stages();
     }
 
-    /** How far the middle of {@code tree}'s height is from {@code camera}'s eye. */
-    private double distance(final Planted tree, final Camera camera) {
-        return middleOf(tree).minus(camera.eye()).length();
-    }
-
-    private Vec3 middleOf(final Planted tree) {
-        final Mat4 placed = tree.placed();
-        final double half = trees.get(tree.grown()).height() * tree.times() / 2;
-        return new Vec3(placed.at(0, 3), placed.at(1, 3) + half, placed.at(2, 3));
+    /** How tall grown tree number {@code grown} stands, as grown, in centimetres. */
+    public double height(final int grown) {
+        return trees.get(grown).height();
     }
 
     @Override
     public void close() {
+        far.forEach(Copies::close);
+        far.clear();
         hazes.values().forEach(Looked::close);
         hazes.clear();
         copies.reversed().forEach(each -> each.values().forEach(Copies::close));
