@@ -180,4 +180,13 @@ public enum Level {
     public V3 drawnTransverseTip() {
         return drawnAt(transverse, 0.15 * high, -(deep / 2 + pedicle + transverseBack));
     }
+
+    /**
+     * Where its spinous process ends, down the middle, back and down from where its laminae meet behind its canal, a
+     * man's ({@link Vertebrae}), the spine as it was drawn.
+     */
+    public V3 drawnSpinousTip() {
+        final double s = Math.toRadians(slope);
+        return drawnAt(0, -spinous * Math.sin(s), -(deep / 2 + pedicle + canalDeep + spinous * Math.cos(s)));
+    }
 }
