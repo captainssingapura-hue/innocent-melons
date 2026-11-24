@@ -119,6 +119,33 @@ class RunTest {
     }
 
     @Test
+    void itsJetsGoAsFastAsTheirGearSaysFromTwentyToAHundredAndFiftyKilometresAnHour() {
+        final List<String> shifts = List.of("SHIFT+DOWN;SHIFT+DOWN;", "SHIFT+DOWN;", "", "SHIFT+UP;",
+                "SHIFT+UP;SHIFT+UP;", "SHIFT+UP;SHIFT+UP;SHIFT+UP;SHIFT+UP;");
+        final List<Gear> gears = List.of(Gear.FIRST, Gear.SECOND, Gear.THIRD, Gear.FOURTH, Gear.FIFTH, Gear.FIFTH);
+        for (int shifted = 0; shifted < shifts.size(); shifted++) {
+            final Run run = new Run(new Scripted("F;SPACE:1;" + shifts.get(shifted) + "W:12"), Optional.empty(),
+                    new Skies(new Asked(1)));
+            while (!run.over()) {
+                run.stepped(1.0 / 120);
+            }
+            assertEquals(gears.get(shifted), run.gear(), "the gear it was shifted to, and no further than the top");
+            assertEquals(run.gear().fastest(), run.gear().hourly(run.shown(1).body().speed()),
+                    run.gear().fastest() * 0.03, "flat out, as fast as its gear goes");
+        }
+        final Run slowed = new Run(new Scripted("F;SPACE:1;W+SHIFT:8"), Optional.empty(), new Skies(new Asked(1)));
+        final Run afoot = new Run(new Scripted("SHIFT+UP;SHIFT+UP;W:6"), Optional.empty(), new Skies(new Asked(1)));
+        while (!slowed.over() || !afoot.over()) {
+            slowed.stepped(1.0 / 120);
+            afoot.stepped(1.0 / 120);
+        }
+        assertEquals(70, Gear.THIRD.hourly(slowed.shown(1).body().speed()), 2.5, "flying, Shift alone slows nothing");
+        assertEquals(27.4, Gear.THIRD.hourly(afoot.shown(1).body().speed()), 1.5, "on foot a gear changes nothing");
+        assertEquals(Gear.FIRST, Gear.FIRST.lower());
+        assertEquals(2.083, Gear.FIFTH.pushed(), 0.001, "the top gear, twice the engine's own top speed and more");
+    }
+
+    @Test
     void jumpsMadeOneAfterAnotherChangeLegs() {
         final Run run = new Run(new Scripted("SPACE;W:1.5;SPACE;W:1.5;SPACE;W:0.5"), Optional.empty(),
                 new Skies(new Asked(1)));

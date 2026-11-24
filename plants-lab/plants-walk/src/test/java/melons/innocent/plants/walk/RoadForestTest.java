@@ -65,6 +65,16 @@ class RoadForestTest {
                 final double stood = -ahead.body().position().y();
                 assertTrue(ahead.body().position().z() > 1_000 && stood > 4 && stood < 16,
                         "walking along it, the avatar stands on its pavement: " + stood + " cm up");
+                // its pavement falls from 14.4 cm at its crown to 5 cm at its edge, 3.75 m out: stood on as it lies
+                for (final double[] spot : new double[][] {{0, 14.4}, {200, 9.4}, {-200, 9.4}, {340, 5.9}}) {
+                    Avatar still = new Avatar(Body.standing(new com.example.fxsuite.avatar.sim.Vec3(spot[0], 0, 0),
+                            0), false);
+                    for (int step = 0; step < 120; step++) {
+                        still = still.step(Controls.NONE, Clock.STEP, inTheWay).avatar();
+                    }
+                    assertEquals(spot[1], -still.body().position().y(), 1.2, "its feet on the pavement, "
+                            + spot[0] + " cm from its line");
+                }
                 final Avatar aside = walked(90, 30, inTheWay);
                 final double off = Math.abs(aside.body().position().x() - road.across(aside.body().position().z()));
                 assertTrue(off > 300 && off <= 3_100, "kept within thirty metres of the road: " + off);

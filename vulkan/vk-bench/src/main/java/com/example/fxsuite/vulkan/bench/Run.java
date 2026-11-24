@@ -44,6 +44,8 @@ public final class Run {
     private int jumps;
     /** How high its jets take it at most, in centimetres: no limit, unless it is given one. */
     private double ceiling = Double.POSITIVE_INFINITY;
+    /** The gear its jets are in. */
+    private Gear gear = Gear.THIRD;
     private final Following following;
     /** What happens in the simulation, step by step, as the engine keeps it: read by the sound alone. */
     private final Journal journal = new Journal();
@@ -102,8 +104,12 @@ public final class Run {
             avatar = new Avatar(avatar.body().toggledFlight(), false);
         }
         before = avatar;
-        final Controls controls = Keys.controls(under(told.held()), told.pressed(), told.turn(), false,
-                following.lookUp());
+        if (told.held().contains("SHIFT") || told.pressed().contains("SHIFT")) {
+            gear = told.pressed().contains("UP") ? gear.higher()
+                    : told.pressed().contains("DOWN") ? gear.lower() : gear;
+        }
+        final Controls controls = geared(Keys.controls(under(told.held()), told.pressed(), told.turn(), false,
+                following.lookUp()));
         final Avatar.Stepped stepped = avatar.step(controls, Clock.STEP, inTheWay);
         avatar = stepped.avatar();
         step++;
@@ -146,6 +152,21 @@ public final class Run {
             lowered.add("CONTROL");
         }
         return lowered;
+    }
+
+    /**
+     * What the engine is told, as the jets' gear has it: flying, ahead and sideways so much of the engine's own top
+     * speed as the gear's fastest is, and always flat out, the gear and not Shift saying how fast; on foot, as told.
+     */
+    private Controls geared(final Controls told) {
+        return !avatar.body().flying() ? told : new Controls(told.forward() * gear.pushed(),
+                told.sideways() * gear.pushed(), told.turn(), told.lift(), true, told.trigger(), told.aim(),
+                told.actions(), told.bomb(), told.strafe());
+    }
+
+    /** The gear its jets are in: Shift with the up arrow takes the next higher, with the down arrow the next lower. */
+    public Gear gear() {
+        return gear;
     }
 
     /** Whether the run is over: its source has nothing more to tell. */

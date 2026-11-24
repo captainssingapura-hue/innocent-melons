@@ -129,8 +129,9 @@ public record Paved(Road road, Section section) {
     }
 
     /**
-     * What of it is stood on from {@code from} to {@code to} along: a flat block to each paved strip of each short
-     * run, as high as the strip's higher edge, so the road is stepped up onto and its crown is a little higher.
+     * What of it is stood on from {@code from} to {@code to} along: a block to each paved strip of each short run,
+     * its top sloping across as the strip's pavement does, from its lower edge up to its higher, so the road is
+     * stepped up onto and whatever stands on it stands on its pavement, at its crown and at its edge alike.
      */
     public List<Block> stoodOn(final double from, final double to) {
         final List<Block> blocks = new ArrayList<>();
@@ -145,10 +146,14 @@ public record Paved(Road road, Section section) {
                 final Vec3 ends = at(along + RUN, (left + right) / 2, 0);
                 final Vec3 way = ends.minus(begins).unit();
                 final Vec3 middle = begins.plus(ends).times(0.5);
-                // the engine turns a block as it turns anything about the upright: its own length then runs this way
+                // a block's top rises toward its front, and its front is this way round from its length: so it is
+                // turned for its front to face across the road toward the strip's higher edge
+                final boolean risesRight = section.top(right) > section.top(left);
+                final Vec3 front = new Vec3(way.z(), 0, -way.x()).times(risesRight ? 1 : -1);
                 blocks.add(new Block(middle.x(), middle.z(), ends.minus(begins).length() / 2, (right - left) / 2,
-                        Math.toDegrees(Math.atan2(-way.z(), way.x())), 0,
-                        Math.max(section.top(left), section.top(right))));
+                        Math.toDegrees(Math.atan2(front.x(), front.z())), 0,
+                        Math.max(section.top(left), section.top(right)),
+                        Math.min(section.top(left), section.top(right))));
             }
         }
         return blocks;
