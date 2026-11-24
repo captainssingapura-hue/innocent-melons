@@ -15,10 +15,12 @@ import java.util.List;
 
 /**
  * The trapezius's middle part: from the spines of the seventh cervical to the third thoracic vertebra, out across the
- * top of the shoulder blade, the highest fibres to the acromion, the lowest to the spine of the scapula near its root.
- * A sheet spread from the one line to the other ({@link MuscleForm}), lying just behind the spines' tips; its lower
- * edge the lower part's upper ({@link TrapeziusLower}), between the third and fourth spines and at the spine's root,
- * so that the two meet.
+ * top of the shoulder blade, the highest fibres to the acromion's medial margin from the acromioclavicular joint back,
+ * the rest along the crest of the scapula's spine to its root. A sheet spread from the one line to the other
+ * ({@link MuscleForm}), each line through all its points, lying just behind the spines' tips; its upper edge the upper
+ * part's lower ({@link TrapeziusUpper}), from C7 to the acromion's facet for the clavicle, its lower edge the lower
+ * part's upper ({@link TrapeziusLower}), between the third and fourth spines and at the crest's root, so that the
+ * three meet. Its insertion held by the scapula's landmarks' names, so it goes where the scapula is drawn.
  */
 public record TrapeziusMiddle() implements Muscle {
 
@@ -42,11 +44,13 @@ public record TrapeziusMiddle() implements Muscle {
     @Override
     public MuscleForm.Spread form() {
         return new MuscleForm.Spread(
-                List.of(new Anchor(C7.INSTANCE, new V3(0.5, 54.35, -7.9)),
-                        new Anchor(T1.INSTANCE, new V3(0.5, 51.8, -8.9)),
+                List.of(new Anchor(C7.INSTANCE, new V3(0.1, 54.35, -9.0)),
+                        new Anchor(T1.INSTANCE, new V3(0.1, 51.8, -10.0)),
                         new Anchor(T3.INSTANCE, TrapeziusLower.INSTANCE.spines())),
-                List.of(new Anchor(Scapula.INSTANCE, new V3(15, 47.532, -6.466)),
-                        new Anchor(Scapula.INSTANCE, TrapeziusLower.INSTANCE.root())),
+                List.of(new Anchor(Scapula.INSTANCE, Scapula.INSTANCE.at("clavicular facet")),
+                        new Anchor(Scapula.INSTANCE, Scapula.INSTANCE.at("acromion's base")),
+                        new Anchor(Scapula.INSTANCE, Scapula.INSTANCE.at("crest")),
+                        new Anchor(Scapula.INSTANCE, Scapula.INSTANCE.at("crest's root"))),
                 0.9, new V3(0, 0, -1));
     }
 

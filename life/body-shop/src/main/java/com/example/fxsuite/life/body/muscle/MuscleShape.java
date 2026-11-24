@@ -67,7 +67,7 @@ public record MuscleShape() implements StatelessFunctionalObject {
             on[i] = s.at().in(rig, left);
             way[i] = s.at().way(s.facing(), rig, left).unit();
         }
-        final V3[] ends = MuscleRings.INSTANCE.ends(m, rig, left);
+        final SpreadLines ends = MuscleRings.INSTANCE.ends(m, rig, left);
         return cageAt(m, on, way, ends, grown(m, bulk, on, way, ends), bed);
     }
 
@@ -75,7 +75,7 @@ public record MuscleShape() implements StatelessFunctionalObject {
      * {@code m}'s cage where its sections lie at {@code on}, facing {@code way}, its lines' posed {@code ends}, if a
      * spread, its belly {@code grown} times ({@link MuscleRings}); a sheet laid on {@code bed}, ring by ring.
      */
-    private Cage cageAt(final Muscle m, final V3[] on, final V3[] way, final V3[] ends, final double grown,
+    private Cage cageAt(final Muscle m, final V3[] on, final V3[] way, final SpreadLines ends, final double grown,
                         final Bed bed) {
         final List<MuscleRings.Ring> rings = MuscleRings.INSTANCE.rings(m, on, way, ends, grown);
         final int n = rings.size();
@@ -87,7 +87,9 @@ public record MuscleShape() implements StatelessFunctionalObject {
                     : rings.get(Math.min(i + 1, n - 1)).at().minus(rings.get(Math.max(i - 1, 0)).at()).unit();
             final V3[] frame = frame(r, along);
             final double wide = r.span().map(V3::length).orElse(r.wide());
-            if (m.sheet()) {
+            if (m.sheet() && !r.path().isEmpty()) {
+                points.addAll(Drape.INSTANCE.path(r.path(), frame[1], frame[2], r.deep(), bed));
+            } else if (m.sheet()) {
                 points.addAll(Drape.INSTANCE.ring(r.on(), r.at(), frame[0], frame[1], frame[2], wide, r.deep(), bed));
             }
             for (int q = 0; q < ROUND; q++) {
@@ -181,7 +183,8 @@ public record MuscleShape() implements StatelessFunctionalObject {
      * How much wider and deeper {@code m}'s belly is than drawn, to be as much as {@code bulk} has it: found on its
      * sections' frustums, then put right by its surface, smoothed twice, a few times, and then by that surface alone.
      */
-    private double grown(final Muscle m, final Muscularity bulk, final V3[] on, final V3[] way, final V3[] ends) {
+    private double grown(final Muscle m, final Muscularity bulk, final V3[] on, final V3[] way,
+                         final SpreadLines ends) {
         if (m.layer() == Layer.TENDON) {
             return 1;
         }
@@ -211,7 +214,8 @@ public record MuscleShape() implements StatelessFunctionalObject {
     }
 
     /** How much {@code m} holds, its belly {@code k} times, its surface smoothed twice, as it is drawn. */
-    private double smoothed(final Muscle m, final V3[] on, final V3[] way, final V3[] ends, final double k) {
+    private double smoothed(final Muscle m, final V3[] on, final V3[] way, final SpreadLines ends,
+                            final double k) {
         final Subdivision s = Subdivision.INSTANCE;
         final Cage cage = cageAt(m, on, way, ends, k, p -> Optional.empty());
         return volume(s.mesh(s.times(s.of(Fitting.INSTANCE.fitted(cage, 1), 1), 2)));

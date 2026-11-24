@@ -43,21 +43,19 @@ public record TrapeziusLower() implements Muscle {
     public MuscleForm.Spread form() {
         return new MuscleForm.Spread(
                 List.of(new Anchor(T4.INSTANCE, spines()),
-                        new Anchor(T8.INSTANCE, new V3(0.5, 33.2, -10.8)),
-                        new Anchor(T12.INSTANCE, new V3(0.5, 24.9, -8.9))),
-                List.of(new Anchor(Scapula.INSTANCE, root()),
-                        new Anchor(Scapula.INSTANCE, new V3(7.2, 41.9, -10.9))),
+                        new Anchor(T8.INSTANCE, new V3(0.1, 33.2, -11.9)),
+                        new Anchor(T12.INSTANCE, new V3(0.1, 24.9, -10.0))),
+                List.of(new Anchor(Scapula.INSTANCE, Scapula.INSTANCE.at("crest's root")),
+                        new Anchor(Scapula.INSTANCE, Scapula.INSTANCE.at("root of the spine"))),
                 0.6, new V3(0, 0, -1));
     }
 
-    /** Where its line along the spines begins, the middle part's ends: between the third and fourth spines' tips. */
+    /**
+     * Where its line along the spines begins, the middle part's ends: between the third and fourth spines' tips, half
+     * a centimetre behind them, as the line all down them lies.
+     */
     public V3 spines() {
-        return new V3(0.5, 45.4, -10.85);
-    }
-
-    /** Where its line on the scapula begins, the middle part's ends: at the top of the tubercle at the spine's root. */
-    public V3 root() {
-        return new V3(6.5, 44.4, -10.65);
+        return new V3(0.1, 45.4, -11.95);
     }
 
     @Override

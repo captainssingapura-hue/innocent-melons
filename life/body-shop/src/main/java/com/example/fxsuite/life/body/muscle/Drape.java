@@ -41,6 +41,39 @@ public record Drape() implements StatelessFunctionalObject {
     }
 
     /**
+     * The ring of a spread's section lying along {@code path}, its fibres' points across it, {@code deep} out the way
+     * {@code face} says, the muscle running {@code along}, laid on {@code bed}: as {@link #ring}, each point across it
+     * on the path, not on a straight line, and out square to the path where it is.
+     */
+    public List<V3> path(final List<V3> path, final V3 face, final V3 along, final double deep, final Bed bed) {
+        final double[] at = new double[path.size()];
+        for (int i = 1; i < path.size(); i++) {
+            at[i] = at[i - 1] + path.get(i).minus(path.get(i - 1)).length();
+        }
+        final List<V3> ring = new ArrayList<>();
+        for (int q = 0; q < MuscleShape.ROUND; q++) {
+            final double a = 2 * Math.PI * q / MuscleShape.ROUND;
+            final double s = (1 + Math.cos(a)) / 2 * at[at.length - 1];
+            final double out = deep / 2 + Math.sin(a) * deep / 2;
+            int i = 1;
+            while (i < path.size() - 1 && at[i] < s) {
+                i++;
+            }
+            final V3 from = path.get(i - 1);
+            final V3 to = path.get(i);
+            final double piece = at[i] - at[i - 1];
+            final V3 line = piece <= 0 ? to : from.plus(to.minus(from).times((s - at[i - 1]) / piece));
+            final V3 tangent = piece <= 0 ? V3.X : to.minus(from).unit();
+            final V3 square = tangent.cross(along);
+            final V3 out1 = square.length() < 1e-6 ? face
+                    : square.unit().times(square.dot(face) < 0 ? -1 : 1);
+            final Optional<Bed.Laid> laid = bed.under(line);
+            ring.add(laid.map(l -> laid(l, line, along, out1, out)).orElse(line.plus(out1.times(out))));
+        }
+        return ring;
+    }
+
+    /**
      * {@code out} off {@code l}, both taken into the plane through {@code line} square to {@code along}; the way out of
      * it there, as near square to the plane as it is, {@code face} instead.
      */

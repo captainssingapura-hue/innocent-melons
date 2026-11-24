@@ -2,6 +2,7 @@ package com.example.fxsuite.life.body.muscle.trunk;
 
 import com.example.fxsuite.life.body.V3;
 import com.example.fxsuite.life.body.bone.arm.Clavicle;
+import com.example.fxsuite.life.body.bone.arm.Scapula;
 import com.example.fxsuite.life.body.bone.skull.Skull;
 import com.example.fxsuite.life.body.bone.spine.C4;
 import com.example.fxsuite.life.body.bone.spine.C7;
@@ -53,11 +54,15 @@ public record TrapeziusUpper() implements Muscle {
     @Override
     public MuscleForm.Spread form() {
         return new MuscleForm.Spread(
-                List.of(new Anchor(Skull.INSTANCE, new V3(2.37, 4.4, -8.501)),
-                        new Anchor(C4.INSTANCE, new V3(0.5, 56.6, -6.3)),
-                        new Anchor(C7.INSTANCE, new V3(0.5, 54.35, -7.9))),
+                // along the medial third of the superior nuchal line in to the external occipital protuberance,
+                // then down the ligamentum nuchae's back edge, half a centimetre behind C7's tip
+                List.of(new Anchor(Skull.INSTANCE, new V3(3.8, 4.76, -8.1)),
+                        new Anchor(Skull.INSTANCE, new V3(0.1, 3.96, -9.2)),
+                        new Anchor(C7.INSTANCE, new V3(0.1, 54.35, -9.0))),
+                // the clavicle's lateral third along its posterior border, out to the acromion's facet for it
                 List.of(new Anchor(Clavicle.INSTANCE, new V3(11.2, 47.0, 3.85)),
-                        new Anchor(Clavicle.INSTANCE, new V3(15.7, 47.8, 0.8))),
+                        new Anchor(Clavicle.INSTANCE, new V3(15.7, 47.8, 0.8)),
+                        new Anchor(Scapula.INSTANCE, Scapula.INSTANCE.at("clavicular facet"))),
                 1.0, new V3(0, 0, -1),
                 // halfway, its occipital fibres still down the back of the neck's side, its lowest over the
                 // shoulder's top, before they turn forward to the clavicle
