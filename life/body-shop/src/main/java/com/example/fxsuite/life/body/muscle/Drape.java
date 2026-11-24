@@ -19,6 +19,9 @@ public record Drape() implements StatelessFunctionalObject {
 
     /** How far off its bed a sheet lies, cm. */
     private static final double GAP = 0.05;
+    /** How far a point inside its bed is moved out at a time looking for its outside, cm, and how many times. */
+    private static final double STEP = 0.25;
+    private static final int CLIMB = 24;
 
     /**
      * The ring of a section lying at {@code on}, its middle at {@code middle}, {@code wide} across, {@code across},
@@ -33,7 +36,7 @@ public record Drape() implements StatelessFunctionalObject {
             final double u = Math.cos(a) * wide / 2;
             final double out = deep / 2 + Math.sin(a) * deep / 2;
             final V3 line = on.plus(across.times(u));
-            final Optional<Bed.Laid> laid = bed.under(line);
+            final Optional<Bed.Laid> laid = outer(bed, line, face);
             final V3 drawn = middle.plus(across.times(u)).plus(face.times(Math.sin(a) * deep / 2));
             ring.add(laid.map(l -> laid(l, line, along, face, out)).orElse(drawn));
         }
@@ -67,10 +70,35 @@ public record Drape() implements StatelessFunctionalObject {
             final V3 square = tangent.cross(along);
             final V3 out1 = square.length() < 1e-6 ? face
                     : square.unit().times(square.dot(face) < 0 ? -1 : 1);
-            final Optional<Bed.Laid> laid = bed.under(line);
+            final Optional<Bed.Laid> laid = outer(bed, line, out1);
             ring.add(laid.map(l -> laid(l, line, along, out1, out)).orElse(line.plus(out1.times(out))));
         }
         return ring;
+    }
+
+    /**
+     * What of {@code bed} a sheet at {@code line}, facing {@code face}, lies on: the nearest of it, if {@code line} is
+     * outside it; if inside, the outside it comes to going out the way the sheet faces, so a sheet laid where a bone
+     * or another muscle stands out lies over it, not under it on its far side. Nothing, if none is near.
+     */
+    private Optional<Bed.Laid> outer(final Bed bed, final V3 line, final V3 face) {
+        final Optional<Bed.Laid> laid = bed.under(line);
+        if (laid.isEmpty() || outside(laid.get(), line)) {
+            return laid;
+        }
+        for (int k = 1; k <= CLIMB; k++) {
+            final V3 p = line.plus(face.times(k * STEP));
+            final Optional<Bed.Laid> there = bed.under(p);
+            if (there.isPresent() && outside(there.get(), p)) {
+                return there;
+            }
+        }
+        return laid;
+    }
+
+    /** Whether {@code p} is outside the bed where {@code l} is its nearest. */
+    private boolean outside(final Bed.Laid l, final V3 p) {
+        return p.minus(l.at()).dot(l.out()) >= 0;
     }
 
     /**
