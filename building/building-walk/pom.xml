@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.example.fxsuite</groupId>
+        <artifactId>fxsuite-building</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>building-walk</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        A building walked round and into, on the test kit: stood at the middle of a base map and gone through by the
+        game engine as it is, drawn by the card. Kept apart from the buildings bench, which has nothing of the game
+        engine in it: the bench asks for a walk, and all that touches the engine is here.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>fxsuite-building-core</artifactId>
+        </dependency>
+        <!-- the test kit: the base map a building is stood on, and the walk round it -->
+        <dependency>
+            <groupId>melons.innocent.testkit</groupId>
+            <artifactId>tk-ground</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
+        <!-- solids as the faces a renderer draws -->
+        <dependency>
+            <groupId>melons.innocent.forms</groupId>
+            <artifactId>forms-data</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>building-generic</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

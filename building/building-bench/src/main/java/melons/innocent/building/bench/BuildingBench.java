@@ -28,8 +28,9 @@ import java.util.Locale;
  * ({@link ThingTree}), each thing by its default implementation ({@link Catalogue}); under it, the one picked's
  * specification, set field by field ({@link SpecForm}); then how finely it is drawn, its figures and what is wrong with
  * it. In the middle, it drawn by JavaFX 3D as one object ({@link BuildingView}). A button opens it in a window of the
- * card's, drawn by Vulkan as finely as it is built ({@link Inspector}). No game engine. The thread it begins on serves
- * the card's windows; JavaFX's runs the rest. Closing the bench ends it.
+ * card's, drawn by Vulkan as finely as it is built ({@link Inspector}); another, "Walk round it", has it walked
+ * round and into on the test kit by the game engine as it is, all of which is the walk module's: there is no game
+ * engine in the bench itself. The thread it begins on serves the card's windows; JavaFX's runs the rest. Closing the bench ends it.
  */
 public final class BuildingBench {
 
@@ -73,9 +74,15 @@ public final class BuildingBench {
                 inspector.ask(picked.title(), structure);
             }
         });
+        final Button walk = new Button("Walk round it");
+        walk.setOnAction(event -> {
+            if (structure != null) {
+                inspector.walk(picked.title(), structure);
+            }
+        });
         figures.setWrapText(true);
         final VBox left = new VBox(8, tree.node(), new TitledPane("Specification", form.node()),
-                new HBox(8, new Label("Drawn"), fineness), figures, inspect);
+                new HBox(8, new Label("Drawn"), fineness), figures, new HBox(8, inspect, walk));
         VBox.setVgrow(left.getChildren().getFirst(), Priority.ALWAYS);
         left.setPadding(new Insets(10));
         left.setPrefWidth(340);
@@ -92,13 +99,20 @@ public final class BuildingBench {
     /**
      * For a run with nobody watching: {@code -Dbench.snapshot=} a file, the bench saved to it once it has settled, and
      * then closed; or, with {@code -Dbench.inspect=true}, what is picked looked into, and that saved as the inspector
-     * says, before it all ends.
+     * says, before it all ends. Or {@code -Dbench.walk=true}: what is picked walked round on the test kit once the
+     * bench has settled, the walk taking the walks' own options (a script, a snapshot, which is then the walk's
+     * picture and not the bench's), and the bench ended when the walk ends.
      */
     private void snapshot(final Stage stage) {
         final String shot = System.getProperty("bench.snapshot", "");
-        if (!shot.isEmpty()) {
+        final boolean walked = Boolean.getBoolean("bench.walk");
+        if (!shot.isEmpty() || walked) {
             final PauseTransition settling = new PauseTransition(Duration.seconds(2));
             settling.setOnFinished(event -> {
+                if (walked && structure != null) {
+                    inspector.walk(picked.title(), structure);
+                    return;
+                }
                 new Snapshot().saved(stage.getScene(), shot);
                 if (Boolean.getBoolean("bench.inspect") && structure != null) {
                     inspector.ask(picked.title(), structure);

@@ -25,6 +25,7 @@
         <module>building-core</module>
         <module>building-chinese</module>
         <module>building-generic</module>
+        <module>building-walk</module>
         <module>building-bench</module>
     </modules>
 
