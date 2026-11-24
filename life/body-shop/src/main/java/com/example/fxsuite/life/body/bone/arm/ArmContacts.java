@@ -44,7 +44,7 @@ public record ArmContacts() implements StatelessFunctionalObject {
 
     /** The clavicle on the acromion, along it the same; moved with the girdle ({@link ThoraxForm#girdle}). */
     public Place acromioclavicular() {
-        return Discs.INSTANCE.inPart(new Place(ACROMIAL.plus(ThoraxForm.INSTANCE.girdle()), clavicle()),
+        return Discs.INSTANCE.inPart(new Place(ACROMIAL.plus(ThoraxForm.INSTANCE.clavicle()), clavicle()),
                 Part.RIGHT_GIRDLE);
     }
 

@@ -10,6 +10,8 @@ import com.example.fxsuite.life.body.bone.Bone;
 import com.example.fxsuite.life.body.bone.Moves;
 import com.example.fxsuite.life.body.bone.arm.Scapula;
 import com.example.fxsuite.life.body.bone.arm.ScapulaMap;
+import com.example.fxsuite.life.body.bone.hip.HipBone;
+import com.example.fxsuite.life.body.bone.hip.IliumNarrowing;
 import com.example.fxsuite.life.body.bone.skull.SkullForm;
 import com.example.fxsuite.life.body.bone.spine.SpineForm;
 import com.example.fxsuite.life.body.bone.thorax.ThoraxForm;
@@ -29,12 +31,13 @@ public record Anchor(Bone bone, V3 at) implements Scalar {
      * Where it is in its part's frame, as on the right; on the head, as the skull is bent to be as men's are measured
      * ({@link SkullForm}); on the chest's bones and the clavicles, as the chest is, its ribs measured
      * ({@link ThoraxForm}); on the scapula, given on it as first sketched, where it is on its form if drawn as one
-     * ({@link ScapulaMap}).
+     * ({@link ScapulaMap}); on the hip bone, its crest drawn in to men's breadth ({@link IliumNarrowing}).
      */
     public V3 local() {
         final V3 drawn = ThoraxForm.INSTANCE.bends(bone) ? ThoraxForm.INSTANCE.apply(at)
                 : SpineForm.INSTANCE.bends(bone) ? SpineForm.INSTANCE.apply(at)
-                : bone == Scapula.INSTANCE && Scapula.INSTANCE.formed() ? ScapulaMap.INSTANCE.toForm(at) : at;
+                : bone == Scapula.INSTANCE && Scapula.INSTANCE.formed() ? ScapulaMap.INSTANCE.toForm(at)
+                : bone == HipBone.INSTANCE ? IliumNarrowing.INSTANCE.apply(at) : at;
         V3 v = bone.inBody() ? drawn.minus(ThoraxForm.INSTANCE.drawnFrom(bone,
                 new Rig(Proportions.DRAWN, Pose.REST, false).frame(bone.part()).at())) : drawn;
         if (bone.part() == Part.HEAD) {

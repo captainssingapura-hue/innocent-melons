@@ -62,7 +62,7 @@ public enum ThoraxForm {
             pair(drawn, bent, p, sternum.moved(p));
         }
         for (final V3 p : List.of(ArmContacts.ACROMIAL, new V3(13.4, 47.0, 3.4))) {
-            pair(drawn, bent, p, p.plus(girdle()));
+            pair(drawn, bent, p, p.plus(clavicle()));
         }
         final V3 canal = new V3(0, 0, -2);
         for (final Level l : List.of(Level.T1, Level.T6, Level.T12)) {
@@ -105,11 +105,21 @@ public enum ThoraxForm {
     }
 
     /**
-     * How far the shoulder girdle is moved from where it was drawn, on the right: as far as the clavicle's inner end
-     * is, on the sternum; the girdle hung from there as drawn, its clavicle, its scapula and the arm beyond it with it.
+     * How far the clavicle is moved from where it was drawn, on the right, both its ends: as far as its inner end is,
+     * on the sternum, so it stays as raised and as swept back as it was drawn.
+     */
+    public V3 clavicle() {
+        return sternum.moved(ArmContacts.STERNAL).minus(ArmContacts.STERNAL);
+    }
+
+    /**
+     * How far the rest of the shoulder girdle is moved from where it was drawn, on the right, its scapula, the shoulder
+     * joint and the arm beyond: back as far as the clavicle is, not up; the scapula had been drawn as high above the
+     * clavicle's end as the sternum's top now rises, its acromion that much over the clavicle's, where the two meet
+     * level.
      */
     public V3 girdle() {
-        return sternum.moved(ArmContacts.STERNAL).minus(ArmContacts.STERNAL);
+        return new V3(0, 0, clavicle().z());
     }
 
     /**
