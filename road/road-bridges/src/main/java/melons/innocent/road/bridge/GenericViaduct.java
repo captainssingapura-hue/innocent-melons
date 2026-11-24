@@ -7,6 +7,7 @@ import com.example.fxsuite.historian.Civilization;
 import com.example.fxsuite.historian.CommonEras;
 import melons.innocent.road.surface.ExpresswaySpec;
 import melons.innocent.road.surface.ExpresswaySurface;
+import melons.innocent.road.surface.Straight;
 import melons.innocent.terrain.Ground;
 
 import java.util.ArrayList;
@@ -57,9 +58,10 @@ public record GenericViaduct(Ground ground)
         final int spans = Math.max(2, (int) Math.round(s.length() / s.span()));
         final List<Double> piers = new ArrayList<>();
         for (int i = 1; i < spans; i++) {
-            piers.add(-s.length() / 2 + i * s.length() / spans);
+            piers.add(i * s.length() / spans);
         }
         return new Bridge(new ExpresswaySurface().section(new ExpresswaySpec<>(s.lanes(), s.lane(), s.shoulder(),
-                s.length())), s.length(), ground.height(0, 0) + s.height(), DEPTH, piers, s.piers(), ground);
+                s.length())), new Straight(s.length(), ground.height(0, 0) + s.height()), DEPTH, piers,
+                s.piers(), ground);
     }
 }

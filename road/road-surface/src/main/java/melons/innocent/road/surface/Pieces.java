@@ -9,16 +9,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A road's strips along a run of it, each a solid standing on what is level under it, the ground or a bridge's deck,
- * {@code level} high: a lane or a shoulder of asphalt, its top
- * falling as its section falls, parted at the road's line where it lies across it so its crown is there; a kerb of
- * precast concrete, {@link #KERB} over the pavement beside it, its top level; a barrier of concrete, its foot as wide
- * as its strip and its top {@link #CAP} wide over its middle, {@link #BARRIER} over the pavement there.
+ * A road's strips along a run of its course, each a solid standing on what the road is laid on, the ground or a
+ * bridge's deck, following it: a lane or a shoulder of asphalt, its top falling as its section falls, parted at the
+ * road's line where it lies across it so its crown is there; a kerb of precast concrete, {@link #KERB} over the
+ * pavement beside it, its top level; a barrier of concrete, its foot as wide as its strip and its top {@link #CAP}
+ * wide over its middle, {@link #BARRIER} over the pavement there.
  *
  * @param section the road's section
- * @param level   how high what it stands on is
+ * @param course  what the road is laid along
  */
-record Pieces(Section section, double level) {
+record Pieces(Section section, Course course) {
 
     /** How high a kerb stands over the pavement beside it; a barrier; how wide a barrier's top is. */
     static final double KERB = 15;
@@ -27,7 +27,7 @@ record Pieces(Section section, double level) {
 
     /** Its strips along {@code run}. */
     List<Part> along(final Shapes.Run run) {
-        final Shapes shapes = new Shapes();
+        final Shapes shapes = new Shapes(course);
         final List<Part> parts = new ArrayList<>();
         final List<Strip> strips = section.strips();
         for (int k = 0; k < strips.size(); k++) {
@@ -47,13 +47,13 @@ record Pieces(Section section, double level) {
                 case KERB -> {
                     final double top = top(Math.abs(x0) < Math.abs(x1) ? x0 : x1) + KERB;
                     parts.add(new Part(new Elements.Kerb(), shapes.solid("kerb", Role.STRUCTURE, Material.PRECAST,
-                            run, x0, level, x1, level, top, top)));
+                            run, x0, 0, x1, 0, top, top)));
                 }
                 case BARRIER -> {
                     final double middle = (x0 + x1) / 2;
                     final double top = top(middle) + BARRIER;
                     parts.add(new Part(new Elements.Barrier(), shapes.solid("barrier", Role.STRUCTURE,
-                            Material.CONCRETE, run, x0, level, x1, level, middle - CAP / 2, top, middle + CAP / 2,
+                            Material.CONCRETE, run, x0, 0, x1, 0, middle - CAP / 2, top, middle + CAP / 2,
                             top)));
                 }
             }
@@ -63,13 +63,12 @@ record Pieces(Section section, double level) {
 
     /** A lane, or a shoulder, from {@code x0} across to {@code x1}, along {@code run}. */
     private Part paved(final boolean lane, final Shapes.Run run, final double x0, final double x1) {
-        return new Part(lane ? new Elements.TrafficLane() : new Elements.Shoulder(), new Shapes().solid(lane ? "lane"
-                : "shoulder", Role.STRUCTURE, Material.ASPHALT, run, x0, level, x1, level, top(x0),
-                top(x1)));
+        return new Part(lane ? new Elements.TrafficLane() : new Elements.Shoulder(), new Shapes(course).solid(
+                lane ? "lane" : "shoulder", Role.STRUCTURE, Material.ASPHALT, run, x0, 0, x1, 0, top(x0), top(x1)));
     }
 
-    /** How high its pavement's top is {@code x} across from its line, standing on what is {@link #level} high. */
+    /** How high its pavement's top is {@code x} across from its line, over what it is laid on. */
     private double top(final double x) {
-        return level + section.top(x);
+        return section.top(x);
     }
 }

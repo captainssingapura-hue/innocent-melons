@@ -1,44 +1,35 @@
 package melons.innocent.road.bridge;
 
-import com.example.fxsuite.avatar.build.Material;
-import com.example.fxsuite.avatar.build.Role;
+import com.example.fxsuite.avatar.build.Point;
 import com.example.fxsuite.avatar.build.StandIns;
 import com.example.fxsuite.building.Structure;
 import com.example.fxsuite.building.Structure.Part;
-import com.example.fxsuite.building.Timbers;
 import com.example.fxsuite.existence.Elements;
-import com.example.fxsuite.taxonomy.Leaf;
+import melons.innocent.road.surface.Course;
 import melons.innocent.road.surface.Section;
-import melons.innocent.road.surface.Stretch;
 import melons.innocent.terrain.Ground;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A straight bridge, {@code length} long, its line along, its middle at nought, standing on {@code ground}: a deck of
- * concrete {@code depth} deep, as wide as the road it carries and a parapet {@link #PARAPET} wide either side, the
- * road's surface on it ({@link Stretch}), {@code level} high; a parapet along each edge, {@link #HIGH} over the deck;
- * at each of {@code piers}, so far along it, a cap of concrete across under the deck, on one wide column under its
- * middle or two under its sides ({@link Piers}), each column standing from the ground under it up to the cap, as tall
- * as the ground there leaves it; at each end an abutment across under the deck, from the ground at its lowest there up
- * to the deck. On level ground every column alike; on ground that is not, each its own height.
+ * A bridge on piers along {@code course}, standing on {@code ground}: its deck ({@link Deck}), {@code depth} deep, the
+ * road on it; at each of {@code piers}, so far along it, a cap of concrete across under the deck, on one wide column
+ * under its middle or two under its sides ({@link Piers}), each column standing from the ground under it up to the
+ * cap, as tall as the ground there leaves it; where the ground leaves no room for a column, a plinth from the ground
+ * up to the deck instead, or nothing where the deck is on the ground; at each end an abutment across under the deck,
+ * from the ground at its lowest there up to the deck. Level or climbing: on level ground under a level deck every
+ * column alike, otherwise each its own height.
  *
  * @param section what it carries across
- * @param length  how long it is
- * @param level   how high its deck's top is, the road laid on it
+ * @param course  its line, and how high its deck's top is along it, the road laid on it
  * @param depth   how deep its deck is
  * @param piers   how far along it each pier stands
  * @param kind    how its piers stand
  * @param ground  what it stands on
  */
-public record Bridge(Section section, double length, double level, double depth, List<Double> piers, Piers kind,
-                     Ground ground) {
+public record Bridge(Section section, Course course, double depth, List<Double> piers, Piers kind, Ground ground) {
 
-    /** How wide a parapet is, and how high over the deck; how long a piece of the deck is. */
-    static final double PARAPET = 50;
-    static final double HIGH = 110;
-    static final double PIECE = 1_000;
     /** A pier's cap: how deep, how long along, how far in from the deck's edges it stops. */
     static final double CAP_DEEP = 150;
     static final double CAP_ALONG = 250;
@@ -48,72 +39,91 @@ public record Bridge(Section section, double length, double level, double depth,
     static final double SINGLE_ALONG = 200;
     static final double TWIN = 160;
     static final double TWIN_IN = 300;
-    /** How thick an abutment is, along. */
+    /** How thick an abutment is, along; how tall a column is, at least, or a plinth stands instead. */
     static final double ABUTMENT = 150;
+    static final double SHORTEST = 50;
 
     public Bridge {
         piers = List.copyOf(piers);
-        if (!(length > 0) || !(depth > 0) || kind == null || ground == null) {
-            throw new IllegalArgumentException("a bridge some way long and deep, its piers of some kind, on ground");
+        if (kind == null || ground == null) {
+            throw new IllegalArgumentException("a bridge its piers of some kind, on ground");
         }
     }
 
-    /** How far its deck reaches from its line either way, its parapets with it. */
-    public double half() {
-        return section.wide() / 2 + PARAPET;
+    /** Its deck. */
+    Deck deck() {
+        return new Deck(section, course, depth);
     }
 
     /** It as a thing built: its road come onto at its far end, on its deck. */
     public Structure structure() {
-        final List<Part> parts = new ArrayList<>(new Stretch(section, length, level).parts());
-        for (double z = -length / 2; z < length / 2 - 1e-6; z += PIECE) {
-            final double z1 = Math.min(z + PIECE, length / 2);
-            parts.add(part(new Elements.Decking(), "deck", -half(), half(), z, z1, level - depth, level));
-            parts.add(part(new Elements.Parapet(), "parapet", -half(), -half() + PARAPET, z, z1, level,
-                    level + HIGH));
-            parts.add(part(new Elements.Parapet(), "parapet", half() - PARAPET, half(), z, z1, level, level + HIGH));
-        }
-        piers.forEach(z -> parts.addAll(pier(z)));
-        parts.add(abutment(length / 2 - ABUTMENT, length / 2));
-        parts.add(abutment(-length / 2, -length / 2 + ABUTMENT));
+        final List<Part> parts = parts(true);
         return new Structure(parts, StandIns.prisms(parts.stream().map(Part::solid).toList()), List.of(),
-                new Stretch(section, length, level).structure().waysIn());
+                deck().waysIn());
     }
 
-    /** The pier {@code z} along: its cap, and its column or columns down to the ground. */
-    private List<Part> pier(final double z) {
-        final double under = level - depth;
-        final double cap = under - CAP_DEEP;
+    /**
+     * Its parts: its deck, the road on it, its piers, an abutment at its start, and one at its far end if {@code far}:
+     * none there where it meets another on what holds that other up.
+     */
+    List<Part> parts(final boolean far) {
+        final Deck deck = deck();
+        final List<Part> parts = new ArrayList<>(deck.parts());
+        piers.forEach(s -> parts.addAll(pier(deck, s)));
+        final double length = course.length();
+        if (far) {
+            parts.addAll(abutment(deck, length - ABUTMENT, length));
+        }
+        parts.addAll(abutment(deck, 0, ABUTMENT));
+        return parts;
+    }
+
+    /** The pier {@code s} along: its cap, and its column or columns down to the ground; or a plinth. */
+    private List<Part> pier(final Deck deck, final double s) {
+        final Blocks blocks = new Blocks(course);
+        final double half = deck.half();
+        final double s0 = s - CAP_ALONG / 2;
+        final double s1 = s + CAP_ALONG / 2;
+        final List<Double> at = kind == Piers.SINGLE ? List.of(0.0) : List.of(-(half - TWIN_IN), half - TWIN_IN);
+        final double along = kind == Piers.SINGLE ? SINGLE_ALONG : TWIN;
+        final double top = Math.max(deck.under(s - along / 2), deck.under(s + along / 2)) - CAP_DEEP;
+        final double highest = at.stream().mapToDouble(x -> ground(s, x)).max().orElseThrow();
+        if (top - highest < SHORTEST) {
+            return plinth(blocks, "plinth", -half + CAP_IN, half - CAP_IN, s0, s1);
+        }
         final List<Part> parts = new ArrayList<>();
-        parts.add(part(new Elements.Beam(), "pier cap", -half() + CAP_IN, half() - CAP_IN, z - CAP_ALONG / 2,
-                z + CAP_ALONG / 2, cap, under));
-        if (kind == Piers.SINGLE) {
-            parts.add(column(0, SINGLE_ACROSS, z, SINGLE_ALONG, cap));
-        } else {
-            final double x = half() - TWIN_IN;
-            parts.add(column(-x, TWIN, z, TWIN, cap));
-            parts.add(column(x, TWIN, z, TWIN, cap));
+        parts.add(blocks.laid(new Elements.Beam(), "pier cap", -half + CAP_IN, half - CAP_IN, s0, s1,
+                -depth - CAP_DEEP, -depth));
+        for (final double x : at) {
+            parts.add(blocks.upright(new Elements.Column(), "column", s, x,
+                    kind == Piers.SINGLE ? SINGLE_ACROSS : TWIN, along, ground(s, x), top));
         }
         return parts;
     }
 
-    /** A column {@code across} by {@code along} round ({@code x}, {@code z}), from the ground there to {@code top}. */
-    private Part column(final double x, final double across, final double z, final double along, final double top) {
-        return part(new Elements.Column(), "column", x - across / 2, x + across / 2, z - along / 2, z + along / 2,
-                ground.height(x, z), top);
+    /** An abutment from {@code s0} to {@code s1} along, across under the deck, from the ground at its lowest to it. */
+    private List<Part> abutment(final Deck deck, final double s0, final double s1) {
+        return plinth(new Blocks(course), "abutment", -deck.half(), deck.half(), s0, s1);
     }
 
-    /** An abutment from {@code z0} to {@code z1} along, across under the deck, from the ground at its lowest to it. */
-    private Part abutment(final double z0, final double z1) {
-        final double z = (z0 + z1) / 2;
-        final double foot = Math.min(ground.height(0, z), Math.min(ground.height(-half(), z),
-                ground.height(half(), z)));
-        return part(new Elements.Abutment(), "abutment", -half(), half(), z0, z1, foot, level - depth);
+    /** A plinth from {@code x0} to {@code x1}, {@code s0} to {@code s1}, from the ground to the deck; or none. */
+    private List<Part> plinth(final Blocks blocks, final String name, final double x0, final double x1, final double s0,
+                              final double s1) {
+        double foot = Double.POSITIVE_INFINITY;
+        double under = Double.POSITIVE_INFINITY;
+        for (final double s : List.of(s0, s1)) {
+            for (final double x : List.of(x0, (x0 + x1) / 2, x1)) {
+                foot = Math.min(foot, ground(s, x));
+            }
+            under = Math.min(under, course.at(s).up() - depth);
+        }
+        return under - foot < 1 ? List.of() : List.of(blocks.footed(new Elements.Abutment(), name, x0, x1, s0,
+                s1, foot, -depth));
     }
 
-    private Part part(final Leaf<?> element, final String name, final double x0, final double x1, final double z0,
-                      final double z1, final double y0, final double y1) {
-        return new Part(element, Timbers.INSTANCE.block(name, Role.STRUCTURE, Material.CONCRETE, x0, x1, z0, z1, y0,
-                y1));
+    /** How high the ground is {@code x} across from its line, {@code s} along it. */
+    private double ground(final double s, final double x) {
+        final Point p = course.beside(s, x, 0);
+        return ground.height(p.across(), p.along());
     }
 }

@@ -76,8 +76,9 @@ class BridgesTest {
     void aFlyoverItsRoomLeftUnderItOverWhatItCrosses() {
         final FlyoverSpec<Civilization, CommonEras.Contemporary> s = new FlyoverSpec<>(350, 100, 550, 2_000);
         final Bridge bridge = new GenericFlyover().bridge(s);
-        assertEquals(550, bridge.level() - bridge.depth(), 1e-9, "5.5 m under its deck");
-        assertTrue(bridge.piers().stream().allMatch(z -> Math.abs(z) - Bridge.SINGLE_ALONG / 2 >= 1_000),
+        assertEquals(550, bridge.course().at(0).up() - bridge.depth(), 1e-9, "5.5 m under its deck");
+        final double middle = bridge.course().length() / 2;
+        assertTrue(bridge.piers().stream().allMatch(p -> Math.abs(p - middle) - Bridge.SINGLE_ALONG / 2 >= 1_000),
                 "its piers clear of what it crosses");
         final Structure built = new GenericFlyover().build(s);
         assertEquals(List.of(), built.problems());

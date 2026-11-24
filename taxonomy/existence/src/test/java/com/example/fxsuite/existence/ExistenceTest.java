@@ -26,11 +26,11 @@ class ExistenceTest {
                 Existence.INSTANCE.trees().stream().map(Taxonomy::name).toList());
         assertEquals(20, Terrains.TREE.leaves().size());
         assertEquals(11, Features.TREE.leaves().size());
-        assertEquals(50, Made.TREE.leaves().size());
+        assertEquals(53, Made.TREE.leaves().size());
         assertEquals(32, Uses.TREE.leaves().size());
         assertEquals(20, Spaces.TREE.leaves().size());
         assertEquals(38, Elements.TREE.leaves().size());
-        assertEquals(231, Existence.INSTANCE.trees().stream().mapToInt(tree -> tree.nodes().size()).sum());
+        assertEquals(234, Existence.INSTANCE.trees().stream().mapToInt(tree -> tree.nodes().size()).sum());
         assertEquals("Rooms let by the night, served from a lobby.", Uses.TREE.meaning(new Uses.HotelRooms()));
         assertEquals("A wide ditch round a town or a castle, often holding water, to keep out.",
                 Made.TREE.meaning(new Earthworks.Moat()));
@@ -81,7 +81,8 @@ class ExistenceTest {
     void whatCarriesTrafficWhateverLayerItLiesInSoANetworkMayJoinIt() {
         // the reach's street, the bridge it lands on, the towpath along the canal and the canal itself
         for (final Node member : List.<Node>of(new Highways.Street(), new Highways.Towpath(), new Highways.Ford(),
-                new Bridges.Bridge(), new Bridges.Viaduct(), new Bridges.Flyover(), new Tunnels.Tunnel(),
+                new Bridges.Bridge(), new Bridges.Viaduct(), new Bridges.Flyover(), new Bridges.Ramp(),
+                new Bridges.SpiralRamp(), new Bridges.ElevatedRoad(), new Tunnels.Tunnel(),
                 new Features.Canal(), new Features.River())) {
             assertTrue(member.answer(Transit.class).isPresent(), member.title() + " carries traffic");
         }

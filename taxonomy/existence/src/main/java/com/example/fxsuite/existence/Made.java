@@ -28,7 +28,8 @@ public record Made() implements L0 {
             new Highways.Path(), new Highways.Towpath(), new Highways.Ford(), new Highways.Paving(),
             new Highways.Setts(), new Highways.Asphalt(), new Highways.Gravel(),
             // the bridges and the tunnels: a way carried over a gap, or through the ground
-            new Bridges.Bridge(), new Bridges.Viaduct(), new Bridges.Flyover(), new Tunnels.Tunnel(),
+            new Bridges.Bridge(), new Bridges.Viaduct(), new Bridges.Flyover(), new Bridges.Ramp(),
+            new Bridges.SpiralRamp(), new Bridges.ElevatedRoad(), new Tunnels.Tunnel(),
             // the earthworks: the ground levelled, raised, cut, faced, cultivated
             new Earthworks.Pad(), new Earthworks.Terrace(), new Earthworks.Reclaimed(), new Earthworks.Embankment(),
             new Earthworks.Dike(), new Earthworks.Mound(), new Earthworks.CityWall(), new Earthworks.Cutting(),

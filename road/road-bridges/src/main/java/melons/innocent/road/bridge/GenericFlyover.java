@@ -7,6 +7,7 @@ import com.example.fxsuite.historian.Civilization;
 import com.example.fxsuite.historian.CommonEras;
 import melons.innocent.road.surface.RoadSpec;
 import melons.innocent.road.surface.RoadSurface;
+import melons.innocent.road.surface.Straight;
 import melons.innocent.terrain.Ground;
 
 import java.util.List;
@@ -58,7 +59,8 @@ public record GenericFlyover(Ground ground)
     public Bridge bridge(final FlyoverSpec<?, ?> s) {
         final double pier = s.crossing() / 2 + CLEAR;
         final double length = 2 * (pier + SIDE);
-        return new Bridge(new RoadSurface().section(new RoadSpec<>(s.lane(), s.shoulder(), length)), length,
-                ground.height(0, 0) + s.clearance() + DEPTH, DEPTH, List.of(-pier, pier), Piers.SINGLE, ground);
+        return new Bridge(new RoadSurface().section(new RoadSpec<>(s.lane(), s.shoulder(), length)),
+                new Straight(length, ground.height(0, 0) + s.clearance() + DEPTH), DEPTH,
+                List.of(length / 2 - pier, length / 2 + pier), Piers.SINGLE, ground);
     }
 }
