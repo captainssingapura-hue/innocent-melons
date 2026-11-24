@@ -49,9 +49,9 @@ class EndlessForestTest {
         try (Card card = new Card(); Canvas canvas = card.canvas(1280, 720)) {
             final Laid laid = new Laid().asking(card.rays());
             for (final int[] set : new int[][] {{8, 20, 300, 2_000}, {64, 20, 0, 2_000}, {32, 25, 300, 300}}) {
-                // the last set is as the walk has it: two levels and a cut-off, everything baked beforehand
+                // the last set is as the walk has it: three levels and a cut-off, everything baked beforehand
                 final boolean low = set[3] == 300;
-                final Reaches reaches = low ? new Reaches(set[1], set[1], 300, 300, 300)
+                final Reaches reaches = low ? new Reaches(set[1], 60, 300, 300, 300)
                         : new Reaches(set[1], 60, 200, 600, set[3]);
                 final long opened = System.currentTimeMillis();
                 try (EndlessForestPlace place = new EndlessForestPlace(card, laid, set[0], 25, reaches, set[2], low);

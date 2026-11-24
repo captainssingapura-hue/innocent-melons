@@ -30,14 +30,15 @@ public record Reaches(double fine, double twigs, double boughs, double limbs, do
     }
 
     /**
-     * As the run says: {@code -Dforest.fine=} (25), {@code -Dforest.twigs=} (25), {@code -Dforest.boughs=} (300),
-     * {@code -Dforest.limbs=} (300) and {@code -Dforest.far=} (300), each in metres. Unless said, then, there are two
-     * levels and a cut-off: the finest within twenty-five metres, boughs to three hundred, and nothing beyond, which
-     * is for an eye kept low among the trunks, where little further off than that is to be seen between them.
+     * As the run says: {@code -Dforest.fine=} (25), {@code -Dforest.twigs=} (60), {@code -Dforest.boughs=} (300),
+     * {@code -Dforest.limbs=} (300) and {@code -Dforest.far=} (300), each in metres. Unless said, then, there are
+     * three levels and a cut-off: the finest within twenty-five metres, twigs gone to sixty, boughs to three hundred,
+     * and nothing beyond, which is for an eye kept low among the trunks, where little further off than that is to be
+     * seen between them.
      */
     public Reaches() {
         this(Double.parseDouble(System.getProperty("forest.fine", "25")),
-                Double.parseDouble(System.getProperty("forest.twigs", "25")),
+                Double.parseDouble(System.getProperty("forest.twigs", "60")),
                 Double.parseDouble(System.getProperty("forest.boughs", "300")),
                 Double.parseDouble(System.getProperty("forest.limbs", "300")),
                 Double.parseDouble(System.getProperty("forest.far", "300")));
