@@ -83,7 +83,7 @@ public record SkinFit() implements StatelessFunctionalObject {
         for (int i = 0; i < of.length; i++) {
             patches[i] = shape.parts()[of[i]];
         }
-        return sheet.flesh(target.bind()).patched(patches);
+        return sheet.flesh(target.bind()).patched(HeadLine.INSTANCE.split(patches, sheet, t, target.bind()));
     }
 
     /**
@@ -152,7 +152,8 @@ public record SkinFit() implements StatelessFunctionalObject {
 
     /**
      * The skin smoothed once more to be drawn, how each point follows the body with it; bound to the body, each
-     * triangle of the part its piece of the cage is.
+     * triangle of the part its piece of the cage is, but the head's and the neck's parted where they meet
+     * ({@link HeadLine}).
      */
     private Flesh finer(final Wrap.Shape s, final Weights[] w, final FatTarget target) {
         final Subdivision sub = Subdivision.INSTANCE;
@@ -188,7 +189,7 @@ public record SkinFit() implements StatelessFunctionalObject {
         for (int i = 0; i < of.length; i++) {
             patches[i] = faces[of[i]];
         }
-        return sheet.flesh(target.bind()).patched(patches);
+        return sheet.flesh(target.bind()).patched(HeadLine.INSTANCE.split(patches, sheet, t, target.bind()));
     }
 
     private double[] flat(final V3[] at) {
