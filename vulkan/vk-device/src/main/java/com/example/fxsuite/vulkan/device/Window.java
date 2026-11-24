@@ -7,6 +7,7 @@ import org.lwjgl.vulkan.VkPresentInfoKHR;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.util.List;
 import java.util.function.Consumer;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
@@ -87,6 +88,11 @@ public final class Window implements Target, AutoCloseable {
     /** What the mouse did in it since this was last asked: to be asked once a frame, after the desk has heard. */
     public Moved mouse() {
         return pointed.moved();
+    }
+
+    /** The clicks of its first button since this was last asked, each where it was in the picture, the first first. */
+    public List<Clicked> clicks() {
+        return pointed.clicks();
     }
 
     /**

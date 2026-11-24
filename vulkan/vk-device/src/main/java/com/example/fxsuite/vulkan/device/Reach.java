@@ -31,6 +31,7 @@ final class Reach {
     private final Kept<Of> opened;
     private final VkQueue queue;
     private final Owner theirs;
+    private final Holding holding = new Holding();
     /** Whether it was opened to answer rays. */
     private final boolean rays;
 
@@ -115,6 +116,11 @@ final class Reach {
 
     String name() {
         return chosen.name();
+    }
+
+    /** How much memory is held on the card, counted as it is asked for and let go. */
+    Holding holding() {
+        return holding;
     }
 
     /** The owner of whatever is made on the card for others. */

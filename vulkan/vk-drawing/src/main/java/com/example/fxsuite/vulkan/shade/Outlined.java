@@ -19,17 +19,19 @@ public record Outlined(Laid laid) {
         laid.placing().forEach(laid.point()::field);
         laid.frame().field("seen");
         laid.draw().field("placed");
+        laid.copy().field("copied");
     }
 
     /** The shader run for each point of the mesh. */
     public Shader vertex() {
         final List<String> lines = new ArrayList<>(List.of(VERSION));
         lines.addAll(new Declared(laid.point()).taken(laid.placing()));
+        lines.addAll(new Declared(laid.copy()).takenFrom(laid.copyPlace()));
         lines.addAll(new Declared(laid.frame()).block(laid.frameBound(), FRAME));
         lines.addAll(new Declared(laid.draw()).pushed(DRAW));
         lines.addAll(List.of(
                 "void main() {",
-                "    gl_Position = frame.seen * (draw.placed * vec4(point, 1.0));",
+                "    gl_Position = frame.seen * (draw.placed * (copied * vec4(point, 1.0)));",
                 "}"));
         return new Shader(Stage.VERTEX, String.join("\n", lines) + "\n");
     }

@@ -36,6 +36,20 @@ public record Laid(boolean rays) {
                 new Field("on", Kind.TRIPLE)));
     }
 
+    /**
+     * One copy of a mesh, of the many one draw may make of it: what takes the mesh from its own frame to the frame of
+     * the thing drawn, turned, moved and made bigger or smaller alike every way (never stretched one way more than
+     * another, or the way its surface faces would come out wrong). A thing drawn once is drawn as one copy, unmoved.
+     */
+    public Layout copy() {
+        return new Layout("Copy", List.of(new Field("copied", Kind.MATRIX)));
+    }
+
+    /** Where a vertex shader takes a copy in: straight after a point's fields. */
+    public int copyPlace() {
+        return point().fields().size();
+    }
+
     /** What of a point a look that colours nothing takes: where it is, and no more. */
     public List<String> placing() {
         return List.of("point");

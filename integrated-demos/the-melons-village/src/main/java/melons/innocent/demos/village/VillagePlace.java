@@ -30,8 +30,9 @@ import java.util.List;
  * once for each. Before the village is its lake: a kerb of rubble, and still water within it, each drawn in one call
  * with the surface its material has. Off the lake's end is a car park of concrete with a hundred cars standing in
  * it ({@link CarParkDrawn}), whose windows are seen through and so are drawn after everything else; and off its
- * other end a small wood of bare oaks ({@link GroveDrawn}). What is in the
- * way is the same walls, the same houses, the same kerb, the same cars and the same trees' trunks.
+ * other end a small wood of bare trees, and west of the towers a forest of forty thousand, drawn as one wood
+ * ({@link GroveDrawn}). What is in the way is the same walls, the same houses, the same kerb, the same cars and
+ * the same trees' trunks.
  */
 public final class VillagePlace implements Place {
 
@@ -73,7 +74,7 @@ public final class VillagePlace implements Place {
             lake.add(kept(new Formed(card, new Look(laid, shades.of(new Materials.Rubble())), kerb.formed())));
             lake.add(kept(new Formed(card, new Look(laid, shades.of(new Materials.Water())), village.lake().sheet())));
             this.carPark = new CarParkDrawn(card, laid, village.carPark(), village.woodCars());
-            this.grove = new GroveDrawn(card, laid, village.grove());
+            this.grove = new GroveDrawn(card, laid, village.woods());
         } catch (final RuntimeException refused) {
             close();
             throw refused;
@@ -109,6 +110,9 @@ public final class VillagePlace implements Place {
 
     @Override
     public void seenThrough(final Pass pass, final Camera camera) {
+        // the wood's far haze first, then the cars' windows: one before the other wherever they lie, which is wrong
+        // only where a window and a crown's haze cross in the picture, and then only in which is laid over which
+        grove.seenThrough(pass, camera);
         carPark.seenThrough(pass, camera);
     }
 

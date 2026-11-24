@@ -83,6 +83,20 @@ public record Village(int homes) {
         return new Grove(new Vec3(-9700, 0, -3400), 5000, 4500, 30);
     }
 
+    /**
+     * The village's forest: forty thousand trees of the wood's same few, on some 1.27 km by 1.58 km of ground west of
+     * the towers, its near edge some 25 m beyond them, about seven metres from tree to tree. Where it lies, how big
+     * and how thick are its author's.
+     */
+    public Grove forest() {
+        return new Grove(new Vec3(-79_200, 0, 0), 126_500, 158_100, 40_000);
+    }
+
+    /** Its woods: the small wood beside the lake, and the forest. */
+    public List<Grove> woods() {
+        return List.of(grove(), forest());
+    }
+
     /** Where each house stands, for the one half melon that is drawn once for each. */
     /**
      * Its tall brick towers: two west of the yards on the left of the lane and two south-west of the wood, so that
@@ -109,7 +123,7 @@ public record Village(int homes) {
 
     /**
      * Everything of the village that is in the way: every yard's wall, every house, the lake's kerb, every car
-     * in the car park, and the trunk of every tree in the wood.
+     * in the car park, and the trunk of every tree in the woods.
      */
     public Obstacles inTheWay() {
         final List<Block> blocks = new ArrayList<>();
@@ -119,7 +133,7 @@ public record Village(int homes) {
         }
         blocks.addAll(lake().inTheWay());
         blocks.addAll(carPark().inTheWay());
-        blocks.addAll(grove().inTheWay());
+        woods().forEach(wood -> blocks.addAll(wood.inTheWay()));
         towers().forEach(tower -> blocks.addAll(tower.walls().inTheWay()));
         woodCars().forEach(car -> blocks.addAll(car.inTheWay()));
         return new Obstacles(blocks);

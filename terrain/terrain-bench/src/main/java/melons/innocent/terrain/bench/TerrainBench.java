@@ -1,5 +1,10 @@
 package melons.innocent.terrain.bench;
 
+import melons.innocent.terrain.drawn.Painting;
+import melons.innocent.terrain.drawn.ByMaterials;
+import melons.innocent.terrain.drawn.ByFeatures;
+import melons.innocent.terrain.drawn.Plainly;
+
 import com.example.fxsuite.texture.materials.Materials;
 import com.example.fxsuite.texture.materials.Shades;
 import com.example.fxsuite.vulkan.device.Canvas;

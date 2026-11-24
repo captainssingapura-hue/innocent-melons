@@ -29,24 +29,43 @@ final class Gathered {
 
     private final List<Stood> all = new ArrayList<>();
 
-    /** {@code mesh} added, standing where {@code placed} says, read as a look laid out by {@code laid} is told. */
-    void stood(final Laid laid, final Sent mesh, final Filling placed) {
+    /**
+     * {@code mesh} added once for each of {@code copies}, each standing where {@code placed} says the whole does,
+     * after its copy has taken it there: read as a look laid out by {@code laid} is told.
+     */
+    void stood(final Laid laid, final Sent mesh, final Filling placed, final List<Filling> copies) {
         if (!placed.layout().equals(laid.draw())) {
             throw new IllegalArgumentException("a thing is told what is laid out as " + laid.draw() + ", not as "
                     + placed.layout());
         }
         final Structured solid = mesh.solid().orElseThrow(() -> new IllegalStateException(
                 "the mesh was not kept for rays to be asked of"));
-        final ByteBuffer told = placed.filled();
-        final int at = placed.layout().blockAt(laid.stands());
-        final float[] rows = new float[ROWS * ACROSS];
-        for (int row = 0; row < ROWS; row++) {
+        final double[] whole = matrix(placed.filled(), placed.layout().blockAt(laid.stands()));
+        for (final Filling copy : copies) {
+            final double[] each = matrix(copy.filled(), 0);
+            final float[] rows = new float[ROWS * ACROSS];
+            for (int row = 0; row < ROWS; row++) {
+                for (int across = 0; across < ACROSS; across++) {
+                    double sum = 0;
+                    for (int k = 0; k < ACROSS; k++) {
+                        sum += whole[row * ACROSS + k] * each[k * ACROSS + across];
+                    }
+                    rows[row * ACROSS + across] = (float) sum;
+                }
+            }
+            all.add(new Stood(solid.address(), rows));
+        }
+    }
+
+    /** The matrix told from {@code at} on in {@code told}, a column at a time: as rows, four numbers to a row. */
+    private double[] matrix(final ByteBuffer told, final int at) {
+        final double[] rows = new double[ACROSS * ACROSS];
+        for (int row = 0; row < ACROSS; row++) {
             for (int across = 0; across < ACROSS; across++) {
-                // told a column at a time, four numbers to a column; written a row at a time
                 rows[row * ACROSS + across] = told.getFloat(at + Float.BYTES * (across * ACROSS + row));
             }
         }
-        all.add(new Stood(solid.address(), rows));
+        return rows;
     }
 
     /** How many things were gathered. */

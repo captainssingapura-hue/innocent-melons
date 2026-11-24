@@ -1,5 +1,7 @@
 package melons.innocent.terrain.bench;
 
+import melons.innocent.terrain.drawn.Painting;
+
 import melons.innocent.terrain.Extent;
 import melons.innocent.terrain.Ground;
 import melons.innocent.terrain.Sample;

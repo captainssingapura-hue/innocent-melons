@@ -39,7 +39,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * trunks standing on one another, turned every way and of different sizes. It lies across the lake from the car
  * park, clear of the lake's kerb. The engine's own avatar, running at a tree, is stopped by its trunk. And the
  * whole is drawn on the card with its shadows, from the sky and from among the trees, with nothing said by the
- * validation layer; how long a frame of it takes is told, since every tree is drawn as finely as it is grown.
+ * validation layer; how long a frame of it takes is told, each tree at the stage its distance calls for, and again
+ * with every tree as finely as it is grown.
  */
 class GroveTest {
 
@@ -109,16 +110,37 @@ class GroveTest {
                             folder.resolve("wood-from-the-sky" + found + ".png").toFile());
                     ImageIO.write(pictured(canvas, place, among, laid, shadows, by).image(), "png",
                             folder.resolve("wood-among-the-trees" + found + ".png").toFile());
-                    final long began = System.nanoTime();
-                    for (int frame = 0; frame < 20; frame++) {
-                        pictured(canvas, place, above, laid, shadows, by);
-                    }
                     System.out.printf("WOOD: a frame of the whole village, shadows found by %s, %.1f ms%n",
-                            by.said(), (System.nanoTime() - began) / 1e6 / 20);
+                            by.said(), timed(canvas, place, above, laid, shadows, by));
                 }
+            }
+            // the same again with every tree held as finely as it is grown, as the wood was drawn before its stages
+            System.setProperty("bench.trees.stage", "fine");
+            try (Place place = new VillagePlace(card, laid); Shaded shadows = new Shaded(card, laid, 4096)) {
+                final Camera above = new Orbit(grove.middle().plus(new Vec3(0, 600, 0)), 200, 24, 9000)
+                        .camera(48, 10);
+                for (final Shadowing by : shadows.offered()) {
+                    System.out.printf("WOOD: the same, every tree drawn as grown, shadows found by %s, %.1f ms%n",
+                            by.said(), timed(canvas, place, above, laid, shadows, by));
+                }
+            } finally {
+                System.clearProperty("bench.trees.stage");
             }
             assertEquals(List.of(), card.heard(), "the validation layer has nothing to say");
         }
+    }
+
+    /** How long a frame of the place takes, in thousandths of a second: forty frames, after five to warm up. */
+    private double timed(final Canvas canvas, final Place place, final Camera camera, final Laid laid,
+                         final Shaded shadows, final Shadowing by) {
+        for (int frame = 0; frame < 5; frame++) {
+            pictured(canvas, place, camera, laid, shadows, by);
+        }
+        final long began = System.nanoTime();
+        for (int frame = 0; frame < 40; frame++) {
+            pictured(canvas, place, camera, laid, shadows, by);
+        }
+        return (System.nanoTime() - began) / 1e6 / 40;
     }
 
     /** The place as {@code camera} sees it by day, with its shadows about the wood, found {@code by}. */

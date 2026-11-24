@@ -10,9 +10,13 @@ import java.util.List;
  * The wood of a tree as one mesh: each bough a round bar that thins as the bough does, bending where the bough
  * bends, closed at its far end. A thick bough is round in many flat sides and a twig in few, since a twig is
  * never seen so close that it matters. Where a bough forks, the two that leave it begin inside it, so nothing
- * shows between them.
+ * shows between them. For a tree seen from further off, the wood may be rounded in so many times fewer sides
+ * ({@code fewer}), never fewer than three.
  */
-public record Wooded(List<Bough> boughs) {
+public record Wooded(List<Bough> boughs, int fewer) {
+
+    /** The fewest flat sides a bough is round in. */
+    private static final int FEWEST = 3;
 
     private static final double FULL = 2 * Math.PI;
     /**
@@ -24,6 +28,14 @@ public record Wooded(List<Bough> boughs) {
 
     public Wooded {
         boughs = List.copyOf(boughs);
+        if (fewer < 1) {
+            throw new IllegalArgumentException("wood is rounded in as many sides as grown or fewer, not " + fewer);
+        }
+    }
+
+    /** {@code boughs}, rounded in as many sides as grown. */
+    public Wooded(final List<Bough> boughs) {
+        this(boughs, 1);
     }
 
     /** The wood of {@code tree}. */
@@ -57,7 +69,7 @@ public record Wooded(List<Bough> boughs) {
      * marks have no seam where the way round begins again.
      */
     private void barred(final Forming forming, final Bough bough, final double own) {
-        final int sides = sides(bough.thick().getFirst());
+        final int sides = Math.max(FEWEST, sides(bough.thick().getFirst()) / fewer);
         final int count = bough.points().size();
         final int[] rings = new int[count];
         Vec3 across = null;

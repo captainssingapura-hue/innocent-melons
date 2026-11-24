@@ -53,7 +53,7 @@ record Piped(Reach reach, Compiler compiler) {
             final VkGraphicsPipelineCreateInfo.Buffer asked = VkGraphicsPipelineCreateInfo.calloc(1, stack)
                     .sType$Default().pNext(fixed.drawnOn(colours).address())
                     .pStages(stages(modules, stack))
-                    .pVertexInputState(taken(laid.point(), fields(laid, colours), stack))
+                    .pVertexInputState(taken(laid, fields(laid, colours), stack))
                     .pInputAssemblyState(fixed.triangles()).pViewportState(fixed.sized())
                     .pRasterizationState(fixed.facing()).pMultisampleState(fixed.sampledOnce())
                     .pDepthStencilState(fixed.nearest(mixed)).pColorBlendState(fixed.written(colours, mixed))
@@ -85,13 +85,21 @@ record Piped(Reach reach, Compiler compiler) {
         return stages;
     }
 
-    /** How a mesh's points are taken in: packed as {@code point} says, each field where its shader looks for it. */
-    private VkPipelineVertexInputStateCreateInfo taken(final Layout point, final List<String> only,
+    /**
+     * How a mesh's points are taken in, packed as {@code laid}'s point says, each field where its shader looks for
+     * it; and, from a second run of bytes, each copy drawn, packed as its copy says, from where the shader looks for
+     * it on, a matrix a column at a time.
+     */
+    private VkPipelineVertexInputStateCreateInfo taken(final Laid laid, final List<String> only,
                                                        final MemoryStack stack) {
-        final VkVertexInputBindingDescription.Buffer each = VkVertexInputBindingDescription.calloc(1, stack)
-                .binding(0).stride(point.packedBytes()).inputRate(VK_VERTEX_INPUT_RATE_VERTEX);
+        final Layout point = laid.point();
+        final Layout copy = laid.copy();
+        final VkVertexInputBindingDescription.Buffer each = VkVertexInputBindingDescription.calloc(2, stack);
+        each.get(0).binding(0).stride(point.packedBytes()).inputRate(VK_VERTEX_INPUT_RATE_VERTEX);
+        each.get(1).binding(1).stride(copy.packedBytes()).inputRate(VK_VERTEX_INPUT_RATE_INSTANCE);
+        final int copied = copy.fields().stream().mapToInt(field -> columns(field.kind())).sum();
         final VkVertexInputAttributeDescription.Buffer fields = VkVertexInputAttributeDescription
-                .calloc(only.size(), stack);
+                .calloc(only.size() + copied, stack);
         int told = 0;
         for (int place = 0; place < point.fields().size(); place++) {
             final Field field = point.fields().get(place);
@@ -100,8 +108,22 @@ record Piped(Reach reach, Compiler compiler) {
                         .offset(point.packedAt(field.name()));
             }
         }
+        int place = laid.copyPlace();
+        for (final Field field : copy.fields()) {
+            for (int column = 0; column < columns(field.kind()); column++) {
+                final boolean matrix = field.kind() == Kind.MATRIX;
+                fields.get(told++).location(place++).binding(1)
+                        .format(format(matrix ? Kind.QUAD : field.kind()))
+                        .offset(copy.packedAt(field.name()) + column * Kind.QUAD.bytes());
+            }
+        }
         return VkPipelineVertexInputStateCreateInfo.calloc(stack).sType$Default()
                 .pVertexBindingDescriptions(each).pVertexAttributeDescriptions(fields);
+    }
+
+    /** How many places a field of {@code kind} takes in: a matrix four, a column in each; anything else one. */
+    private int columns(final Kind kind) {
+        return kind == Kind.MATRIX ? Kind.MATRIX.numbers() / Kind.QUAD.numbers() : 1;
     }
 
     private int format(final Kind kind) {

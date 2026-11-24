@@ -5,6 +5,7 @@ import com.example.fxsuite.vulkan.space.Vec3;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkAccelerationStructureBuildGeometryInfoKHR;
 import org.lwjgl.vulkan.VkAccelerationStructureBuildRangeInfoKHR;
+import org.lwjgl.vulkan.VkBufferCopy;
 import org.lwjgl.vulkan.VkBufferImageCopy;
 import org.lwjgl.vulkan.VkCommandBuffer;
 import org.lwjgl.vulkan.VkImageMemoryBarrier;
@@ -147,6 +148,14 @@ final class Strokes {
             final VkAccelerationStructureBuildRangeInfoKHR.Buffer all = VkAccelerationStructureBuildRangeInfoKHR
                     .calloc(1, stack).primitiveCount(count);
             vkCmdBuildAccelerationStructuresKHR(commands, asked, stack.pointers(all.address()));
+        }
+    }
+
+    /** All of {@code from}'s bytes copied into {@code into}, which holds as many. */
+    void copied(final Bytes from, final Bytes into) {
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            vkCmdCopyBuffer(commands, from.buffer().raw(), into.buffer().raw(),
+                    VkBufferCopy.calloc(1, stack).size(from.size()));
         }
     }
 

@@ -1,6 +1,7 @@
 package com.example.fxsuite.vulkan.render;
 
 import com.example.fxsuite.vulkan.device.Card;
+import com.example.fxsuite.vulkan.device.Copies;
 import com.example.fxsuite.vulkan.device.Drawing;
 import com.example.fxsuite.vulkan.device.Pass;
 import com.example.fxsuite.vulkan.layout.Filling;
@@ -67,6 +68,19 @@ public final class Looked implements AutoCloseable {
                 .with(PLACED, camera.placed(new Vec3(0, 0, 0)).times(stands).columns())
                 .with(COARSENED, coarsened)
                 .with(TINT, tint.x(), tint.y(), tint.z()));
+    }
+
+    /**
+     * {@code form} drawn as every one of {@code copies} in one draw, each where its copy takes it from its own frame,
+     * the whole standing as {@code stands} says, otherwise as above. Copies placed relative to a point near them, and
+     * that point said by {@code stands}, are drawn as steadily far from the world's middle as near it.
+     */
+    public void drawn(final Pass pass, final Shaped form, final Mat4 stands, final Camera camera,
+                      final double coarsened, final Vec3 tint, final Copies copies) {
+        pass.draw(drawing, form.sent(), new Filling(laid.draw())
+                .with(PLACED, camera.placed(new Vec3(0, 0, 0)).times(stands).columns())
+                .with(COARSENED, coarsened)
+                .with(TINT, tint.x(), tint.y(), tint.z()), copies);
     }
 
     @Override

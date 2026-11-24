@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.terrain</groupId>
+        <artifactId>terrain</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>terrain-drawn</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        The land on the card, for every bench and every flight that shows it: its tiles built away from the card from
+        the ground their level is seen as, put on the card within a budget and kept there, drawn in the lab's
+        materials, painted plainly, by the land's features, or by what the lab has for them, with its water. Which
+        tiles, and how fine, is for whoever shows the land to say. No JavaFX and no engine.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>melons.innocent.terrain</groupId>
+            <artifactId>terrain-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.terrain</groupId>
+            <artifactId>terrain-tiles</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-render</artifactId>
+        </dependency>
+        <!-- the lab's materials: what the land is drawn in; the engine, which the lab reaches through the renderer's
+             bench for the avatar's tones, is left out, as no material the land is drawn in needs it -->
+        <dependency>
+            <groupId>com.example.fxsuite.texture</groupId>
+            <artifactId>tx-materials</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.example.fxsuite</groupId>
+                    <artifactId>fxsuite-avatar-demo</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- a country to test the paintings on -->
+        <dependency>
+            <groupId>melons.innocent.terrain</groupId>
+            <artifactId>melon-country</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>-Dorg.lwjgl.util.DebugAllocator=true --enable-native-access=ALL-UNNAMED</argLine>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
