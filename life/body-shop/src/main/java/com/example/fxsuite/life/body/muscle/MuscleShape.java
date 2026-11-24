@@ -190,6 +190,14 @@ public record MuscleShape() implements StatelessFunctionalObject {
         if (Math.abs(wanted - drawn) <= 1e-9 * drawn) {
             return 1;
         }
+        if (m.form() instanceof MuscleForm.Spread) {
+            // a sheet's width is its lines' whatever its bulk, so what it holds goes as its depth
+            double k = wanted / drawn;
+            for (int round = 0; round < 4; round++) {
+                k *= wanted / smoothed(m, on, way, ends, k);
+            }
+            return k;
+        }
         double target = asDrawn(m, on) * wanted / drawn;
         double k = frustums(m, on, target);
         for (int round = 0; round < 3; round++) {
