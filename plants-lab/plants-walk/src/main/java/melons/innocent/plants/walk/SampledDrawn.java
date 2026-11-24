@@ -55,8 +55,6 @@ public final class SampledDrawn implements AutoCloseable {
     private static final long SENDING = 4_000_000;
     /** Half a tall tree's height, in centimetres: a square's middle is taken to be so far up. */
     private static final double HALF = 750;
-    /** Within so far of the eye a square is drawn whether in view or not, in centimetres. */
-    private static final double CLOSE = 6_000;
     /** A level no square has used for so many frames may go when the card is over what it may hold. */
     private static final int UNUSED = 240;
     private static final String COPIED = "copied";
@@ -129,16 +127,10 @@ public final class SampledDrawn implements AutoCloseable {
             for (final Kind kind : Kind.values()) {
                 barks.put(kind, new Looked(card, new Look(laid, new Shades().of(new Barks().of(kind)))));
             }
-            final Set<Stage> first = new HashSet<>(beforehand ? reaches.levels() : Set.of());
-            first.add(Stage.WHOLE);
-            if (shadows > 0) {
-                first.add(Stage.BOUGHS);
-            }
             final List<Key> keys = new ArrayList<>();
             for (int sample = 0; sample < endless.samples().count(); sample++) {
-                for (final Stage level : first) {
-                    keys.add(new Key(sample, level));
-                }
+                final int which = sample;
+                reaches.first(beforehand, shadows > 0).forEach(level -> keys.add(new Key(which, level)));
             }
             // baked a few at once, on every thread there is to bake on, and each put on the card here as it comes:
             // no more at once, since a sample's finest mesh is large while it is still being put together
@@ -195,12 +187,17 @@ public final class SampledDrawn implements AutoCloseable {
         final List<Endless.Seen> missing = new ArrayList<>();
         for (final Endless.Seen seen : inReach) {
             final Vec3 middle = endless.middle(seen.across(), seen.along());
+            final boolean casts = seen.away() < shadows;
+            final boolean shows = view.holds(middle.plus(new Vec3(0, HALF, 0)), Math.hypot(side, HALF));
+            if (!casts && !shows) {
+                continue;
+            }
             final Filling copy = new Filling(laid.copy()).with(COPIED, new Mat4(middle.minus(anchor))
                     .times(endless.turned(seen.quarters())).columns());
-            if (seen.away() < shadows) {
+            if (casts) {
                 kept.get(new Key(seen.sample(), Stage.BOUGHS)).casting.add(copy);
             }
-            if (seen.away() > CLOSE && !view.holds(middle.plus(new Vec3(0, HALF, 0)), Math.hypot(side, HALF))) {
+            if (!shows) {
                 continue;
             }
             if (!kept.containsKey(new Key(seen.sample(), seen.level()))) {
@@ -289,12 +286,12 @@ public final class SampledDrawn implements AutoCloseable {
      * instead, each as its sample's boughs.
      */
     public void drawn(final Pass pass, final Camera camera) {
-        final Mat4 stands = new Mat4(anchor);
+        // every square stands alike but for its copy, so what a draw is told is worked out once for them all
+        final Filling told = barks.get(Kind.OAK).told(new Mat4(anchor), camera, 1, new Vec3(1, 1, 1));
         kept.values().forEach(one -> {
             final Copies these = pass.gathers() ? one.cast : one.shown;
             if (these.count() > 0) {
-                one.shapes.forEach((kind, shape) -> barks.get(kind).drawn(pass, shape, stands, camera, 1,
-                        new Vec3(1, 1, 1), these));
+                one.shapes.forEach((kind, shape) -> barks.get(kind).drawn(pass, shape, told, these));
             }
         });
     }

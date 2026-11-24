@@ -78,21 +78,39 @@ public record Endless(Samples samples, long chance) {
      * in is at nothing and from high above every square is far.
      */
     public List<Seen> seen(final Vec3 eye, final Reaches reaches) {
+        return seen(eye, reaches, new Plainly());
+    }
+
+    /**
+     * The same as {@code looking} has it: every square in reach still, since whatever is in sight is drawn, each at
+     * the level it will need at the nearest the eye comes to it shortly, or the finest the looking allows where
+     * that is coarser. How far off a square is said to be is how far off it is now.
+     */
+    public List<Seen> seen(final Vec3 eye, final Reaches reaches, final Looking looking) {
         final double side = samples.side();
         final double far = reaches.far() * 100;
         final List<Seen> seen = new ArrayList<>();
         for (long along = (long) Math.floor((eye.z() - far) / side); along * side <= eye.z() + far; along++) {
             for (long across = (long) Math.floor((eye.x() - far) / side); across * side <= eye.x() + far; across++) {
-                final double x = Math.max(0, Math.max(across * side - eye.x(), eye.x() - (across + 1) * side));
-                final double z = Math.max(0, Math.max(along * side - eye.z(), eye.z() - (along + 1) * side));
-                final double away = Math.sqrt(x * x + z * z + eye.y() * eye.y());
-                final long a = across;
-                final long b = along;
-                reaches.level(away).ifPresent(level -> seen.add(new Seen(a, b, sample(a, b), quarters(a, b), away,
-                        level)));
+                final double away = away(eye, across, along);
+                if (away > far) {
+                    continue;
+                }
+                final Stage needed = reaches.level(away(looking.soon(eye, middle(across, along)), across, along))
+                        .orElse(Stage.WHOLE);
+                seen.add(new Seen(across, along, sample(across, along), quarters(across, along), away,
+                        needed.ordinal() < looking.finest().ordinal() ? looking.finest() : needed));
             }
         }
         return seen;
+    }
+
+    /** How far the nearest of the square {@code across}, {@code along}, on the ground, is from {@code eye}. */
+    private double away(final Vec3 eye, final long across, final long along) {
+        final double side = samples.side();
+        final double x = Math.max(0, Math.max(across * side - eye.x(), eye.x() - (across + 1) * side));
+        final double z = Math.max(0, Math.max(along * side - eye.z(), eye.z() - (along + 1) * side));
+        return Math.sqrt(x * x + z * z + eye.y() * eye.y());
     }
 
     /** The square's two numbers and the forest's own mixed into one, every bit of it depending on all of them. */

@@ -30,18 +30,17 @@ public record Reaches(double fine, double twigs, double boughs, double limbs, do
     }
 
     /**
-     * As the run says: {@code -Dforest.fine=} (25), {@code -Dforest.twigs=} (60), {@code -Dforest.boughs=} (300),
-     * {@code -Dforest.limbs=} (300) and {@code -Dforest.far=} (300), each in metres. Unless said, then, there are
-     * three levels and a cut-off: the finest within twenty-five metres, twigs gone to sixty, boughs to three hundred,
-     * and nothing beyond, which is for an eye kept low among the trunks, where little further off than that is to be
-     * seen between them.
+     * As the run says: {@code -Dforest.fine=} (60), {@code -Dforest.twigs=} (120), {@code -Dforest.boughs=} (300),
+     * {@code -Dforest.limbs=} (500) and {@code -Dforest.far=} (1200), each in metres. Unless said, then: the finest
+     * within sixty metres, twigs gone to a hundred and twenty, boughs to three hundred, limbs to five hundred and trunks alone
+     * to twelve hundred, as far as a trunk is to be made out at all, and nothing beyond.
      */
     public Reaches() {
-        this(Double.parseDouble(System.getProperty("forest.fine", "25")),
-                Double.parseDouble(System.getProperty("forest.twigs", "60")),
+        this(Double.parseDouble(System.getProperty("forest.fine", "60")),
+                Double.parseDouble(System.getProperty("forest.twigs", "120")),
                 Double.parseDouble(System.getProperty("forest.boughs", "300")),
-                Double.parseDouble(System.getProperty("forest.limbs", "300")),
-                Double.parseDouble(System.getProperty("forest.far", "300")));
+                Double.parseDouble(System.getProperty("forest.limbs", "500")),
+                Double.parseDouble(System.getProperty("forest.far", "1200")));
     }
 
     /** The levels in use: each that reaches further than the finer one before it. */
@@ -54,6 +53,20 @@ public record Reaches(double fine, double twigs, double boughs, double limbs, do
             }
         }
         return levels;
+    }
+
+    /**
+     * The levels a forest has on the card before it is first drawn: trunks alone always, so no square is ever
+     * missing; boughs where shadows are cast, since it is as its boughs that a square stands for rays; and every
+     * level in use, where everything is baked {@code beforehand}.
+     */
+    public Set<Stage> first(final boolean beforehand, final boolean shadowed) {
+        final Set<Stage> first = beforehand ? levels() : EnumSet.noneOf(Stage.class);
+        first.add(Stage.WHOLE);
+        if (shadowed) {
+            first.add(Stage.BOUGHS);
+        }
+        return first;
     }
 
     /** The level a sample so many centimetres from the eye is drawn at; none, beyond the furthest. */

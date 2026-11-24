@@ -3,7 +3,9 @@ package com.example.fxsuite.vulkan.bench;
 import com.example.fxsuite.avatar.sim.Obstacles;
 import com.example.fxsuite.vulkan.device.Pass;
 import com.example.fxsuite.vulkan.view.Camera;
+import melons.innocent.core.motion.Motion;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -30,6 +32,21 @@ public interface Place extends AutoCloseable {
      * taken off it, for that view, while nothing is being drawn. Most places stand as they are, and do nothing here.
      */
     default void readied(final Camera camera) {
+    }
+
+    /**
+     * Its figures that may be set while it is walked, each shown as a slider in the walk's window and read by the
+     * place as it readies a frame: none, of most.
+     */
+    default List<Dial> dials() {
+        return List.of();
+    }
+
+    /**
+     * Told how whoever looks at it is moving, as the core engine detects it, before it is readied for a frame: for
+     * a place that draws by how sharply a thing can be seen. Nothing is done with it, by most.
+     */
+    default void moving(final Motion observer) {
     }
 
     /**

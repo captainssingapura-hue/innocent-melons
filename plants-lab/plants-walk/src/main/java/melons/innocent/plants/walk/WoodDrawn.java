@@ -84,6 +84,8 @@ public final class WoodDrawn implements AutoCloseable {
     private Planting planting;
     /** The coarsest stage a tree left to its distance is drawn at. */
     private Stage coarsest = Stage.WHOLE;
+    /** The finest stage any tree is drawn at, however near: the finest there is, unless a cap says another. */
+    private Stage finest = Stage.FINE;
     /** The camera the trees were last chosen for. */
     private Camera last;
 
@@ -145,6 +147,27 @@ public final class WoodDrawn implements AutoCloseable {
         this.last = null;
     }
 
+    /**
+     * Each tree told the stage it is drawn at from now on, in the order planted, whatever its distance: for a
+     * forest drawn in squares, whose trees drawn one by one must change as the squares beside them do.
+     */
+    public void told(final List<Stage> stages) {
+        if (planting.told(stages)) {
+            this.last = null;
+        }
+    }
+
+    /**
+     * No tree is drawn finer than {@code stage} from now on, however near and whatever it is held at: a cap, for
+     * finding by eye which change of stage it is that is seen. The finest there is caps nothing.
+     */
+    public void noFinerThan(final Stage stage) {
+        if (stage != finest) {
+            this.finest = stage;
+            this.last = null;
+        }
+    }
+
     /** The wood planted afresh as {@code planted}: the trees as grown, and what is on the card, kept. */
     public void replanted(final List<Planted> planted) {
         this.planting = new Planting(planted, trees.stream().map(StagedTree::height).toList(), laid);
@@ -175,7 +198,7 @@ public final class WoodDrawn implements AutoCloseable {
             return;
         }
         last = camera;
-        final Planting.Chosen chosen = planting.chosen(camera, held, trees.size(), coarsest);
+        final Planting.Chosen chosen = planting.chosen(camera, held, trees.size(), coarsest, finest);
         for (int grown = 0; grown < trees.size(); grown++) {
             far.get(grown).filled(chosen.far().get(grown));
             for (final Stage stage : Stage.values()) {

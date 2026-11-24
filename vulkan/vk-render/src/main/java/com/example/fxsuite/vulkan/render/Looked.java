@@ -83,6 +83,23 @@ public final class Looked implements AutoCloseable {
                 .with(TINT, tint.x(), tint.y(), tint.z()), copies);
     }
 
+    /**
+     * What a thing drawn with this look is told, standing as {@code stands} says and seen by {@code camera}, to be
+     * handed to {@link #drawn(Pass, Shaped, Filling, Copies)}: worked out once for however many forms are then
+     * drawn standing alike, with this look or any other laid out as it is.
+     */
+    public Filling told(final Mat4 stands, final Camera camera, final double coarsened, final Vec3 tint) {
+        return new Filling(laid.draw())
+                .with(PLACED, camera.placed(new Vec3(0, 0, 0)).times(stands).columns())
+                .with(COARSENED, coarsened)
+                .with(TINT, tint.x(), tint.y(), tint.z());
+    }
+
+    /** {@code form} drawn as every one of {@code copies} in one draw, told what {@code told} says. */
+    public void drawn(final Pass pass, final Shaped form, final Filling told, final Copies copies) {
+        pass.draw(drawing, form.sent(), told, copies);
+    }
+
     @Override
     public void close() {
         drawing.close();

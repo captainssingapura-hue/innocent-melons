@@ -55,6 +55,8 @@ final class Planting {
     private final List<Filling> fromTheMiddle = new ArrayList<>();
     private final Staging staging = new Staging(FIELD, PIXELS);
     private final Stage[] at;
+    /** The stage each tree is told to be drawn at, in the order planted; none told, where it is empty. */
+    private Stage[] told = new Stage[0];
     private final int[] standOf;
     private final Stands stands;
     private final double[] switches;
@@ -94,11 +96,28 @@ final class Planting {
     }
 
     /**
+     * Each tree told the stage it is drawn at, in the order planted, whatever its distance: as a forest of squares
+     * tells the trees of a square that cannot be drawn as one, so they change with the squares beside them and not
+     * by distances of their own. A tree told its coarsest stage is drawn as a far one. Whether anything changed.
+     */
+    boolean told(final List<Stage> stages) {
+        if (stages.size() != planted.size()) {
+            throw new IllegalArgumentException("a stage to each tree planted: " + stages.size() + " for "
+                    + planted.size());
+        }
+        final Stage[] now = stages.toArray(new Stage[0]);
+        final boolean changed = !Arrays.equals(now, told);
+        told = now;
+        return changed;
+    }
+
+    /**
      * Each tree chosen for {@code camera}, {@code held} at one stage where the whole wood is, of {@code grown}; no
      * tree left to its distance drawn coarser than {@code coarsest}, and none turned far unless that is the
-     * coarsest stage there is.
+     * coarsest stage there is. None is drawn finer than {@code finest}, whatever it is held at or called for.
      */
-    Chosen chosen(final Camera camera, final Optional<Stage> held, final int grown, final Stage coarsest) {
+    Chosen chosen(final Camera camera, final Optional<Stage> held, final int grown, final Stage coarsest,
+                  final Stage finest) {
         final boolean[] shown = stands.shown(camera);
         final InView view = new InView(camera, KEPT * METRE);
         final List<List<Filling>> far = new ArrayList<>();
@@ -115,7 +134,8 @@ final class Planting {
             final WoodDrawn.Planted one = planted.get(tree);
             off[tree] = middleOf(one).minus(camera.eye()).length();
             final boolean free = held.isEmpty() && one.held().isEmpty() && coarsest == Stage.WHOLE;
-            afar[tree] = free && off[tree] > switches[tree] * (afar[tree] ? BACK : 1);
+            afar[tree] = told.length > 0 ? told[tree] == Stage.WHOLE
+                    : free && off[tree] > switches[tree] * (afar[tree] ? BACK : 1);
             if (!afar[tree]) {
                 // distances are positive, so their bits sort as they do; the tree's number in the low bits
                 keys[counted++] = (Double.doubleToLongBits(off[tree]) & ~NUMBERED) | tree;
@@ -130,10 +150,11 @@ final class Planting {
         for (int k = counted - 1; k >= 0; k--) {
             final int tree = (int) (keys[k] & NUMBERED);
             final WoodDrawn.Planted one = planted.get(tree);
-            at[tree] = one.held().or(() -> held).orElseGet(() -> {
+            final Stage left = told.length > 0 ? told[tree] : one.held().or(() -> held).orElseGet(() -> {
                 final Stage called = staging.of(tree, off[tree], one.times());
                 return called.ordinal() > coarsest.ordinal() ? coarsest : called;
             });
+            at[tree] = left.ordinal() < finest.ordinal() ? finest : left;
             if (view.holds(middleOf(one), tall(one))) {
                 near.get(one.grown()).get(at[tree].ordinal()).add(fromTheMiddle.get(tree));
             }

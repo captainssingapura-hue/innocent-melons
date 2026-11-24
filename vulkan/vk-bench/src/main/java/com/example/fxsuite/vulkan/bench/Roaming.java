@@ -10,8 +10,10 @@ import com.example.fxsuite.vulkan.render.Overlay;
 import com.example.fxsuite.vulkan.shade.Laid;
 import com.example.fxsuite.vulkan.space.Vec3;
 import com.example.fxsuite.vulkan.view.Camera;
+import melons.innocent.core.motion.Motion;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * What moves the figures a walk draws: stepped in fixed steps, each as its source tells it, and read between its
@@ -51,6 +53,11 @@ public interface Roaming {
 
     /** Every figure's parts, as they are drawn. */
     List<Courier.Placed> figures(double blend);
+
+    /** How the lead is moving, as the core engine detects it from the run's steps: not known, of most. */
+    default Optional<Motion> motion() {
+        return Optional.empty();
+    }
 
     /** What has happened since this was last asked, heard as the lead would hear it: nothing, of most. */
     default void heard(final Hearing hearing, final double blend) {

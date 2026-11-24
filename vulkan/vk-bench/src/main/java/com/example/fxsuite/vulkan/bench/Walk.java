@@ -195,7 +195,7 @@ public final class Walk {
              Overlay overlay = new Overlay(card, laid);
              Carded carded = new Carded(roaming, card, laid);
              Hearing hearing = Hearing.open(roaming.ends() || settle >= 0)) {
-            final Guide guide = new Guide(asked, card.name(), roamer.keys());
+            final Guide guide = new Guide(asked, card.name(), roamer.keys(), place.dials());
             asked.offered(shadows.offered());
             try (Shown shown = new Shown(guide, beside, LEFT, TOP)) {
                 window.shown(LEFT + BESIDE, TOP);
@@ -309,6 +309,7 @@ public final class Walk {
      */
     private void frame(final Target target, final Staged staged, final Roaming roaming, final Camera camera,
                        final double blend) {
+        roaming.motion().ifPresent(staged.place()::moving);
         staged.place().readied(camera);
         staged.place().rearranged().ifPresent(roaming::inTheWay);
         final List<Courier.Placed> figures = roaming.figures(blend);

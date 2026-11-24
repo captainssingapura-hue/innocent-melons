@@ -3,14 +3,19 @@ package com.example.fxsuite.vulkan.bench;
 import com.example.fxsuite.avatar.hear.Hearing;
 import com.example.fxsuite.avatar.look.Gait;
 import com.example.fxsuite.avatar.sim.Avatar;
+import com.example.fxsuite.avatar.sim.Body;
 import com.example.fxsuite.avatar.sim.Obstacles;
 import com.example.fxsuite.vulkan.bench.subject.Bot;
 import com.example.fxsuite.vulkan.bench.subject.Courier;
+import com.example.fxsuite.vulkan.device.Pass;
+import com.example.fxsuite.vulkan.render.Overlay;
 import com.example.fxsuite.vulkan.space.Vec3;
 import com.example.fxsuite.vulkan.view.Camera;
+import melons.innocent.core.motion.Motion;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -21,6 +26,13 @@ import java.util.Optional;
  * lead does. Only the lead's run moves the sky's clock. The walk is over when the lead's run is.
  */
 public record Company(Run lead, Bot bot, Optional<Companion> companion) implements Roaming {
+
+    /** Where its figures are written over the picture, how large and how far apart, in the picture's own units. */
+    private static final double MARGIN = 0.06;
+    private static final double FOOT = -0.92;
+    private static final double LETTER = 0.045;
+    private static final double LINE = 0.08;
+    private static final double METRE = 100;
 
     /** A companion: its run, and the bot it is drawn as. */
     public record Companion(Run run, Bot bot) {
@@ -87,6 +99,31 @@ public record Company(Run lead, Bot bot, Optional<Companion> companion) implemen
                 Gait.of(shown, lead.following().yaw(), lead.following().lookUp()), lead.otherLeg()));
         all.addAll(others(blend));
         return all;
+    }
+
+    @Override
+    public Optional<Motion> motion() {
+        return Optional.of(lead.motion());
+    }
+
+    /**
+     * The lead's speed over the picture, as the core engine detects it from the run's steps, low on its left, and,
+     * flying, its height and the gear its jets are in with the fastest that gear goes: for flying by, since the
+     * fastest gear is twice the engine's own top speed.
+     */
+    @Override
+    public void overlaid(final Pass pass, final Overlay.Over over, final double blend) {
+        final Body body = lead.shown(blend).body();
+        final Vec3 green = new Vec3(0.35, 1, 0.45);
+        final Gear gear = lead.gear();
+        final double left = -over.aspect() + MARGIN;
+        over.text(pass, String.format(Locale.ROOT, "KMH %.0f", lead.motion().hourly()), left, FOOT, LETTER, green);
+        if (body.flying()) {
+            over.text(pass, String.format(Locale.ROOT, "GEAR %d OF %d  TOP %.0f", gear.ordinal() + 1,
+                    Gear.values().length, gear.fastest()), left, FOOT + LINE, LETTER, green);
+            over.text(pass, String.format(Locale.ROOT, "ALT %.0f M", -body.position().y() / METRE), left,
+                    FOOT + 2 * LINE, LETTER, green);
+        }
     }
 
     @Override

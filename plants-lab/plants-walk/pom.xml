@@ -40,6 +40,18 @@
             <groupId>com.example.fxsuite.texture</groupId>
             <artifactId>tx-materials</artifactId>
         </dependency>
+        <!-- the road works: a road's surface across it, which the forest's road is paved with -->
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>road-surface</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
+        <!-- the core engine: how sharply a thing is seen as its observer moves -->
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-visibility</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
         <!-- the curves a road is smoothed by -->
         <dependency>
             <groupId>melons.innocent.math</groupId>

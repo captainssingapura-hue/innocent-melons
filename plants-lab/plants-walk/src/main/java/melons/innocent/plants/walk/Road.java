@@ -20,8 +20,11 @@ import java.util.List;
  */
 public final class Road {
 
-    /** How far ahead of where it has been reached it is made, and how far behind that it is kept, in centimetres. */
-    private static final double AHEAD = 44_000;
+    /**
+     * How far ahead of where it has been reached it is made, which is as far ahead as a forest is ever drawn, and
+     * how far behind that it is kept, in centimetres.
+     */
+    private static final double AHEAD = 124_000;
     private static final double BEHIND = 30_000;
 
     private final Wandering wandering;

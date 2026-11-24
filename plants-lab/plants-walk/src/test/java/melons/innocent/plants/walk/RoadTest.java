@@ -58,7 +58,7 @@ class RoadTest {
         final Road road = new Road(new Wandering(new Random(11)));
         assertEquals(0, road.across(-20_000), "straight behind where the travelling begins");
         assertEquals(0, road.across(0));
-        assertTrue(road.has(40_000) && road.has(-30_000) && !road.has(50_000), "made some way ahead, and no more");
+        assertTrue(road.has(120_000) && road.has(-30_000) && !road.has(130_000), "made some way ahead, and no more");
         final double there = road.across(35_000);
         final double leaning = road.slope(35_000);
         double last = road.across(0);
@@ -72,7 +72,7 @@ class RoadTest {
         assertTrue(turned < 0.2, "it turns nowhere sharply: " + turned);
         assertTrue(road.reached(100_000), "made on as it is reached");
         assertFalse(road.reached(100_000), "and not again till it is reached further");
-        assertTrue(road.has(140_000) && !road.has(35_000), "ahead of where it was reached; the far past let go");
+        assertTrue(road.has(220_000) && !road.has(35_000), "ahead of where it was reached; the far past let go");
         assertThrows(IllegalArgumentException.class, () -> road.across(35_000));
         final Road again = new Road(new Wandering(new Random(11)));
         again.reached(20_000);

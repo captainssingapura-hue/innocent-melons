@@ -80,8 +80,9 @@ class EndlessForestTest {
                                 + " settled in %.1f s; %s; %s%n", set[0], set[1], set[2], named.get(view),
                                 (System.nanoTime() - timed) / 1e6 / 20, (settledAt - began) / 1e3, place.said(),
                                 card.memory().said());
-                        assertTrue(place.triangles() > 0 || low && camera.eye().y() > 30_000,
-                                "something of it drawn, unless it is cut off nearer than the eye is high");
+                        // at rest the forest is drawn all round only as far as its boughs go: from high above, nothing
+                        assertTrue(place.triangles() > 0 || camera.eye().y() > 30_000,
+                                "something of it drawn, unless the eye is higher than it is drawn far");
                         if (view == cameras.size() - 1) {
                             final int posts = place.rearranged().orElseThrow().blocks().size();
                             assertEquals(13 * 13 * 16, posts, "its trunks in the way round where the eye now is");

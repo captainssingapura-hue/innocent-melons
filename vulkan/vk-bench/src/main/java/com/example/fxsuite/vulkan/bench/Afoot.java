@@ -16,7 +16,8 @@ import java.util.Optional;
  * The engine's own avatar, moved by the engine's simulation, on its feet and on its jets: the walks' first way of
  * moving. Its lead starts where it is told, which is where {@code -Dbench.at=} says unless a bench says otherwise,
  * and is drawn as the bot {@code -Dbench.bot=} says (the man unless said); its jets take it no higher than its
- * {@code ceiling}, in metres, which is no limit unless a bench or {@code -Dbench.ceiling=} says one; a companion comes with it where {@code -Dbench.companion.script=} or {@code
+ * {@code ceiling}, in metres, which is no limit unless a bench or {@code -Dbench.ceiling=} says one, in one of five
+ * gears ({@link Gear}); a companion comes with it where {@code -Dbench.companion.script=} or {@code
  * -Dbench.companion.replay=} is told, starting where {@code -Dbench.companion.at=} says, drawn as {@code
  * -Dbench.companion.bot=} (the woman unless said).
  */
@@ -48,7 +49,9 @@ public record Afoot(String at, double ceiling) implements Roamer {
     public List<String> keys() {
         return List.of("In the card's window:", "  mouse: turn (Esc lets it go)", "  W, S: ahead and back",
                 "  A, D: sideways", "  Shift: walk", "  Space: jump",
-                "  F: fly, or land; flying, Space climbs and Ctrl sinks", "  Q, E: swing the view round; C: back behind",
+                "  F: fly, or land; flying, Space climbs and Ctrl sinks",
+                "  Shift with the up or down arrow: a higher or lower gear,", "    five from 20 to 150 km an hour",
+                "  Q, E: swing the view round; C: back behind",
                 "  scroll: nearer or further");
     }
 

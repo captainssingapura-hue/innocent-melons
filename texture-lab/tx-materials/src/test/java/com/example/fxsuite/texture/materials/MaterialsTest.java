@@ -25,8 +25,8 @@ class MaterialsTest {
     void fortyTwoLeavesUnderEightBranchesEveryNodeWithItsMeaning() {
         assertEquals(List.of(), tree.problems());
         assertEquals("materials", tree.name());
-        assertEquals(47, tree.leaves().size());
-        assertEquals(59, tree.nodes().size(), "the leaves, their eight branches, the three parts of two, and the root");
+        assertEquals(49, tree.leaves().size());
+        assertEquals(61, tree.nodes().size(), "the leaves, their eight branches, the three parts of two, and the root");
         for (final Node node : tree.nodes()) {
             assertFalse(tree.meaning(node).isBlank(), node.title() + " has its meaning");
         }
@@ -41,7 +41,8 @@ class MaterialsTest {
                 new Materials.Gold().lineage());
         assertEquals(List.of(new Materials.CommonRedBrick(), new Materials.ChineseGreyBrick(),
                 new Materials.Adobe(), new Materials.Rubble(),
-                new Materials.DressedStone(), new Materials.Concrete()), tree.under(new Materials.Masonry()));
+                new Materials.DressedStone(), new Materials.Concrete(), new Materials.Asphalt()),
+                tree.under(new Materials.Masonry()));
         assertEquals(List.of(new Materials.Water()), tree.under(new Materials.Liquid()));
     }
 
