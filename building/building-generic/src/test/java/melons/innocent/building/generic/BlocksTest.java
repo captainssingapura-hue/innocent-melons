@@ -56,8 +56,8 @@ class BlocksTest {
                 "blades 30 cm thick, none longer than 1.8 m");
         assertEquals(12 * (plan.walls().size() + plan.cores().size()),
                 block.solids(new Elements.BearingWall()).size());
-        assertEquals(1 + 11 * 7, block.solids(new Elements.Floor()).size(),
-                "a slab over each storey but the top, in seven pieces round the cores' two wells");
+        assertEquals(2 * (1 + 11 * 7), block.solids(new Elements.Floor()).size(),
+                "a slab over each storey but the top, in seven pieces round the cores' two wells, each finished");
         assertEquals(1, block.solids(new Elements.Roof()).size());
         final double[] size = size(block.solids());
         assertEquals(13_440, size[0], 1e-6, "as long as asked, its end pillars flush");

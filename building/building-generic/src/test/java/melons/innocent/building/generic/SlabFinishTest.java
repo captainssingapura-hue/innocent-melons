@@ -60,8 +60,11 @@ class SlabFinishTest {
         painted.addAll(block.solids(new Elements.Parapet()));
         painted.addAll(block.solids(new Elements.BearingWall()).stream()
                 .filter(s -> !s.tint().equals(Optional.of(Raised.CORES))).toList());
-        painted.addAll(block.solids(new Elements.Floor()));
+        final List<Solid> floors = block.solids(new Elements.Floor());
+        painted.addAll(floors.stream().filter(s -> !s.name().equals("floor finish")).toList());
         assertTrue(painted.stream().allMatch(s -> s.tint().equals(Optional.of(cream))), "painted all over");
+        assertTrue(floors.stream().filter(s -> s.name().equals("floor finish")).allMatch(s -> s.tint()
+                .equals(Optional.of(Raised.FLOORS))) && floors.size() % 2 == 0, "every floor finished in its own");
         assertTrue(block.solids(new Elements.BearingWall()).stream().anyMatch(s -> s.tint()
                 .equals(Optional.of(Raised.CORES))), "but its cores, in their own colour");
         assertTrue(block.solids(new Elements.Steps()).stream().allMatch(s -> s.tint()
