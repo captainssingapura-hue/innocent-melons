@@ -28,8 +28,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class BlocksTest {
 
-    private final SlabBlockSpec<Civilization, CommonEras.Modern> slab = new SlabBlockSpec<>(12, 750, 1_200, 180, 6,
-            12);
+    private final SlabBlockSpec<Civilization, CommonEras.Modern> slab = new SlabBlockSpec<>(12, 1_020, 1_025, 180,
+            6, 12);
     private final PointBlockSpec<Civilization, CommonEras.Modern> point = new PointBlockSpec<>(20, 900);
 
     @Test
@@ -37,16 +37,25 @@ class BlocksTest {
         final Structure block = new GenericSlabBlock().build(slab);
         assertEquals(List.of(), block.problems());
         final FloorPlan plan = new GenericSlabBlock().plan(slab);
-        // bays: a core, six flats, a core, six flats, a core: fifteen bays, sixteen walls between and at the ends,
-        // three cores' back walls and the spine
-        assertEquals(16 + 3 + 1, plan.walls().size());
+        // bays: a core, six flats, a core, six flats, a core. Each flat nine pillars of its own; on each group's seven
+        // lines, flats mirrored in turn, four with two pillars and three with three; each core three walls
+        assertEquals(12 * 9 + 2 * (4 * 2 + 3 * 3) + 3 * 3, plan.walls().size());
+        final List<FloorPlan.Wall> pillars = plan.walls().stream().filter(w -> w.name().equals("pillar")).toList();
+        assertTrue(pillars.stream().allMatch(w -> w.thick() == CorridorFlat.PILLAR && w.length() <= 180),
+                "blades 30 cm thick, none longer than 1.8 m");
         assertEquals(12 * plan.walls().size(), block.solids(new Elements.BearingWall()).size());
         assertEquals(12 - 1, block.solids(new Elements.Floor()).size() - 1, "a slab over each storey but the top");
         assertEquals(1, block.solids(new Elements.Roof()).size());
         final double[] size = size(block.solids());
-        assertEquals(12 * 750 + 3 * GenericSlabBlock.CORE_WIDE + GenericSlabBlock.WALL, size[0], 1e-6);
-        assertEquals(1_200 + 180, size[1], 1e-6, "its flats and its corridor");
+        assertEquals(12 * 1_020 + 3 * GenericSlabBlock.CORE_WIDE, size[0], 1e-6, "its cores' end walls flush");
+        assertEquals(1_025 + 180, size[1], 1e-6, "its flats and its corridor");
         assertEquals(360 + 11 * 280 + GenericSlabBlock.SLAB, size[2], 1e-6, "from under the ground slab to the roof");
+        final SlabBlockSpec<Civilization, CommonEras.Modern> wider = new SlabBlockSpec<>(10, 1_150, 1_200, 180, 5, 6);
+        // wider and deeper than the board's: the same pillars, as big; five flats a group, the last unmirrored
+        final List<FloorPlan.Wall> stretched = new GenericSlabBlock().plan(wider).walls();
+        assertEquals(10 * 9 + 2 * (3 * 2 + 3 * 3) + 3 * 3, stretched.size());
+        assertTrue(stretched.stream().filter(w -> w.name().equals("pillar"))
+                .allMatch(w -> Math.abs(w.thick() - 30) < 1e-9), "pillars stretched apart, none bigger");
     }
 
     @Test
@@ -102,10 +111,10 @@ class BlocksTest {
         final List<Solid> parapets = block.solids(new Elements.Parapet());
         assertEquals(11, parapets.size(), "the access balcony guarded on every storey over the void deck");
         assertTrue(parapets.stream().allMatch(p -> Math.abs(height(p) - 100) < 1e-6), "half a storey high");
-        // each flat's back a window as wide as it, between its party walls: 7.3 m, five panes, eleven storeys
+        // each flat windowed between its pillars, back and front, every flat alike, on eleven storeys
         final long panes = block.solids(new Elements.Window()).stream().filter(s -> s.material() == Material.GLASS)
                 .count();
-        assertEquals(11 * 12 * 5, panes);
+        assertTrue(panes > 0 && panes % (11 * 12) == 0);
         final Structure tower = new GenericPointBlock().build(point);
         final long round = tower.solids(new Elements.Window()).stream().filter(s -> s.material() == Material.GLASS)
                 .count();

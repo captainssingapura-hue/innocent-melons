@@ -12,15 +12,16 @@ import java.util.List;
 
 /**
  * How a slab block of public housing was built in the modern era, as the corridor-access blocks of Singapore's housing
- * board were, as bare structure: its floor plan of shear walls, raised storey on storey ({@link Raised}). Along its
- * length, bays in turn: a core, so many flats, a core, and so on, a core at each end; a party wall between every two
- * bays, front to back, the end ones its gables; each core closed behind by a wall, a shaft for its stairs and lifts;
- * a spine wall along the whole of it between its flats and its corridor; each storey's slab over flats and corridor
- * alike. Covered, above its first storey, in lightweight brick ({@link Covered}): across its back each flat a window
- * as wide as it is, between its party walls, and behind each core a wall; its corridor an access balcony along its
- * front, guarded by a parapet half a storey high. Its first storey 3.6 m, open below as a void deck, the rest 2.8 m,
- * as the board's own guide gives them; its walls and slabs 20 cm, its cover 10 cm. Its front, the corridor's side,
- * toward along.
+ * board were: its floor plan raised storey on storey ({@link Raised}). Along its length, bays in turn: a core, so many
+ * flats, a core, and so on, a core at each end. Its flats stand on pillars only ({@link CorridorFlat}), every other one
+ * mirrored, so two lie bathroom to bathroom and the pillars on the party line between them serve both. Each core a
+ * shaft for its stairs and lifts, walled in concrete either side the whole depth of the block, and behind across it,
+ * open on the corridor. Each storey's slab over flats and corridor alike. Covered, above its first storey, in
+ * lightweight brick ({@link Covered}) between the pillars ({@link Infill}): each flat windowed across its back and
+ * across its face on the corridor, a party wall on each party line; the back closed behind each core; and the
+ * corridor an access balcony along its front, guarded by a parapet half a storey high. Its first storey 3.6 m, open
+ * below as a void deck, the rest 2.8 m, as the board's own guide gives them; its cores' walls and its slabs 20 cm, its
+ * cover 10 cm. Its front, the corridor's side, toward along.
  */
 public final class GenericSlabBlock
         implements ThingImpl<Buildings.SlabBlock, Civilization, CommonEras.Modern, SlabBlockSpec<Civilization,
@@ -33,6 +34,10 @@ public final class GenericSlabBlock
     static final double CORE_WIDE = 600;
     static final double CORE_DEEP = 700;
     static final double COVER = 10;
+
+    /** A bay of it, from one line across to the next: a core, or a flat, mirrored or not. */
+    private record Bay(double x0, double x1, boolean core, boolean mirrored) {
+    }
 
     @Override
     public Buildings.SlabBlock thing() {
@@ -55,44 +60,108 @@ public final class GenericSlabBlock
     }
 
     /**
-     * {@code s}'s floor plan: its bays' party walls, its cores' back walls, its spine wall and its slab; and its cover,
-     * a window as wide as each flat across its back, the back closed behind each core, and a parapet along its access
-     * balcony.
+     * {@code s}'s floor plan: its flats' pillars and those on their party lines, its cores' walls, and its slab; and
+     * its cover, between the pillars.
      */
     public FloorPlan plan(final SlabBlockSpec<?, ?> s) {
-        final List<double[]> bays = new ArrayList<>();
+        final List<Bay> bays = bays(s);
+        final double length = bays.getLast().x1() - bays.getFirst().x0();
+        final double deep = s.flatDeep();
+        final CorridorFlat flat = new CorridorFlat();
+        final List<Box> pillars = new ArrayList<>();
+        final List<FloorPlan.Wall> walls = new ArrayList<>();
+        for (final Bay bay : bays) {
+            if (bay.core()) {
+                walls.addAll(core(bay, bays, deep));
+            } else {
+                pillars.addAll(flat.inside(bay.x0(), s.flatWide(), -deep, deep, bay.mirrored()));
+            }
+        }
+        for (int k = 1; k < bays.size(); k++) {
+            final Bay before = bays.get(k - 1);
+            final Bay after = bays.get(k);
+            if (!before.core() || !after.core()) {
+                // a mirrored flat's right is its own left; the one after a line has its left on it
+                final boolean leftHand = before.core() ? !after.mirrored() : before.mirrored();
+                pillars.addAll(flat.line(after.x0(), -deep, deep, leftHand));
+            }
+        }
+        // the cover fills between the cores' walls as it does between the pillars
+        final List<Box> standing = new ArrayList<>(pillars);
+        walls.forEach(w -> standing.add(box(w)));
+        walls.addAll(pillars.stream().map(p -> p.wall("pillar")).toList());
+        return new FloorPlan(walls, List.of(new FloorPlan.Slab(-length / 2, -deep, length / 2, s.corridor())),
+                covers(bays, new Infill(standing), deep, s.corridor()));
+    }
+
+    /** What {@code wall}, square to the plan, stands on. */
+    private Box box(final FloorPlan.Wall wall) {
+        final double half = wall.thick() / 2;
+        return wall.x0() == wall.x1()
+                ? new Box(wall.x0() - half, Math.min(wall.z0(), wall.z1()), wall.x0() + half,
+                Math.max(wall.z0(), wall.z1()))
+                : new Box(Math.min(wall.x0(), wall.x1()), wall.z0() - half, Math.max(wall.x0(), wall.x1()),
+                wall.z0() + half);
+    }
+
+    /** {@code s}'s bays, from one end to the other, its middle at nought: every other flat of a group mirrored. */
+    private List<Bay> bays(final SlabBlockSpec<?, ?> s) {
+        final int groups = (s.flats() + s.perCore() - 1) / s.perCore();
+        final double length = s.flats() * s.flatWide() + (groups + 1) * CORE_WIDE;
+        final List<Bay> bays = new ArrayList<>();
+        double x = -length / 2;
+        bays.add(new Bay(x, x += CORE_WIDE, true, false));
         int left = s.flats();
-        bays.add(new double[] {CORE_WIDE, 1});
         while (left > 0) {
             final int group = Math.min(left, s.perCore());
             for (int i = 0; i < group; i++) {
-                bays.add(new double[] {s.flatWide(), 0});
+                bays.add(new Bay(x, x += s.flatWide(), false, i % 2 == 1));
             }
-            bays.add(new double[] {CORE_WIDE, 1});
+            bays.add(new Bay(x, x += CORE_WIDE, true, false));
             left -= group;
         }
-        final double length = bays.stream().mapToDouble(bay -> bay[0]).sum();
-        final double deep = s.flatDeep();
-        final List<FloorPlan.Wall> walls = new ArrayList<>();
+        return bays;
+    }
+
+    /**
+     * {@code core}'s walls: either side the block's whole {@code deep}, flush with the block's end if it is at one,
+     * else just inside the pillars on the line; and across it behind, {@link #CORE_DEEP} back.
+     */
+    private List<FloorPlan.Wall> core(final Bay core, final List<Bay> bays, final double deep) {
+        final double first = core == bays.getFirst() ? WALL / 2 : CorridorFlat.PILLAR / 2 + WALL / 2;
+        final double last = core == bays.getLast() ? WALL / 2 : CorridorFlat.PILLAR / 2 + WALL / 2;
+        final double a = core.x0() + first;
+        final double b = core.x1() - last;
+        return List.of(new FloorPlan.Wall(a, -deep, a, 0, WALL, "core's side wall"),
+                new FloorPlan.Wall(b, -deep, b, 0, WALL, "core's side wall"),
+                new FloorPlan.Wall(a + WALL / 2, -CORE_DEEP, b - WALL / 2, -CORE_DEEP, WALL, "core's back wall"));
+    }
+
+    /**
+     * The cover of {@code bays}, between the pillars {@code infill} fills between: each bay's back, inside it, windowed
+     * behind a flat and solid behind a core; each flat's face on the corridor, windowed; a party wall on each line a
+     * flat is on; and the access balcony's parapet along the corridor's edge.
+     */
+    private List<FloorPlan.Cover> covers(final List<Bay> bays, final Infill infill, final double deep,
+                                         final double corridor) {
         final List<FloorPlan.Cover> covers = new ArrayList<>();
-        double x = -length / 2;
-        walls.add(new FloorPlan.Wall(x, -deep, x, 0, WALL, "gable"));
-        for (int b = 0; b < bays.size(); b++) {
-            final double next = x + bays.get(b)[0];
-            final boolean core = bays.get(b)[1] == 1;
-            if (core) {
-                walls.add(new FloorPlan.Wall(x, -CORE_DEEP, next, -CORE_DEEP, WALL, "core's back wall"));
+        for (int k = 0; k < bays.size(); k++) {
+            final Bay bay = bays.get(k);
+            covers.addAll(infill.along(new Infill.Side(bay.x0(), -deep, bay.x1(), -deep, bay.core()
+                    ? FloorPlan.Kind.SOLID : FloorPlan.Kind.WINDOWED, bay.core() ? "back wall behind a core"
+                    : "back wall"), COVER / 2, COVER));
+            if (!bay.core()) {
+                covers.addAll(infill.along(new Infill.Side(bay.x1(), 0, bay.x0(), 0, FloorPlan.Kind.WINDOWED,
+                        "front wall"), COVER / 2, COVER));
             }
-            covers.add(new FloorPlan.Cover(new FloorPlan.Wall(x + WALL / 2, -deep + COVER / 2, next - WALL / 2,
-                    -deep + COVER / 2, COVER, core ? "back wall behind a core" : "back wall"),
-                    core ? FloorPlan.Kind.SOLID : FloorPlan.Kind.WINDOWED));
-            walls.add(new FloorPlan.Wall(next, -deep, next, 0, WALL, b + 1 == bays.size() ? "gable" : "party wall"));
-            x = next;
+            if (k > 0 && (!bay.core() || !bays.get(k - 1).core())) {
+                covers.addAll(infill.along(new Infill.Side(bay.x0(), -deep, bay.x0(), 0, FloorPlan.Kind.SOLID,
+                        "party wall"), 0, COVER));
+            }
         }
-        walls.add(new FloorPlan.Wall(-length / 2, 0, length / 2, 0, WALL, "spine wall"));
-        covers.add(new FloorPlan.Cover(new FloorPlan.Wall(-length / 2, s.corridor() - COVER / 2, length / 2,
-                s.corridor() - COVER / 2, COVER, "access balcony's parapet"), FloorPlan.Kind.PARAPET));
-        return new FloorPlan(walls, List.of(new FloorPlan.Slab(-length / 2, -deep, length / 2, s.corridor())),
-                covers);
+        final double length = bays.getLast().x1() - bays.getFirst().x0();
+        covers.add(new FloorPlan.Cover(new FloorPlan.Wall(-length / 2, corridor - COVER / 2, length / 2,
+                corridor - COVER / 2, COVER, "access balcony's parapet"), FloorPlan.Kind.PARAPET));
+        return covers;
     }
 }
