@@ -19,7 +19,23 @@ public enum Kind {
      * A white birch (白桦, Betula platyphylla): a tall slender trunk with one leader running on up through a narrow
      * crown, side boughs climbing steeply from it, and a great many fine twigs that hang at their ends.
      */
-    BIRCH("White birch", new Habit(380, 15, 1.25, 0.92, 0.67, 26, 0.07, 0.06, 0.13, 0.9, 0.32, 70));
+    BIRCH("White birch", new Habit(380, 15, 1.25, 0.92, 0.67, 26, 0.07, 0.06, 0.13, 0.9, 0.32, 70)),
+    /**
+     * A Lombardy poplar (钻天杨, Populus nigra 'Italica'): far the tallest, a column: one leader running straight up,
+     * and side boughs leaving it at a narrow angle and climbing close beside it, so the whole is many times as high
+     * as it is wide.
+     */
+    POPLAR("Lombardy poplar", new Habit(260, 34, 1.3, 0.93, 0.72, 18, 0.05, 0.16, 0.25, 0.95, 0, 60)),
+    /**
+     * A weeping willow (垂柳, Salix babylonica): a short thick trunk forking low into wide boughs, and from them a
+     * great many long slender twigs that hang straight down, golden where they are thin.
+     */
+    WILLOW("Weeping willow", new Habit(260, 36, 1.45, 0.95, 0.8, 42, 0.12, 0.04, 0.32, 0.76, 0.75, 0)),
+    /**
+     * A plane (悬铃木, Platanus): tall and broad, a heavy straight trunk carrying a high wide crown of stout boughs,
+     * its bark in patches of cream, olive and brown.
+     */
+    PLANE("Plane", new Habit(340, 40, 1.4, 0.95, 0.8, 34, 0.1, 0.07, 0.55, 0.8, 0, 0));
 
     private final String said;
     private final Habit habit;

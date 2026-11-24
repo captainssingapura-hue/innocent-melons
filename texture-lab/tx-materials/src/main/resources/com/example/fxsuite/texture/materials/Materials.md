@@ -136,6 +136,21 @@ and meeting again in diamonds.
 A white birch's bark: chalky white and smooth, with grey bands where its papery skin peels, short dark dashes
 lying across the wood, and black patches low on an old trunk.
 
+## PoplarBark
+
+A poplar's bark: pale grey with a cast of green and smooth, marked with small dark flecks, and broken into dark
+rough ridges low on an old trunk.
+
+## WillowBark
+
+A weeping willow's bark: grey-brown and deeply furrowed on its trunk and boughs, and golden where its wood is young
+and slender, as its hanging twigs are.
+
+## PlaneBark
+
+A plane tree's bark: smooth and shed in flakes, a patchwork of pale cream, olive and grey-brown, and olive where its
+wood is young and slender.
+
 ## Liquid
 
 What flows, and lies level where it is held.

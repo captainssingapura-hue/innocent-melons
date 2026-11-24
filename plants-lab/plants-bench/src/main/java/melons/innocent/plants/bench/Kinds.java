@@ -19,6 +19,8 @@ public enum Kinds {
 
     /** How many trees of each kind the bench grows. */
     private static final int EACH = 2;
+    /** How many kinds are mixed where they are: the oak, the walnut and the white birch. */
+    private static final int THREE = 3;
 
     private final String title;
     private final Kind kind;
@@ -51,7 +53,7 @@ public enum Kinds {
 
     /** Some tree grown of these kinds, chosen by {@code chance}, by its number among {@link #grown}. */
     public int any(final Random chance) {
-        final int of = kind == null ? chance.nextInt(Kind.values().length) : kind.ordinal();
+        final int of = kind == null ? chance.nextInt(THREE) : kind.ordinal();
         return of * EACH + chance.nextInt(EACH);
     }
 }

@@ -12,18 +12,23 @@ import com.example.fxsuite.vulkan.term.Turns;
 import java.util.List;
 
 /**
- * The bark of an old walnut: grey ridges standing between dark furrows that run along the wood, wandering this way
- * and that so that two furrows meet and part again, and the ridges between them are long narrow plates crossing
+ * A furrowed bark, an old walnut's unless its colours are said otherwise: grey ridges standing between dark furrows
+ * that run along the wood, wandering this way and that so that two furrows meet and part again, and the ridges between them are long narrow plates crossing
  * in diamonds. Each plate is a little paler or darker than the next, and there are weather-stains over the whole.
  * It is dull, with no shine.
  *
  * <p>It is laid out over where on its bough's bark a point is (across: how far round; up: how far along, each
  * bough set on by a stretch of its own), so the furrows run along the wood. A furrow is a stripe along the wood,
  * filtered as every stripe is ({@link Turns}), bent round the bough by a soft noise that changes slowly along it:
- * where the bending crowds stripes together they meet. The bark has no depth to catch the light: that waits for relief. Its
- * colours and sizes are their author's, from no measured tree.
+ * where the bending crowds stripes together they meet. The bark has no depth to catch the light: that waits for
+ * relief. Its colours and sizes are their author's, from no measured tree.
+ *
+ * @param ridge  the colour of its ridges
+ * @param stain  the colour of its weather-stains
+ * @param plate  the colour its darker plates go toward
+ * @param furrow the colour of its furrows
  */
-public record FurrowedBark() {
+public record FurrowedBark(String ridge, String stain, String plate, String furrow) {
 
     private static final int BENDING = 61;
     private static final int SHADES = 63;
@@ -42,20 +47,25 @@ public record FurrowedBark() {
     /** How far the plates of one ridge are moved along from the next, of a plate. */
     private static final double STAGGER = 0.37;
 
+    /** An old walnut's: grey ridges, paler stains, darker plates and furrows nearly black. */
+    public FurrowedBark() {
+        this("#7c776f", "#918b80", "#5d5851", "#2a2622");
+    }
+
     /** Its surface, worked out from where on the tree a point is. */
     public Surface surface() {
         final Seen seen = new Seen();
         final Point at = seen.at();
         final Real covers = seen.covers();
         final Real counted = counted(at, covers);
-        return new Surface(new Colour("#7c776f"), List.of(
-                new Term("weather-stains", new Colour("#918b80"),
+        return new Surface(new Colour(ridge), List.of(
+                new Term("weather-stains", new Colour(stain),
                         new Mottle(18, STAINS).soft(at, covers).times(0.6), 9),
-                new Term("plates", new Colour("#5d5851"),
+                new Term("plates", new Colour(plate),
                         new Scatter(counted.floored(),
                                 at.up().over(PLATE).plus(counted.floored().times(STAGGER)).floored(), SHADES, APART)
                                 .settling(covers).times(0.7), APART),
-                new Term("furrows", new Colour("#2a2622"),
+                new Term("furrows", new Colour(furrow),
                         new Turns(counted, new Real(1 / APART)).pulse(FURROW, covers), APART)),
                 new Colour(0, 0, 0), 8);
     }

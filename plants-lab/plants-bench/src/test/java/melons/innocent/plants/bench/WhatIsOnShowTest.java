@@ -53,7 +53,7 @@ class WhatIsOnShowTest {
                 && Math.abs(tree.placed().at(2, 3)) < 1_250), "on its square");
         final Set<Kind> mixed = Subject.PATCH.planted(Kinds.MIXED, new Vec3(0, 0, 0),
                 Optional.empty(), 4).stream().map(tree -> grown.get(tree.grown()).kind()).collect(Collectors.toSet());
-        assertEquals(Set.of(Kind.values()), mixed, "all three, mixed");
+        assertEquals(Set.of(Kind.OAK, Kind.WALNUT, Kind.BIRCH), mixed, "all three, mixed");
         assertEquals(where(Subject.PATCH.planted(Kinds.MIXED, new Vec3(0, 0, 0), Optional.empty(), 4)),
                 where(Subject.PATCH.planted(Kinds.MIXED, new Vec3(0, 0, 0), Optional.empty(), 4)),
                 "the same every time");

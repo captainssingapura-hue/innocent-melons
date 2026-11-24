@@ -64,7 +64,7 @@ class MaterialViewOnTheCardTest {
             assertEquals(List.of(), card.heard(), "by night and without shadows: nothing said either");
             assertEquals(0xff0b1026, new Picture(canvas.width(), canvas.pixels()).at(4, 4), "the night's sky");
         }
-        assertEquals(44, seen.size());
+        assertEquals(47, seen.size());
         assertTrue(seen.values().stream().distinct().count() >= 38, "the materials are told apart: " + seen);
     }
 

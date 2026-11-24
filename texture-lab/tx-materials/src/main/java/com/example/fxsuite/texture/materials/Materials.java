@@ -36,7 +36,8 @@ public record Materials() {
                 new Adobe(), new Rubble(), new DressedStone(), new Concrete(),
                 new Enamel(), new Rubber(), new GlossPaint(), new MetallicPaint(), new Glass(), new LitGlass(),
                 new Flame(), new LitPaper(),
-                new Rind(), new Timber(), new OakBark(), new WalnutBark(), new BirchBark(), new Water(),
+                new Rind(), new Timber(), new OakBark(), new WalnutBark(), new BirchBark(), new PoplarBark(),
+                new WillowBark(), new PlaneBark(), new Water(),
                 new Turf(), new Topsoil(), new Sand(), new Gravel(), new Bedrock(), new Mud(),
                 new Skin(), new Lip(), new Nail(), new Hair(), new Sclera(), new Iris(), new Cornea(),
                 new ToothEnamel(), new Bone(), new Cartilage(), new Muscle(), new Tendon(), new Fat()),
@@ -108,6 +109,9 @@ public record Materials() {
     public record OakBark() implements Leaf<Bark>, Material { public Bark parent() { return new Bark(); } }
     public record WalnutBark() implements Leaf<Bark>, Material { public Bark parent() { return new Bark(); } }
     public record BirchBark() implements Leaf<Bark>, Material { public Bark parent() { return new Bark(); } }
+    public record PoplarBark() implements Leaf<Bark>, Material { public Bark parent() { return new Bark(); } }
+    public record WillowBark() implements Leaf<Bark>, Material { public Bark parent() { return new Bark(); } }
+    public record PlaneBark() implements Leaf<Bark>, Material { public Bark parent() { return new Bark(); } }
 
     // Liquid: what flows, and lies level
     public record Liquid() implements L1<Matter>, Mirroring { public Matter parent() { return new Matter(); } }
