@@ -51,7 +51,10 @@ public record TrapeziusMiddle() implements Muscle {
                         new Anchor(Scapula.INSTANCE, Scapula.INSTANCE.at("acromion's base")),
                         new Anchor(Scapula.INSTANCE, Scapula.INSTANCE.at("crest")),
                         new Anchor(Scapula.INSTANCE, Scapula.INSTANCE.at("crest's root"))),
-                0.9, new V3(0, 0, -1));
+                0.9, new V3(0, 0, -1),
+                // its highest fibre over the shoulder's top as the upper part's lowest is, the same fibre, so the
+                // seam between them is one line; its lowest, from T3 to the crest's root, straight, over its middle
+                List.of(TrapeziusUpper.INSTANCE.overShoulder(), new Anchor(T3.INSTANCE, new V3(3.99, 44.94, -11.72))));
     }
 
     @Override
