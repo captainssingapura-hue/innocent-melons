@@ -41,6 +41,7 @@ public final class BuildingBench {
 
     private final Catalogue catalogue;
     private final Inspector inspector;
+    private final String title;
     private final BuildingView view = new BuildingView(900, 700);
     private final Label figures = new Label();
     private final ComboBox<String> fineness = new ComboBox<>();
@@ -50,8 +51,14 @@ public final class BuildingBench {
 
     /** A bench offering {@code catalogue}'s things, looked into closely by {@code inspector}. */
     public BuildingBench(final Catalogue catalogue, final Inspector inspector) {
+        this(catalogue, inspector, "Buildings bench");
+    }
+
+    /** The same, its window called {@code title}: another bench of things built, such as roads' surfaces. */
+    public BuildingBench(final Catalogue catalogue, final Inspector inspector, final String title) {
         this.catalogue = catalogue;
         this.inspector = inspector;
+        this.title = title;
     }
 
     public static void main(final String[] args) throws InterruptedException {
@@ -88,7 +95,7 @@ public final class BuildingBench {
         left.setPrefWidth(340);
         final BorderPane pane = new BorderPane(view.node(), null, null, null, left);
         final Stage stage = new Stage();
-        stage.setTitle("Buildings bench");
+        stage.setTitle(title);
         stage.setScene(new Scene(pane));
         stage.setOnHidden(event -> inspector.end());
         stage.show();

@@ -1,6 +1,6 @@
 # Elements
 
-The parts a building is made of. An element says what the part does, never what it is made of or how it is shaped: those
+The parts a building, or a work such as a road, is made of. An element says what the part does, never what it is made of or how it is shaped: those
 are its civilization's and its era's.
 
 ## Element
@@ -130,6 +130,30 @@ Posts and rails along an edge.
 ## Parapet
 
 A low wall along an edge: a roof's, a city wall's battlements.
+
+## Barrier
+
+A low wall or rail along a road, to keep traffic from leaving it or from crossing into the other way.
+
+## Kerb
+
+A raised edge of stone or concrete along a carriageway, between it and what is beside it.
+
+## Carriageway
+
+What traffic goes along on a road, and what is painted on it.
+
+## TrafficLane
+
+A strip of a carriageway for one line of traffic going one way.
+
+## Shoulder
+
+A paved strip beside the lanes, kept clear, to stop on.
+
+## Marking
+
+A line painted on a carriageway: where its lanes part, and where its edge is.
 
 ## Conveyance
 

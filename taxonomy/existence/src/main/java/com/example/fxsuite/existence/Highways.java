@@ -22,6 +22,7 @@ public final class Highways {
     // Way: along the ground
     public record Way() implements L2<Highway>, Transit { public Highway parent() { return new Highway(); } }
     public record Road() implements Leaf<Way> { public Way parent() { return new Way(); } }
+    public record Expressway() implements Leaf<Way> { public Way parent() { return new Way(); } }
     public record Street() implements Leaf<Way> { public Way parent() { return new Way(); } }
     public record Lane() implements Leaf<Way> { public Way parent() { return new Way(); } }
     public record Path() implements Leaf<Way> { public Way parent() { return new Way(); } }

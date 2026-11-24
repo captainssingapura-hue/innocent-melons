@@ -26,11 +26,11 @@ class ExistenceTest {
                 Existence.INSTANCE.trees().stream().map(Taxonomy::name).toList());
         assertEquals(20, Terrains.TREE.leaves().size());
         assertEquals(11, Features.TREE.leaves().size());
-        assertEquals(48, Made.TREE.leaves().size());
+        assertEquals(49, Made.TREE.leaves().size());
         assertEquals(32, Uses.TREE.leaves().size());
         assertEquals(20, Spaces.TREE.leaves().size());
-        assertEquals(33, Elements.TREE.leaves().size());
-        assertEquals(223, Existence.INSTANCE.trees().stream().mapToInt(tree -> tree.nodes().size()).sum());
+        assertEquals(38, Elements.TREE.leaves().size());
+        assertEquals(230, Existence.INSTANCE.trees().stream().mapToInt(tree -> tree.nodes().size()).sum());
         assertEquals("Rooms let by the night, served from a lobby.", Uses.TREE.meaning(new Uses.HotelRooms()));
         assertEquals("A wide ditch round a town or a castle, often holding water, to keep out.",
                 Made.TREE.meaning(new Earthworks.Moat()));
@@ -44,8 +44,8 @@ class ExistenceTest {
         assertEquals(List.of(new Tunnels.Tunnel(), new Tunnels.Bore(), new Made()), new Tunnels.Tunnel().lineage());
         assertEquals(List.of(new Earthworks.CityWall(), new Earthworks.Raised(), new Earthworks.Earthwork(),
                 new Made()), new Earthworks.CityWall().lineage());
-        assertEquals(List.of(new Highways.Road(), new Highways.Street(), new Highways.Lane(), new Highways.Path(),
-                new Highways.Towpath(), new Highways.Ford()), Made.TREE.under(new Highways.Way()));
+        assertEquals(List.of(new Highways.Road(), new Highways.Expressway(), new Highways.Street(), new Highways.Lane(),
+                new Highways.Path(), new Highways.Towpath(), new Highways.Ford()), Made.TREE.under(new Highways.Way()));
         assertEquals(List.of(new Buildings.GateTower()), Made.TREE.under(new Buildings.Fortification()));
         assertEquals(List.of(new Features.Canal(), new Features.Flowing(), new Features.Water(),
                 new Features.Feature()), new Features.Canal().lineage());
