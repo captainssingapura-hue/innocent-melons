@@ -51,6 +51,8 @@ public final class EndlessForestPlace implements Place {
     private static final double GROUND = 400_000;
 
     private final List<WoodDrawn.Grown> grown = new ArrayList<>();
+    /** Each grown tree's trunk: kept, since asking a tree for its boughs grows it afresh. */
+    private final List<Bough> trunks = new ArrayList<>();
     /** Each sample's trees, in its own frame: kept, so saying what is in the way works nothing out again. */
     private final List<List<WoodDrawn.Planted>> planted = new ArrayList<>();
     private final Endless endless;
@@ -81,6 +83,7 @@ public final class EndlessForestPlace implements Place {
         for (final Kind kind : Kind.values()) {
             for (int number = 1; number <= EACH; number++) {
                 grown.add(new WoodDrawn.Grown(kind, kind.tree(number)));
+                trunks.add(grown.getLast().tree().boughs().getFirst());
             }
         }
         this.reaches = reaches;
@@ -112,7 +115,6 @@ public final class EndlessForestPlace implements Place {
     public Obstacles inTheWay() {
         postedAcross = across;
         postedAlong = along;
-        final List<Bough> trunks = grown.stream().map(tree -> tree.tree().boughs().getFirst()).toList();
         final List<Block> posts = new ArrayList<>();
         for (long b = along - POSTED; b <= along + POSTED; b++) {
             for (long a = across - POSTED; a <= across + POSTED; a++) {

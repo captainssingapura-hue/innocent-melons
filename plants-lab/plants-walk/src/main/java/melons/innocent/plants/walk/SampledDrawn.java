@@ -177,6 +177,11 @@ public final class SampledDrawn implements AutoCloseable {
      * what it may hold.
      */
     public void readied(final Camera camera) {
+        readied(camera, endless.seen(camera.eye(), reaches));
+    }
+
+    /** The same, of the squares {@code inReach} and no others: for a forest that is not everywhere. */
+    public void readied(final Camera camera, final List<Endless.Seen> inReach) {
         frame++;
         sent();
         final Vec3 eye = camera.eye();
@@ -188,7 +193,7 @@ public final class SampledDrawn implements AutoCloseable {
         drawn = 0;
         final InView view = new InView(camera, 0);
         final List<Endless.Seen> missing = new ArrayList<>();
-        for (final Endless.Seen seen : endless.seen(eye, reaches)) {
+        for (final Endless.Seen seen : inReach) {
             final Vec3 middle = endless.middle(seen.across(), seen.along());
             final Filling copy = new Filling(laid.copy()).with(COPIED, new Mat4(middle.minus(anchor))
                     .times(endless.turned(seen.quarters())).columns());
@@ -285,12 +290,11 @@ public final class SampledDrawn implements AutoCloseable {
      */
     public void drawn(final Pass pass, final Camera camera) {
         final Mat4 stands = new Mat4(anchor);
-        final Vec3 white = new Vec3(1, 1, 1);
         kept.values().forEach(one -> {
             final Copies these = pass.gathers() ? one.cast : one.shown;
             if (these.count() > 0) {
-                one.shapes.forEach((kind, shape) -> barks.get(kind).drawn(pass, shape, stands, camera, 1, white,
-                        these));
+                one.shapes.forEach((kind, shape) -> barks.get(kind).drawn(pass, shape, stands, camera, 1,
+                        new Vec3(1, 1, 1), these));
             }
         });
     }

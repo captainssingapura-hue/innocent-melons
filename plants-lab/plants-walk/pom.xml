@@ -40,6 +40,12 @@
             <groupId>com.example.fxsuite.texture</groupId>
             <artifactId>tx-materials</artifactId>
         </dependency>
+        <!-- the curves a road is smoothed by -->
+        <dependency>
+            <groupId>melons.innocent.math</groupId>
+            <artifactId>math-curves</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

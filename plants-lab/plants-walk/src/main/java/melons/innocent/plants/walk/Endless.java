@@ -62,6 +62,17 @@ public record Endless(Samples samples, long chance) {
     }
 
     /**
+     * The trees {@code sampled}, a sample's in its own frame, where the square {@code across}, {@code along}
+     * has them.
+     */
+    public List<WoodDrawn.Planted> placed(final long across, final long along,
+                                          final List<WoodDrawn.Planted> sampled) {
+        final Mat4 placed = placed(across, along);
+        return sampled.stream().map(tree -> new WoodDrawn.Planted(tree.grown(), placed.times(tree.placed()),
+                tree.times())).toList();
+    }
+
+    /**
      * Every square some of which is within {@code reaches}' furthest of {@code eye}, each with the level its
      * distance calls for: the distance from the eye to the nearest of the square on the ground, so the square stood
      * in is at nothing and from high above every square is far.
