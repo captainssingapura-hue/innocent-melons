@@ -23,6 +23,8 @@ public record Hues() {
             case STONE -> Color.web("#9a958a");
             case GLASS -> Color.web("#6f8fa3");
             case METAL -> Color.web("#3c3f44");
+            case TITANIUM -> Color.web("#b3b8bd");
+            case GUN_METAL -> Color.web("#2c3439");
             case GRAVEL -> Color.web("#a39f96");
             case SLATE -> Color.web("#4b5058");
             case TILE -> Color.web("#a4553a");

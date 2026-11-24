@@ -17,6 +17,9 @@ public enum Material {
     GLASS("glass", Double.POSITIVE_INFINITY),
     /** Window frames, mullions, rails. */
     METAL("dark metal", Double.POSITIVE_INFINITY),
+    /** Metals a building is framed or clad in: titanium, pale and bright; gun metal, a dark grey gone blue. */
+    TITANIUM("titanium", Double.POSITIVE_INFINITY),
+    GUN_METAL("gun metal", Double.POSITIVE_INFINITY),
     /** A flat roof's covering. */
     GRAVEL("gravel", Double.POSITIVE_INFINITY),
     /** Pitched roofs' coverings: slate, clay tiles, copper gone green; glazed tiles, yellow or green; grey tiles. */

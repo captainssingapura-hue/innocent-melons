@@ -15,10 +15,10 @@ import java.util.Optional;
 
 /**
  * What each material a building's solids are of is drawn in when looked into closely: the texture lab's look for it,
- * where the lab has one, concrete as concrete, glass as glass, metal as steel, paint as gloss paint, brick, stone,
- * earth; else a plain surface in the colour JavaFX draws it in. Painted, a plain surface in its paint, what is under
- * it hidden; glass tinted, the glass's look in its tint. The one place the solids' materials meet the lab's, so
- * when those give way to the lab's taxonomy of materials, only this changes.
+ * where the lab has one, concrete as concrete, glass as glass, metal as steel, titanium and gun metal as themselves,
+ * paint as gloss paint, brick, stone, earth; else a plain surface in the colour JavaFX draws it in. Painted, a plain
+ * surface in its paint, what is under it hidden; glass tinted, the glass's look in its tint. The one place the solids'
+ * materials meet the lab's, so when those give way to the lab's taxonomy of materials, only this changes.
  */
 public final class LabLooks {
 
@@ -31,6 +31,8 @@ public final class LabLooks {
             case CONCRETE, PRECAST -> new Materials.Concrete();
             case GLASS -> new Materials.Glass();
             case METAL -> new Materials.Steel();
+            case TITANIUM -> new Materials.Titanium();
+            case GUN_METAL -> new Materials.Gunmetal();
             case PAINTED, LACQUER -> new Materials.GlossPaint();
             case BRICK -> new Materials.CommonRedBrick();
             case STONE, SANDSTONE, LIMESTONE -> new Materials.DressedStone();
