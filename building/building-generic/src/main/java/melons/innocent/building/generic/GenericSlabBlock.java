@@ -1,10 +1,8 @@
 package melons.innocent.building.generic;
 
-import com.example.fxsuite.avatar.build.Material;
 import com.example.fxsuite.building.Structure;
 import com.example.fxsuite.building.ThingImpl;
 import com.example.fxsuite.building.spec.SlabBlockSpec;
-import com.example.fxsuite.building.spec.Walling;
 import com.example.fxsuite.existence.Buildings;
 import com.example.fxsuite.historian.Civilization;
 import com.example.fxsuite.historian.CommonEras;
@@ -66,17 +64,8 @@ public final class GenericSlabBlock
 
     @Override
     public Structure build(final SlabBlockSpec<Civilization, CommonEras.Modern> s) {
-        return new Raised(SLAB, infill(s.walling())).of(plan(s), s.storeys(), s.ground(), s.storey());
-    }
-
-    /** What its walls are of, filled in with {@code walling}. */
-    private Material infill(final Walling walling) {
-        return switch (walling) {
-            case BRICK -> Material.BRICK;
-            case PRECAST -> Material.PRECAST;
-            case CONCRETE -> Material.CONCRETE;
-            case STONE -> Material.STONE;
-        };
+        final Finished finished = new Finished(s.finish());
+        return finished.of(new Raised(SLAB, finished.infill()).of(plan(s), s.storeys(), s.ground(), s.storey()));
     }
 
     /**

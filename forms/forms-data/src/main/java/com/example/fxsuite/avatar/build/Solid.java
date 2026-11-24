@@ -1,15 +1,19 @@
 package com.example.fxsuite.avatar.build;
 
+import melons.innocent.forms.Tint;
+
 import java.util.List;
+import java.util.Optional;
 
 /**
  * One solid part of a building as dressed: a box, not necessarily square to the building, given by
  * its eight corners: corner {@code k} is at the low or high end of its first edge as bit 0 of k
  * says, of its second as bit 1, of its third as bit 2. Named, so whatever comes after (damage,
  * collision) can tell which it is; what it does ({@code role}), and so what it is made of
- * ({@code material}), as the palette it was dressed in says.
+ * ({@code material}), as the palette it was dressed in says; and, if it is, the colour it is painted or tinted over
+ * that ({@code tint}).
  */
-public record Solid(String name, Role role, Material material, List<Point> corners) {
+public record Solid(String name, Role role, Material material, List<Point> corners, Optional<Tint> tint) {
 
     public Solid {
         corners = List.copyOf(corners);
@@ -18,9 +22,19 @@ public record Solid(String name, Role role, Material material, List<Point> corne
         }
     }
 
+    /** One as its material is, neither painted nor tinted. */
+    public Solid(final String name, final Role role, final Material material, final List<Point> corners) {
+        this(name, role, material, corners, Optional.empty());
+    }
+
     /** The same, {@code k} times as big every way, about the building's origin: each corner as far again from it. */
     public Solid scaled(final double k) {
-        return new Solid(name, role, material, corners.stream().map(p -> p.times(k)).toList());
+        return new Solid(name, role, material, corners.stream().map(p -> p.times(k)).toList(), tint);
+    }
+
+    /** The same, painted or tinted {@code colour}. */
+    public Solid tinted(final Tint colour) {
+        return new Solid(name, role, material, corners, Optional.of(colour));
     }
 
     /**

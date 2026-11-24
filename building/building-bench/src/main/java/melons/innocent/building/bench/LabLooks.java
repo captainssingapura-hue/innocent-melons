@@ -6,6 +6,8 @@ import com.example.fxsuite.texture.materials.Shades;
 import com.example.fxsuite.vulkan.term.Colour;
 import com.example.fxsuite.vulkan.term.Surface;
 import javafx.scene.paint.Color;
+import melons.innocent.forms.Facets;
+import melons.innocent.forms.Tint;
 import melons.innocent.forms.fx.Hues;
 
 import java.util.List;
@@ -14,9 +16,9 @@ import java.util.Optional;
 /**
  * What each material a building's solids are of is drawn in when looked into closely: the texture lab's look for it,
  * where the lab has one, concrete as concrete, glass as glass, metal as steel, paint as gloss paint, brick, stone,
- * earth;
- * else a plain surface in the colour JavaFX draws it in. The one place the solids' materials meet the lab's, so when
- * those give way to the lab's taxonomy of materials, only this changes.
+ * earth; else a plain surface in the colour JavaFX draws it in. Painted, a plain surface in its paint, what is under
+ * it hidden; glass tinted, the glass's look in its tint. The one place the solids' materials meet the lab's, so
+ * when those give way to the lab's taxonomy of materials, only this changes.
  */
 public final class LabLooks {
 
@@ -39,6 +41,19 @@ public final class LabLooks {
             case EARTH -> new Materials.Topsoil();
             default -> null;
         });
+    }
+
+    /** The surface {@code coat} is drawn in: painted, a plain one in its paint; glass tinted, glass in its tint. */
+    public Surface surface(final Facets.Coat coat) {
+        return coat.tint().map(t -> coat.material() == Material.GLASS ? tinted(surface(coat.material()), t)
+                : plain(Color.color(t.red(), t.green(), t.blue()))).orElseGet(() -> surface(coat.material()));
+    }
+
+    /** {@code glass} its own colour {@code tint}: as much let through, mirrored and glancing as it is. */
+    private Surface tinted(final Surface glass, final Tint tint) {
+        final Surface tinted = new Surface(new Colour(tint.red(), tint.green(), tint.blue()), glass.terms(),
+                glass.shine(), glass.tightness()).mirroring(glass.mirror()).clear(glass.through());
+        return glass.glance().map(tinted::glancing).orElse(tinted);
     }
 
     /** The surface {@code material} is drawn in: the lab's look, or a plain one in its colour. */

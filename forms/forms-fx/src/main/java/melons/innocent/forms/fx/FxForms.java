@@ -1,6 +1,5 @@
 package melons.innocent.forms.fx;
 
-import com.example.fxsuite.avatar.build.Material;
 import javafx.scene.Group;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.CullFace;
@@ -12,7 +11,7 @@ import melons.innocent.forms.Facets;
 import java.util.Map;
 
 /**
- * Solids' faces ({@link Facets}) as JavaFX 3D draws them: a mesh to each material, each in the colour {@link Hues}
+ * Solids' faces ({@link Facets}) as JavaFX 3D draws them: a mesh to each coat, each in the colour {@link Hues}
  * gives it, both sides drawn, every point facing as its face does so the light falls flat on each face. In their own
  * frame, y up; whoever shows them in JavaFX's, y down, turns them over.
  */
@@ -23,10 +22,10 @@ public record FxForms(Hues hues) {
         this(new Hues());
     }
 
-    /** {@code facets} as a group of meshes, one to each material. */
+    /** {@code facets} as a group of meshes, one to each coat. */
     public Group of(final Facets facets) {
         final Group group = new Group();
-        for (final Map.Entry<Material, Facets.Sheet> sheet : facets.sheets().entrySet()) {
+        for (final Map.Entry<Facets.Coat, Facets.Sheet> sheet : facets.sheets().entrySet()) {
             final MeshView view = new MeshView(mesh(sheet.getValue()));
             final PhongMaterial look = new PhongMaterial(hues.of(sheet.getKey()));
             view.setMaterial(look);

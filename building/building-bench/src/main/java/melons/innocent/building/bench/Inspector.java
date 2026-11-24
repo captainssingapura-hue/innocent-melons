@@ -1,6 +1,5 @@
 package melons.innocent.building.bench;
 
-import com.example.fxsuite.avatar.build.Material;
 import com.example.fxsuite.building.Structure;
 import com.example.fxsuite.vulkan.device.Canvas;
 import com.example.fxsuite.vulkan.device.Card;
@@ -94,7 +93,7 @@ public final class Inspector {
             final Daylight day = new Daylight();
             final List<Formed> parts = new ArrayList<>();
             // what is seen through, glass, drawn after all that is not, as the card has it
-            final List<Map.Entry<Material, Facets.Sheet>> sheets = new ArrayList<>(facets.sheets().entrySet());
+            final List<Map.Entry<Facets.Coat, Facets.Sheet>> sheets = new ArrayList<>(facets.sheets().entrySet());
             sheets.sort(Comparator.comparing(sheet -> looks.surface(sheet.getKey()).seenThrough()));
             sheets.forEach(sheet -> parts.add(new Formed(card, new Look(laid, looks.surface(sheet.getKey())),
                     mesh(sheet.getValue()))));
