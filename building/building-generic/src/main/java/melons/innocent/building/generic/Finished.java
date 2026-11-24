@@ -8,7 +8,8 @@ import com.example.fxsuite.existence.Elements;
 
 /**
  * A building finished outside as {@code finish} says: its windows' frames and glass their colours; all else of it
- * painted, if it is to be, but its roof, which is waterproofed and seen by none, and its doors, timber as they are.
+ * painted, if it is to be, but its roof, which is waterproofed and seen by none, and its doors, timber as they are;
+ * and what is already coloured as it is, its cores and its stairs, left so.
  *
  * @param finish how it is finished
  */
@@ -33,6 +34,9 @@ record Finished(Finish finish) {
     /** {@code part}'s solid finished. */
     private Solid of(final Structure.Part part) {
         final Solid solid = part.solid();
+        if (solid.tint().isPresent()) {
+            return solid;
+        }
         if (part.element().equals(new Elements.Window())) {
             return switch (solid.material()) {
                 case GLASS -> solid.tinted(finish.glass());

@@ -20,9 +20,11 @@ import java.util.List;
  * them out most evenly. Each bay stands on pillars only ({@link SlabBay}), every other one of a run mirrored, so two
  * lie bathroom to bathroom and the pillars on the line between them serve both; at each end its pillars just inside
  * the end. Each core a shaft for its stairs and lifts, walled in concrete either side the whole depth of the block, and
- * behind across it, open on the corridor. Each storey's slab over bays and corridor alike. Covered above its first
- * storey as its cover says ({@link SlabCover}). Its first storey open below as a void deck; its storeys as high as
- * asked; its cores' walls and its slabs 20 cm. Its front, the corridor's side, toward along.
+ * behind across it, open on the corridor: against its left wall a dog-leg stair ({@link DogLeg}), its half landing at
+ * the back, its front edge on the core's floor before the corridor, walled along its other side; beside it, at the
+ * back, the lifts' shaft. Each storey's slab over bays and corridor alike, but for the stairs' wells. Covered above
+ * its first storey as its cover says ({@link SlabCover}). Its first storey open below as a void deck; its storeys as
+ * high as asked; its cores' walls and its slabs 20 cm. Its front, the corridor's side, toward along.
  */
 public final class GenericSlabBlock
         implements ThingImpl<Buildings.SlabBlock, Civilization, CommonEras.Modern, SlabBlockSpec<Civilization,
@@ -38,6 +40,9 @@ public final class GenericSlabBlock
     static final double WIDEST = 1_250;
     /** How many bays at most between two cores. */
     static final int RUN = 6;
+    /** How wide a core's stair is, its two flights and the wall between; how deep its lifts' shaft. */
+    static final double STAIR_WIDE = 250;
+    static final double LIFTS = 250;
 
     /** A bay of it, from one line across to the next: a core, or a bay of its structure, mirrored or not. */
     record Bay(double x0, double x1, boolean core, boolean mirrored) {
@@ -61,7 +66,11 @@ public final class GenericSlabBlock
     @Override
     public Structure build(final SlabBlockSpec<Civilization, CommonEras.Modern> s) {
         final Finished finished = new Finished(s.finish());
-        return finished.of(new Raised(SLAB, finished.infill()).of(plan(s), s.storeys(), s.ground(), s.storey()));
+        final Structure raised = new Raised(SLAB, finished.infill()).of(plan(s), s.storeys(), s.ground(), s.storey());
+        // come into at each core, from the corridor's edge
+        final List<Structure.WayIn> ways = bays(s.length()).stream().filter(Bay::core)
+                .map(b -> new Structure.WayIn((b.x0() + b.x1()) / 2, s.corridor(), 0)).toList();
+        return finished.of(new Structure(raised.parts(), raised.shape(), raised.rooms(), ways, raised.stairs()));
     }
 
     /**
@@ -73,10 +82,17 @@ public final class GenericSlabBlock
         final double deep = s.deep();
         final SlabBay bay = new SlabBay();
         final List<Box> pillars = new ArrayList<>();
-        final List<FloorPlan.Wall> walls = new ArrayList<>();
+        final List<FloorPlan.Wall> cores = new ArrayList<>();
+        final List<DogLeg> stairs = new ArrayList<>();
+        final double stairDeep = Math.max(new Flights(s.ground()).run(), new Flights(s.storey()).run())
+                + (STAIR_WIDE - DogLeg.CENTRE) / 2;
         for (final Bay b : bays) {
             if (b.core()) {
-                walls.addAll(core(b, deep));
+                cores.addAll(core(b, deep));
+                final double inside = b.x0() + SlabBay.PILLAR / 2 + WALL;
+                stairs.add(new DogLeg(inside + STAIR_WIDE / 2, -CORE_DEEP + WALL / 2 + stairDeep, 0, -1,
+                        STAIR_WIDE, stairDeep));
+                cores.addAll(lifts(b, inside + STAIR_WIDE, stairDeep));
             } else {
                 pillars.addAll(bay.inside(b.x0(), b.x1() - b.x0(), -deep, deep, b.mirrored()));
             }
@@ -94,10 +110,24 @@ public final class GenericSlabBlock
         pillars.addAll(bay.line(last.x1() - SlabBay.PILLAR / 2, -deep, deep, last.mirrored()));
         // the cover fills between the cores' walls as it does between the pillars
         final List<Box> standing = new ArrayList<>(pillars);
-        walls.forEach(w -> standing.add(box(w)));
-        walls.addAll(pillars.stream().map(p -> p.wall("pillar")).toList());
-        return new FloorPlan(walls, List.of(new FloorPlan.Slab(-s.length() / 2, -deep, s.length() / 2,
-                s.corridor())), new SlabCover(bays, deep, s.corridor()).of(standing));
+        cores.forEach(w -> standing.add(box(w)));
+        return new FloorPlan(pillars.stream().map(p -> p.wall("pillar")).toList(), cores,
+                List.of(new FloorPlan.Slab(-s.length() / 2, -deep, s.length() / 2, s.corridor())),
+                new SlabCover(bays, deep, s.corridor()).of(standing), stairs);
+    }
+
+    /**
+     * Beside {@code core}'s stair, from {@code from} across to the core's far wall: a wall along the stair's side, from
+     * the core's back wall to the stair's front edge, {@code stair} in; and the lifts' shaft behind, {@link #LIFTS}
+     * deep, closed in front by a wall across it.
+     */
+    private List<FloorPlan.Wall> lifts(final Bay core, final double from, final double stair) {
+        final double back = -CORE_DEEP + WALL / 2;
+        final double side = from + WALL / 2;
+        final double far = core.x1() - SlabBay.PILLAR / 2 - WALL;
+        return List.of(new FloorPlan.Wall(side, back, side, back + stair, WALL, "stair's side wall"),
+                new FloorPlan.Wall(from + WALL, back + LIFTS + WALL / 2, far, back + LIFTS + WALL / 2, WALL,
+                        "lift shaft"));
     }
 
     /**

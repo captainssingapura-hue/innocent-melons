@@ -1,5 +1,7 @@
 package melons.innocent.building.generic;
 
+import com.example.fxsuite.building.Structure;
+
 import java.util.List;
 
 /**
@@ -12,11 +14,26 @@ import java.util.List;
  */
 record Turned(int quarters, double dx, double dz) {
 
-    /** {@code plan}, every wall, slab and run of cover in it, moved and turned. */
+    /** {@code plan}, every wall, slab, run of cover and stair in it, moved and turned. */
     FloorPlan plan(final FloorPlan plan) {
         return new FloorPlan(plan.walls().stream().map(this::wall).toList(),
+                plan.cores().stream().map(this::wall).toList(),
                 plan.slabs().stream().map(this::slab).toList(),
-                plan.covers().stream().map(c -> new FloorPlan.Cover(wall(c.wall()), c.kind())).toList());
+                plan.covers().stream().map(c -> new FloorPlan.Cover(wall(c.wall()), c.kind())).toList(),
+                plan.stairs().stream().map(this::stair).toList());
+    }
+
+    /** {@code way}, moved and turned, as high as it was. */
+    Structure.WayIn way(final Structure.WayIn way) {
+        final double[] at = at(way.across(), way.along());
+        return new Structure.WayIn(at[0], at[1], way.level());
+    }
+
+    /** {@code s}, its front edge moved and turned, and running in as it turns. */
+    private DogLeg stair(final DogLeg s) {
+        final double[] at = at(s.x(), s.z());
+        final double[] in = at(s.x() + s.runX(), s.z() + s.runZ());
+        return new DogLeg(at[0], at[1], Math.round(in[0] - at[0]), Math.round(in[1] - at[1]), s.wide(), s.deep());
     }
 
     /** {@code covers}, moved and turned. */

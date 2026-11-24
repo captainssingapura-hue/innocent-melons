@@ -58,9 +58,17 @@ class SlabFinishTest {
                 .equals(Optional.of(frames))), "its frames their colour");
         final List<Solid> painted = new ArrayList<>(block.solids(new Elements.Wall()));
         painted.addAll(block.solids(new Elements.Parapet()));
-        painted.addAll(block.solids(new Elements.BearingWall()));
-        painted.addAll(block.solids(new Elements.Floor()));
+        painted.addAll(block.solids(new Elements.BearingWall()).stream()
+                .filter(s -> !s.tint().equals(Optional.of(Raised.CORES))).toList());
+        final List<Solid> floors = block.solids(new Elements.Floor());
+        painted.addAll(floors.stream().filter(s -> !s.name().equals("floor finish")).toList());
         assertTrue(painted.stream().allMatch(s -> s.tint().equals(Optional.of(cream))), "painted all over");
+        assertTrue(floors.stream().filter(s -> s.name().equals("floor finish")).allMatch(s -> s.tint()
+                .equals(Optional.of(Raised.FLOORS))) && floors.size() % 2 == 0, "every floor finished in its own");
+        assertTrue(block.solids(new Elements.BearingWall()).stream().anyMatch(s -> s.tint()
+                .equals(Optional.of(Raised.CORES))), "but its cores, in their own colour");
+        assertTrue(block.solids(new Elements.Steps()).stream().allMatch(s -> s.tint()
+                .equals(Optional.of(Raised.STAIRS))), "and its stairs");
         assertTrue(block.solids(new Elements.Roof()).stream().allMatch(s -> s.tint().isEmpty()), "but its roof");
         assertTrue(block.solids(new Elements.Wall()).stream().allMatch(s -> s.material() == Material.PRECAST),
                 "precast under its paint");

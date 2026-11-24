@@ -46,14 +46,18 @@ class BlocksTest {
         final FloorPlan plan = new GenericSlabBlock().plan(slab);
         // as long as twelve of the board's bays and two cores: a corner, two bays, a core, six bays, a core, two bays
         // and a corner. Each bay nine pillars of its own; on each run's lines, its ends' too, bays mirrored in turn,
-        // two pillars and three by turns; each core three walls
+        // two pillars and three by turns; each core three walls of its own, and two by its stair: along its side, and
+        // across its lifts
         assertEquals(12, new GenericSlabBlock().count(slab.length()));
-        assertEquals(12 * 9 + 2 * (2 * 2 + 2 * 3) + (4 * 2 + 3 * 3) + 2 * 3, plan.walls().size());
+        assertEquals(12 * 9 + 2 * (2 * 2 + 2 * 3) + (4 * 2 + 3 * 3), plan.walls().size());
+        assertEquals(2 * (3 + 2), plan.cores().size());
         final List<FloorPlan.Wall> pillars = plan.walls().stream().filter(w -> w.name().equals("pillar")).toList();
         assertTrue(pillars.stream().allMatch(w -> w.thick() == SlabBay.PILLAR && w.length() <= 180),
                 "blades 30 cm thick, none longer than 1.8 m");
-        assertEquals(12 * plan.walls().size(), block.solids(new Elements.BearingWall()).size());
-        assertEquals(12 - 1, block.solids(new Elements.Floor()).size() - 1, "a slab over each storey but the top");
+        assertEquals(12 * (plan.walls().size() + plan.cores().size()),
+                block.solids(new Elements.BearingWall()).size());
+        assertEquals(2 * (1 + 11 * 7), block.solids(new Elements.Floor()).size(),
+                "a slab over each storey but the top, in seven pieces round the cores' two wells, each finished");
         assertEquals(1, block.solids(new Elements.Roof()).size());
         final double[] size = size(block.solids());
         assertEquals(13_440, size[0], 1e-6, "as long as asked, its end pillars flush");
@@ -65,7 +69,7 @@ class BlocksTest {
                 320, brick);
         assertEquals(11, new GenericSlabBlock().count(wider.length()));
         final List<FloorPlan.Wall> stretched = new GenericSlabBlock().plan(wider).walls();
-        assertEquals(11 * 9 + 2 * (2 * 2 + 2 * 3) + (3 * 2 + 3 * 3) + 2 * 3, stretched.size());
+        assertEquals(11 * 9 + 2 * (2 * 2 + 2 * 3) + (3 * 2 + 3 * 3), stretched.size());
         assertTrue(stretched.stream().filter(w -> w.name().equals("pillar"))
                 .allMatch(w -> Math.abs(w.thick() - 30) < 1e-9), "pillars stretched apart, none bigger");
         assertEquals(450 + 5 * 320 + GenericSlabBlock.SLAB, size(new GenericSlabBlock().build(wider).solids())[2],
@@ -109,9 +113,12 @@ class BlocksTest {
         assertEquals(19, pillars.size(), "as the board's plan has them");
         assertTrue(pillars.stream().allMatch(w -> w.thick() == ExecutiveFlat.PILLAR && w.length() <= 180),
                 "blades 30 cm thick, none longer than 1.8 m");
-        // each flat's pillars, and the lobby's wall its side, in two, either side of its door; the shaft's four
-        assertEquals(4 * (pillars.size() + 2) + 4, plan.walls().size());
-        assertEquals(20 * plan.walls().size(), block.solids(new Elements.BearingWall()).size());
+        // each flat's pillars; and its core's: the lobby's wall each side, in two, either side of its door, the shaft's
+        // four, and the wall behind the stair
+        assertEquals(4 * pillars.size(), plan.walls().size());
+        assertEquals(4 * 2 + 4 + 1, plan.cores().size());
+        assertEquals(20 * (plan.walls().size() + plan.cores().size()),
+                block.solids(new Elements.BearingWall()).size());
         final List<FloorPlan.Slab> slabs = plan.slabs();
         for (int i = 0; i < slabs.size(); i++) {
             for (int j = i + 1; j < slabs.size(); j++) {

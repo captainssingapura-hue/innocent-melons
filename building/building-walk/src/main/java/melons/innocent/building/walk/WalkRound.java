@@ -48,8 +48,9 @@ public record WalkRound(String title, Structure structure, Function<Facets.Coat,
     }
 
     /**
-     * Where the avatar starts, as a walk is told it (metres across and along, and degrees round): before the middle
-     * of its front, facing it; at the map's middle, for a building of nothing.
+     * Where the avatar starts, as a walk is told it (metres across and along, and degrees round): before its front,
+     * facing it, across from its first way in, so the way in is before it; from the middle of its front, if it has
+     * none; at the map's middle, for a building of nothing.
      */
     public String start() {
         final double[] across = {Double.MAX_VALUE, -Double.MAX_VALUE};
@@ -61,8 +62,10 @@ public record WalkRound(String title, Structure structure, Function<Facets.Coat,
                 front = Math.max(front, corner.along());
             }
         }
-        return across[0] > across[1] ? "" : String.format(Locale.ROOT, "%.2f,%.2f,%.0f",
-                (across[0] + across[1]) / 2 / METRE, (front + BEFORE) / METRE, BEHIND);
+        final double from = structure.waysIn().isEmpty() ? (across[0] + across[1]) / 2
+                : structure.waysIn().getFirst().across();
+        return across[0] > across[1] ? "" : String.format(Locale.ROOT, "%.2f,%.2f,%.0f", from / METRE,
+                (front + BEFORE) / METRE, BEHIND);
     }
 
     /**
