@@ -39,9 +39,10 @@ public final class GatlingHold {
 
         /**
          * As the gun is slung unless said otherwise: beside the hip, its left side on the hip's outside; its swivel on
-         * its top, a little to the left, over its centre of mass.
+         * its top, a little to the left, over its centre of mass; hung as far back as the shoulders stand, the girdle hung
+         * from the sternum as it is measured, so the left hand reaches the side handle with its arm near straight.
          */
-        public static final Sling DEFAULT = new Sling(new V3(14, -1, -28), new V3(-5, 7, 32.6), new V3(-5.5, 1, 32.6));
+        public static final Sling DEFAULT = new Sling(new V3(13, 1, -31), new V3(-5, 7, 32.6), new V3(-5.5, 1, 32.6));
 
         public Sling with(final V3 fromHip, final V3 swivel) {
             return new Sling(fromHip, swivel, bears);

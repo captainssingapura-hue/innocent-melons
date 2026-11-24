@@ -25,8 +25,8 @@ public record Drawn() implements StatelessFunctionalObject {
 
     /** {@code bone}'s shape, a woman's as far as {@code female} says. */
     public Field.Compound shape(final Bone bone, final double female) {
-        final V3 origin = bone.inBody()
-                ? new Rig(Proportions.DRAWN, Pose.REST, false).frame(bone.part()).at() : V3.ZERO;
+        final V3 origin = bone.inBody() ? ThoraxForm.INSTANCE.drawnFrom(bone,
+                new Rig(Proportions.DRAWN, Pose.REST, false).frame(bone.part()).at()) : V3.ZERO;
         final Sketch s = new Sketch(origin, 1);
         bone.draw(s, female);
         if (bone.part() == Part.HEAD) {

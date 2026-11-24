@@ -42,14 +42,16 @@ public record ArmContacts() implements StatelessFunctionalObject {
         return Discs.INSTANCE.inPart(new Place(ThoraxForm.INSTANCE.apply(STERNAL), clavicle()), on);
     }
 
-    /** The clavicle on the acromion, along it the same. */
+    /** The clavicle on the acromion, along it the same; moved with the girdle ({@link ThoraxForm#girdle}). */
     public Place acromioclavicular() {
-        return Discs.INSTANCE.inPart(new Place(ACROMIAL, clavicle()), Part.RIGHT_GIRDLE);
+        return Discs.INSTANCE.inPart(new Place(ACROMIAL.plus(ThoraxForm.INSTANCE.girdle()), clavicle()),
+                Part.RIGHT_GIRDLE);
     }
 
-    /** The shoulder joint, on the scapula: down the arm, raised forward. */
+    /** The shoulder joint, on the scapula: down the arm, raised forward; moved with the girdle. */
     public Place glenoid() {
-        return Discs.INSTANCE.inPart(new Place(Scapula.JOINT, Axes.HANGING), Part.RIGHT_GIRDLE);
+        return Discs.INSTANCE.inPart(new Place(Scapula.JOINT.plus(ThoraxForm.INSTANCE.girdle()), Axes.HANGING),
+                Part.RIGHT_GIRDLE);
     }
 
     /** The same, on the humerus: the middle of its head. */

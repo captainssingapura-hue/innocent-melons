@@ -67,7 +67,7 @@ public record TrapeziusUpper() implements Muscle {
                 // halfway, its occipital fibres still down the back of the neck's side, its lowest over the
                 // shoulder's top, before they turn forward to the clavicle
                 List.of(new Anchor(C4.INSTANCE, new V3(6.0, 56.1, -4.7)),
-                        new Anchor(C7.INSTANCE, new V3(8.0, 51.8, -3.7))));
+                        new Anchor(C7.INSTANCE, new V3(8.0, 51.8, -6.3))));
     }
 
     @Override

@@ -56,16 +56,25 @@ public record Scapula() implements Bone {
     }
 
     /**
-     * Where its landmark called {@code name} is, in the body's frame at rest, as on the right: on its form
-     * ({@link ScapulaForm}), where it is drawn as one; else where it was first sketched, for those muscles hold it by:
-     * the acromion's facet for the clavicle and its base, the crest of its spine midway, the crest's root and the
-     * spine's root.
+     * Whether it is drawn as a form ({@link ScapulaForm}), as it is unless {@code -Dbones.scapula=sketch} asks for it
+     * as it was first sketched.
+     */
+    public boolean formed() {
+        return !"sketch".equals(System.getProperty("bones.scapula"));
+    }
+
+    /**
+     * Where its landmark called {@code name} is, in the body's frame at rest, as on the right, as a point on the scapula
+     * as first sketched, where the muscles' anchors on it are given ({@link ScapulaMap}): its form's landmark taken
+     * back to the sketch, where it is drawn as a form, so that an anchor there comes to the landmark itself; else where
+     * it was first sketched, for those muscles hold it by: the acromion's facet for the clavicle and its base, the
+     * crest of its spine midway, the crest's root and the spine's root.
      */
     public V3 at(final String name) {
-        if ("form".equals(System.getProperty("bones.scapula"))) {
+        if (formed()) {
             final ScapulaForm form = new ScapulaForm();
             final var p = form.placed().point(form.form().at(name));
-            return v(p.x(), p.y(), p.z());
+            return ScapulaMap.INSTANCE.toSketch(v(p.x(), p.y(), p.z()));
         }
         return switch (name) {
             case "clavicular facet" -> v(16.5, 47.9, 0.8);
@@ -98,12 +107,12 @@ public record Scapula() implements Bone {
     }
 
     /**
-     * Drawn as a form of its landmarks fitted to adult measures ({@link ScapulaForm}) where
-     * {@code -Dbones.scapula=form} asks; else as it was first sketched.
+     * Drawn as a form of its landmarks fitted to adult measures ({@link ScapulaForm}), unless
+     * {@code -Dbones.scapula=sketch} asks for it as it was first sketched.
      */
     @Override
     public void draw(final Sketch s, final double female) {
-        if ("form".equals(System.getProperty("bones.scapula"))) {
+        if (formed()) {
             final ScapulaForm form = new ScapulaForm();
             form.bone().drawn(s, form.placed());
             return;
