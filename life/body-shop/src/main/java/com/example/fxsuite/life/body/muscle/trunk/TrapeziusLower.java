@@ -39,15 +39,30 @@ public record TrapeziusLower() implements Muscle {
         return MuscleRegion.BACK;
     }
 
+    /** How far it reaches in under the middle part along their seam, cm. */
+    private static final double OVERLAP = 0.8;
+
     @Override
     public MuscleForm.Spread form() {
         return new MuscleForm.Spread(
-                List.of(new Anchor(T4.INSTANCE, spines()),
+                // begun a little up under the middle part, so the two overlap along their seam, not just meet
+                List.of(new Anchor(T4.INSTANCE, spines().plus(new V3(0, OVERLAP, 0))),
+                        new Anchor(T4.INSTANCE, spines()),
                         new Anchor(T8.INSTANCE, new V3(0.1, 33.2, -11.9)),
                         new Anchor(T12.INSTANCE, new V3(0.1, 24.9, -10.0))),
-                List.of(new Anchor(Scapula.INSTANCE, Scapula.INSTANCE.at("crest's root")),
+                List.of(new Anchor(Scapula.INSTANCE, underMiddle()),
+                        new Anchor(Scapula.INSTANCE, Scapula.INSTANCE.at("crest's root")),
                         new Anchor(Scapula.INSTANCE, Scapula.INSTANCE.at("root of the spine"))),
                 0.6, new V3(0, 0, -1));
+    }
+
+    /**
+     * Where its line on the scapula begins, a little out along the crest from its root, under the middle part's end:
+     * two parts meeting edge to edge leave a hairline between them where each thins to its edge.
+     */
+    private V3 underMiddle() {
+        final V3 root = Scapula.INSTANCE.at("crest's root");
+        return root.plus(Scapula.INSTANCE.at("crest").minus(root).unit().times(OVERLAP));
     }
 
     /**

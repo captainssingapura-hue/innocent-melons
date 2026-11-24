@@ -21,8 +21,9 @@ public record SpreadRings() implements StatelessFunctionalObject {
 
     public static final SpreadRings INSTANCE = new SpreadRings();
 
-    /** How far a spread's rings turn from one to the next at most, degrees. */
+    /** How far a spread's rings turn from one to the next at most, degrees, where they are as wide as {@link #WIDE}. */
     private static final double TURNING = 8;
+    private static final double WIDE = 2;
     /** How many points each ring's line across is found at. */
     private static final int ACROSS = 16;
 
@@ -66,7 +67,11 @@ public record SpreadRings() implements StatelessFunctionalObject {
         return rings;
     }
 
-    /** How many rings along {@code l}: none further apart than {@code apart}, nor turned more than {@link #TURNING}. */
+    /**
+     * How many rings along {@code l}: none further apart than {@code apart}, nor, where they are {@link #WIDE} across
+     * or more, turned more than {@link #TURNING} from the next; a ring narrower, as one gathering to a point is, turns
+     * as it likes, folding nothing.
+     */
     public int count(final SpreadLines l, final double apart) {
         final int steps = 64;
         double length = 0;
@@ -76,9 +81,13 @@ public record SpreadRings() implements StatelessFunctionalObject {
         for (int k = 1; k <= steps; k++) {
             final double t = (double) k / steps;
             final V3 at = fibre(l, 0.5, t);
-            final V3 next = fibre(l, 1, t).minus(fibre(l, 0, t)).unit();
+            final V3 across = fibre(l, 1, t).minus(fibre(l, 0, t));
+            final V3 next = across.unit();
             length += at.minus(last).length();
-            fastest = Math.max(fastest, Math.toDegrees(Math.acos(Math.max(-1, Math.min(1, span.dot(next))))) * steps);
+            if (across.length() >= WIDE) {
+                fastest = Math.max(fastest,
+                        Math.toDegrees(Math.acos(Math.max(-1, Math.min(1, span.dot(next))))) * steps);
+            }
             last = at;
             span = next;
         }
