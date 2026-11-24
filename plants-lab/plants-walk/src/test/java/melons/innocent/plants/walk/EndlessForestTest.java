@@ -48,10 +48,16 @@ class EndlessForestTest {
                 new Orbit(new Vec3(1_200_300, 170, -1_200_200), 30, -3, 300).camera(48, 10));
         try (Card card = new Card(); Canvas canvas = card.canvas(1280, 720)) {
             final Laid laid = new Laid().asking(card.rays());
-            for (final int[] set : new int[][] {{8, 20, 300}, {32, 20, 300}, {32, 20, 0}, {64, 20, 0}, {32, 60, 0}}) {
-                final Reaches reaches = new Reaches(set[1], Math.max(60, set[1]), 200, 600, 2_000);
-                try (EndlessForestPlace place = new EndlessForestPlace(card, laid, set[0], 25, reaches, set[2]);
+            for (final int[] set : new int[][] {{8, 20, 300, 2_000}, {64, 20, 0, 2_000}, {32, 25, 300, 300}}) {
+                // the last set is as the walk has it: two levels and a cut-off, everything baked beforehand
+                final boolean low = set[3] == 300;
+                final Reaches reaches = low ? new Reaches(set[1], set[1], 300, 300, 300)
+                        : new Reaches(set[1], 60, 200, 600, set[3]);
+                final long opened = System.currentTimeMillis();
+                try (EndlessForestPlace place = new EndlessForestPlace(card, laid, set[0], 25, reaches, set[2], low);
                      Shaded shadows = new Shaded(card, laid, 4096)) {
+                    System.out.printf("ENDLESS FOREST: %d samples made ready in %.1f s; %s%n", set[0],
+                            (System.currentTimeMillis() - opened) / 1e3, card.memory().said());
                     for (int view = 0; view < cameras.size(); view++) {
                         final Camera camera = cameras.get(view);
                         final long began = System.currentTimeMillis();
@@ -61,7 +67,7 @@ class EndlessForestTest {
                         } while (!place.settled() && System.currentTimeMillis() - began < PATIENCE);
                         assertTrue(place.settled(), "everything wanted baked: " + place.said());
                         ImageIO.write(pictured(canvas, place, camera, laid, shadows).image(), "png", folder.resolve(
-                                "endless-" + set[0] + "-samples-fine-" + set[1] + "-shadows-" + set[2] + "-" + named.get(view)
+                                "endless-" + set[0] + "-samples-fine-" + set[1] + "-shadows-" + set[2] + "-far-" + set[3] + "-" + named.get(view)
                                 + ".png")
                                 .toFile());
                         final long settledAt = System.currentTimeMillis();
@@ -74,7 +80,8 @@ class EndlessForestTest {
                                 + " settled in %.1f s; %s; %s%n", set[0], set[1], set[2], named.get(view),
                                 (System.nanoTime() - timed) / 1e6 / 20, (settledAt - began) / 1e3, place.said(),
                                 card.memory().said());
-                        assertTrue(place.triangles() > 0, "something of it drawn");
+                        assertTrue(place.triangles() > 0 || low && camera.eye().y() > 30_000,
+                                "something of it drawn, unless it is cut off nearer than the eye is high");
                         if (view == cameras.size() - 1) {
                             final int posts = place.rearranged().orElseThrow().blocks().size();
                             assertEquals(13 * 13 * 16, posts, "its trunks in the way round where the eye now is");

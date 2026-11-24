@@ -17,6 +17,7 @@ import melons.innocent.plants.tree.Kind;
 import melons.innocent.plants.tree.Stage;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashSet;
@@ -39,17 +40,23 @@ import java.util.concurrent.Executors;
  * samples stood side by side.
  *
  * <p>Every sample's trunks are on the card from the start, so no square is ever missing: a square whose level has
- * not come yet is drawn at the finest coarser one that has. Finer levels are baked away from the card's thread as
- * squares come to want them, the nearest first, and sent for at most four thousandths of a second a frame. Squares
- * nearer than the shadows reach stand for rays, each a copy of its sample's triangles; further ones, and trunks
- * alone, do not. Over what the card may hold, a level no square has used for a while goes, and nothing new comes.
+ * not come yet is drawn at the finest coarser one that has. Told to, it bakes every level in use for every sample
+ * before it is first drawn, and then nothing is baked or sent while the eye moves; otherwise finer levels are baked
+ * away from the card's thread as squares come to want them and sent a few thousandths of a second a frame, and a
+ * level no square has used for a while goes when the card is over what it may hold.
+ *
+ * <p>For rays, every square within the shadows' reach stands as its sample's boughs, whatever level it is drawn
+ * at: twigs cast no shadow, and so the finest meshes, far the heaviest, keep no triangles for rays at all.
  */
 public final class SampledDrawn implements AutoCloseable {
 
     private static final int AT_ONCE = 4;
+    private static final int BAKERS = 3;
     private static final long SENDING = 4_000_000;
     /** Half a tall tree's height, in centimetres: a square's middle is taken to be so far up. */
     private static final double HALF = 750;
+    /** Within so far of the eye a square is drawn whether in view or not, in centimetres. */
+    private static final double CLOSE = 6_000;
     /** A level no square has used for so many frames may go when the card is over what it may hold. */
     private static final int UNUSED = 240;
     private static final String COPIED = "copied";
@@ -62,20 +69,20 @@ public final class SampledDrawn implements AutoCloseable {
     private record Made(Key key, Map<Kind, Mesh> meshes, Optional<RuntimeException> failed) {
     }
 
-    /** A sample at a level on the card: its meshes, and this frame's copies of it, standing for rays and not. */
+    /** A sample at a level on the card: its meshes, and this frame's copies of it, drawn and standing for rays. */
     private final class Kept {
         private final Map<Kind, Shaped> shapes = new EnumMap<>(Kind.class);
-        private final Copies near = card.copies(laid, 16);
-        private final Copies far = card.copies(laid, 16).standing(false);
-        private final List<Filling> nearer = new ArrayList<>();
-        private final List<Filling> further = new ArrayList<>();
+        private final Copies shown = card.copies(laid, 16);
+        private final Copies cast = card.copies(laid, 16);
+        private final List<Filling> showing = new ArrayList<>();
+        private final List<Filling> casting = new ArrayList<>();
         private long triangles;
         private long used;
 
         private void close() {
             shapes.values().forEach(Shaped::close);
-            near.close();
-            far.close();
+            shown.close();
+            cast.close();
         }
     }
 
@@ -84,13 +91,15 @@ public final class SampledDrawn implements AutoCloseable {
     private final Endless endless;
     private final Reaches reaches;
     private final double shadows;
+    /** Whether every level in use was baked before it was first drawn: then nothing is ever let go. */
+    private final boolean beforehand;
     private final Budgeted budget = new Budgeted();
     private final Baked baked;
     private final Map<Kind, Looked> barks = new EnumMap<>(Kind.class);
     private final Map<Key, Kept> kept = new LinkedHashMap<>();
     private final Set<Key> asked = new HashSet<>();
     private final Queue<Made> made = new ConcurrentLinkedQueue<>();
-    private final ExecutorService workers = Executors.newFixedThreadPool(3, work -> {
+    private final ExecutorService workers = Executors.newFixedThreadPool(BAKERS, work -> {
         final Thread thread = new Thread(work, "a forest sample's baker");
         thread.setDaemon(true);
         return thread;
@@ -104,22 +113,42 @@ public final class SampledDrawn implements AutoCloseable {
 
     /**
      * {@code endless} on {@code card}, of the grown trees {@code grown}, each level reaching as {@code reaches}
-     * says, its squares standing for rays within {@code shadows} centimetres of the eye.
+     * says, its squares standing for rays within {@code shadows} centimetres of the eye; {@code beforehand}, with
+     * every level in use baked for every sample before it is first drawn.
      */
     public SampledDrawn(final Card card, final Laid laid, final Endless endless, final List<WoodDrawn.Grown> grown,
-                        final Reaches reaches, final double shadows) {
+                        final Reaches reaches, final double shadows, final boolean beforehand) {
         this.card = card;
         this.laid = laid;
         this.endless = endless;
         this.reaches = reaches;
         this.shadows = shadows;
+        this.beforehand = beforehand;
         this.baked = new Baked(grown, List.of(1.0));
         try {
             for (final Kind kind : Kind.values()) {
                 barks.put(kind, new Looked(card, new Look(laid, new Shades().of(new Barks().of(kind)))));
             }
+            final Set<Stage> first = new HashSet<>(beforehand ? reaches.levels() : Set.of());
+            first.add(Stage.WHOLE);
+            if (shadows > 0) {
+                first.add(Stage.BOUGHS);
+            }
+            final List<Key> keys = new ArrayList<>();
             for (int sample = 0; sample < endless.samples().count(); sample++) {
-                carded(new Key(sample, Stage.WHOLE), baked.wood(endless.samples().planted(sample), Stage.WHOLE));
+                for (final Stage level : first) {
+                    keys.add(new Key(sample, level));
+                }
+            }
+            // baked a few at once, on every thread there is to bake on, and each put on the card here as it comes:
+            // no more at once, since a sample's finest mesh is large while it is still being put together
+            for (int from = 0; from < keys.size(); from += BAKERS) {
+                final List<Key> few = keys.subList(from, Math.min(keys.size(), from + BAKERS));
+                final List<Awaited<Map<Kind, Mesh>>> coming = few.stream().map(key -> new Awaited<>(workers.submit(
+                        () -> baked.wood(endless.samples().planted(key.sample()), key.level())))).toList();
+                for (int each = 0; each < few.size(); each++) {
+                    carded(few.get(each), coming.get(each).come());
+                }
             }
         } catch (final RuntimeException refused) {
             close();
@@ -128,14 +157,14 @@ public final class SampledDrawn implements AutoCloseable {
     }
 
     /**
-     * {@code meshes} put on the card as {@code key}'s: all but trunks alone kept for rays as well, where shadows
-     * are cast at all.
+     * {@code meshes} put on the card as {@code key}'s: a sample's boughs kept for rays as well, where shadows are
+     * cast at all, and no other level.
      */
     private void carded(final Key key, final Map<Kind, Mesh> meshes) {
         final Kept one = new Kept();
         kept.put(key, one);
         meshes.forEach((kind, mesh) -> {
-            one.shapes.put(kind, new Shaped(card, laid, mesh, shadows > 0 && key.level() != Stage.WHOLE));
+            one.shapes.put(kind, new Shaped(card, laid, mesh, shadows > 0 && key.level() == Stage.BOUGHS));
             one.triangles += mesh.triangles();
         });
         one.used = frame;
@@ -143,8 +172,9 @@ public final class SampledDrawn implements AutoCloseable {
 
     /**
      * Readied for a frame seen by {@code camera}, outside any drawing: what has been baked sent, every square in
-     * reach given to the sample and level it is drawn as, what is wanted and missing asked for, and what is no
-     * longer used let go if the card is over what it may hold.
+     * reach given to the sample and level it is drawn as and, within the shadows' reach, to the boughs it stands
+     * for rays as; what is wanted and missing asked for; and what is no longer used let go if the card is over
+     * what it may hold.
      */
     public void readied(final Camera camera) {
         frame++;
@@ -152,18 +182,20 @@ public final class SampledDrawn implements AutoCloseable {
         final Vec3 eye = camera.eye();
         final double side = endless.samples().side();
         anchor = new Vec3(Math.floor(eye.x() / side) * side, 0, Math.floor(eye.z() / side) * side);
-        kept.values().forEach(one -> {
-            one.nearer.clear();
-            one.further.clear();
-        });
-        java.util.Arrays.fill(squares, 0);
+        kept.values().forEach(one -> one.showing.clear());
+        kept.values().forEach(one -> one.casting.clear());
+        Arrays.fill(squares, 0);
         drawn = 0;
         final InView view = new InView(camera, 0);
         final List<Endless.Seen> missing = new ArrayList<>();
         for (final Endless.Seen seen : endless.seen(eye, reaches)) {
             final Vec3 middle = endless.middle(seen.across(), seen.along());
-            final boolean near = seen.away() < shadows;
-            if (!near && !view.holds(middle.plus(new Vec3(0, HALF, 0)), Math.hypot(side, HALF))) {
+            final Filling copy = new Filling(laid.copy()).with(COPIED, new Mat4(middle.minus(anchor))
+                    .times(endless.turned(seen.quarters())).columns());
+            if (seen.away() < shadows) {
+                kept.get(new Key(seen.sample(), Stage.BOUGHS)).casting.add(copy);
+            }
+            if (seen.away() > CLOSE && !view.holds(middle.plus(new Vec3(0, HALF, 0)), Math.hypot(side, HALF))) {
                 continue;
             }
             if (!kept.containsKey(new Key(seen.sample(), seen.level()))) {
@@ -175,15 +207,12 @@ public final class SampledDrawn implements AutoCloseable {
             }
             final Kept one = kept.get(new Key(seen.sample(), level));
             one.used = frame;
-            (near && level != Stage.WHOLE ? one.nearer : one.further).add(new Filling(laid.copy()).with(COPIED,
-                    new Mat4(middle.minus(anchor)).times(endless.turned(seen.quarters())).columns()));
+            one.showing.add(copy);
             squares[level.ordinal()]++;
             drawn += one.triangles;
         }
-        kept.values().forEach(one -> {
-            one.near.filled(one.nearer);
-            one.far.filled(one.further);
-        });
+        kept.values().forEach(one -> one.shown.filled(one.showing));
+        kept.values().forEach(one -> one.cast.filled(one.casting));
         wanting = missing.size();
         baking(missing);
         eased();
@@ -206,7 +235,7 @@ public final class SampledDrawn implements AutoCloseable {
         }
     }
 
-    /** The samples and levels {@code missing} squares want, asked for, the nearest first, a few at once. */
+    /** The samples and levels {@code missing} squares want, asked for, a few at once. */
     private void baking(final List<Endless.Seen> missing) {
         if (flying >= AT_ONCE || budget.full(held())) {
             return;
@@ -230,13 +259,17 @@ public final class SampledDrawn implements AutoCloseable {
         }
     }
 
-    /** Over what the card may hold, each level but trunks alone that no square has used for a while let go. */
+    /**
+     * Over what the card may hold, each level no square has used for a while let go: but trunks, and boughs, and
+     * nothing at all of what was baked beforehand, which is there so that nothing need be baked again.
+     */
     private void eased() {
-        if (held() <= budget.budget()) {
+        if (beforehand || held() <= budget.budget()) {
             return;
         }
         final List<Key> idle = kept.entrySet().stream().filter(one -> one.getKey().level() != Stage.WHOLE
-                && one.getValue().used < frame - UNUSED).map(Map.Entry::getKey).toList();
+                && one.getKey().level() != Stage.BOUGHS && one.getValue().used < frame - UNUSED)
+                .map(Map.Entry::getKey).toList();
         idle.forEach(key -> kept.remove(key).close());
     }
 
@@ -246,27 +279,23 @@ public final class SampledDrawn implements AutoCloseable {
     }
 
     /**
-     * Every square as it was readied, drawn by {@code pass} as {@code camera} sees it: each sample at each level a
-     * draw a kind for the squares that stand for rays, and one for those that do not, which a pass that only
-     * gathers what stands leaves out.
+     * Every square as it was readied, drawn by {@code pass} as {@code camera} sees it: a draw for each sample, level
+     * and kind. A pass that only gathers what stands for rays is given the squares within the shadows' reach
+     * instead, each as its sample's boughs.
      */
     public void drawn(final Pass pass, final Camera camera) {
         final Mat4 stands = new Mat4(anchor);
         final Vec3 white = new Vec3(1, 1, 1);
-        kept.values().forEach(one -> one.shapes.forEach((kind, shape) -> {
-            if (one.near.count() > 0) {
-                barks.get(kind).drawn(pass, shape, stands, camera, 1, white, one.near);
+        kept.values().forEach(one -> {
+            final Copies these = pass.gathers() ? one.cast : one.shown;
+            if (these.count() > 0) {
+                one.shapes.forEach((kind, shape) -> barks.get(kind).drawn(pass, shape, stands, camera, 1, white,
+                        these));
             }
-            if (!pass.gathers() && one.far.count() > 0) {
-                barks.get(kind).drawn(pass, shape, stands, camera, 1, white, one.far);
-            }
-        }));
+        });
     }
 
-    /**
-     * Whether everything wanted is on the card, or as much of it as the card may hold: nothing being baked or
-     * waiting to be sent, and nothing missing unless there is no room for it.
-     */
+    /** Whether everything wanted is on the card, or as much of it as the card may hold. */
     public boolean settled() {
         return flying == 0 && made.isEmpty() && (wanting == 0 || budget.full(held()));
     }

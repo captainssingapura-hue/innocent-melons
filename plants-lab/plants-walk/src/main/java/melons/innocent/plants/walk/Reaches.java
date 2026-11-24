@@ -2,7 +2,9 @@ package melons.innocent.plants.walk;
 
 import melons.innocent.plants.tree.Stage;
 
+import java.util.EnumSet;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * How far from the eye each level of an endless forest's samples reaches, in metres: within {@code fine} a sample
@@ -28,15 +30,29 @@ public record Reaches(double fine, double twigs, double boughs, double limbs, do
     }
 
     /**
-     * As the run says: {@code -Dforest.fine=} (20), {@code -Dforest.twigs=} (60), {@code -Dforest.boughs=} (200),
-     * {@code -Dforest.limbs=} (600) and {@code -Dforest.far=} (2000), each in metres.
+     * As the run says: {@code -Dforest.fine=} (25), {@code -Dforest.twigs=} (25), {@code -Dforest.boughs=} (300),
+     * {@code -Dforest.limbs=} (300) and {@code -Dforest.far=} (300), each in metres. Unless said, then, there are two
+     * levels and a cut-off: the finest within twenty-five metres, boughs to three hundred, and nothing beyond, which
+     * is for an eye kept low among the trunks, where little further off than that is to be seen between them.
      */
     public Reaches() {
-        this(Double.parseDouble(System.getProperty("forest.fine", "20")),
-                Double.parseDouble(System.getProperty("forest.twigs", "60")),
-                Double.parseDouble(System.getProperty("forest.boughs", "200")),
-                Double.parseDouble(System.getProperty("forest.limbs", "600")),
-                Double.parseDouble(System.getProperty("forest.far", "2000")));
+        this(Double.parseDouble(System.getProperty("forest.fine", "25")),
+                Double.parseDouble(System.getProperty("forest.twigs", "25")),
+                Double.parseDouble(System.getProperty("forest.boughs", "300")),
+                Double.parseDouble(System.getProperty("forest.limbs", "300")),
+                Double.parseDouble(System.getProperty("forest.far", "300")));
+    }
+
+    /** The levels in use: each that reaches further than the finer one before it. */
+    public Set<Stage> levels() {
+        final Set<Stage> levels = EnumSet.noneOf(Stage.class);
+        final double[] reach = {0, fine, twigs, boughs, limbs, far};
+        for (final Stage level : Stage.values()) {
+            if (reach[level.ordinal() + 1] > reach[level.ordinal()]) {
+                levels.add(level);
+            }
+        }
+        return levels;
     }
 
     /** The level a sample so many centimetres from the eye is drawn at; none, beyond the furthest. */
