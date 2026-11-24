@@ -74,13 +74,23 @@ public record MuscleBody() implements StatelessFunctionalObject {
         final Bed bed = bedding.apply(bound(under, bind).flesh());
         final List<MuscleSurface.Surface> shown = new ArrayList<>();
         for (int i = 0; i < firm.size(); i++) {
-            if (deep || firm.get(i).muscle().layer() != Layer.DEEP) {
+            if ((deep || firm.get(i).muscle().layer() != Layer.DEEP) && only(firm.get(i).muscle())) {
                 shown.add(under.get(i));
             }
         }
         shown.addAll(sheets.parallelStream().filter(j -> deep || j.muscle().layer() != Layer.DEEP)
+                .filter(j -> only(j.muscle()))
                 .map(j -> MuscleSurface.INSTANCE.surface(j.muscle(), bulk, bind, j.left(), steps, bed)).toList());
         return bound(shown, bind);
+    }
+
+    /**
+     * Whether {@code m} is shown: unless {@code -Dmuscles.only} names some, by a pattern their names match (the
+     * trapezius alone, say, {@code trapezius.*}), every one; those left out still lying under the sheets as before.
+     */
+    private boolean only(final Muscle m) {
+        final String only = System.getProperty("muscles.only", "");
+        return only.isEmpty() || m.name().matches(only);
     }
 
     /** {@code surfaces} put together as one, bound where {@code bind} holds the body. */

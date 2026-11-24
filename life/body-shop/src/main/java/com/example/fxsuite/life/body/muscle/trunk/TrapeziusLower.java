@@ -39,25 +39,38 @@ public record TrapeziusLower() implements Muscle {
         return MuscleRegion.BACK;
     }
 
+    /** How far it reaches in under the middle part along their seam, cm. */
+    private static final double OVERLAP = 0.8;
+
     @Override
     public MuscleForm.Spread form() {
         return new MuscleForm.Spread(
-                List.of(new Anchor(T4.INSTANCE, spines()),
-                        new Anchor(T8.INSTANCE, new V3(0.5, 33.2, -10.8)),
-                        new Anchor(T12.INSTANCE, new V3(0.5, 24.9, -8.9))),
-                List.of(new Anchor(Scapula.INSTANCE, root()),
-                        new Anchor(Scapula.INSTANCE, new V3(7.2, 41.9, -10.9))),
+                // begun a little up under the middle part, so the two overlap along their seam, not just meet
+                List.of(new Anchor(T4.INSTANCE, spines().plus(new V3(0, OVERLAP, 0))),
+                        new Anchor(T4.INSTANCE, spines()),
+                        new Anchor(T8.INSTANCE, new V3(0.1, 33.2, -11.9)),
+                        new Anchor(T12.INSTANCE, new V3(0.1, 24.9, -10.0))),
+                List.of(new Anchor(Scapula.INSTANCE, underMiddle()),
+                        new Anchor(Scapula.INSTANCE, Scapula.INSTANCE.at("crest's root")),
+                        new Anchor(Scapula.INSTANCE, Scapula.INSTANCE.at("root of the spine"))),
                 0.6, new V3(0, 0, -1));
     }
 
-    /** Where its line along the spines begins, the middle part's ends: between the third and fourth spines' tips. */
-    public V3 spines() {
-        return new V3(0.5, 45.4, -10.85);
+    /**
+     * Where its line on the scapula begins, a little out along the crest from its root, under the middle part's end:
+     * two parts meeting edge to edge leave a hairline between them where each thins to its edge.
+     */
+    private V3 underMiddle() {
+        final V3 root = Scapula.INSTANCE.at("crest's root");
+        return root.plus(Scapula.INSTANCE.at("crest").minus(root).unit().times(OVERLAP));
     }
 
-    /** Where its line on the scapula begins, the middle part's ends: at the top of the tubercle at the spine's root. */
-    public V3 root() {
-        return new V3(6.5, 44.4, -10.65);
+    /**
+     * Where its line along the spines begins, the middle part's ends: between the third and fourth spines' tips, half
+     * a centimetre behind them, as the line all down them lies.
+     */
+    public V3 spines() {
+        return new V3(0.1, 45.4, -11.95);
     }
 
     @Override

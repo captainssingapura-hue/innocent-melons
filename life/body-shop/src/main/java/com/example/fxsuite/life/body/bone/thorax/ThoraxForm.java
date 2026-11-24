@@ -17,10 +17,10 @@ import java.util.List;
 /**
  * The chest as its ribs are measured ({@link RibLine}), hung from the spine as it is curved, from as it was drawn by
  * eye ({@link RibAsDrawn}) on the spine as it was drawn: the sternum turned and moved to meet them
- * ({@link SternumFit}); the clavicles' inner ends moved with it, their outer ends where they were. What was drawn on the
- * ribs, the sternum, their cartilages and the clavicles bent smoothly ({@link ThinPlate}) from as drawn to as
- * measured, each rib along its length, the sternum moved, the vertebrae moved as the spine is curved, the clavicles'
- * outer ends held. Found once.
+ * ({@link SternumFit}); the clavicles' inner ends moved with it, their outer ends as far, the shoulder girdle hung
+ * from them moved with them ({@link #girdle}). What was drawn on the ribs, the sternum, their cartilages and the
+ * clavicles bent smoothly ({@link ThinPlate}) from as drawn to as measured, each rib along its length, the sternum
+ * moved, the vertebrae moved as the spine is curved, the clavicles' outer ends moved with the girdle. Found once.
  */
 public enum ThoraxForm {
     INSTANCE;
@@ -53,8 +53,8 @@ public enum ThoraxForm {
     }
 
     /**
-     * The sternum's corners as drawn, moved; the clavicles' inner ends with it, their outer ends held; inside the
-     * spine's canal at three levels, moved as it is curved.
+     * The sternum's corners as drawn, moved; the clavicles' inner ends with it, their outer ends as far, with the
+     * girdle; inside the spine's canal at three levels, moved as it is curved.
      */
     private void front(final List<V3> drawn, final List<V3> bent) {
         for (final V3 p : List.of(new V3(2.7, 45.6, 6.6), new V3(1.5, 40.9, 7.4), new V3(1.85, 35.5, 8.4),
@@ -62,7 +62,7 @@ public enum ThoraxForm {
             pair(drawn, bent, p, sternum.moved(p));
         }
         for (final V3 p : List.of(ArmContacts.ACROMIAL, new V3(13.4, 47.0, 3.4))) {
-            pair(drawn, bent, p, p);
+            pair(drawn, bent, p, p.plus(clavicle()));
         }
         final V3 canal = new V3(0, 0, -2);
         for (final Level l : List.of(Level.T1, Level.T6, Level.T12)) {
@@ -102,6 +102,34 @@ public enum ThoraxForm {
     /** How the sternum is moved from where it was drawn. */
     public SternumFit.Move sternum() {
         return sternum;
+    }
+
+    /**
+     * How far the clavicle is moved from where it was drawn, on the right, both its ends: as far as its inner end is,
+     * on the sternum, so it stays as raised and as swept back as it was drawn.
+     */
+    public V3 clavicle() {
+        return sternum.moved(ArmContacts.STERNAL).minus(ArmContacts.STERNAL);
+    }
+
+    /**
+     * How far the rest of the shoulder girdle is moved from where it was drawn, on the right, its scapula, the shoulder
+     * joint and the arm beyond: back as far as the clavicle is, not up; the scapula had been drawn as high above the
+     * clavicle's end as the sternum's top now rises, its acromion that much over the clavicle's, where the two meet
+     * level.
+     */
+    public V3 girdle() {
+        return new V3(0, 0, clavicle().z());
+    }
+
+    /**
+     * Where {@code bone}, drawn in the body's frame at rest as its part was first drawn, is drawn from in its part, its
+     * part's joint now {@code at}: the girdle's bones not bent with the chest, the scapula, from where the girdle was
+     * before it was moved, so they go with it; every other from {@code at}.
+     */
+    public V3 drawnFrom(final Bone bone, final V3 at) {
+        final boolean girdle = bone.part() == Part.RIGHT_GIRDLE || bone.part() == Part.LEFT_GIRDLE;
+        return girdle && !bends(bone) ? at.minus(girdle()) : at;
     }
 
     /** Whether what is drawn on {@code bone} is bent with the chest: on a rib, the sternum, a cartilage, a clavicle. */

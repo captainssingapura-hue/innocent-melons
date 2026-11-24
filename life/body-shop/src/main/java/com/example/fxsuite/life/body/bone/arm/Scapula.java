@@ -55,6 +55,37 @@ public record Scapula() implements Bone {
         return "scapula";
     }
 
+    /**
+     * Whether it is drawn as a form ({@link ScapulaForm}), as it is unless {@code -Dbones.scapula=sketch} asks for it
+     * as it was first sketched.
+     */
+    public boolean formed() {
+        return !"sketch".equals(System.getProperty("bones.scapula"));
+    }
+
+    /**
+     * Where its landmark called {@code name} is, in the body's frame at rest, as on the right, as a point on the scapula
+     * as first sketched, where the muscles' anchors on it are given ({@link ScapulaMap}): its form's landmark taken
+     * back to the sketch, where it is drawn as a form, so that an anchor there comes to the landmark itself; else where
+     * it was first sketched, for those muscles hold it by: the acromion's facet for the clavicle and its base, the
+     * crest of its spine midway, the crest's root and the spine's root.
+     */
+    public V3 at(final String name) {
+        if (formed()) {
+            final ScapulaForm form = new ScapulaForm();
+            final var p = form.placed().point(form.form().at(name));
+            return ScapulaMap.INSTANCE.toSketch(v(p.x(), p.y(), p.z()));
+        }
+        return switch (name) {
+            case "clavicular facet" -> v(16.5, 47.9, 0.8);
+            case "acromion's base" -> v(14.0, 47.4, -6.6);
+            case "crest" -> v(10.45, 46.1, -9.5);
+            case "crest's root" -> v(7.0, 44.9, -11.7);
+            case "root of the spine" -> v(6.5, 44.4, -10.65);
+            default -> throw new IllegalArgumentException("the scapula as first sketched has no " + name);
+        };
+    }
+
     @Override
     public Region region() {
         return Region.SHOULDER;
@@ -75,8 +106,17 @@ public record Scapula() implements Bone {
         return 0.12;
     }
 
+    /**
+     * Drawn as a form of its landmarks fitted to adult measures ({@link ScapulaForm}), unless
+     * {@code -Dbones.scapula=sketch} asks for it as it was first sketched.
+     */
     @Override
     public void draw(final Sketch s, final double female) {
+        if (formed()) {
+            final ScapulaForm form = new ScapulaForm();
+            form.bone().drawn(s, form.placed());
+            return;
+        }
         final double light = 1 - 0.12 * female;
         blade(s, light);
         spine(s);

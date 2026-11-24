@@ -15,7 +15,8 @@
         though when one came to know of it is the historian's. Nothing in the world is a parabola: a bridge's deck
         follows one. Graphs (graph): vertices joined by edges, each edge directed or not and carrying a label of its
         own. Curves (curves): each kind of curve worked out, a value of its own that gives one value for each x over
-        its span. Plain Java, for the roads, the buildings and whatever else is drawn or reckoned with them.
+        its span. Forms (form): landmarks in space joined by edges, straight or curving, and spanned by faces: a
+        graph of points. Plain Java, for the roads, the buildings and whatever else is drawn or reckoned with them.
     </description>
 
     <properties>
@@ -27,6 +28,7 @@
         <module>existences</module>
         <module>graph</module>
         <module>curves</module>
+        <module>form</module>
     </modules>
 
     <dependencyManagement>

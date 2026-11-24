@@ -1,5 +1,7 @@
 package com.example.fxsuite.life.body;
 
+import com.example.fxsuite.life.body.bone.thorax.ThoraxForm;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -174,14 +176,18 @@ public final class Rig {
     }
 
     /** Where {@code p}'s joint is on its parent, in its parent's frame, as the papers' figure has it; the hand's moved
-     * with its forearm's twist; hips and shoulders as far apart as the body's. */
+     * with its forearm's twist; hips and shoulders as far apart as the body's; the girdle hung from the sternum as it
+     * is measured ({@link ThoraxForm#girdle}). */
     private V3 joint(final Part p) {
         final V3 j = mirrorIfOff(p, p.joint());
         return switch (p) {
             case RIGHT_HAND, LEFT_HAND -> twisted(j, twist(p.side()), 1);
             case RIGHT_THIGH, LEFT_THIGH -> new V3(j.x() * proportions.hipScale(), j.y(), j.z());
-            case RIGHT_GIRDLE, LEFT_GIRDLE, RIGHT_UPPER_ARM, LEFT_UPPER_ARM ->
-                    new V3(j.x() * proportions.shoulderScale(), j.y(), j.z());
+            case RIGHT_GIRDLE, LEFT_GIRDLE -> {
+                final V3 moved = mirrorIfOff(p, ThoraxForm.INSTANCE.girdle());
+                yield new V3(j.x() * proportions.shoulderScale() + moved.x(), j.y() + moved.y(), j.z() + moved.z());
+            }
+            case RIGHT_UPPER_ARM, LEFT_UPPER_ARM -> new V3(j.x() * proportions.shoulderScale(), j.y(), j.z());
             default -> j;
         };
     }

@@ -31,22 +31,15 @@ public record MuscleRings() implements StatelessFunctionalObject {
      * @param span from end to end across it, if said
      * @param wide how wide, cm
      * @param deep how deep, cm
+     * @param path a spread's ring's line across, through its fibres, from its lines' first ends to their last;
+     *             else none
      */
-    public record Ring(V3 on, V3 at, V3 way, Optional<V3> span, double wide, double deep) {
+    public record Ring(V3 on, V3 at, V3 way, Optional<V3> span, double wide, double deep, List<V3> path) {
     }
 
-    /**
-     * The posed ends of {@code m}'s lines, if a spread, on the body {@code rig} holds, on the right or the left: its
-     * origin's first and last, its insertion's first and last, the way each line faces; a strap's, none.
-     */
-    public V3[] ends(final Muscle m, final Rig rig, final boolean left) {
-        return switch (m.form()) {
-            case MuscleForm.Strap s -> new V3[0];
-            case MuscleForm.Spread s -> new V3[] {s.origin().getFirst().in(rig, left),
-                    s.origin().getLast().in(rig, left), s.insertion().getFirst().in(rig, left),
-                    s.insertion().getLast().in(rig, left), s.origin().getFirst().way(s.facing(), rig, left).unit(),
-                    s.insertion().getFirst().way(s.facing(), rig, left).unit()};
-        };
+    /** {@code m}'s lines, if a spread, posed on the body {@code rig} holds, on the right or the left; else none. */
+    public SpreadLines ends(final Muscle m, final Rig rig, final boolean left) {
+        return SpreadRings.INSTANCE.lines(m, rig, left);
     }
 
     /**
@@ -54,11 +47,13 @@ public record MuscleRings() implements StatelessFunctionalObject {
      * {@code grown} times: a strap's sections wider and deeper as one, its tendons as drawn; a spread deeper, its
      * lines where they are.
      */
-    public List<Ring> rings(final Muscle m, final V3[] on, final V3[] way, final V3[] ends, final double grown) {
+    public List<Ring> rings(final Muscle m, final V3[] on, final V3[] way, final SpreadLines ends,
+                            final double grown) {
         return switch (m.form()) {
             case MuscleForm.Strap s -> strap(m, on, way, grown);
-            case MuscleForm.Spread s -> spread(ends, s.deep(), MuscleShape.INSTANCE.kept(m, 0) ? 1 : grown,
-                    MuscleShape.INSTANCE.kept(m, 1) ? 1 : grown, grown);
+            case MuscleForm.Spread s -> SpreadRings.INSTANCE.rings(ends, s.deep(),
+                    MuscleShape.INSTANCE.kept(m, 0) ? 1 : grown, MuscleShape.INSTANCE.kept(m, 1) ? 1 : grown, grown,
+                    APART);
         };
     }
 
@@ -66,8 +61,7 @@ public record MuscleRings() implements StatelessFunctionalObject {
     public int[] sectionOf(final Muscle m, final Rig rig, final boolean left) {
         final List<Integer> of = new ArrayList<>();
         if (m.form() instanceof MuscleForm.Spread) {
-            final V3[] e = ends(m, rig, left);
-            final int n = count(e[0].plus(e[1]).times(0.5), e[2].plus(e[3]).times(0.5));
+            final int n = SpreadRings.INSTANCE.count(ends(m, rig, left), APART);
             for (int i = 0; i < n; i++) {
                 of.add(2 * i < n ? 0 : 1);
             }
@@ -110,7 +104,7 @@ public record MuscleRings() implements StatelessFunctionalObject {
             final Section s = sections.get(i);
             final double k = MuscleShape.INSTANCE.kept(m, i) ? 1 : grown;
             drawn.add(new Ring(on[i], on[i].plus(way[i].times(s.deep() * k / 2)), way[i], Optional.empty(),
-                    s.wide() * k, s.deep() * k));
+                    s.wide() * k, s.deep() * k, List.of()));
         }
         if (!m.sheet()) {
             return drawn;
@@ -128,29 +122,6 @@ public record MuscleRings() implements StatelessFunctionalObject {
         return all;
     }
 
-    /**
-     * A spread's rings, from across its origin to across its insertion, each from the one line to the other; as deep
-     * as drawn, {@code origin} times at its origin, {@code insertion} times at its insertion, {@code belly} times
-     * midway, rounding between.
-     */
-    private List<Ring> spread(final V3[] e, final double drawn, final double origin, final double insertion,
-                              final double belly) {
-        final int n = count(e[0].plus(e[1]).times(0.5), e[2].plus(e[3]).times(0.5));
-        final List<Ring> rings = new ArrayList<>();
-        for (int i = 0; i < n; i++) {
-            final double t = (double) i / (n - 1);
-            final double end = origin + (insertion - origin) * t;
-            final double deep = drawn * (end + (belly - end) * Math.sin(Math.PI * t));
-            final V3 first = mix(e[0], e[2], t);
-            final V3 last = mix(e[1], e[3], t);
-            final V3 on = first.plus(last).times(0.5);
-            final V3 way = mix(e[4], e[5], t).unit();
-            final V3 span = last.minus(first);
-            rings.add(new Ring(on, on.plus(way.times(deep / 2)), way, Optional.of(span), span.length(), deep));
-        }
-        return rings;
-    }
-
     /** How many rings from {@code a} to {@code b}, both ends among them, none further apart than {@link #APART}. */
     private int count(final V3 a, final V3 b) {
         return Math.max(2, (int) Math.ceil(b.minus(a).length() / APART) + 1);
@@ -158,7 +129,8 @@ public record MuscleRings() implements StatelessFunctionalObject {
 
     private Ring share(final Ring a, final Ring b, final double t) {
         return new Ring(mix(a.on(), b.on(), t), mix(a.at(), b.at(), t), mix(a.way(), b.way(), t).unit(),
-                Optional.empty(), a.wide() + (b.wide() - a.wide()) * t, a.deep() + (b.deep() - a.deep()) * t);
+                Optional.empty(), a.wide() + (b.wide() - a.wide()) * t, a.deep() + (b.deep() - a.deep()) * t,
+                List.of());
     }
 
     private V3 mix(final V3 a, final V3 b, final double t) {

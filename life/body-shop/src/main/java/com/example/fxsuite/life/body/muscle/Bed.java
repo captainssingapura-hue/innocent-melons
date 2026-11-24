@@ -10,8 +10,8 @@ import java.util.Optional;
  */
 public interface Bed {
 
-    /** A point of the bed and the way out of it there, a unit. */
-    record Laid(V3 at, V3 out) {
+    /** A point of the bed, the way out of it there, a unit, and whether it is a bone's, not a muscle's. */
+    record Laid(V3 at, V3 out, boolean bone) {
     }
 
     /** The point of the bed nearest {@code p}, and the way out of it there; none, if none is near. */

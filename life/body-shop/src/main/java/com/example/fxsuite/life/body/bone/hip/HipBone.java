@@ -97,12 +97,14 @@ public record HipBone() implements Bone {
     private void ilium(final Sketch s, final double f, final double light) {
         final V3 asis = v(12.0 + 1.2 * f, 7.0 - 0.6 * f, 5.5);
         final V3 aiis = v(10.4 + 0.5 * f, 3.4, 4.3);
-        final V3 tubercle = v(14.2 + 0.9 * f, 11.0 - 0.8 * f, 1.2);
-        final V3 crestBack = v(12.6 + 0.6 * f, 13.4 - 1.0 * f, -4.0);
+        // the crest drawn in to men's breadth, and the wing under it ({@link IliumNarrowing})
+        final IliumNarrowing in = IliumNarrowing.INSTANCE;
+        final V3 tubercle = in.apply(v(14.2 + 0.9 * f, 11.0 - 0.8 * f, 1.2));
+        final V3 crestBack = in.apply(v(12.6 + 0.6 * f, 13.4 - 1.0 * f, -4.0));
         final V3 psis = v(4.6, 9.5 - 0.5 * f, -8.0);
         final V3 piis = v(4.8, 6.5 - 0.4 * f, -8.0);
         final V3 notch = v(6.4 + 0.5 * f, 2.6, -5.8);
-        final V3 fossa = v(10.6 + 0.8 * f, 7.6 - 0.5 * f, -0.8);
+        final V3 fossa = in.apply(v(10.6 + 0.8 * f, 7.6 - 0.5 * f, -0.8));
         // the wing, hollowed inside as the iliac fossa, bulging out where the gluteal muscles lie on it
         s.blend(0.5).sheet(new V3[] {asis, tubercle, crestBack, psis}, new V3[] {aiis, v(9.3, 2.6, 0.2), notch, piis},
                 8, 4, 0.55 * light, v(1, 0, -0.2), 0.9);
