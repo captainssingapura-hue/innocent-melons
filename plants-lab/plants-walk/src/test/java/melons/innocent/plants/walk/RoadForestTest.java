@@ -1,6 +1,7 @@
 package melons.innocent.plants.walk;
 
 import com.example.fxsuite.avatar.sim.Avatar;
+import com.example.fxsuite.avatar.sim.Block;
 import com.example.fxsuite.avatar.sim.Body;
 import com.example.fxsuite.avatar.sim.Clock;
 import com.example.fxsuite.avatar.sim.Controls;
@@ -32,8 +33,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * A road through a forest without end, on the card. No tree's trunk is in the way within five metres of the road's
- * middle, as far along as its trunks are said; the avatar, walking off sideways, is stopped some thirty metres from
+ * A road through a forest without end, on the card. No tree's trunk is in the way on the road or within three
+ * metres of its edge, as far along as its trunks are said, and the avatar walking along it stands on its pavement; the avatar, walking off sideways, is stopped some thirty metres from
  * the road, and walking back along it is stopped a hundred metres behind. Followed for half a kilometre, the road is
  * made on ahead and let go behind, the squares it touches are drawn tree by tree, and it is pictured along the way
  * with nothing said by the validation layer: the pictures are written to {@code target/card/road-*.png}, and how
@@ -53,10 +54,17 @@ class RoadForestTest {
                 final Road road = place.road();
                 pictured(canvas, place, eye(road, 0), laid, shadows);
                 final Obstacles inTheWay = place.inTheWay();
-                assertTrue(inTheWay.blocks().stream().filter(block -> block.top() < 1_000_000)
-                        .noneMatch(trunk -> road.off(trunk.x(), trunk.z()) <= 500), "no trunk within five metres");
-                assertTrue(inTheWay.blocks().stream().anyMatch(trunk -> road.off(trunk.x(), trunk.z()) < 1_200),
+                // a trunk is neither the low pavement nor a wall as high as the sky
+                final List<Block> trunks = inTheWay.blocks().stream().filter(block -> block.top() > 100
+                        && block.top() < 1_000_000).toList();
+                assertTrue(trunks.stream().noneMatch(trunk -> road.off(trunk.x(), trunk.z()) <= 675),
+                        "no trunk on the road or within three metres of its edge");
+                assertTrue(trunks.stream().anyMatch(trunk -> road.off(trunk.x(), trunk.z()) < 1_400),
                         "but trees not far beyond that");
+                final Avatar ahead = walked(0, 4, inTheWay);
+                final double stood = -ahead.body().position().y();
+                assertTrue(ahead.body().position().z() > 1_000 && stood > 4 && stood < 16,
+                        "walking along it, the avatar stands on its pavement: " + stood + " cm up");
                 final Avatar aside = walked(90, 30, inTheWay);
                 final double off = Math.abs(aside.body().position().x() - road.across(aside.body().position().z()));
                 assertTrue(off > 300 && off <= 3_100, "kept within thirty metres of the road: " + off);

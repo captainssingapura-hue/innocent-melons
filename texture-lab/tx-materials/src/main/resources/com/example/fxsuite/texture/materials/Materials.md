@@ -62,6 +62,11 @@ Stone cut square, to lie in courses.
 
 Cement, sand and stone poured wet and set hard, cast in slabs with a joint between each.
 
+## Asphalt
+
+Stones bound with tar and rolled flat, as a road is paved: dark grey, worn paler in patches, speckled with its
+stones.
+
 ## Synthetic
 
 Made by a process, not found and not grown.
@@ -73,6 +78,10 @@ A hard coat baked onto what it covers.
 ## Rubber
 
 A tough, springy stuff that gives and comes back.
+
+## RoadPaint
+
+The paint a road's lines are painted in: white and matt, worn greyer in patches, with no clear coat.
 
 ## GlossPaint
 

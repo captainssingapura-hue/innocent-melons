@@ -33,7 +33,7 @@ public record Materials() {
     public Taxonomy tree() {
         return new Taxonomy("materials", new Matter(), List.of(new Gold(), new Bronze(),
                 new Titanium(), new Gunmetal(), new Steel(), new CommonRedBrick(), new ChineseGreyBrick(),
-                new Adobe(), new Rubble(), new DressedStone(), new Concrete(),
+                new Adobe(), new Rubble(), new DressedStone(), new Concrete(), new Asphalt(), new RoadPaint(),
                 new Enamel(), new Rubber(), new GlossPaint(), new MetallicPaint(), new Glass(), new LitGlass(),
                 new Flame(), new LitPaper(),
                 new Rind(), new Timber(), new OakBark(), new WalnutBark(), new BirchBark(), new PoplarBark(),
@@ -68,6 +68,12 @@ public record Materials() {
     public record Rubble() implements Leaf<Masonry>, Material { public Masonry parent() { return new Masonry(); } }
     public record Concrete() implements Leaf<Masonry>, Material {
         public Masonry parent() { return new Masonry(); }
+    }
+    public record Asphalt() implements Leaf<Masonry>, Material {
+        public Masonry parent() { return new Masonry(); }
+    }
+    public record RoadPaint() implements Leaf<Synthetic>, Material {
+        public Synthetic parent() { return new Synthetic(); }
     }
     public record DressedStone() implements Leaf<Masonry>, Material {
         public Masonry parent() { return new Masonry(); }

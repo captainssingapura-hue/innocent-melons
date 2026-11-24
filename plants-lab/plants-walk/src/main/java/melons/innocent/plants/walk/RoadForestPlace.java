@@ -2,6 +2,8 @@ package melons.innocent.plants.walk;
 
 import com.example.fxsuite.avatar.sim.Block;
 import com.example.fxsuite.avatar.sim.Obstacles;
+import com.example.fxsuite.historian.Civilization;
+import com.example.fxsuite.historian.CommonEras;
 import com.example.fxsuite.vulkan.bench.Place;
 import com.example.fxsuite.vulkan.device.Card;
 import com.example.fxsuite.vulkan.device.Pass;
@@ -11,6 +13,8 @@ import com.example.fxsuite.vulkan.space.Vec3;
 import com.example.fxsuite.vulkan.view.Camera;
 import melons.innocent.plants.tree.Bough;
 import melons.innocent.plants.tree.Kind;
+import melons.innocent.road.surface.RoadSpec;
+import melons.innocent.road.surface.RoadSurface;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -21,8 +25,10 @@ import java.util.Set;
 /**
  * A road through a forest without end: the forest of samples ({@link Endless}, {@link SampledDrawn}), in winter,
  * standing in a strip either side of a road that wanders on for ever the way the world's third number grows
- * ({@link Road}), with no tree on the road or close beside it. The road is made as it is travelled and is another
- * road every time; the forest it runs through is the one forest, the same wherever the road happens to cross it.
+ * ({@link Road}), paved as the road works surface a country road today ({@link Paved}): two lanes and a narrow
+ * shoulder to each, with no tree on it or within three metres of its edge. The road is made as it is travelled
+ * and is another road every time; the forest it runs through is the one forest, the same wherever the road
+ * happens to cross it.
  *
  * <p>A square of the forest the road touches cannot be a copy of its sample, some of its trees being gone, so its
  * trees that are left are drawn one by one ({@link WoodDrawn}); every other square in the strip is its sample, as
@@ -38,9 +44,13 @@ public final class RoadForestPlace implements Place {
     private static final double METRE = 100;
     private static final int EACH = 2;
     private static final long CHANCE = 20261124L;
-    /** How far either side of the road's middle the forest stands, and within how far of it no tree does. */
+    /** How far either side of the road's middle the forest stands, and how far past its edge no tree does. */
     private static final double STRIP = 15_000;
-    private static final double CLEAR = 500;
+    private static final double VERGE = 300;
+    /** The road's lanes and its shoulders, how wide; and a stretch's length, which a road's specification asks. */
+    private static final double LANE = 300;
+    private static final double SHOULDER = 75;
+    private static final double STRETCH = 10_000;
     /** How far a road may be from a square's middle, across, and still touch it; beyond that it is not looked at. */
     private static final double TOUCHING = 4_500;
     /** How many squares each way from the eye's own the trunks are in the way, and how far it goes before more. */
@@ -56,6 +66,8 @@ public final class RoadForestPlace implements Place {
     private final Reaches reaches;
     private final Road road;
     private final RoadDrawn drawn;
+    /** Within how far of the road's middle no tree stands, in centimetres: its half width and its verge. */
+    private final double clear;
     private final SampledDrawn forest;
     private final WoodDrawn wood;
     /** The squares the road touched when their trees were last planted, each as its two numbers in one. */
@@ -85,7 +97,10 @@ public final class RoadForestPlace implements Place {
         for (int sample = 0; sample < samples; sample++) {
             planted.add(endless.samples().planted(sample));
         }
-        this.drawn = new RoadDrawn(card, laid, road);
+        // a country road as the road works surface one today: two lanes of three metres, a narrow shoulder to each
+        this.drawn = new RoadDrawn(card, laid, road, new RoadSurface().section(
+                new RoadSpec<Civilization, CommonEras.Contemporary>(LANE, SHOULDER, STRETCH)));
+        this.clear = drawn.wide() / 2 + VERGE;
         try {
             this.wood = new WoodDrawn(card, laid, grown, List.of(), Optional.empty());
         } catch (final RuntimeException refused) {
@@ -120,7 +135,7 @@ public final class RoadForestPlace implements Place {
 
     /** Whether a tree standing at {@code across}, {@code along} is gone: on the road, or close beside it. */
     private boolean cleared(final double across, final double along) {
-        return road.has(along) && road.off(across, along) <= CLEAR;
+        return road.has(along) && road.off(across, along) <= clear;
     }
 
     @Override
