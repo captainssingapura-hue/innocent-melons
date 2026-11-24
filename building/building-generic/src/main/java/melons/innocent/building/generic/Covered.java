@@ -13,7 +13,8 @@ import java.util.List;
  * its kind is. A windowed run a sill wall {@code sill} high, over it a window as wide as the run up to {@code head},
  * its glass in a frame of metal and parted by mullions no more than {@link #PANE} apart, and over the window a band of
  * wall up to the slab; a solid run wall all the way up; a parapet a wall {@code parapet} high and no more, an open edge
- * guarded. In centimetres.
+ * guarded; a door's run a door as wide as it, {@link #LEAF} thick, of timber, up to {@code head}, and over it a
+ * band of wall up to the slab. In centimetres.
  *
  * @param sill    how high a window's sill is over the floor
  * @param head    how high a window's head is over the floor
@@ -26,6 +27,8 @@ public record Covered(double sill, double head, double parapet, Material infill)
     static final double PANE = 150;
     static final double FRAME = 5;
     static final double GLASS = 2;
+    /** How thick a door is. */
+    static final double LEAF = 5;
 
     /** Sills at 90 cm, heads at 2.1 m, parapets 1 m, as flats commonly have them; its walls of {@code infill}. */
     public Covered(final Material infill) {
@@ -42,6 +45,12 @@ public record Covered(double sill, double head, double parapet, Material infill)
                     run, floor, ceiling)));
             case PARAPET -> parts.add(new Part(new Elements.Parapet(), along.whole(run.name(), Role.DRESSING,
                     infill, run, floor, floor + parapet)));
+            case DOOR -> {
+                parts.add(new Part(new Elements.Door(), along.box(run.name(), Role.DRESSING, Material.TIMBER, run,
+                        0, run.length(), 0, LEAF, floor, floor + head)));
+                parts.add(new Part(new Elements.Wall(), along.whole(run.name() + " over its door", Role.WALL, infill,
+                        run, floor + head, ceiling)));
+            }
             case WINDOWED -> {
                 parts.add(new Part(new Elements.Wall(), along.whole(run.name() + " under its window", Role.WALL,
                         infill, run, floor, floor + sill)));

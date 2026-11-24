@@ -8,7 +8,7 @@ import com.example.fxsuite.existence.Elements;
 
 /**
  * A building finished outside as {@code finish} says: its windows' frames and glass their colours; all else of it
- * painted, if it is to be, but its roof, which is waterproofed and seen by none.
+ * painted, if it is to be, but its roof, which is waterproofed and seen by none, and its doors, timber as they are.
  *
  * @param finish how it is finished
  */
@@ -40,7 +40,7 @@ record Finished(Finish finish) {
                 default -> solid;
             };
         }
-        if (part.element().equals(new Elements.Roof())) {
+        if (part.element().equals(new Elements.Roof()) || part.element().equals(new Elements.Door())) {
             return solid;
         }
         return finish.paint().map(solid::tinted).orElse(solid);

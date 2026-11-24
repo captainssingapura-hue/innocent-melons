@@ -74,7 +74,9 @@ public record FloorPlan(List<Wall> walls, List<Slab> slabs, List<Cover> covers) 
         /** A wall, its full height, no window in it. */
         SOLID,
         /** A wall half a storey high, along an open edge: an access balcony's. */
-        PARAPET
+        PARAPET,
+        /** A doorway as wide as the run, its door in it, and a band of wall over it up to the slab. */
+        DOOR
     }
 
     /**

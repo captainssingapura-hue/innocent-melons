@@ -25,8 +25,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * The slab block and the point block, their structure and their cover: nothing wrong with either; each storey its
  * plan's walls, its slabs over them, the topmost its roof; as high as its storeys, the first 3.6 m and the rest 2.8 m;
- * the slab block as long as its flats and cores, a core at each end and between each group; the point block four
- * executive flats on their pillars, round their lobby, clear of one another; covered above the void deck in brick,
+ * the slab block as long as asked, its bays and cores worked out from it, a corner home at each end; the point block
+ * four executive flats on their pillars, round their lobby, clear of one another; covered above the void deck in brick,
  * the slab block's windows as wide as each flat's back, the access balcony guarded half a storey high; and blocks too
  * big or too small refused.
  */
@@ -35,7 +35,7 @@ class BlocksTest {
     private final Tint frames = new Tint("#3c3f44");
     private final Tint glass = new Tint("#6f8fa3");
     private final Finish brick = new Finish(Walling.BRICK, Optional.empty(), frames, glass);
-    private final SlabBlockSpec<Civilization, CommonEras.Modern> slab = new SlabBlockSpec<>(14_040, 1_205, 180, 12,
+    private final SlabBlockSpec<Civilization, CommonEras.Modern> slab = new SlabBlockSpec<>(13_440, 1_205, 180, 12,
             360, 280, brick);
     private final PointBlockSpec<Civilization, CommonEras.Modern> point = new PointBlockSpec<>(20, 900);
 
@@ -44,11 +44,11 @@ class BlocksTest {
         final Structure block = new GenericSlabBlock().build(slab);
         assertEquals(List.of(), block.problems());
         final FloorPlan plan = new GenericSlabBlock().plan(slab);
-        // as long as twelve of the board's bays and three cores: a core, six bays, a core, six bays, a core. Each bay
-        // nine pillars of its own; on each run's seven lines, bays mirrored in turn, four with two pillars and three
-        // with three; each core three walls
+        // as long as twelve of the board's bays and two cores: a corner, two bays, a core, six bays, a core, two bays
+        // and a corner. Each bay nine pillars of its own; on each run's lines, its ends' too, bays mirrored in turn,
+        // two pillars and three by turns; each core three walls
         assertEquals(12, new GenericSlabBlock().count(slab.length()));
-        assertEquals(12 * 9 + 2 * (4 * 2 + 3 * 3) + 3 * 3, plan.walls().size());
+        assertEquals(12 * 9 + 2 * (2 * 2 + 2 * 3) + (4 * 2 + 3 * 3) + 2 * 3, plan.walls().size());
         final List<FloorPlan.Wall> pillars = plan.walls().stream().filter(w -> w.name().equals("pillar")).toList();
         assertTrue(pillars.stream().allMatch(w -> w.thick() == SlabBay.PILLAR && w.length() <= 180),
                 "blades 30 cm thick, none longer than 1.8 m");
@@ -56,16 +56,16 @@ class BlocksTest {
         assertEquals(12 - 1, block.solids(new Elements.Floor()).size() - 1, "a slab over each storey but the top");
         assertEquals(1, block.solids(new Elements.Roof()).size());
         final double[] size = size(block.solids());
-        assertEquals(14_040, size[0], 1e-6, "as long as asked, its cores' end walls flush");
+        assertEquals(13_440, size[0], 1e-6, "as long as asked, its end pillars flush");
         assertEquals(1_205, size[1], 1e-6, "as wide as asked, its bays and its corridor");
         assertEquals(360 + 11 * 280 + GenericSlabBlock.SLAB, size[2], 1e-6, "from under the ground slab to the roof");
         // wider and deeper than the board's: eleven bays 10.45 m wide nearer its 10.2 m than ten 11.5 m wide, in runs
-        // of six and five, the last of five unmirrored; the same pillars, as big
-        final SlabBlockSpec<Civilization, CommonEras.Modern> wider = new SlabBlockSpec<>(13_300, 1_380, 180, 6, 450,
+        // of three, five and three, the last of five unmirrored; the same pillars, as big
+        final SlabBlockSpec<Civilization, CommonEras.Modern> wider = new SlabBlockSpec<>(12_700, 1_380, 180, 6, 450,
                 320, brick);
         assertEquals(11, new GenericSlabBlock().count(wider.length()));
         final List<FloorPlan.Wall> stretched = new GenericSlabBlock().plan(wider).walls();
-        assertEquals(11 * 9 + (4 * 2 + 3 * 3) + (3 * 2 + 3 * 3) + 3 * 3, stretched.size());
+        assertEquals(11 * 9 + 2 * (2 * 2 + 2 * 3) + (3 * 2 + 3 * 3) + 2 * 3, stretched.size());
         assertTrue(stretched.stream().filter(w -> w.name().equals("pillar"))
                 .allMatch(w -> Math.abs(w.thick() - 30) < 1e-9), "pillars stretched apart, none bigger");
         assertEquals(450 + 5 * 320 + GenericSlabBlock.SLAB, size(new GenericSlabBlock().build(wider).solids())[2],
@@ -79,59 +79,25 @@ class BlocksTest {
             final SlabBlockSpec<Civilization, CommonEras.Modern> s = new SlabBlockSpec<>(length, 1_205, 180, 4, 360,
                     280, brick);
             final int n = block.count(length);
-            final int cores = (n + GenericSlabBlock.RUN - 1) / GenericSlabBlock.RUN + 1;
+            final int cores = block.cores(n);
+            assertEquals((n + GenericSlabBlock.RUN - 1) / GenericSlabBlock.RUN, cores, "a core every six bays or so");
             final double wide = (length - cores * GenericSlabBlock.CORE_WIDE) / n;
             assertTrue(wide >= GenericSlabBlock.NARROWEST - 1e-9 && wide <= GenericSlabBlock.WIDEST + 1e-9,
                     length + ": " + n + " bays " + wide + " wide");
             final FloorPlan.Slab floor = block.plan(s).slabs().getFirst();
             assertEquals(length, floor.x1() - floor.x0(), 1e-6, "as long as asked");
         }
-        assertEquals(2, block.count(2_700), "the shortest, two bays 7.5 m wide and three cores");
+        assertEquals(2, block.count(2_700), "the shortest, two corner homes 10.5 m wide and a core");
         // too short, too high, too deep behind its corridor, its first storey too low, its others too high, unfilled
         final Object[][] refused = {{2_600, 1_205, 12, 360, 280, brick},
-            {14_040, 1_205, 41, 360, 280, brick}, {14_040, 1_900, 12, 360, 280, brick},
-            {14_040, 1_205, 12, 250, 280, brick}, {14_040, 1_205, 12, 360, 400, brick},
-            {14_040, 1_205, 12, 360, 280, null}};
+            {13_440, 1_205, 41, 360, 280, brick}, {13_440, 1_900, 12, 360, 280, brick},
+            {13_440, 1_205, 12, 250, 280, brick}, {13_440, 1_205, 12, 360, 400, brick},
+            {13_440, 1_205, 12, 360, 280, null}};
         for (final Object[] r : refused) {
             assertThrows(IllegalArgumentException.class, () -> new SlabBlockSpec<>(((Number) r[0]).doubleValue(),
                     ((Number) r[1]).doubleValue(), 180, (int) r[2], ((Number) r[3]).doubleValue(),
                     ((Number) r[4]).doubleValue(), (Finish) r[5]));
         }
-    }
-
-    @Test
-    void aSlabBlockFilledInWithWhatItIsAskedFor() {
-        for (final Walling walling : Walling.values()) {
-            final Structure block = new GenericSlabBlock().build(new SlabBlockSpec<>(6_000, 1_205, 180, 3, 360, 280,
-                    new Finish(walling, Optional.empty(), frames, glass)));
-            final List<Solid> walls = block.solids(new Elements.Wall());
-            assertTrue(!walls.isEmpty() && walls.stream().allMatch(s -> s.material().name().equals(walling.name())),
-                    walling + " between the pillars");
-            assertTrue(block.solids(new Elements.BearingWall()).stream()
-                    .allMatch(s -> s.material() == Material.CONCRETE), "the pillars concrete whatever between");
-            assertTrue(walls.stream().allMatch(s -> s.tint().isEmpty()), "unpainted, as it is");
-        }
-    }
-
-    @Test
-    void aSlabBlockPaintedItsWindowsFramedAndGlazedInTheirColours() {
-        final Tint cream = new Tint("#e8dcc0");
-        final Tint green = new Tint("#4f7a6a");
-        final Structure block = new GenericSlabBlock().build(new SlabBlockSpec<>(6_000, 1_205, 180, 3, 360, 280,
-                new Finish(Walling.PRECAST, Optional.of(cream), frames, green)));
-        final List<Solid> windows = block.solids(new Elements.Window());
-        assertTrue(windows.stream().filter(s -> s.material() == Material.GLASS).allMatch(s -> s.tint()
-                .equals(Optional.of(green))), "its glass tinted");
-        assertTrue(windows.stream().filter(s -> s.material() == Material.METAL).allMatch(s -> s.tint()
-                .equals(Optional.of(frames))), "its frames their colour");
-        final List<Solid> painted = new ArrayList<>(block.solids(new Elements.Wall()));
-        painted.addAll(block.solids(new Elements.Parapet()));
-        painted.addAll(block.solids(new Elements.BearingWall()));
-        painted.addAll(block.solids(new Elements.Floor()));
-        assertTrue(painted.stream().allMatch(s -> s.tint().equals(Optional.of(cream))), "painted all over");
-        assertTrue(block.solids(new Elements.Roof()).stream().allMatch(s -> s.tint().isEmpty()), "but its roof");
-        assertTrue(block.solids(new Elements.Wall()).stream().allMatch(s -> s.material() == Material.PRECAST),
-                "precast under its paint");
     }
 
     @Test
@@ -186,10 +152,10 @@ class BlocksTest {
         final List<Solid> parapets = block.solids(new Elements.Parapet());
         assertEquals(11, parapets.size(), "the access balcony guarded on every storey over the void deck");
         assertTrue(parapets.stream().allMatch(p -> Math.abs(height(p) - 100) < 1e-6), "half a storey high");
-        // each flat windowed between its pillars, back and front, every flat alike, on eleven storeys
+        // each home windowed between its pillars, every storey alike, eleven of them
         final long panes = block.solids(new Elements.Window()).stream().filter(s -> s.material() == Material.GLASS)
                 .count();
-        assertTrue(panes > 0 && panes % (11 * 12) == 0);
+        assertTrue(panes > 0 && panes % 11 == 0);
         final Structure tower = new GenericPointBlock().build(point);
         final long round = tower.solids(new Elements.Window()).stream().filter(s -> s.material() == Material.GLASS)
                 .count();

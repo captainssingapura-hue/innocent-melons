@@ -144,8 +144,12 @@ public final class Inspector {
         }
     }
 
-    /** Where the eye first looks from: round the middle of {@code facets}, far enough off to see them whole. */
+    /**
+     * Where the eye first looks from: round the middle of {@code facets}, far enough off to see them whole, as far
+     * round as {@code -Dbench.turn=} says, 30 degrees if it does not.
+     */
     private Orbit orbit(final Facets facets) {
+        final double turn = Double.parseDouble(System.getProperty("bench.turn", "30"));
         final double[] low = {Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE};
         final double[] high = {-Double.MAX_VALUE, -Double.MAX_VALUE, -Double.MAX_VALUE};
         facets.sheets().values().forEach(sheet -> {
@@ -155,10 +159,10 @@ public final class Inspector {
             }
         });
         if (low[0] > high[0]) {
-            return new Orbit(new Vec3(0, 0, 0), 30, 20, 1_000);
+            return new Orbit(new Vec3(0, 0, 0), turn, 20, 1_000);
         }
         final double size = Math.max(high[0] - low[0], Math.max(high[1] - low[1], high[2] - low[2]));
-        return new Orbit(new Vec3((low[0] + high[0]) / 2, (low[1] + high[1]) / 2, (low[2] + high[2]) / 2), 30, 20,
+        return new Orbit(new Vec3((low[0] + high[0]) / 2, (low[1] + high[1]) / 2, (low[2] + high[2]) / 2), turn, 20,
                 Math.max(500, size * 2));
     }
 
