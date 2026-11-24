@@ -75,8 +75,17 @@ public record Scapula() implements Bone {
         return 0.12;
     }
 
+    /**
+     * Drawn as a form of its landmarks fitted to adult measures ({@link ScapulaForm}) where {@code -Dbones.scapula=form}
+     * asks; else as it was first sketched.
+     */
     @Override
     public void draw(final Sketch s, final double female) {
+        if ("form".equals(System.getProperty("bones.scapula"))) {
+            final ScapulaForm form = new ScapulaForm();
+            form.bone().drawn(s, form.placed());
+            return;
+        }
         final double light = 1 - 0.12 * female;
         blade(s, light);
         spine(s);

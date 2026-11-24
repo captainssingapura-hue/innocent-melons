@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.example.fxsuite</groupId>
+        <artifactId>fxsuite-math</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>fxsuite-math-form</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        A form in space as a graph and nothing more: named points (landmarks) joined by edges, each straight or curving
+        between its two (an arc, a bow, a corner's sweep), and faces spanned by loops of its edges, each a surface
+        through its sides. What it is made of, how thick its parts are and what they bear are for whatever uses it to
+        say, about its parts by their names: a building's walls, an aircraft's frame, a bone's borders and fossae.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>fxsuite-math-graph</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.lang.ontology</groupId>
+            <artifactId>core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>
