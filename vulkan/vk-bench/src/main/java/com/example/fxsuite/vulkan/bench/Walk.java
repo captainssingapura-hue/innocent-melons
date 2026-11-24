@@ -144,6 +144,7 @@ public final class Walk {
     /** The walk, until a window is closed, the run or the time is up, or the validation layer speaks. */
     public void run() throws IOException {
         asked.night(Boolean.getBoolean("bench.night"));
+        asked.logged(!System.getProperty("bench.log", "").isBlank());
         asked.clocked(Boolean.getBoolean("bench.sky"));
         asked.quickened(said("bench.sky.speed", asked.quickened()));
         asked.shadowing(System.getProperty("bench.shadows.mode", ""));
@@ -228,7 +229,7 @@ public final class Walk {
             }
             frames++;
             if (frames % EVENED == 0) {
-                guide.told((now - told) / MILLION / EVENED);
+                guide.told((now - told) / MILLION / EVENED, List.of(card.memory().said(), staged.place().said()));
                 guide.sky(skies.said());
                 told = now;
             }

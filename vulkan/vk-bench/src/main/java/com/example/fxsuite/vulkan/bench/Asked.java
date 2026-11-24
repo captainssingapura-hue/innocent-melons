@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class Asked {
 
     private final AtomicBoolean stopped = new AtomicBoolean();
+    private final AtomicBoolean logged = new AtomicBoolean();
     private final AtomicBoolean first = new AtomicBoolean();
     private final AtomicReference<Double> further;
     private final AtomicBoolean shadowed;
@@ -192,6 +193,15 @@ public final class Asked {
     /** Whether the first view has been asked for since this was last asked; once answered, it is not wanted again. */
     public boolean firstWanted() {
         return first.getAndSet(false);
+    }
+
+    /** Whether what the bench tells of itself, a frame's time and the memory held, is logged as it is told. */
+    public void logged(final boolean on) {
+        logged.set(on);
+    }
+
+    public boolean logged() {
+        return logged.get();
     }
 
     /** Asks for the bench to stop. */

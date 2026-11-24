@@ -3,6 +3,7 @@ package com.example.fxsuite.vulkan.device;
 import com.example.fxsuite.vulkan.form.Packed;
 import com.example.fxsuite.vulkan.layout.Layout;
 
+import java.nio.ByteBuffer;
 import java.util.Optional;
 
 import static org.lwjgl.vulkan.KHRAccelerationStructure.*;
@@ -25,19 +26,53 @@ public final class Sent implements AutoCloseable {
     private final Optional<Structured> solid;
 
     Sent(final Reach reach, final Recording recording, final Packed mesh) {
+        this(reach, recording, mesh, true);
+    }
+
+    /**
+     * The same; where not {@code standing}, its triangles are not kept for rays, so it stands in the way of none
+     * and is spared what keeping them costs: for what is too far off for its shadow to matter.
+     */
+    Sent(final Reach reach, final Recording recording, final Packed mesh, final boolean standing) {
         this.layout = mesh.layout();
         this.count = mesh.mesh().corners().size();
         // read where they are by what builds the triangles for rays, on a card that answers them
-        final int read = reach.rays() ? VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR
+        final boolean kept = reach.rays() && standing;
+        final int read = kept ? VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR
                 | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT : 0;
-        this.points = new Bytes(reach, "a mesh's points", mesh.points().remaining(),
-                VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | read);
-        this.corners = new Bytes(reach, "a mesh's corners", mesh.corners().remaining(),
-                VK_BUFFER_USAGE_INDEX_BUFFER_BIT | read);
-        points.filled(mesh.points());
-        corners.filled(mesh.corners());
-        this.solid = reach.rays() ? Optional.of(solid(reach, recording, mesh.mesh().points().size()))
+        // in the card's own memory, which is far the faster to draw from; or, asked for, where Java reaches them
+        final boolean carded = !"host".equals(System.getProperty("vulkan.meshes", "card"));
+        this.points = held(reach, recording, "a mesh's points", mesh.points(),
+                VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | read, carded);
+        this.corners = held(reach, recording, "a mesh's corners", mesh.corners(),
+                VK_BUFFER_USAGE_INDEX_BUFFER_BIT | read, carded);
+        this.solid = kept ? Optional.of(solid(reach, recording, mesh.mesh().points().size()))
                 : Optional.empty();
+    }
+
+    /**
+     * {@code bytes} kept on the card to be used as {@code use} says: where Java reaches them; or, where
+     * {@code carded}, in the card's own memory, filled by way of bytes Java reaches that are let go once copied.
+     */
+    private Bytes held(final Reach reach, final Recording recording, final String name, final ByteBuffer bytes,
+                       final int use, final boolean carded) {
+        if (!carded) {
+            final Bytes reached = new Bytes(reach, name, bytes.remaining(), use);
+            reached.filled(bytes);
+            return reached;
+        }
+        final Bytes staged = new Bytes(reach, name + ", on their way", bytes.remaining(),
+                VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+        try {
+            staged.filled(bytes);
+            final Bytes own = new Bytes(reach, name, bytes.remaining(), use | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+            recording.begun().copied(staged, own);
+            recording.sent();
+            return own;
+        } finally {
+            staged.close();
+        }
     }
 
     /** Its triangles kept for rays, built and done: of {@code many} points, three corners to a triangle. */

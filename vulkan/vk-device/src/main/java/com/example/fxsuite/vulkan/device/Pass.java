@@ -91,7 +91,9 @@ public final class Pass {
             return;
         }
         if (gathered.isPresent()) {
-            gathered.get().stood(drawing.laid(), mesh, placed, copies.each());
+            if (copies.stands() && mesh.solid().isPresent()) {
+                gathered.get().stood(drawing.laid(), mesh, placed, copies.each());
+            }
             return;
         }
         if (mixing && !drawing.mixes()) {
@@ -123,6 +125,14 @@ public final class Pass {
             vkCmdPushConstants(commands, with.telling().raw(), Described.PUSHED, 0, pushed);
             vkCmdDrawIndexed(commands, mesh.count(), copies.count(), 0, 0, 0);
         }
+    }
+
+    /**
+     * Whether this draws on no picture, but gathers what stands for rays: whoever draws may then leave out what
+     * stands in the way of none, and spare the work of saying where it stands.
+     */
+    public boolean gathers() {
+        return gathered.isPresent();
     }
 
     /** Drawing ended: this draws no more. */

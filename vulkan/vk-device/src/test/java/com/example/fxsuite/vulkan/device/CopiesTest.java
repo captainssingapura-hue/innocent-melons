@@ -26,7 +26,8 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  * Copies of a mesh drawn many at once, checked by facts. Two copies of a face, drawn in one draw, stand where each
  * copy takes it, and nothing stands between them; no copies draw nothing; filled again with more than there was room
  * for, all are drawn; a copy laid out otherwise is refused. On a card that answers rays, copies gathered for rays
- * each stand of themselves: the one between the wall and the sun shades it, among two hundred others. And the
+ * each stand of themselves: the one between the wall and the sun shades it, among two hundred others; copies said
+ * to stand for no ray are not gathered, and shade nothing. And the
  * validation layer says nothing of any of it.
  */
 class CopiesTest {
@@ -92,6 +93,11 @@ class CopiesTest {
                 final Picture shaded = new Picture(SIZE, canvas.pixels());
                 assertEquals(13, shaded.part(32, 32, 0), 1, "the wall behind the copy from the sun");
                 assertEquals(64, shaded.part(18, 41, 0), 1, "the wall beside its shadow");
+                copies.standing(false);
+                canvas.drawn(sky, frame(laid), standing.stood(pass -> pass.draw(drawing, sentFace, told(laid),
+                        copies)), pass -> pass.draw(drawing, sentWall, told(laid)));
+                assertEquals(64, new Picture(SIZE, canvas.pixels()).part(32, 32, 0), 1,
+                        "copies said to stand for no ray cast no shadow");
             }
             assertEquals(List.of(), card.heard(), "the validation layer has nothing to say of it");
         }

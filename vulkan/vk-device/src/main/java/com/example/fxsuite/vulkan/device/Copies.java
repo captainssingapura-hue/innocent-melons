@@ -24,6 +24,8 @@ public final class Copies implements AutoCloseable {
     private Bytes bytes;
     private int most;
     private List<Filling> each = List.of();
+    /** Whether the copies stand in the way of rays, when what a frame holds is gathered for them. */
+    private boolean stand = true;
 
     /** Room for {@code most} copies, laid out as {@code copy}, none of them filled yet. */
     Copies(final Reach reach, final Layout copy, final int most) {
@@ -58,6 +60,21 @@ public final class Copies implements AutoCloseable {
         bytes.filled(all.rewind());
         this.each = List.copyOf(copies);
         return this;
+    }
+
+    /**
+     * Whether the copies stand in the way of rays, when what a frame holds is gathered for them: they do unless
+     * said otherwise. Copies too far off for their shadows to matter are spared being gathered, which is work done
+     * for each copy every frame. They are drawn all the same, and on a picture of depths too.
+     */
+    public Copies standing(final boolean stands) {
+        this.stand = stands;
+        return this;
+    }
+
+    /** Whether the copies stand in the way of rays. */
+    boolean stands() {
+        return stand;
     }
 
     /** How many copies it holds. */

@@ -39,6 +39,11 @@ public interface Place extends AutoCloseable {
         return true;
     }
 
+    /** What the place has to say of what it holds on the card, in a line or two: nothing, unless it says. */
+    default String said() {
+        return "";
+    }
+
     /** What stands there, drawn by {@code pass} as {@code camera} sees it: all of it that hides what is behind it. */
     void drawn(Pass pass, Camera camera);
 
