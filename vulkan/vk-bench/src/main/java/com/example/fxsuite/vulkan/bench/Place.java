@@ -4,6 +4,8 @@ import com.example.fxsuite.avatar.sim.Obstacles;
 import com.example.fxsuite.vulkan.device.Pass;
 import com.example.fxsuite.vulkan.view.Camera;
 
+import java.util.Optional;
+
 /**
  * Somewhere the avatar walks, to look at what stands there: what is in the avatar's way, as the engine's simulation
  * knows it; and what is drawn of the place each frame, on the flat ground every place has. What is in the way and
@@ -28,6 +30,15 @@ public interface Place extends AutoCloseable {
      * taken off it, for that view, while nothing is being drawn. Most places stand as they are, and do nothing here.
      */
     default void readied(final Camera camera) {
+    }
+
+    /**
+     * What is in the way now, where that has changed since it was last asked: for a place that goes on further than
+     * can be said at once, which says what is in the way round wherever it was last readied for. Asked after each
+     * readying; nothing, for a place whose obstacles never change, as most do not.
+     */
+    default Optional<Obstacles> rearranged() {
+        return Optional.empty();
     }
 
     /**

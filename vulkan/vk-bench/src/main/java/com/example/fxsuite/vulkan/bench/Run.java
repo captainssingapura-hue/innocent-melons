@@ -17,6 +17,8 @@ import com.example.fxsuite.vulkan.space.Vec3;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * A walk's run: the engine's avatar stepped by the engine's simulation in its fixed steps, each step told what its
@@ -28,6 +30,9 @@ import java.util.Optional;
  */
 public final class Run {
 
+    /** How far over its ceiling a flying avatar may be carried before it is brought down, in centimetres. */
+    private static final double OVER = 30;
+
     private final Source source;
     private final Optional<Keeping> keeping;
     private final Optional<Skies> skies;
@@ -37,6 +42,8 @@ public final class Run {
     private long step;
     /** How many jumps the avatar has made. */
     private int jumps;
+    /** How high its jets take it at most, in centimetres: no limit, unless it is given one. */
+    private double ceiling = Double.POSITIVE_INFINITY;
     private final Following following;
     /** What happens in the simulation, step by step, as the engine keeps it: read by the sound alone. */
     private final Journal journal = new Journal();
@@ -95,7 +102,8 @@ public final class Run {
             avatar = new Avatar(avatar.body().toggledFlight(), false);
         }
         before = avatar;
-        final Controls controls = Keys.controls(told.held(), told.pressed(), told.turn(), false, following.lookUp());
+        final Controls controls = Keys.controls(under(told.held()), told.pressed(), told.turn(), false,
+                following.lookUp());
         final Avatar.Stepped stepped = avatar.step(controls, Clock.STEP, inTheWay);
         avatar = stepped.avatar();
         step++;
@@ -112,6 +120,32 @@ public final class Run {
                         + stood + ", and the kept run has it at " + kept + "; a rule has changed since it was kept");
             }
         });
+    }
+
+    /**
+     * The same run with its jets taking it no higher than {@code centimetres} over the ground: for a place that is
+     * not yet fit to be seen from high up. It is the keys that are held to it, the simulation being as it is.
+     */
+    public Run under(final double centimetres) {
+        ceiling = centimetres;
+        return this;
+    }
+
+    /**
+     * The keys {@code held}, as the engine is told them: flying at its ceiling the key that climbs is let go, and
+     * over it, as a climb's own way carries it a little, the key that sinks is held, till it is under again.
+     */
+    private Set<String> under(final Set<String> held) {
+        final double high = -avatar.body().position().y();
+        if (!avatar.body().flying() || high < ceiling) {
+            return held;
+        }
+        final Set<String> lowered = new TreeSet<>(held);
+        lowered.remove("SPACE");
+        if (high > ceiling + OVER) {
+            lowered.add("CONTROL");
+        }
+        return lowered;
     }
 
     /** Whether the run is over: its source has nothing more to tell. */

@@ -75,6 +75,11 @@ class EndlessForestTest {
                                 (System.nanoTime() - timed) / 1e6 / 20, (settledAt - began) / 1e3, place.said(),
                                 card.memory().said());
                         assertTrue(place.triangles() > 0, "something of it drawn");
+                        if (view == cameras.size() - 1) {
+                            final int posts = place.rearranged().orElseThrow().blocks().size();
+                            assertEquals(13 * 13 * 16, posts, "its trunks in the way round where the eye now is");
+                            assertTrue(place.rearranged().isEmpty(), "and not said again till the eye has gone on");
+                        }
                     }
                 }
                 assertEquals(List.of(), card.heard(), "the validation layer has nothing to say");

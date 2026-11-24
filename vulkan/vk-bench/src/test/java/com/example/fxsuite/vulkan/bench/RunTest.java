@@ -103,6 +103,22 @@ class RunTest {
     }
 
     @Test
+    void itsJetsTakeItNoHigherThanItsCeilingAndWithNoneItGoesOnUp() {
+        final String climbing = "F;SPACE:8;W:2";
+        final Run free = new Run(new Scripted(climbing), Optional.empty(), new Skies(new Asked(1)));
+        final Run held = new Run(new Scripted(climbing), Optional.empty(), new Skies(new Asked(1))).under(1_000);
+        double highest = 0;
+        while (!held.over()) {
+            held.stepped(1.0 / 120);
+            free.stepped(1.0 / 120);
+            highest = Math.max(highest, -held.shown(1).body().position().y());
+        }
+        assertTrue(highest > 950 && highest < 1_150, "up to its ceiling of ten metres, and hardly over: " + highest);
+        assertTrue(-held.shown(1).body().position().y() > 900, "and it stays up there, still flying");
+        assertTrue(-free.shown(1).body().position().y() > 2_000, "with no ceiling it goes on up");
+    }
+
+    @Test
     void jumpsMadeOneAfterAnotherChangeLegs() {
         final Run run = new Run(new Scripted("SPACE;W:1.5;SPACE;W:1.5;SPACE;W:0.5"), Optional.empty(),
                 new Skies(new Asked(1)));
