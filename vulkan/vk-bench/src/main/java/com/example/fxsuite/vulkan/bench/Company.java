@@ -101,8 +101,9 @@ public record Company(Run lead, Bot bot, Optional<Companion> companion) implemen
     }
 
     /**
-     * The lead's speed over the picture, low on its left, and, flying, its height and the gear its jets are in with
-     * the fastest that gear goes: for flying by, since the fastest gear is twice the engine's own top speed.
+     * The lead's speed over the picture, as the core engine detects it from the run's steps, low on its left, and,
+     * flying, its height and the gear its jets are in with the fastest that gear goes: for flying by, since the
+     * fastest gear is twice the engine's own top speed.
      */
     @Override
     public void overlaid(final Pass pass, final Overlay.Over over, final double blend) {
@@ -110,8 +111,7 @@ public record Company(Run lead, Bot bot, Optional<Companion> companion) implemen
         final Vec3 green = new Vec3(0.35, 1, 0.45);
         final Gear gear = lead.gear();
         final double left = -over.aspect() + MARGIN;
-        over.text(pass, String.format(Locale.ROOT, "KMH %.0f", gear.hourly(Math.hypot(body.speed(), body.drift()))),
-                left, FOOT, LETTER, green);
+        over.text(pass, String.format(Locale.ROOT, "KMH %.0f", lead.motion().hourly()), left, FOOT, LETTER, green);
         if (body.flying()) {
             over.text(pass, String.format(Locale.ROOT, "GEAR %d OF %d  TOP %.0f", gear.ordinal() + 1,
                     Gear.values().length, gear.fastest()), left, FOOT + LINE, LETTER, green);

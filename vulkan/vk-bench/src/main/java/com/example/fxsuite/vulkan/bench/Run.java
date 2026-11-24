@@ -1,6 +1,7 @@
 package com.example.fxsuite.vulkan.bench;
 
 import com.example.fxsuite.avatar.sim.Avatar;
+import com.example.fxsuite.avatar.sim.Block;
 import com.example.fxsuite.avatar.sim.Body;
 import com.example.fxsuite.avatar.sim.Clock;
 import com.example.fxsuite.avatar.sim.Controls;
@@ -14,6 +15,9 @@ import com.example.fxsuite.vulkan.bench.play.Source;
 import com.example.fxsuite.vulkan.bench.play.Step;
 import com.example.fxsuite.vulkan.bench.play.Where;
 import com.example.fxsuite.vulkan.space.Vec3;
+import melons.innocent.core.motion.Motion;
+import melons.innocent.core.motion.Moving;
+import melons.innocent.core.motion.Spot;
 
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +36,8 @@ public final class Run {
 
     /** How far over its ceiling a flying avatar may be carried before it is brought down, in centimetres. */
     private static final double OVER = 30;
+    /** How far from the engine's own middle its avatar goes before it is brought back to it, in centimetres. */
+    private static final double FAR = 100_000;
 
     private final Source source;
     private final Optional<Keeping> keeping;
@@ -47,10 +53,17 @@ public final class Run {
     /** The gear its jets are in. */
     private Gear gear = Gear.THIRD;
     private final Following following;
+    /** The avatar's motion, detected from its steps: the core engine's. */
+    private final Moving moving;
     /** What happens in the simulation, step by step, as the engine keeps it: read by the sound alone. */
     private final Journal journal = new Journal();
     private final Journal.Reader forSound = journal.reader();
     private Obstacles inTheWay = Obstacles.NONE;
+    /** What is in the way as the place says it, in the world: {@link #inTheWay} is the same as the engine has it. */
+    private Obstacles placed = Obstacles.NONE;
+    /** How far across and along the engine's own middle is from the world's: see {@link #recentred}. */
+    private double across;
+    private double along;
 
     /**
      * A run told by {@code source}, kept by {@code keeping} where there is one, its sky's clock {@code skies}
@@ -72,16 +85,61 @@ public final class Run {
         this.avatar = new Avatar(start, false);
         this.before = avatar;
         this.following = new Following(start);
+        this.moving = new Moving(spot(start), start.yaw());
+        recentred();
     }
 
-    /** What is in the avatar's way from now on. */
+    /** What is in the avatar's way from now on, in the world. */
     public void inTheWay(final Obstacles blocks) {
-        this.inTheWay = blocks;
+        this.placed = blocks;
+        if (!movable()) {
+            avatar = moved(avatar, across, along);
+            before = moved(before, across, along);
+            across = 0;
+            along = 0;
+        }
+        this.inTheWay = within();
     }
 
-    /** What is in the avatar's way. */
+    /** What is in the avatar's way, in the world. */
     public Obstacles inTheWay() {
-        return inTheWay;
+        return placed;
+    }
+
+    /**
+     * The engine's avatar brought back to the engine's own middle when it has gone a kilometre from it, and how far
+     * that middle now is from the world's kept: the engine's level world ends five kilometres out every way, and
+     * this is how a run goes on past that with the engine as it is. Everything the run says of the avatar it says
+     * in the world, so nothing else knows. Only where what is in the way is boxes on level ground, which can be
+     * moved with it: among a building's own shapes, or on surveyed land, the avatar is left where the engine has it.
+     */
+    private void recentred() {
+        final com.example.fxsuite.avatar.sim.Vec3 at = avatar.body().position();
+        if (movable() && Math.max(Math.abs(at.x()), Math.abs(at.z())) > FAR) {
+            across += at.x();
+            along += at.z();
+            avatar = moved(avatar, -at.x(), -at.z());
+            before = moved(before, -at.x(), -at.z());
+            inTheWay = within();
+        }
+    }
+
+    /** Whether what is in the way can be moved with the avatar: boxes alone, on level ground. */
+    private boolean movable() {
+        return placed.volumes().isEmpty() && placed.gates().isEmpty() && placed.land().level();
+    }
+
+    /** What is in the way as the engine has it: the world's boxes, as far from the engine's middle as they are. */
+    private Obstacles within() {
+        return across == 0 && along == 0 ? placed : new Obstacles(placed.blocks().stream().map(block -> new Block(
+                block.x() - across, block.z() - along, block.halfWidth(), block.halfDepth(), block.yaw(),
+                block.bottom(), block.top(), block.toe())).toList());
+    }
+
+    /** {@code moving} moved so far across and along, otherwise as it is. */
+    private Avatar moved(final Avatar moving, final double dx, final double dz) {
+        return dx == 0 && dz == 0 ? moving : new Avatar(moving.body().shifted(dx, dz), moving.wearingPack(),
+                moving.sweep(), moving.arms());
     }
 
     /**
@@ -113,11 +171,14 @@ public final class Run {
         final Avatar.Stepped stepped = avatar.step(controls, Clock.STEP, inTheWay);
         avatar = stepped.avatar();
         step++;
-        following.stepped(avatar.body(), told.tilt(), told.circling(), told.scrolled(), told.behind());
+        recentred();
+        following.stepped(moved(avatar, across, along).body(), told.tilt(), told.circling(), told.scrolled(),
+                told.behind());
         journal.append(step, stepped.events());
         jumps += (int) stepped.events().stream().filter(Event.Jumped.class::isInstance).count();
         skies.ifPresent(sky -> sky.stepped(Clock.STEP));
-        final com.example.fxsuite.avatar.sim.Vec3 at = avatar.body().position();
+        final com.example.fxsuite.avatar.sim.Vec3 at = moved(avatar, across, along).body().position();
+        moving.stepped(spot(moved(avatar, across, along).body()), avatar.body().yaw(), Clock.STEP);
         final Where stood = new Where(at.x(), at.y(), at.z());
         keeping.ifPresent(kept -> kept.kept(step, told, stood));
         source.check(step).ifPresent(kept -> {
@@ -164,6 +225,16 @@ public final class Run {
                 told.actions(), told.bomb(), told.strafe());
     }
 
+    /** Where {@code body} is, in the world, as the core engine has a spot: up the way its second number grows. */
+    private Spot spot(final Body body) {
+        return new Spot(body.position().x(), -body.position().y(), body.position().z());
+    }
+
+    /** How the avatar is moving, as the core engine detects it from the run's steps. */
+    public Motion motion() {
+        return moving.motion();
+    }
+
     /** The gear its jets are in: Shift with the up arrow takes the next higher, with the down arrow the next lower. */
     public Gear gear() {
         return gear;
@@ -186,7 +257,7 @@ public final class Run {
 
     /** The avatar {@code blend} of the way from its step before the last to its last, as it is drawn. */
     public Avatar shown(final double blend) {
-        return avatar.between(before, blend);
+        return moved(avatar.between(before, blend), across, along);
     }
 
     /** Where the avatar's head is when it is {@code shown}, in the renderer's frame: height counted up. */

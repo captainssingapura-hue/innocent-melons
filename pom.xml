@@ -18,6 +18,7 @@
         <module>historian</module>
         <module>taxonomy</module>
         <module>math</module>
+        <module>core-engine</module>
         <module>road</module>
         <module>forms</module>
         <module>avatar-demo</module>
