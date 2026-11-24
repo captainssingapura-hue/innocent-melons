@@ -4,12 +4,14 @@ import com.example.fxsuite.places.yard.Walled;
 import com.example.fxsuite.avatar.sim.Block;
 import com.example.fxsuite.avatar.sim.Num;
 import com.example.fxsuite.avatar.sim.Obstacles;
+import com.example.fxsuite.avatar.sim.Volume;
 import com.example.fxsuite.vulkan.space.Mat4;
 import com.example.fxsuite.vulkan.space.Turned;
 import com.example.fxsuite.vulkan.space.Vec3;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 /**
  * A village along a lane: so many homes, by turns on the lane's left and its right, each a yard walled round with
@@ -123,7 +125,7 @@ public record Village(int homes) {
 
     /**
      * Everything of the village that is in the way: every yard's wall, every house, the lake's kerb, every car
-     * in the car park, and the trunk of every tree in the woods.
+     * in the car park, and the trunk of every tree in the woods; and its buildings, each as its own shape is.
      */
     public Obstacles inTheWay() {
         final List<Block> blocks = new ArrayList<>();
@@ -136,6 +138,18 @@ public record Village(int homes) {
         woods().forEach(wood -> blocks.addAll(wood.inTheWay()));
         towers().forEach(tower -> blocks.addAll(tower.walls().inTheWay()));
         woodCars().forEach(car -> blocks.addAll(car.inTheWay()));
-        return new Obstacles(blocks);
+        final List<Volume> built = new ArrayList<>();
+        buildings().forEach(building -> built.addAll(building.inTheWay()));
+        return new Obstacles(blocks).with(built, IntStream.range(blocks.size(), blocks.size() + built.size())
+                .boxed().toList());
+    }
+
+    /**
+     * The buildings of the buildings' own on the open ground east of the lane, each facing it ({@link Buildings}):
+     * two houses of shipping containers and a house of concrete; and across the lane, past the last yards, another
+     * house of concrete, taller.
+     */
+    public List<Built> buildings() {
+        return new Buildings().all();
     }
 }

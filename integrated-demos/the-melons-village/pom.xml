@@ -51,6 +51,14 @@
             <artifactId>pl-yard</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>building-container</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>building-bench</artifactId>
+        </dependency>
+        <dependency>
             <groupId>melons.innocent.plants</groupId>
             <artifactId>plants-tree</artifactId>
         </dependency>
