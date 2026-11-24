@@ -104,7 +104,18 @@ public record Bot(Build build, double tall, Finish finish) {
      * placed in the engine's frame, and the whole is then turned over, as the courier is.
      */
     public List<Courier.Placed> placed(final Body body, final double thrust, final Pose pose) {
-        final Joints joints = new Joints(pose, new Knees(body), build);
+        return placed(body, thrust, pose, false);
+    }
+
+    /**
+     * The same, and in a jump, where {@code otherLeg} says so, with its legs changed about: the knee raised that
+     * would have trailed. On its feet and flying it is as it would be anyway.
+     */
+    public List<Courier.Placed> placed(final Body body, final double thrust, final Pose pose,
+                                       final boolean otherLeg) {
+        final boolean changed = otherLeg && !body.grounded() && !body.flying();
+        final Knees knees = new Knees(body);
+        final Joints joints = new Joints(pose, changed ? knees.changed() : knees, build, changed);
         final double planted = body.grounded() && !body.flying() ? lowest(joints) : 0;
         final Mat4 stood = new Mat4(new Vec3(body.position().x(), body.position().y(), body.position().z()))
                 .times(new Turned(new Vec3(0, 1, 0), body.yaw()).matrix())
