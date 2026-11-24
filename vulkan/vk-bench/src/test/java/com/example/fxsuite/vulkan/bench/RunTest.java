@@ -102,6 +102,23 @@ class RunTest {
         assertNotEquals(new Step(), new Step(Set.of("W"), List.of(), 0, 0, false, 0, 0, false));
     }
 
+    @Test
+    void jumpsMadeOneAfterAnotherChangeLegs() {
+        final Run run = new Run(new Scripted("SPACE;W:1.5;SPACE;W:1.5;SPACE;W:0.5"), Optional.empty(),
+                new Skies(new Asked(1)));
+        final List<Boolean> legs = new ArrayList<>();
+        boolean aloft = false;
+        while (!run.over()) {
+            run.stepped(1.0 / 120);
+            final boolean now = !run.shown(1).body().grounded();
+            if (now && !aloft) {
+                legs.add(run.otherLeg());
+            }
+            aloft = now;
+        }
+        assertEquals(List.of(false, true, false), legs, "three jumps: one leg, the other, and the first again");
+    }
+
     /**
      * {@code source} run to its end, a frame every {@code frame} seconds, kept in {@code kept}, among two posts;
      * where the avatar and the chase camera's eye were at each frame, said in a line, and last where they ended.

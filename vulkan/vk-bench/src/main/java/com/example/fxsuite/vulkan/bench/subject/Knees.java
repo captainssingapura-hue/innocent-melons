@@ -34,6 +34,11 @@ public record Knees(double left, double right) {
                 body.flying() ? TRAILING : body.grounded() ? new Stride(body).right() : JUMP_TRAILING);
     }
 
+    /** The same knees changed about: the left bent as the right was, and the right as the left. */
+    public Knees changed() {
+        return new Knees(right, left);
+    }
+
     /** The knees on foot: each by how far through its swing or its bearing its leg is. */
     private record Stride(Body body) {
 

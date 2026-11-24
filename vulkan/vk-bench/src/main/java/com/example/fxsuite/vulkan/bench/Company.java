@@ -84,7 +84,7 @@ public record Company(Run lead, Bot bot, Optional<Companion> companion) implemen
     public List<Courier.Placed> figures(final double blend) {
         final Avatar shown = lead.shown(blend);
         final List<Courier.Placed> all = new ArrayList<>(bot.placed(shown.body(), shown.body().thrust(),
-                Gait.of(shown, lead.following().yaw(), lead.following().lookUp())));
+                Gait.of(shown, lead.following().yaw(), lead.following().lookUp()), lead.otherLeg()));
         all.addAll(others(blend));
         return all;
     }
@@ -103,7 +103,8 @@ public record Company(Run lead, Bot bot, Optional<Companion> companion) implemen
         return companion.map(other -> {
             final Avatar shown = other.run().shown(blend);
             return other.bot().placed(shown.body(), shown.body().thrust(),
-                    Gait.of(shown, other.run().following().yaw(), other.run().following().lookUp()));
+                    Gait.of(shown, other.run().following().yaw(), other.run().following().lookUp()),
+                    other.run().otherLeg());
         }).orElse(List.of());
     }
 }

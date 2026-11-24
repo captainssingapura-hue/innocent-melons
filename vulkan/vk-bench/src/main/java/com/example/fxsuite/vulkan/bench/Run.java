@@ -35,6 +35,8 @@ public final class Run {
     private Avatar before;
     private Clock clock = Clock.START;
     private long step;
+    /** How many jumps the avatar has made. */
+    private int jumps;
     private final Following following;
     /** What happens in the simulation, step by step, as the engine keeps it: read by the sound alone. */
     private final Journal journal = new Journal();
@@ -99,6 +101,7 @@ public final class Run {
         step++;
         following.stepped(avatar.body(), told.tilt(), told.circling(), told.scrolled(), told.behind());
         journal.append(step, stepped.events());
+        jumps += (int) stepped.events().stream().filter(Event.Jumped.class::isInstance).count();
         skies.ifPresent(sky -> sky.stepped(Clock.STEP));
         final com.example.fxsuite.avatar.sim.Vec3 at = avatar.body().position();
         final Where stood = new Where(at.x(), at.y(), at.z());
@@ -145,6 +148,14 @@ public final class Run {
     /** What has happened in the steps taken since this was last asked, for what is heard. */
     public List<Event> happened() {
         return forSound.read().events();
+    }
+
+    /**
+     * Whether the jump the avatar is in, or made last, is one led with the other leg: every second jump, so that
+     * jumps made one after another change legs.
+     */
+    public boolean otherLeg() {
+        return jumps % 2 == 0;
     }
 
     /** How many steps have been taken. */
