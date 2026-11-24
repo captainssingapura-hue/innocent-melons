@@ -24,6 +24,7 @@
         <module>texture-lab</module>
         <module>vehicles</module>
         <module>places</module>
+        <module>test-kit</module>
         <module>terrain</module>
         <module>plants-lab</module>
         <module>integrated-demos</module>
