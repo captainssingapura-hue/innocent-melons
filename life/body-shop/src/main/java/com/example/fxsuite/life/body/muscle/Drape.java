@@ -20,12 +20,14 @@ public record Drape() implements StatelessFunctionalObject {
     /** How far off its bed a sheet lies, cm. */
     private static final double GAP = 0.05;
     /**
-     * How far a point inside its bed is moved out at a time looking for its outside, cm, and how many times at most: a
-     * centimetre all told, as far as a spine's tip or a scapula's crest stands out under a sheet; one deeper in, as in a
-     * thick muscle, laid on the nearest of its bed instead, so it does not stand out of its sheet as a spike.
+     * How far a point inside its bed is moved out at a time looking for its outside, cm, and how many times at most:
+     * out of a muscle, a centimetre all told, so a point deeper in a thick one is laid on the nearest of it instead and
+     * does not stand out of its sheet as a spike; out of a bone, two and a half, as far as a spine's tip, a scapula's
+     * angle or its crest stands out under a sheet, which passes over it, never through it.
      */
     private static final double STEP = 0.25;
     private static final int CLIMB = 4;
+    private static final int OVER_BONE = 10;
 
     /**
      * The ring of a section lying at {@code on}, its middle at {@code middle}, {@code wide} across, {@code across},
@@ -82,16 +84,17 @@ public record Drape() implements StatelessFunctionalObject {
 
     /**
      * What of {@code bed} a sheet at {@code line}, facing {@code face}, lies on: the nearest of it, if {@code line} is
-     * outside it; if inside, the outside it comes to going out the way the sheet faces, if within a centimetre, so a
-     * sheet laid where a bone or another muscle stands out lies over it, not under it on its far side; if further, the
-     * nearest of it. Nothing, if none is near.
+     * outside it; if inside, the outside it comes to going out the way the sheet faces, if within a centimetre of a
+     * muscle or two and a half of a bone ({@link #CLIMB}), so a sheet laid where a bone or another muscle stands out
+     * lies over it, not under it on its far side; if further, the nearest of it. Nothing, if none is near.
      */
     private Optional<Bed.Laid> outer(final Bed bed, final V3 line, final V3 face) {
         final Optional<Bed.Laid> laid = bed.under(line);
         if (laid.isEmpty() || outside(laid.get(), line)) {
             return laid;
         }
-        for (int k = 1; k <= CLIMB; k++) {
+        final int climb = laid.get().bone() ? OVER_BONE : CLIMB;
+        for (int k = 1; k <= climb; k++) {
             final V3 p = line.plus(face.times(k * STEP));
             final Optional<Bed.Laid> there = bed.under(p);
             if (there.isPresent() && outside(there.get(), p)) {

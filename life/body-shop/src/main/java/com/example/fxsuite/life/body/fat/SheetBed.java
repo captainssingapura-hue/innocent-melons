@@ -16,7 +16,8 @@ import java.util.Optional;
 
 /**
  * What a body's sheets of muscle lie on ({@link Bed}): its other muscles, the deep ones too, and its bones, as one
- * surface, the nearest of it found within {@link #REACH}; the way out of it there, its nearest triangle's.
+ * surface, the nearest of it found within {@link #REACH}; the way out of it there, its nearest triangle's; whether it
+ * is a bone's.
  */
 public record SheetBed() implements StatelessFunctionalObject {
 
@@ -51,7 +52,10 @@ public record SheetBed() implements StatelessFunctionalObject {
     /** The bed of {@code muscles} and {@code bones}. */
     private Bed of(final Flesh muscles, final Beneath bones) {
         final Underneath u = Underneath.INSTANCE;
-        final Nearness near = new Nearness(u.with(u.muscles(muscles), bones));
+        final Beneath flesh = u.muscles(muscles);
+        final Nearness near = new Nearness(u.with(flesh, bones));
+        // the muscles' triangles first, the bones' after them
+        final int firstBone = flesh.triangles().length / 3;
         return p -> {
             final Nearness.Near n = near.nearest(p, REACH, t -> true);
             if (n.triangle() < 0) {
@@ -63,7 +67,8 @@ public record SheetBed() implements StatelessFunctionalObject {
             final V3 c1 = b.point(t[3 * n.triangle() + 1]);
             final V3 c2 = b.point(t[3 * n.triangle() + 2]);
             final V3 at = a.times(n.a()).plus(c1.times(n.b())).plus(c2.times(n.c()));
-            return Optional.of(new Bed.Laid(at, c1.minus(a).cross(c2.minus(a)).unit()));
+            return Optional.of(new Bed.Laid(at, c1.minus(a).cross(c2.minus(a)).unit(),
+                    n.triangle() >= firstBone));
         };
     }
 }
