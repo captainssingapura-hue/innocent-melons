@@ -49,7 +49,8 @@ class ForestTest {
         try (Card card = new Card(); ForestPlace forest = new ForestPlace(card, plain)) {
             assertEquals(1000, forest.trees());
             final List<Woodland> woods = forest.woods();
-            assertEquals(List.of(Set.of(Kind.OAK), Set.of(Kind.WALNUT), Set.of(Kind.BIRCH), Set.of(Kind.values())),
+            assertEquals(List.of(Set.of(Kind.OAK), Set.of(Kind.WALNUT), Set.of(Kind.BIRCH),
+                    Set.of(Kind.OAK, Kind.WALNUT, Kind.BIRCH)),
                     woods.stream().map(wood -> wood.standing().stream().map(Woodland.Planted::kind)
                             .collect(Collectors.toSet())).toList());
             for (final Woodland wood : woods) {

@@ -25,8 +25,8 @@ class MaterialsTest {
     void fortyTwoLeavesUnderEightBranchesEveryNodeWithItsMeaning() {
         assertEquals(List.of(), tree.problems());
         assertEquals("materials", tree.name());
-        assertEquals(44, tree.leaves().size());
-        assertEquals(56, tree.nodes().size(), "the leaves, their eight branches, the three parts of two, and the root");
+        assertEquals(47, tree.leaves().size());
+        assertEquals(59, tree.nodes().size(), "the leaves, their eight branches, the three parts of two, and the root");
         for (final Node node : tree.nodes()) {
             assertFalse(tree.meaning(node).isBlank(), node.title() + " has its meaning");
         }

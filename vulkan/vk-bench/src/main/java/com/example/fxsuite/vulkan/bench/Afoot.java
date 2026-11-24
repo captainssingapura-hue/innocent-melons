@@ -15,21 +15,32 @@ import java.util.Optional;
 /**
  * The engine's own avatar, moved by the engine's simulation, on its feet and on its jets: the walks' first way of
  * moving. Its lead starts where it is told, which is where {@code -Dbench.at=} says unless a bench says otherwise,
- * and is drawn as the bot {@code -Dbench.bot=} says (the man unless said); a companion comes with it where {@code -Dbench.companion.script=} or {@code
+ * and is drawn as the bot {@code -Dbench.bot=} says (the man unless said); its jets take it no higher than its
+ * {@code ceiling}, in metres, which is no limit unless a bench or {@code -Dbench.ceiling=} says one; a companion comes with it where {@code -Dbench.companion.script=} or {@code
  * -Dbench.companion.replay=} is told, starting where {@code -Dbench.companion.at=} says, drawn as {@code
  * -Dbench.companion.bot=} (the woman unless said).
  */
-public record Afoot(String at) implements Roamer {
+public record Afoot(String at, double ceiling) implements Roamer {
+
+    private static final double METRE = 100;
 
     /** Its lead starting where the run says. */
     public Afoot() {
         this(System.getProperty("bench.at", ""));
     }
 
+    /**
+     * Its lead starting where {@code at} says, its jets taking it as high as the run says at most:
+     * {@code -Dbench.ceiling=} metres over the ground, and no limit unless it is said.
+     */
+    public Afoot(final String at) {
+        this(at, Double.parseDouble(System.getProperty("bench.ceiling", "Infinity")));
+    }
+
     @Override
     public Roaming roaming(final Source source, final Optional<Keeping> keeping, final Skies skies) {
         return new Company(new Run(source, keeping, Optional.of(skies),
-                new Start(at).body()),
+                new Start(at).body()).under(ceiling * METRE),
                 new Bot(new Said(System.getProperty("bench.bot", "man")).build()), companion());
     }
 

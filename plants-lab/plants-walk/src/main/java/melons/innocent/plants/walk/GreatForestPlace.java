@@ -32,7 +32,7 @@ public final class GreatForestPlace implements Place {
 
     /** The forest, on {@code card}, its layouts as {@code laid} says. */
     public GreatForestPlace(final Card card, final Laid laid) {
-        for (final Kind kind : Kind.values()) {
+        for (final Kind kind : List.of(Kind.OAK, Kind.WALNUT, Kind.BIRCH)) {
             for (int number = 1; number <= EACH; number++) {
                 grown.add(new WoodDrawn.Grown(kind, kind.tree(number)));
             }

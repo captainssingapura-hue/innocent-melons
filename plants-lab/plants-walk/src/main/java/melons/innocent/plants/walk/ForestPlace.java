@@ -50,9 +50,10 @@ public final class ForestPlace implements Place {
                 new Woodland(List.of(Kind.OAK), new Vec3(-side, 0, near), SIDE, SIDE, each, CHANCE),
                 new Woodland(List.of(Kind.WALNUT), new Vec3(side, 0, near), SIDE, SIDE, each, CHANCE + 1),
                 new Woodland(List.of(Kind.BIRCH), new Vec3(-side, 0, far), SIDE, SIDE, each, CHANCE + 2),
-                new Woodland(List.of(Kind.values()), new Vec3(side, 0, far), SIDE, SIDE, each, CHANCE + 3));
+                new Woodland(List.of(Kind.OAK, Kind.WALNUT, Kind.BIRCH), new Vec3(side, 0, far), SIDE, SIDE, each,
+                        CHANCE + 3));
         final int numbers = woods.getFirst().each();
-        for (final Kind kind : Kind.values()) {
+        for (final Kind kind : List.of(Kind.OAK, Kind.WALNUT, Kind.BIRCH)) {
             for (int number = 1; number <= numbers; number++) {
                 grown.add(new WoodDrawn.Grown(kind, kind.tree(number)));
             }

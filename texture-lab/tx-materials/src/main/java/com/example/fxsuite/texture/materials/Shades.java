@@ -41,11 +41,6 @@ public record Shades() {
             case Materials.LitGlass glass -> Tone.VISOR.surface();
             case Materials.Flame flame -> Tone.FLAME.surface();
             case Materials.LitPaper paper -> new PaperLantern().surface();
-            case Materials.Rind rind -> new Watermelon().rind();
-            case Materials.Timber timber -> new VarnishedTimber().surface();
-            case Materials.OakBark bark -> new RoughBark().surface();
-            case Materials.WalnutBark bark -> new FurrowedBark().surface();
-            case Materials.BirchBark bark -> new PaperBark().surface();
             case Materials.Water water -> new StillWater().surface();
             case Materials.Turf turf -> Grounds.TURF.surface();
             case Materials.Topsoil soil -> Grounds.TOPSOIL.surface();
@@ -66,6 +61,24 @@ public record Shades() {
             case Materials.Muscle muscle -> Tissues.MUSCLE.surface();
             case Materials.Tendon tendon -> Tissues.TENDON.surface();
             case Materials.Fat fat -> Tissues.FAT.surface();
+            default -> grown(material);
+        };
+    }
+
+    /** {@code material}'s surface, where it is something grown: a rind, timber, or a tree's bark. */
+    private Surface grown(final Material material) {
+        return switch (material) {
+            case Materials.Rind rind -> new Watermelon().rind();
+            case Materials.Timber timber -> new VarnishedTimber().surface();
+            case Materials.OakBark bark -> new RoughBark().surface();
+            case Materials.WalnutBark bark -> new FurrowedBark().surface();
+            case Materials.BirchBark bark -> new PaperBark().surface();
+            case Materials.PoplarBark bark -> new PaleBark().surface();
+            // a willow's old bark is furrowed as a walnut's is, browner; its young wood is golden
+            case Materials.WillowBark bark -> new FurrowedBark("#6f6557", "#857b6a", "#544b40", "#2b2520").surface()
+                    .marked(new Slender("#c9a53a", 0.5, 2.2).term());
+            case Materials.PlaneBark bark -> new MottledBark().surface()
+                    .marked(new Slender("#7c7f52", 0.6, 2.5).term());
             default -> throw new IllegalArgumentException(material.title() + " is in no tree of materials that is"
                     + " shaded here");
         };

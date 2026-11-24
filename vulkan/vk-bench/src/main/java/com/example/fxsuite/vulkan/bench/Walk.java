@@ -310,6 +310,7 @@ public final class Walk {
     private void frame(final Target target, final Staged staged, final Roaming roaming, final Camera camera,
                        final double blend) {
         staged.place().readied(camera);
+        staged.place().rearranged().ifPresent(roaming::inTheWay);
         final List<Courier.Placed> figures = roaming.figures(blend);
         final double aspect = (double) target.width() / target.height();
         final Daylight time = skies.lit();
