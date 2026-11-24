@@ -2,12 +2,18 @@ package melons.innocent.forms.fx;
 
 import com.example.fxsuite.avatar.build.Material;
 import javafx.scene.paint.Color;
+import melons.innocent.forms.Facets;
 
 /**
  * The colour each material is drawn in by JavaFX, as it looks from a little way off: a plain colour to a material,
- * no pattern, the light and the eye's angle doing the rest.
+ * no pattern, the light and the eye's angle doing the rest; or, painted or tinted, the colour it is painted or tinted.
  */
 public record Hues() {
+
+    /** The colour {@code coat} is drawn in: what it is painted or tinted, else its material's. */
+    public Color of(final Facets.Coat coat) {
+        return coat.tint().map(t -> Color.color(t.red(), t.green(), t.blue())).orElseGet(() -> of(coat.material()));
+    }
 
     /** The colour {@code material} is drawn in. */
     public Color of(final Material material) {

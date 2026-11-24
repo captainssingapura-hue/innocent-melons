@@ -6,34 +6,50 @@ import com.example.fxsuite.historian.Civilization;
 import com.example.fxsuite.historian.Era;
 
 /**
- * A slab block, as asked for: so many flats side by side along its corridor, each so wide and so deep, the corridor so
- * wide along its front, a core of stairs and lifts between every so many flats and at its ends, and so many storeys. In
- * centimetres. Two flats to forty; each 5 m to 12 m wide and 8 m to 16 m deep; its corridor 1.2 m to 3 m; two flats a
- * core at least; two storeys to thirty.
+ * A slab block, as asked for: so long and so wide, its corridor so wide along its front, so many storeys, its first so
+ * high and the rest so high, finished outside as it is asked. How it stands, where its pillars
+ * and its cores are, is its builder's to work out; how it is parted into flats, another's. In centimetres. From 27 m
+ * long to 250 m; 9.2 m wide to 19 m, of it a corridor 1.2 m to 3 m and the rest 8 m to 16 m deep behind; two storeys
+ * to forty, the first 3 m to 5 m high and the rest 2.6 m to 3.6 m.
  *
- * @param flats    how many flats there are on each storey
- * @param flatWide how wide each flat is, along the corridor
- * @param flatDeep how deep each flat is, back from the corridor
- * @param corridor how wide the corridor is
- * @param perCore  how many flats there are between one core and the next
+ * @param length   how long it is, along its corridor
+ * @param width    how wide it is, back to front, its corridor with it
+ * @param corridor how wide its corridor is
  * @param storeys  how many storeys it has
+ * @param ground   how high its first storey is, floor to floor
+ * @param storey   how high each storey over it is
+ * @param finish   how it is finished outside, its walls filled in between its pillars
  * @param <C>      whose way it is built
  * @param <E>      when
  */
-public record SlabBlockSpec<C extends Civilization, E extends Era<? super C>>(int flats, double flatWide,
-                                                                              double flatDeep, double corridor,
-                                                                              int perCore, int storeys)
+public record SlabBlockSpec<C extends Civilization, E extends Era<? super C>>(double length, double width,
+                                                                              double corridor, int storeys,
+                                                                              double ground, double storey,
+                                                                              Finish finish)
         implements Spec<Buildings.SlabBlock, C, E> {
 
     public SlabBlockSpec {
-        if (flats < 2 || flats > 40 || perCore < 2 || perCore > flats || storeys < 2 || storeys > 30) {
-            throw new IllegalArgumentException("two flats to forty, two a core at least, two storeys to thirty, not "
-                    + flats + ", " + perCore + ", " + storeys);
+        if (!(length >= 2_700 && length <= 25_000)) {
+            throw new IllegalArgumentException("a slab block 27 m to 250 m long, not " + length);
         }
-        if (!(flatWide >= 500 && flatWide <= 1_200) || !(flatDeep >= 800 && flatDeep <= 1_600)
-                || !(corridor >= 120 && corridor <= 300)) {
-            throw new IllegalArgumentException("flats 5 m to 12 m wide and 8 m to 16 m deep, a corridor 1.2 m to 3 m,"
-                    + " not " + flatWide + ", " + flatDeep + ", " + corridor);
+        if (!(corridor >= 120 && corridor <= 300) || !(width - corridor >= 800 && width - corridor <= 1_600)) {
+            throw new IllegalArgumentException("a corridor 1.2 m to 3 m and 8 m to 16 m behind it, not " + corridor
+                    + " of " + width);
         }
+        if (finish == null) {
+            throw new IllegalArgumentException("finished somehow");
+        }
+        if (storeys < 2 || storeys > 40) {
+            throw new IllegalArgumentException("two storeys to forty, not " + storeys);
+        }
+        if (!(ground >= 300 && ground <= 500) || !(storey >= 260 && storey <= 360)) {
+            throw new IllegalArgumentException("its first storey 3 m to 5 m high and the rest 2.6 m to 3.6 m, not "
+                    + ground + " and " + storey);
+        }
+    }
+
+    /** How deep it is behind its corridor. */
+    public double deep() {
+        return width - corridor;
     }
 }

@@ -26,7 +26,8 @@ public final class BuildingView {
     private static final double SCROLLED = 1.0015;
 
     private final Group building = new Group();
-    private final Rotate round = new Rotate(30, Rotate.Y_AXIS);
+    /** How far round it is first seen from: {@code -Dbench.turn=} degrees, 30 if not said. */
+    private final Rotate round = new Rotate(Double.parseDouble(System.getProperty("bench.turn", "30")), Rotate.Y_AXIS);
     private final Rotate down = new Rotate(-20, Rotate.X_AXIS);
     private final Translate back = new Translate(0, 0, -3_000);
     private final SubScene scene;

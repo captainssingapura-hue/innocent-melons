@@ -33,7 +33,7 @@ class FacetsTest {
         final Facets facets = new Facets(List.of(box(0, 0, 0, 100, Material.STONE), box(500, 0, 0, 100,
                 Material.TIMBER), box(900, 0, 0, 2, Material.STONE)), 5);
         assertEquals(24, facets.triangles());
-        final Facets.Sheet stone = facets.sheets().get(Material.STONE);
+        final Facets.Sheet stone = facets.sheets().get(new Facets.Coat(Material.STONE));
         assertEquals(12, stone.triangles());
         for (int t = 0; t < stone.triangles(); t++) {
             final double[][] p = new double[3][];
@@ -52,6 +52,6 @@ class FacetsTest {
                     + stone.facings()[3 * c + 2] * out[2] > 0, "its points facing out");
             assertEquals(0, stone.solids()[t], "from the first solid");
         }
-        assertEquals(1, facets.sheets().get(Material.TIMBER).solids()[0]);
+        assertEquals(1, facets.sheets().get(new Facets.Coat(Material.TIMBER)).solids()[0]);
     }
 }

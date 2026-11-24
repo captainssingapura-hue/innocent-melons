@@ -5,16 +5,18 @@ import com.example.fxsuite.avatar.build.Point;
 import com.example.fxsuite.avatar.build.Solid;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Solids as the faces a renderer draws, whichever renderer: each solid's six faces, each two triangles wound to face
  * out of it, its corners its own so its edges stay sharp, every point facing as its face does; gathered a sheet to a
- * material, so a whole building is a handful of sheets. Solids no bigger every way than {@code finest} are left out, so
- * a building may be drawn at a coarser fineness than it is built. Each triangle remembers the solid it came from, by
- * its place in the list given. In centimetres, x across, y up, z along: a solid's across, up and along.
+ * coat, a material as painted or tinted or not, so a whole building is a handful of sheets. Solids no bigger every
+ * way than {@code finest} are left out, so a building may be drawn at a coarser fineness than it is built. Each
+ * triangle remembers the solid it came from, by its place in the list given. In centimetres, x across, y up, z along:
+ * a solid's across, up and along.
  */
 public final class Facets {
 
@@ -22,10 +24,24 @@ public final class Facets {
     private static final int[][] FACES = {{0, 1, 3, 2}, {4, 5, 7, 6}, {0, 2, 6, 4}, {1, 3, 7, 5}, {0, 1, 5, 4},
         {2, 3, 7, 6}};
 
-    private final Map<Material, Sheet> sheets = new EnumMap<>(Material.class);
+    private final Map<Coat, Sheet> sheets = new LinkedHashMap<>();
 
     /**
-     * A material's sheet of triangles.
+     * What a face is drawn as: its material, and the colour it is painted or tinted over that, if it is.
+     *
+     * @param material what it is made of
+     * @param tint     what it is painted or tinted, if anything
+     */
+    public record Coat(Material material, Optional<Tint> tint) {
+
+        /** {@code material} as it is. */
+        public Coat(final Material material) {
+            this(material, Optional.empty());
+        }
+    }
+
+    /**
+     * A coat's sheet of triangles.
      *
      * @param points  each point, x, y and z in turn
      * @param facings which way each point faces, a unit long, x, y and z in turn
@@ -42,23 +58,24 @@ public final class Facets {
 
     /** {@code solids}' faces, but for those no bigger every way than {@code finest} centimetres. */
     public Facets(final List<Solid> solids, final double finest) {
-        final Map<Material, List<double[]>> points = new EnumMap<>(Material.class);
-        final Map<Material, List<Integer>> of = new EnumMap<>(Material.class);
+        final Map<Coat, List<double[]>> points = new LinkedHashMap<>();
+        final Map<Coat, List<Integer>> of = new LinkedHashMap<>();
         for (int s = 0; s < solids.size(); s++) {
             final Solid solid = solids.get(s);
             if (size(solid) > finest) {
-                faced(solid, points.computeIfAbsent(solid.material(), m -> new ArrayList<>()));
-                final List<Integer> from = of.computeIfAbsent(solid.material(), m -> new ArrayList<>());
+                final Coat coat = new Coat(solid.material(), solid.tint());
+                faced(solid, points.computeIfAbsent(coat, c -> new ArrayList<>()));
+                final List<Integer> from = of.computeIfAbsent(coat, c -> new ArrayList<>());
                 for (int t = 0; t < 2 * FACES.length; t++) {
                     from.add(s);
                 }
             }
         }
-        points.forEach((material, faces) -> sheets.put(material, sheet(faces, of.get(material))));
+        points.forEach((coat, faces) -> sheets.put(coat, sheet(faces, of.get(coat))));
     }
 
-    /** Its sheets, by material. */
-    public Map<Material, Sheet> sheets() {
+    /** Its sheets, by coat, in the order their first solids were given. */
+    public Map<Coat, Sheet> sheets() {
         return sheets;
     }
 

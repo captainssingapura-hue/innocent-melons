@@ -2,31 +2,26 @@ package melons.innocent.building.bench;
 
 import com.example.fxsuite.building.Spec;
 import javafx.scene.Node;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.RecordComponent;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
 
 /**
  * A specification set field by field, made from the specification itself: a specification is a record, so each of its
- * components has a control, a whole number or a measure as a field to type in, a choice among an enumeration's as a
- * list to pick from. Changed, the specification is made again from what the controls say, and told to whoever asked;
- * what its own checks refuse is shown under it instead. Made and used on JavaFX's thread.
+ * components has a control ({@link Controls}), a record within it its own fields under its name. Changed, the
+ * specification is made again from what the controls say, and told to whoever asked; what its own checks refuse is
+ * shown under it instead. Made and used on JavaFX's thread.
  */
 public final class SpecForm {
 
     private final Consumer<Spec<?, ?, ?>> changed;
-    private final GridPane grid = new GridPane(8, 4);
+    private final VBox fields = new VBox();
     private final Label refused = new Label();
-    private final List<Node> controls = new ArrayList<>();
-    private Spec<?, ?, ?> shown;
+    private Controls.Reading reading;
 
     /** A form telling {@code changed} each specification it is set to. */
     public SpecForm(final Consumer<Spec<?, ?, ?>> changed) {
@@ -37,60 +32,46 @@ public final class SpecForm {
 
     /** The fields, and what is refused under them. */
     public VBox node() {
-        return new VBox(6, grid, refused);
+        return new VBox(6, fields, refused);
     }
 
     /** {@code spec}'s fields shown, each its control, set as it is. */
     public void show(final Spec<?, ?, ?> spec) {
-        shown = spec;
-        grid.getChildren().clear();
-        controls.clear();
         refused.setText("");
-        final RecordComponent[] components = spec.getClass().getRecordComponents();
-        for (int i = 0; i < components.length; i++) {
-            final Node control = control(components[i], value(components[i], spec));
-            controls.add(control);
-            grid.add(new Label(components[i].getName()), 0, i);
-            grid.add(control, 1, i);
-        }
+        final Controls.Field field = record(spec.getClass(), spec, new Controls(this::made));
+        fields.getChildren().setAll(field.node());
+        reading = field.reading();
     }
 
-    /** A control for {@code component}, set to {@code value}, the specification made again when it is changed. */
-    private Node control(final RecordComponent component, final Object value) {
-        final Class<?> type = component.getType();
-        if (type.isEnum()) {
-            final ComboBox<Object> choice = new ComboBox<>();
-            choice.getItems().setAll(type.getEnumConstants());
-            choice.setValue(value);
-            choice.setOnAction(event -> made());
-            return choice;
+    /** The fields of a record of {@code type}, set as {@code value} is, read back as one of it. */
+    private Controls.Field record(final Class<?> type, final Object value, final Controls controls) {
+        final GridPane grid = new GridPane(8, 4);
+        final RecordComponent[] components = type.getRecordComponents();
+        final Class<?>[] types = new Class<?>[components.length];
+        final Controls.Reading[] readings = new Controls.Reading[components.length];
+        for (int i = 0; i < components.length; i++) {
+            final Object part = value(components[i], value);
+            types[i] = components[i].getType();
+            final Controls.Field field = types[i].isRecord() && !controls.knows(types[i])
+                    ? record(types[i], part, controls) : controls.of(components[i].getGenericType(), part);
+            readings[i] = field.reading();
+            grid.add(new Label(components[i].getName()), 0, i);
+            grid.add(field.node(), 1, i);
         }
-        final TextField field = new TextField(type == int.class ? String.valueOf(value)
-                : String.valueOf(((Number) value).doubleValue()).replaceAll("\\.0$", ""));
-        field.setPrefColumnCount(8);
-        field.setOnAction(event -> made());
-        field.focusedProperty().addListener((property, was, now) -> {
-            if (!now) {
-                made();
+        return new Controls.Field(grid, () -> {
+            final Object[] values = new Object[readings.length];
+            for (int i = 0; i < readings.length; i++) {
+                values[i] = readings[i].read();
             }
+            return type.getDeclaredConstructor(types).newInstance(values);
         });
-        return field;
     }
 
     /** The specification made again from the controls, and told; or what refused it, shown. */
     private void made() {
-        final RecordComponent[] components = shown.getClass().getRecordComponents();
-        final Class<?>[] types = new Class<?>[components.length];
-        final Object[] values = new Object[components.length];
         try {
-            for (int i = 0; i < components.length; i++) {
-                types[i] = components[i].getType();
-                values[i] = read(types[i], controls.get(i));
-            }
-            final Spec<?, ?, ?> spec = (Spec<?, ?, ?>) shown.getClass().getDeclaredConstructor(types)
-                    .newInstance(values);
+            final Spec<?, ?, ?> spec = (Spec<?, ?, ?>) reading.read();
             refused.setText("");
-            shown = spec;
             changed.accept(spec);
         } catch (final InvocationTargetException e) {
             refused.setText(e.getCause().getMessage());
@@ -101,19 +82,10 @@ public final class SpecForm {
         }
     }
 
-    /** What {@code control} says, as a {@code type}. */
-    private Object read(final Class<?> type, final Node control) {
-        if (control instanceof ComboBox<?> choice) {
-            return choice.getValue();
-        }
-        final String text = ((TextField) control).getText().strip();
-        return type == int.class ? (Object) Integer.parseInt(text) : (Object) Double.parseDouble(text);
-    }
-
-    /** What {@code spec} has for {@code component}. */
-    private Object value(final RecordComponent component, final Spec<?, ?, ?> spec) {
+    /** What {@code of} has for {@code component}. */
+    private Object value(final RecordComponent component, final Object of) {
         try {
-            return component.getAccessor().invoke(spec);
+            return component.getAccessor().invoke(of);
         } catch (final ReflectiveOperationException e) {
             throw new IllegalStateException("a specification's " + component.getName() + " unread", e);
         }

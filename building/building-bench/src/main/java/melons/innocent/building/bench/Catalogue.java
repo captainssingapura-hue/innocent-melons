@@ -14,6 +14,7 @@ import com.example.fxsuite.building.chinese.SongWineHouse;
 import com.example.fxsuite.building.chinese.SongWovenArch;
 import com.example.fxsuite.building.chinese.WovenArch;
 import com.example.fxsuite.building.spec.CityWallSpec;
+import com.example.fxsuite.building.spec.Finish;
 import com.example.fxsuite.building.spec.FarmhouseSpec;
 import com.example.fxsuite.building.spec.GateTowerSpec;
 import com.example.fxsuite.building.spec.HallSpec;
@@ -22,6 +23,7 @@ import com.example.fxsuite.building.spec.PointBlockSpec;
 import com.example.fxsuite.building.spec.QuaySpec;
 import com.example.fxsuite.building.spec.Roofing;
 import com.example.fxsuite.building.spec.SlabBlockSpec;
+import com.example.fxsuite.building.spec.Walling;
 import com.example.fxsuite.building.spec.ShopHouseSpec;
 import com.example.fxsuite.building.spec.StallSpec;
 import com.example.fxsuite.building.spec.WineHouseSpec;
@@ -29,6 +31,7 @@ import com.example.fxsuite.taxonomy.Leaf;
 import melons.innocent.building.generic.GenericHouse;
 import melons.innocent.building.generic.GenericPointBlock;
 import melons.innocent.building.generic.GenericSlabBlock;
+import melons.innocent.forms.Tint;
 
 import java.util.List;
 import java.util.Optional;
@@ -51,7 +54,9 @@ public record Catalogue(List<Offered> offered) {
     public Catalogue() {
         this(List.of(
                 new Offered(new GenericHouse(), new HouseSpec<>(900, 700, 2, 300, 3)),
-                new Offered(new GenericSlabBlock(), new SlabBlockSpec<>(12, 1_020, 1_025, 180, 6, 12)),
+                new Offered(new GenericSlabBlock(), new SlabBlockSpec<>(13_440, 1_205, 180, 12, 360, 280,
+                        new Finish(Walling.BRICK, Optional.of(new Tint("#e8dcc0")), new Tint("#3c3f44"),
+                                new Tint("#6f8fa3")))),
                 new Offered(new GenericPointBlock(), new PointBlockSpec<>(20, 900)),
                 new Offered(new SongFarmhouse(), new FarmhouseSpec<>(3, 330, 600, Roofing.THATCH, 800)),
                 new Offered(new SongShopHouse(), new ShopHouseSpec<>(3, 360, 600, Roofing.TILE)),
