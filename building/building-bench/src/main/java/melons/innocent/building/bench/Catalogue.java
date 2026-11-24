@@ -51,7 +51,7 @@ public record Catalogue(List<Offered> offered) {
     public Catalogue() {
         this(List.of(
                 new Offered(new GenericHouse(), new HouseSpec<>(900, 700, 2, 300, 3)),
-                new Offered(new GenericSlabBlock(), new SlabBlockSpec<>(12, 1_020, 1_025, 180, 6, 12)),
+                new Offered(new GenericSlabBlock(), new SlabBlockSpec<>(14_040, 1_205, 180, 12, 360, 280)),
                 new Offered(new GenericPointBlock(), new PointBlockSpec<>(20, 900)),
                 new Offered(new SongFarmhouse(), new FarmhouseSpec<>(3, 330, 600, Roofing.THATCH, 800)),
                 new Offered(new SongShopHouse(), new ShopHouseSpec<>(3, 360, 600, Roofing.TILE)),

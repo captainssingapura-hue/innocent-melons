@@ -28,8 +28,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class BlocksTest {
 
-    private final SlabBlockSpec<Civilization, CommonEras.Modern> slab = new SlabBlockSpec<>(12, 1_020, 1_025, 180,
-            6, 12);
+    private final SlabBlockSpec<Civilization, CommonEras.Modern> slab = new SlabBlockSpec<>(14_040, 1_205, 180, 12,
+            360, 280);
     private final PointBlockSpec<Civilization, CommonEras.Modern> point = new PointBlockSpec<>(20, 900);
 
     @Test
@@ -37,25 +37,53 @@ class BlocksTest {
         final Structure block = new GenericSlabBlock().build(slab);
         assertEquals(List.of(), block.problems());
         final FloorPlan plan = new GenericSlabBlock().plan(slab);
-        // bays: a core, six flats, a core, six flats, a core. Each flat nine pillars of its own; on each group's seven
-        // lines, flats mirrored in turn, four with two pillars and three with three; each core three walls
+        // as long as twelve of the board's bays and three cores: a core, six bays, a core, six bays, a core. Each bay
+        // nine pillars of its own; on each run's seven lines, bays mirrored in turn, four with two pillars and three
+        // with three; each core three walls
+        assertEquals(12, new GenericSlabBlock().count(slab.length()));
         assertEquals(12 * 9 + 2 * (4 * 2 + 3 * 3) + 3 * 3, plan.walls().size());
         final List<FloorPlan.Wall> pillars = plan.walls().stream().filter(w -> w.name().equals("pillar")).toList();
-        assertTrue(pillars.stream().allMatch(w -> w.thick() == CorridorFlat.PILLAR && w.length() <= 180),
+        assertTrue(pillars.stream().allMatch(w -> w.thick() == SlabBay.PILLAR && w.length() <= 180),
                 "blades 30 cm thick, none longer than 1.8 m");
         assertEquals(12 * plan.walls().size(), block.solids(new Elements.BearingWall()).size());
         assertEquals(12 - 1, block.solids(new Elements.Floor()).size() - 1, "a slab over each storey but the top");
         assertEquals(1, block.solids(new Elements.Roof()).size());
         final double[] size = size(block.solids());
-        assertEquals(12 * 1_020 + 3 * GenericSlabBlock.CORE_WIDE, size[0], 1e-6, "its cores' end walls flush");
-        assertEquals(1_025 + 180, size[1], 1e-6, "its flats and its corridor");
+        assertEquals(14_040, size[0], 1e-6, "as long as asked, its cores' end walls flush");
+        assertEquals(1_205, size[1], 1e-6, "as wide as asked, its bays and its corridor");
         assertEquals(360 + 11 * 280 + GenericSlabBlock.SLAB, size[2], 1e-6, "from under the ground slab to the roof");
-        final SlabBlockSpec<Civilization, CommonEras.Modern> wider = new SlabBlockSpec<>(10, 1_150, 1_200, 180, 5, 6);
-        // wider and deeper than the board's: the same pillars, as big; five flats a group, the last unmirrored
+        // wider and deeper than the board's: eleven bays 10.45 m wide nearer its 10.2 m than ten 11.5 m wide, in runs
+        // of six and five, the last of five unmirrored; the same pillars, as big
+        final SlabBlockSpec<Civilization, CommonEras.Modern> wider = new SlabBlockSpec<>(13_300, 1_380, 180, 6, 450,
+                320);
+        assertEquals(11, new GenericSlabBlock().count(wider.length()));
         final List<FloorPlan.Wall> stretched = new GenericSlabBlock().plan(wider).walls();
-        assertEquals(10 * 9 + 2 * (3 * 2 + 3 * 3) + 3 * 3, stretched.size());
+        assertEquals(11 * 9 + (4 * 2 + 3 * 3) + (3 * 2 + 3 * 3) + 3 * 3, stretched.size());
         assertTrue(stretched.stream().filter(w -> w.name().equals("pillar"))
                 .allMatch(w -> Math.abs(w.thick() - 30) < 1e-9), "pillars stretched apart, none bigger");
+        assertEquals(450 + 5 * 320 + GenericSlabBlock.SLAB, size(new GenericSlabBlock().build(wider).solids())[2],
+                1e-6, "its storeys as high as asked");
+    }
+
+    @Test
+    void aSlabBlockAnyLengthItsBaysWorkedOut() {
+        final GenericSlabBlock block = new GenericSlabBlock();
+        for (double length = 2_700; length <= 25_000; length += 10) {
+            final SlabBlockSpec<Civilization, CommonEras.Modern> s = new SlabBlockSpec<>(length, 1_205, 180, 4, 360,
+                    280);
+            final int n = block.count(length);
+            final int cores = (n + GenericSlabBlock.RUN - 1) / GenericSlabBlock.RUN + 1;
+            final double wide = (length - cores * GenericSlabBlock.CORE_WIDE) / n;
+            assertTrue(wide >= GenericSlabBlock.NARROWEST - 1e-9 && wide <= GenericSlabBlock.WIDEST + 1e-9,
+                    length + ": " + n + " bays " + wide + " wide");
+            final FloorPlan.Slab floor = block.plan(s).slabs().getFirst();
+            assertEquals(length, floor.x1() - floor.x0(), 1e-6, "as long as asked");
+        }
+        assertEquals(2, block.count(2_700), "the shortest, two bays 7.5 m wide and three cores");
+        assertThrows(IllegalArgumentException.class, () -> new SlabBlockSpec<>(2_600, 1_205, 180, 12, 360, 280));
+        assertThrows(IllegalArgumentException.class, () -> new SlabBlockSpec<>(14_040, 1_205, 180, 41, 360, 280));
+        assertThrows(IllegalArgumentException.class, () -> new SlabBlockSpec<>(14_040, 1_900, 180, 12, 360, 280));
+        assertThrows(IllegalArgumentException.class, () -> new SlabBlockSpec<>(14_040, 1_205, 180, 12, 250, 280));
     }
 
     @Test
@@ -83,7 +111,7 @@ class BlocksTest {
         assertEquals(360 + 19 * 280 + GenericPointBlock.SLAB, size[2], 1e-6);
         assertThrows(IllegalArgumentException.class, () -> new PointBlockSpec<>(20, 800));
         assertThrows(IllegalArgumentException.class, () -> new PointBlockSpec<>(20, 1_300));
-        assertThrows(IllegalArgumentException.class, () -> new SlabBlockSpec<>(12, 750, 1_200, 180, 6, 31));
+        assertThrows(IllegalArgumentException.class, () -> new SlabBlockSpec<>(14_040, 1_205, 180, 12, 360, 400));
     }
 
     @Test
@@ -105,7 +133,7 @@ class BlocksTest {
         final List<Solid> cover = new ArrayList<>(block.solids(new Elements.Wall()));
         cover.addAll(block.solids(new Elements.Window()));
         cover.addAll(block.solids(new Elements.Parapet()));
-        assertTrue(cover.stream().allMatch(s -> s.corners().stream().allMatch(p -> p.up() >= GenericSlabBlock.GROUND
+        assertTrue(cover.stream().allMatch(s -> s.corners().stream().allMatch(p -> p.up() >= slab.ground()
                 - 1e-6)), "nothing on the void deck");
         assertTrue(block.solids(new Elements.Wall()).stream().allMatch(s -> s.material() == Material.BRICK));
         final List<Solid> parapets = block.solids(new Elements.Parapet());
