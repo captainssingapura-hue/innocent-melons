@@ -8,6 +8,7 @@ import melons.innocent.building.container.Finish;
 import melons.innocent.building.container.Size;
 import melons.innocent.building.generic.GenericHouse;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -16,12 +17,20 @@ import java.util.List;
  * containers, cream under gun metal; a smaller one of twenty-foot containers, timber under titanium on charcoal
  * steel; and a house of concrete, two storeys. West of the lane, past its last yards, facing it: a house of concrete
  * three storeys high. A building's front, toward along in its own frame, turned minus ninety degrees faces the
- * lane from its right, and turned ninety from its left.
+ * lane from its right, and turned ninety from its left. And with them the village's blocks of public housing
+ * ({@link HousingBlocks}).
  */
 record Buildings() {
 
-    /** Each of them, where it stands. */
+    /** Each of them, where it stands, its houses first. */
     List<Built> all() {
+        final List<Built> all = new ArrayList<>(houses());
+        all.addAll(new HousingBlocks().all());
+        return all;
+    }
+
+    /** Its houses. */
+    List<Built> houses() {
         final ContainerHouse containers = new ContainerHouse();
         final GenericHouse house = new GenericHouse();
         return List.of(

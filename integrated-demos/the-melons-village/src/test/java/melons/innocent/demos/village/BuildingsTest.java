@@ -17,9 +17,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The village's buildings: four, each nothing wrong with it as a thing built; each in the way as its own shape is,
- * set down where it stands; each clear of the others and of everything else of the village, its yards, its houses
- * and its towers; and those east of the lane on its far side from the yards, facing it.
+ * The village's buildings: four houses and five blocks of flats, each nothing wrong with it as a thing built; each
+ * in the way as its own shape is, set down where it stands; each clear of the others and of everything else of the
+ * village, its yards, its houses and its towers; those east of the lane on its far side from the yards; and each come
+ * into from the lane's side.
  */
 class BuildingsTest {
 
@@ -28,7 +29,7 @@ class BuildingsTest {
     @Test
     void fourBuildingsEachSoundAndInTheWay() {
         final List<Built> buildings = village.buildings();
-        assertEquals(4, buildings.size());
+        assertEquals(4 + 5, buildings.size(), "four houses and five blocks of flats");
         buildings.forEach(b -> assertEquals(List.of(), b.structure().problems()));
         final Obstacles inTheWay = village.inTheWay();
         final int built = buildings.stream().mapToInt(b -> b.inTheWay().size()).sum();
@@ -53,12 +54,34 @@ class BuildingsTest {
     }
 
     @Test
+    void noFloorLaidWhereTheGroundIsSoNoneFlickersOnIt() {
+        for (final Built b : village.buildings()) {
+            final List<Volume> shape = b.inTheWay();
+            for (final Volume v : shape) {
+                if (Math.abs(v.high()) < 1) {
+                    assertTrue(shape.stream().anyMatch(on -> Math.abs(on.low() - v.high()) < 1e-6
+                            && covers(((Prism) on).bounds(), ((Prism) v).bounds())),
+                            "a top where the ground is only under what stands on it");
+                }
+            }
+            assertEquals(Built.LIFT, b.placed().clip(new Vec3(0, 0, 0)).shown().y(), 1e-9, "set down over it");
+        }
+    }
+
+    @Test
     void eachFacingTheLane() {
         for (final Built b : village.buildings()) {
             final Structure.WayIn in = b.structure().waysIn().getFirst();
-            final double x = b.placed().clip(new Vec3(in.across(), 0, in.along())).shown().x();
-            assertTrue(Math.abs(x) < Math.abs(b.stands().x()), "come into from the lane's side: " + x);
+            final Vec3 at = b.placed().clip(new Vec3(in.across(), 0, in.along())).shown();
+            final Vec3 s = b.stands();
+            final double toward = -s.x() * (at.x() - s.x()) + (lane(s.z()) - s.z()) * (at.z() - s.z());
+            assertTrue(toward > 0, "come into from the lane's side: " + at);
         }
+    }
+
+    /** How far along the nearest point of the lane is to {@code z}: the lane runs from the start to the last yards. */
+    private double lane(final double z) {
+        return Math.clamp(z, 0, 8_000);
     }
 
     /** Each building's box seen from above: its least and most across, its least and most along. */
@@ -78,6 +101,12 @@ class BuildingsTest {
             boxes.add(box);
         }
         return boxes;
+    }
+
+    /** Whether {@code over} covers all of {@code under}, seen from above. */
+    private boolean covers(final Volume.Bounds over, final Volume.Bounds under) {
+        return over.minX() <= under.minX() + 1e-6 && over.maxX() >= under.maxX() - 1e-6
+                && over.minZ() <= under.minZ() + 1e-6 && over.maxZ() >= under.maxZ() - 1e-6;
     }
 
     private boolean overlap(final double[] a, final double[] b) {

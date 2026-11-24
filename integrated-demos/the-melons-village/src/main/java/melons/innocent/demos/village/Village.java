@@ -147,7 +147,8 @@ public record Village(int homes) {
     /**
      * The buildings of the buildings' own on the open ground east of the lane, each facing it ({@link Buildings}):
      * two houses of shipping containers and a house of concrete; and across the lane, past the last yards, another
-     * house of concrete, taller.
+     * house of concrete, taller; and east and north of them its blocks of public housing, two slab blocks and three
+     * point blocks.
      */
     public List<Built> buildings() {
         return new Buildings().all();
