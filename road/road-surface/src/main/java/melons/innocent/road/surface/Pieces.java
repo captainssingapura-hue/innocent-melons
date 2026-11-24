@@ -9,14 +9,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A road's strips along a run of it, each a solid standing on level ground: a lane or a shoulder of asphalt, its top
+ * A road's strips along a run of it, each a solid standing on what is level under it, the ground or a bridge's deck,
+ * {@code level} high: a lane or a shoulder of asphalt, its top
  * falling as its section falls, parted at the road's line where it lies across it so its crown is there; a kerb of
  * precast concrete, {@link #KERB} over the pavement beside it, its top level; a barrier of concrete, its foot as wide
  * as its strip and its top {@link #CAP} wide over its middle, {@link #BARRIER} over the pavement there.
  *
  * @param section the road's section
+ * @param level   how high what it stands on is
  */
-record Pieces(Section section) {
+record Pieces(Section section, double level) {
 
     /** How high a kerb stands over the pavement beside it; a barrier; how wide a barrier's top is. */
     static final double KERB = 15;
@@ -43,15 +45,16 @@ record Pieces(Section section) {
                     }
                 }
                 case KERB -> {
-                    final double top = section.top(Math.abs(x0) < Math.abs(x1) ? x0 : x1) + KERB;
+                    final double top = top(Math.abs(x0) < Math.abs(x1) ? x0 : x1) + KERB;
                     parts.add(new Part(new Elements.Kerb(), shapes.solid("kerb", Role.STRUCTURE, Material.PRECAST,
-                            run, x0, 0, x1, 0, top, top)));
+                            run, x0, level, x1, level, top, top)));
                 }
                 case BARRIER -> {
                     final double middle = (x0 + x1) / 2;
-                    final double top = section.top(middle) + BARRIER;
+                    final double top = top(middle) + BARRIER;
                     parts.add(new Part(new Elements.Barrier(), shapes.solid("barrier", Role.STRUCTURE,
-                            Material.CONCRETE, run, x0, 0, x1, 0, middle - CAP / 2, top, middle + CAP / 2, top)));
+                            Material.CONCRETE, run, x0, level, x1, level, middle - CAP / 2, top, middle + CAP / 2,
+                            top)));
                 }
             }
         }
@@ -61,7 +64,12 @@ record Pieces(Section section) {
     /** A lane, or a shoulder, from {@code x0} across to {@code x1}, along {@code run}. */
     private Part paved(final boolean lane, final Shapes.Run run, final double x0, final double x1) {
         return new Part(lane ? new Elements.TrafficLane() : new Elements.Shoulder(), new Shapes().solid(lane ? "lane"
-                : "shoulder", Role.STRUCTURE, Material.ASPHALT, run, x0, 0, x1, 0, section.top(x0),
-                section.top(x1)));
+                : "shoulder", Role.STRUCTURE, Material.ASPHALT, run, x0, level, x1, level, top(x0),
+                top(x1)));
+    }
+
+    /** How high its pavement's top is {@code x} across from its line, standing on what is {@link #level} high. */
+    private double top(final double x) {
+        return level + section.top(x);
     }
 }

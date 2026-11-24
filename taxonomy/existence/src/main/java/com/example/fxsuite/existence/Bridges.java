@@ -20,4 +20,5 @@ public final class Bridges {
 
     public record Bridge() implements Leaf<Span> { public Span parent() { return new Span(); } }
     public record Viaduct() implements Leaf<Span> { public Span parent() { return new Span(); } }
+    public record Flyover() implements Leaf<Span> { public Span parent() { return new Span(); } }
 }

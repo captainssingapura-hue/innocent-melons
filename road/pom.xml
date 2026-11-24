@@ -24,6 +24,8 @@
         <module>road-core</module>
         <module>road-surface</module>
         <module>road-surface-bench</module>
+        <module>road-bridges</module>
+        <module>road-bridges-bench</module>
     </modules>
 
     <dependencyManagement>

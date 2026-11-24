@@ -16,8 +16,9 @@ import java.util.List;
  * edge. None on a section that is not marked.
  *
  * @param section the road's section
+ * @param level   how high what it stands on is
  */
-record Markings(Section section) {
+record Markings(Section section, double level) {
 
     /** How thick paint lies; its colour. */
     static final double THICK = 1;
@@ -70,8 +71,8 @@ record Markings(Section section) {
 
     private Part stroke(final Line line, final double x, final Shapes.Run run) {
         final double x1 = x + line.wide();
-        final double y0 = section.top(x);
-        final double y1 = section.top(x1);
+        final double y0 = level + section.top(x);
+        final double y1 = level + section.top(x1);
         return new Part(new Elements.Marking(), new Shapes().solid(line.name(), Role.DRESSING, Material.PAINTED, run,
                 x, y0, x1, y1, y0 + THICK, y1 + THICK).tinted(WHITE));
     }

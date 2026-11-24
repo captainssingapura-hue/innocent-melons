@@ -14,3 +14,7 @@ Carries a way over water or over another way.
 ## Viaduct
 
 Carries a way a long way over low ground, on many spans.
+
+## Flyover
+
+Carries a road over another road where they cross, on a few short spans, so neither waits for the other.
