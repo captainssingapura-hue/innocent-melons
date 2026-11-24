@@ -56,6 +56,15 @@ public record TestKit(String title, BaseMap map, List<BiFunction<Card, Laid, Pla
 
     /** The same, its figures moved as {@code roamer} moves them. */
     public void walked(final Roamer roamer) throws IOException {
-        new Walk(title, placing(), roamer).run();
+        walk(roamer).run();
+    }
+
+    /**
+     * The walk round it, not yet begun, its figures moved as {@code roamer} moves them: for a bench that is already
+     * running, which says {@code beside()} of it before it runs it, on the thread its card's windows are served on,
+     * and may ask it to stop from any other.
+     */
+    public Walk walk(final Roamer roamer) {
+        return new Walk(title, placing(), roamer);
     }
 }

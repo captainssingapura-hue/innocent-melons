@@ -1,6 +1,7 @@
 package melons.innocent.building.bench;
 
 import com.example.fxsuite.building.Structure;
+import com.example.fxsuite.vulkan.bench.Walk;
 import com.example.fxsuite.vulkan.device.Canvas;
 import com.example.fxsuite.vulkan.device.Card;
 import com.example.fxsuite.vulkan.device.Desk;
@@ -8,7 +9,6 @@ import com.example.fxsuite.vulkan.device.Moved;
 import com.example.fxsuite.vulkan.device.Refused;
 import com.example.fxsuite.vulkan.device.Target;
 import com.example.fxsuite.vulkan.device.Window;
-import com.example.fxsuite.vulkan.form.Mesh;
 import com.example.fxsuite.vulkan.render.Formed;
 import com.example.fxsuite.vulkan.render.Framed;
 import com.example.fxsuite.vulkan.shade.Laid;
@@ -18,6 +18,8 @@ import com.example.fxsuite.vulkan.view.Camera;
 import com.example.fxsuite.vulkan.view.Orbit;
 import com.example.fxsuite.vulkan.worked.Daylight;
 import com.example.fxsuite.vulkan.worked.Picture;
+import melons.innocent.building.walk.Meshed;
+import melons.innocent.building.walk.WalkRound;
 import melons.innocent.forms.Facets;
 
 import javax.imageio.ImageIO;
@@ -31,6 +33,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A building looked into closely, in a window of the card's, drawn by Vulkan as finely as it is built: every solid,
@@ -52,18 +55,54 @@ public final class Inspector {
     /** A file to save what is first looked into to, and then end: {@code -Dbench.inspectSnapshot=}; none, at first. */
     private final String shot = System.getProperty("bench.inspectSnapshot", "");
 
-    /** A building asked to be looked into: what it is called, and it. */
-    private record Asked(String title, Structure structure) {
+    /** The walk now going on, while one is: so that it can be asked to stop from the bench's thread. */
+    private final AtomicReference<Walk> walking = new AtomicReference<>();
+
+    /** A building asked to be looked into, or walked round: what it is called, it, and which. */
+    private record Asked(String title, Structure structure, boolean walked) {
     }
 
     /** {@code structure} looked into, in a window called {@code title}: from any thread. */
     public void ask(final String title, final Structure structure) {
-        asked.add(Optional.of(new Asked(title, structure)));
+        walking().ifPresent(Walk::stop);
+        asked.add(Optional.of(new Asked(title, structure, false)));
+    }
+
+    /**
+     * {@code structure} walked round and into, on the test kit, by the game engine's avatar ({@link WalkRound}):
+     * from any thread. What is open closes for it.
+     */
+    public void walk(final String title, final Structure structure) {
+        walking().ifPresent(Walk::stop);
+        asked.add(Optional.of(new Asked(title, structure, true)));
     }
 
     /** No more asked: the one open closed, and the serving ended. */
     public void end() {
+        walking().ifPresent(Walk::stop);
         asked.add(Optional.empty());
+    }
+
+    /** The walk now going on, if one is. */
+    private Optional<Walk> walking() {
+        return Optional.ofNullable(walking.get());
+    }
+
+    /**
+     * {@code it} walked round till its walk is closed or something else is asked; what is asked next. With
+     * {@code -Dbench.walk=true}, a run with nobody watching, nothing more is served once the walk has ended.
+     */
+    private Optional<Asked> walked(final Asked it) throws InterruptedException {
+        final Walk walk = new WalkRound(it.title(), it.structure(), looks::surface).walk();
+        walking.set(walk);
+        try {
+            walk.run();
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        } finally {
+            walking.set(null);
+        }
+        return Boolean.getBoolean("bench.walk") ? Optional.empty() : asked.take();
     }
 
     /**
@@ -74,7 +113,7 @@ public final class Inspector {
         Optional<Asked> next = asked.take();
         while (next.isPresent()) {
             try {
-                next = inspected(next.get());
+                next = next.get().walked() ? walked(next.get()) : inspected(next.get());
             } catch (final RuntimeException refused) {
                 System.err.println("Not looked into: " + next.get().title());
                 refused.printStackTrace();
@@ -96,7 +135,7 @@ public final class Inspector {
             final List<Map.Entry<Facets.Coat, Facets.Sheet>> sheets = new ArrayList<>(facets.sheets().entrySet());
             sheets.sort(Comparator.comparing(sheet -> looks.surface(sheet.getKey()).seenThrough()));
             sheets.forEach(sheet -> parts.add(new Formed(card, new Look(laid, looks.surface(sheet.getKey())),
-                    mesh(sheet.getValue()))));
+                    new Meshed(sheet.getValue()).mesh())));
             Orbit orbit = orbit(facets);
             window.shown(80, 80);
             int frames = 0;
@@ -164,20 +203,5 @@ public final class Inspector {
         final double size = Math.max(high[0] - low[0], Math.max(high[1] - low[1], high[2] - low[2]));
         return new Orbit(new Vec3((low[0] + high[0]) / 2, (low[1] + high[1]) / 2, (low[2] + high[2]) / 2), turn, 20,
                 Math.max(500, size * 2));
-    }
-
-    /** {@code sheet} as the card's mesh. */
-    private Mesh mesh(final Facets.Sheet sheet) {
-        final List<Vec3> points = new ArrayList<>();
-        final List<Vec3> facings = new ArrayList<>();
-        for (int i = 0; i < sheet.points().length; i += 3) {
-            points.add(new Vec3(sheet.points()[i], sheet.points()[i + 1], sheet.points()[i + 2]));
-            facings.add(new Vec3(sheet.facings()[i], sheet.facings()[i + 1], sheet.facings()[i + 2]));
-        }
-        final List<Integer> corners = new ArrayList<>();
-        for (final int corner : sheet.corners()) {
-            corners.add(corner);
-        }
-        return new Mesh(points, facings, corners);
     }
 }

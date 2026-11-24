@@ -14,17 +14,22 @@ import java.util.Optional;
 
 /**
  * The engine's own avatar, moved by the engine's simulation, on its feet and on its jets: the walks' first way of
- * moving. Its lead starts where {@code -Dbench.at=} says and is drawn as the bot {@code -Dbench.bot=} says (the man
- * unless said); a companion comes with it where {@code -Dbench.companion.script=} or {@code
+ * moving. Its lead starts where it is told, which is where {@code -Dbench.at=} says unless a bench says otherwise,
+ * and is drawn as the bot {@code -Dbench.bot=} says (the man unless said); a companion comes with it where {@code -Dbench.companion.script=} or {@code
  * -Dbench.companion.replay=} is told, starting where {@code -Dbench.companion.at=} says, drawn as {@code
  * -Dbench.companion.bot=} (the woman unless said).
  */
-public record Afoot() implements Roamer {
+public record Afoot(String at) implements Roamer {
+
+    /** Its lead starting where the run says. */
+    public Afoot() {
+        this(System.getProperty("bench.at", ""));
+    }
 
     @Override
     public Roaming roaming(final Source source, final Optional<Keeping> keeping, final Skies skies) {
         return new Company(new Run(source, keeping, Optional.of(skies),
-                new Start(System.getProperty("bench.at", "")).body()),
+                new Start(at).body()),
                 new Bot(new Said(System.getProperty("bench.bot", "man")).build()), companion());
     }
 

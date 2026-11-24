@@ -5,6 +5,7 @@ import com.example.fxsuite.avatar.sim.Body;
 import com.example.fxsuite.avatar.sim.Clock;
 import com.example.fxsuite.avatar.sim.Hit;
 import com.example.fxsuite.avatar.sim.Obstacles;
+import com.example.fxsuite.avatar.sim.Volume;
 import com.example.fxsuite.avatar.view.Chase;
 import com.example.fxsuite.vulkan.space.Vec3;
 import com.example.fxsuite.vulkan.view.Camera;
@@ -122,6 +123,14 @@ public final class Following {
         double off = seen.distance();
         for (final Block block : inTheWay.blocks()) {
             final Hit met = block.ray(seen.pivot(), back, off);
+            if (met != null) {
+                off = Math.min(off, Math.max(Chase.NEAREST, met.distance() - Chase.WALL_GAP));
+            }
+        }
+        // a building's own shape as well as boxes: its walls, floors and roofs, so the eye follows the avatar indoors
+        for (final Volume volume : inTheWay.volumes()) {
+            final Hit met = Volume.within(volume, seen.pivot(), back, off) == null ? null
+                    : volume.ray(seen.pivot(), back, off);
             if (met != null) {
                 off = Math.min(off, Math.max(Chase.NEAREST, met.distance() - Chase.WALL_GAP));
             }

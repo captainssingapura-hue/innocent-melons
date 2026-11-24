@@ -45,6 +45,8 @@ public final class Guide {
     private final LightBoard light;
     /** Where a frame's time is shown, once the window is: nothing of JavaFX's is made before JavaFX has begun. */
     private final AtomicReference<Label> taken = new AtomicReference<>();
+    /** Its window, while it is shown. */
+    private final AtomicReference<Stage> window = new AtomicReference<>();
 
     /** A guide saying {@code lines}, for what is drawn on the card called {@code card}. */
     public Guide(final Asked asked, final String card, final List<String> lines) {
@@ -72,6 +74,12 @@ public final class Guide {
         stage.setY(y);
         stage.setOnCloseRequest(closing -> asked.stop());
         stage.show();
+        window.set(stage);
+    }
+
+    /** Taken away again, if it was shown. To be called on JavaFX's thread. */
+    public void hidden() {
+        Optional.ofNullable(window.getAndSet(null)).ifPresent(Stage::close);
     }
 
     /** Told the moment the sky's clock has come to and where the sun and the moon stand. From any thread. */

@@ -11,6 +11,7 @@ import com.example.fxsuite.vulkan.render.Formed;
 import com.example.fxsuite.vulkan.shade.Laid;
 import com.example.fxsuite.vulkan.shade.Look;
 import com.example.fxsuite.vulkan.space.Mat4;
+import com.example.fxsuite.vulkan.space.Vec3;
 import com.example.fxsuite.vulkan.view.Camera;
 
 import java.util.ArrayList;
@@ -27,6 +28,9 @@ import java.util.stream.IntStream;
  * the last made first, and then its ground.
  */
 public final class TestGround implements Place {
+
+    /** How far under where height is nothing the ground is drawn, in centimetres: see {@link #drawn}. */
+    private static final double SUNK = 2;
 
     private final BaseMap map;
     private final Formed ground;
@@ -94,9 +98,13 @@ public final class TestGround implements Place {
                 .collect(Collectors.joining(System.lineSeparator()));
     }
 
+    /**
+     * The ground, and then each thing stood on it. The ground is drawn two centimetres under where height is nothing,
+     * so that a floor or a slab laid on it at that height is drawn over it and the two do not flicker.
+     */
     @Override
     public void drawn(final Pass pass, final Camera camera) {
-        ground.drawn(pass, new Mat4(), camera, 1);
+        ground.drawn(pass, new Mat4(new Vec3(0, -SUNK, 0)), camera, 1);
         stood.forEach(place -> place.drawn(pass, camera));
     }
 

@@ -27,7 +27,6 @@ import com.example.fxsuite.vulkan.view.Beam;
 import com.example.fxsuite.vulkan.view.Camera;
 import com.example.fxsuite.vulkan.worked.Daylight;
 import com.example.fxsuite.vulkan.worked.Picture;
-import javafx.application.Platform;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -107,6 +106,8 @@ public final class Walk {
     private final BiFunction<Card, Laid, Place> placing;
     /** What moves the figures: the engine's own avatar, unless the walk is told otherwise. */
     private final Roamer roamer;
+    /** Whether it is opened beside a bench whose JavaFX is already running. */
+    private boolean beside;
     /** The layouts of every look: asking rays, once the card is open, where the card answers them. */
     private Laid laid = new Laid();
     /** The bench's day, for where its sun stands: where the sliders begin unless the run is told otherwise. */
@@ -139,6 +140,20 @@ public final class Walk {
         this.title = title;
         this.placing = placing;
         this.roamer = roamer;
+    }
+
+    /**
+     * The same walk, opened beside a bench whose JavaFX is already running: its window is shown on that, and when
+     * the walk ends only its own windows go.
+     */
+    public Walk beside() {
+        beside = true;
+        return this;
+    }
+
+    /** Asked to end, as closing a window of its asks. From any thread. */
+    public void stop() {
+        asked.stop();
     }
 
     /** The walk, until a window is closed, the run or the time is up, or the validation layer speaks. */
@@ -182,19 +197,19 @@ public final class Walk {
              Hearing hearing = Hearing.open(roaming.ends() || settle >= 0)) {
             final Guide guide = new Guide(asked, card.name(), roamer.keys());
             asked.offered(shadows.offered());
-            Platform.startup(() -> guide.shown(LEFT, TOP));
-            window.shown(LEFT + BESIDE, TOP);
-            final Staged staged = new Staged(place, cast, shadows, overlay);
-            drawn(desk, card, window, staged, guide, hearing, roaming);
-            final String snapshot = System.getProperty("bench.snapshot", "");
-            if (!snapshot.isEmpty()) {
-                try (Canvas canvas = card.canvas(window.width(), window.height())) {
-                    frame(canvas, staged, roaming, roaming.camera(1), 1);
-                    ImageIO.write(new Picture(canvas.width(), canvas.pixels()).image(), "png", new File(snapshot));
+            try (Shown shown = new Shown(guide, beside, LEFT, TOP)) {
+                window.shown(LEFT + BESIDE, TOP);
+                final Staged staged = new Staged(place, cast, shadows, overlay);
+                drawn(desk, card, window, staged, guide, hearing, roaming);
+                final String snapshot = System.getProperty("bench.snapshot", "");
+                if (!snapshot.isEmpty()) {
+                    try (Canvas canvas = card.canvas(window.width(), window.height())) {
+                        frame(canvas, staged, roaming, roaming.camera(1), 1);
+                        ImageIO.write(new Picture(canvas.width(), canvas.pixels()).image(), "png",
+                                new File(snapshot));
+                    }
                 }
             }
-        } finally {
-            Platform.exit();
         }
     }
 
