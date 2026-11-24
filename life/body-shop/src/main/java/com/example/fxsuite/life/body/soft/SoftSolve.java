@@ -20,8 +20,9 @@ public final class SoftSolve {
 
     /** How free a node is: as free as any, or fixed. */
     private static final double FREE = 1;
-    /** How far apart the fascia's rings are, cm. */
+    /** How far apart the fascia's rings are, cm; and the points of the grid the muscles as walls are known on. */
     private static final double FASCIA_STEP = 0.5;
+    private static final double FROZEN_CELL = 0.25;
 
     /** Where the solve has got to. */
     public enum Phase { DRAWN_IN, GROWING, SETTLING, DONE }
@@ -42,13 +43,16 @@ public final class SoftSolve {
      * @param hold    how near a place a muscle is held to its bones a node is fixed, cm
      * @param tension how much shorter than drawn a muscle is at rest along its fibres, so that it pulls
      * @param fascia  whether, as they settle, a sleeve of fascia wraps them and presses them together ({@link Fascia})
+     * @param layered whether they are solved a layer at a time, the deepest first, each layer on those under it, as
+     *                they lie, each drawn in, grown and settled so many steps; else all at once
      */
     public record Settings(double youngs, double poisson, double least, int drawIn, int grow, int settle, int sweeps,
-                           double quick, double apart, double clear, double hold, double tension, boolean fascia) {
+                           double quick, double apart, double clear, double hold, double tension, boolean fascia,
+                           boolean layered) {
 
-        /** As the neck is first tried. */
+        /** As the neck is first tried: a layer at a time. */
         public static Settings first() {
-            return new Settings(10, 0.45, 0.35, 80, 320, 200, 2, 1, 0.02, 0.05, 0.75, 0.08, true);
+            return new Settings(10, 0.45, 0.35, 30, 90, 60, 2, 1, 0.02, 0.05, 0.75, 0.08, true, true);
         }
     }
 
@@ -64,9 +68,10 @@ public final class SoftSolve {
      * @param room     how much room the elements take now, of their room at rest at full size
      * @param pressed  how many points of the muscles' surfaces pressed on the fascia, in its last sweep
      * @param sleeve   how much room the fascia holds, cm3; none, before it wraps them
+     * @param depth    how deep the layer being solved lies, the outermost 1; none, all at once
      */
     public record Moment(Phase phase, int step, int steps, double scale, int touching, int inBone, double room,
-                         int pressed, double sleeve) {
+                         int pressed, double sleeve, int depth) {
     }
 
     private final List<Lattice> lattices;
@@ -77,19 +82,32 @@ public final class SoftSolve {
     private final SurfaceContact contact;
     private final SurfaceContact.Surfaces surfaceOf;
     private final SoftRegion region;
+    private final List<Mesher.Mesh> surfaces;
+    /** The muscles round them and the layers come to rest, as walls. */
+    private final MuscleWalls frozen;
     private Optional<Fascia> fascia = Optional.empty();
     private final Settings settings;
     private final double rest;
+    /** Each node's muscle, each muscle's depth, and the depths there are, the deepest first. */
+    private final int[] ownerOf;
+    private final int[] depthOf;
+    private final int[] ranks;
+    /** How free each node is in the layer being solved, and which muscles take part in it; for which layer. */
+    private double[] free;
+    private boolean[] taking;
+    private boolean[] firm;
+    private int freeFor = -1;
     private int step;
 
     /**
      * The muscles of {@code region}, their {@code lattices} and the {@code surfaces} carried in them, each held near
-     * each of its {@code holds} and its fibres running as its {@code fibres} say (by the same order), kept out of
-     * {@code walls}, solved as {@code settings} say.
+     * each of its {@code holds}, its fibres running as its {@code fibres} say and lying as deep as {@code depths} says
+     * (by the same order), kept out of {@code walls} and of the muscles held round them, {@code around}, solved as
+     * {@code settings} say. Solved a layer at a time, each layer kept out of those under it as of bone.
      */
     public SoftSolve(final SoftRegion region, final List<Lattice> lattices, final List<Mesher.Mesh> surfaces,
-                     final List<List<V3>> holds, final List<Along> fibres, final Walls walls,
-                     final Settings settings) {
+                     final List<List<V3>> holds, final List<Along> fibres, final List<Integer> depths,
+                     final List<Mesher.Mesh> around, final Walls walls, final Settings settings) {
         this.lattices = List.copyOf(lattices);
         this.settings = settings;
         first = new int[lattices.size() + 1];
@@ -98,6 +116,10 @@ public final class SoftSolve {
         }
         x = new double[3 * first[lattices.size()]];
         w = new double[first[lattices.size()]];
+        ownerOf = new int[w.length];
+        depthOf = depths.stream().mapToInt(Integer::intValue).toArray();
+        ranks = depths.stream().distinct().sorted(java.util.Comparator.reverseOrder()).mapToInt(Integer::intValue)
+                .toArray();
         final List<Integer> tets = new ArrayList<>();
         final List<V3> ways = new ArrayList<>();
         for (int k = 0; k < lattices.size(); k++) {
@@ -109,6 +131,7 @@ public final class SoftSolve {
                 x[3 * g + 1] = v.y();
                 x[3 * g + 2] = v.z();
                 w[g] = l.fixed()[i] || held(v, holds.get(k), settings.hold()) ? 0 : FREE;
+                ownerOf[g] = k;
             }
             for (final int t : l.tets()) {
                 tets.add(first[k] + t);
@@ -134,7 +157,10 @@ public final class SoftSolve {
                 settings.quick(), fibre, settings.tension());
         this.region = region;
         surfaceOf = new SurfaceContact.Surfaces(surfaces, lattices, first);
-        contact = new SurfaceContact(surfaceOf, walls);
+        this.surfaces = List.copyOf(surfaces);
+        frozen = new MuscleWalls(region, FROZEN_CELL);
+        around.forEach(frozen::add);
+        contact = new SurfaceContact(surfaceOf, new EitherWalls(walls, frozen));
         rest = elastic.room(x);
     }
 
@@ -149,6 +175,11 @@ public final class SoftSolve {
 
     /** How many steps it takes in all. */
     public int steps() {
+        return perLayer() * (settings.layered() ? ranks.length : 1);
+    }
+
+    /** How many steps a layer, or all at once, take. */
+    private int perLayer() {
         return settings.drawIn() + settings.grow() + settings.settle();
     }
 
@@ -159,26 +190,64 @@ public final class SoftSolve {
 
     /** One step on: so many sweeps of the elements, and, once it grows, of what keeps them apart and out of bone. */
     public Moment stepped() {
-        final Phase phase = phase(step);
-        final double scale = scale(step);
+        final int local = step % perLayer();
+        final int layer = step / perLayer();
+        final Phase phase = phase(local);
+        final double scale = scale(local);
+        final int depth = settings.layered() ? ranks[layer] : 0;
+        layered(layer, depth);
         elastic.begun();
         int near = 0;
         int bone = 0;
         int pressed = 0;
-        if (phase == Phase.SETTLING && settings.fascia() && fascia.isEmpty()) {
+        final boolean outermost = !settings.layered() || layer == ranks.length - 1;
+        if (phase == Phase.SETTLING && outermost && settings.fascia() && fascia.isEmpty()) {
             fascia = Optional.of(new Fascia(region, FASCIA_STEP, surfaceOf.placed(x), surfaceOf.carried()));
         }
         for (int s = 0; s < settings.sweeps(); s++) {
-            elastic.swept(x, w, scale);
-            final int[] kept = contact.kept(x, w, settings.apart(), settings.clear(), phase != Phase.DRAWN_IN,
-                    fascia);
+            elastic.swept(x, free, scale);
+            final int[] kept = contact.kept(x, free, settings.apart(), settings.clear(), phase != Phase.DRAWN_IN,
+                    fascia, taking, firm);
             near = kept[0];
             bone = kept[1];
             pressed = kept[2];
         }
         step++;
-        return new Moment(phase(step), step, steps(), scale, near, bone, elastic.room(x) / rest, pressed,
-                fascia.map(Fascia::room).orElse(0.0));
+        return new Moment(done() ? Phase.DONE : phase(step % perLayer()), step, steps(), scale, near, bone,
+                elastic.room(x) / rest, pressed, fascia.map(Fascia::room).orElse(0.0), depth);
+    }
+
+    /**
+     * Ready for layer {@code layer}, its muscles {@code depth} deep: only they free and taking part; those deeper held
+     * where they came to rest, made walls to them as the bones are, and those shallower not yet taking part. All, if
+     * solved all at once.
+     */
+    private void layered(final int layer, final int depth) {
+        if (layer == freeFor) {
+            return;
+        }
+        if (settings.layered() && layer > 0) {
+            final List<Lattice> now = lattices();
+            for (int k = 0; k < depthOf.length; k++) {
+                if (depthOf[k] == ranks[layer - 1]) {
+                    frozen.add(new Mesher.Mesh(now.get(k).carrying(surfaces.get(k).points()),
+                            surfaces.get(k).triangles()));
+                }
+            }
+        }
+        freeFor = layer;
+        free = w.clone();
+        taking = new boolean[depthOf.length];
+        firm = new boolean[depthOf.length];
+        for (int k = 0; k < depthOf.length; k++) {
+            taking[k] = !settings.layered() || depthOf[k] == depth;
+            firm[k] = settings.layered() && depthOf[k] > depth;
+        }
+        for (int g = 0; g < free.length; g++) {
+            if (settings.layered() && depthOf[ownerOf[g]] != depth) {
+                free[g] = 0;
+            }
+        }
     }
 
     private Phase phase(final int at) {

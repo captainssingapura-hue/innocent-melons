@@ -185,7 +185,8 @@ public final class SoftBench {
         }
         return new SoftAsked(new V3(b[0], b[1], b[2]), new V3(b[3], b[4], b[5]),
                 said("soft.share", 25) / 100, said("soft.cell", 0.5), shows("soft.held"), shows("soft.bones"),
-                shows("soft.surfaces"), shows("soft.elements"), shows("soft.solved"), shows("soft.fascia"));
+                shows("soft.surfaces"), shows("soft.elements"), shows("soft.solved"), shows("soft.fascia"),
+                Boolean.getBoolean("soft.onePiece"));
     }
 
     /** Whether {@code -D}{@code name} asks that shown: so unless it says false. */

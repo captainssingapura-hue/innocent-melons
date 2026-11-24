@@ -19,18 +19,19 @@ import com.example.fxsuite.life.body.soft.SoftRegion;
  * @param elements whether their elements are shown
  * @param solved   whether the muscles are shown as solved at rest, where they have been
  * @param fascia   whether the fascia wrapping them is shown, where there is one
+ * @param onePiece whether the region's soft tissue is shown as one piece, each of its cells given to one tissue
  */
 public record SoftAsked(V3 lo, V3 hi, double share, double cell, boolean held, boolean bones, boolean surfaces,
-                        boolean elements, boolean solved, boolean fascia) {
+                        boolean elements, boolean solved, boolean fascia, boolean onePiece) {
 
     /** The region. */
     public SoftRegion region() {
         return new SoftRegion(lo, hi);
     }
 
-    /** Whether {@code other} asks for the same region, share and cubes: whether it is to be found afresh. */
+    /** Whether {@code other} asks for the same region, share, cubes and way: whether it is to be found afresh. */
     public boolean sameRegion(final SoftAsked other) {
         return other != null && lo.equals(other.lo) && hi.equals(other.hi) && share == other.share
-                && cell == other.cell;
+                && cell == other.cell && onePiece == other.onePiece;
     }
 }

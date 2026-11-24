@@ -3,6 +3,8 @@ package com.example.fxsuite.life.body.vulkan.soft;
 import com.example.fxsuite.life.body.V3;
 import com.example.fxsuite.life.body.soft.Fascia;
 import com.example.fxsuite.life.body.soft.Lattice;
+import com.example.fxsuite.life.body.soft.TissueMap;
+import com.example.fxsuite.life.body.soft.TissueSurfaces;
 import com.example.fxsuite.life.body.soft.RegionPieces;
 import com.example.fxsuite.life.body.soft.SoftRegion;
 import com.example.fxsuite.life.body.vulkan.Sheet;
@@ -31,6 +33,8 @@ public final class SoftPieces {
     private static final double EDGE = 0.12;
     private static final double CUT = 0.18;
     private static final double HOLD = 0.45;
+    /** How many times a tissue's surface, as its cells give it, is smoothed. */
+    private static final int SMOOTH = 8;
     /** How far tendon a triangle is, on the average of its corners, to be drawn as tendon. */
     private static final double TENDON = 0.5;
     /** The colours: beyond the region, a cut, a hold, an edge. */
@@ -45,7 +49,7 @@ public final class SoftPieces {
     private static final Vec3 FIXED = new Vec3(0.45, 0.45, 0.45);
 
     /** What a thing drawn is: a taken muscle's surface, its elements, or a mark of the region's. */
-    public enum Kind { SURFACE, ELEMENTS, MARK, FASCIA }
+    public enum Kind { SURFACE, ELEMENTS, MARK, FASCIA, FILLER }
 
     /**
      * Something drawn: of the kind {@code kind}, in {@code material}, of the colour {@code tint} where the material
@@ -145,6 +149,33 @@ public final class SoftPieces {
             add(drawn, Kind.MARK, new Materials.GlossPaint(), EDGES, edge);
         }
         return new Found(mine, drawn);
+    }
+
+    /**
+     * What is drawn of {@code region} as one piece ({@link TissueMap}): each taken muscle's own cells' surface, in
+     * muscle, the connective tissue between them in fat; the region's edges, where the taken are cut and held.
+     */
+    public Found oneFound(final SoftRegion region, final RegionPieces.Taken taken, final TissueMap map) {
+        final List<Integer> mine = new ArrayList<>();
+        final List<Drawn> drawn = new ArrayList<>();
+        final List<Mesh> meshes = java.util.stream.IntStream.range(0, taken.taken().size()).parallel()
+                .mapToObj(k -> sheet(TissueSurfaces.INSTANCE.of(map, k, SMOOTH)).mesh()).toList();
+        for (int k = 0; k < taken.taken().size(); k++) {
+            mine.add(numbers.get(taken.taken().get(k)));
+            add(drawn, Kind.SURFACE, new Materials.Muscle(), BEYOND, meshes.get(k));
+        }
+        add(drawn, Kind.FILLER, new Materials.Fat(), BEYOND,
+                sheet(TissueSurfaces.INSTANCE.of(map, TissueMap.FILLER, SMOOTH)).mesh());
+        add(drawn, Kind.MARK, new Materials.GlossPaint(), CUTS, marks(taken.cuts(), CUT));
+        add(drawn, Kind.MARK, new Materials.GlossPaint(), HOLDS, marks(taken.attached(), HOLD));
+        for (final Mesh edge : edges(region)) {
+            add(drawn, Kind.MARK, new Materials.GlossPaint(), EDGES, edge);
+        }
+        return new Found(mine, drawn);
+    }
+
+    private Sheet sheet(final com.example.fxsuite.life.body.Mesher.Mesh m) {
+        return new Sheet(m.points(), m.triangles());
     }
 
     /** How many muscles there are, both sides. */

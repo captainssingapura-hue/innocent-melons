@@ -72,6 +72,8 @@ public final class SoftConsole {
         solved.setSelected(first.solved());
         final CheckBox fascia = new CheckBox("The fascia wrapping them, seen through, where there is one");
         fascia.setSelected(first.fascia());
+        final CheckBox onePiece = new CheckBox("As one piece: each cell of the region given to one tissue");
+        onePiece.setSelected(first.onePiece());
         surfaces.setSelected(first.surfaces());
         elements.setSelected(first.elements());
         final CheckBox bones = new CheckBox("The bones");
@@ -81,7 +83,8 @@ public final class SoftConsole {
                 new V3(bounds[0].getValue(), bounds[1].getValue(), bounds[2].getValue()),
                 new V3(bounds[3].getValue(), bounds[4].getValue(), bounds[5].getValue()),
                 share.getValue() / 100, cell.getValue(), held.isSelected(), bones.isSelected(),
-                surfaces.isSelected(), elements.isSelected(), solved.isSelected(), fascia.isSelected()));
+                surfaces.isSelected(), elements.isSelected(), solved.isSelected(), fascia.isSelected(),
+                onePiece.isSelected()));
         final GridPane grid = new GridPane();
         grid.setHgap(GAP);
         grid.setVgap(GAP / 2);
@@ -106,6 +109,7 @@ public final class SoftConsole {
         elements.setOnAction(e -> changed.run());
         solved.setOnAction(e -> changed.run());
         fascia.setOnAction(e -> changed.run());
+        onePiece.setOnAction(e -> changed.run());
         final Label said = new Label();
         said.setWrapText(true);
         final TextArea list = new TextArea();
@@ -128,7 +132,8 @@ public final class SoftConsole {
         lit.setPadding(new Insets(GAP));
         lit.setPrefWidth(LIGHT_WIDE);
         final VBox middle = new VBox(GAP, new Label("The region simulated soft, the body's frame"), grid, surfaces,
-                elements, held, bones, said, new javafx.scene.layout.HBox(GAP, solve, stop), solved, fascia, solving,
+                elements, held, bones, said, onePiece,
+                new javafx.scene.layout.HBox(GAP, solve, stop), solved, fascia, solving,
                 new Label("Taken in: how deep, the muscle, how much of it in the region"), list,
                 shell.working(), shell.figures(), shell.problems());
         middle.setPadding(new Insets(GAP));

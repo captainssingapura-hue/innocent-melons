@@ -101,13 +101,15 @@ class SoftSolveTest {
 
     private SoftSolve.Settings settings(final double least, final int drawIn, final int grow, final int settle,
                                         final double tension) {
-        return new SoftSolve.Settings(10, 0.45, least, drawIn, grow, settle, 2, 1, 0.02, 0.05, 0.75, tension, false);
+        return new SoftSolve.Settings(10, 0.45, least, drawIn, grow, settle, 2, 1, 0.02, 0.05, 0.75, tension, false,
+                false);
     }
 
     private SoftSolve solve(final List<Box> boxes, final List<List<V3>> holds, final List<Along> fibres,
                             final Walls walls, final SoftSolve.Settings s) {
         return new SoftSolve(ROOM, boxes.stream().map(Box::lattice).toList(),
-                boxes.stream().map(Box::surface).toList(), holds, fibres, walls, s);
+                boxes.stream().map(Box::surface).toList(), holds, fibres,
+                boxes.stream().map(b -> 1).toList(), List.of(), walls, s);
     }
 
     private SoftSolve.Moment solved(final SoftSolve s) {
@@ -207,12 +209,14 @@ class SoftSolveTest {
         final double before = gap(inSlab, null);
         final SoftSolve loose = new SoftSolve(slab, inSlab.stream().map(Box::lattice).toList(),
                 inSlab.stream().map(Box::surface).toList(), List.of(List.of(), List.of()), List.of(across, across),
-                none, new SoftSolve.Settings(10, 0.45, 1, 0, 0, 300, 2, 1, 0.02, 0.05, 0.75, 0, false));
+                List.of(1, 1), List.of(), none,
+                new SoftSolve.Settings(10, 0.45, 1, 0, 0, 300, 2, 1, 0.02, 0.05, 0.75, 0, false, false));
         solved(loose);
         assertEquals(before, gap(inSlab, loose), 0.05, "unwrapped, they stay apart");
         final SoftSolve wrapped = new SoftSolve(slab, inSlab.stream().map(Box::lattice).toList(),
                 inSlab.stream().map(Box::surface).toList(), List.of(List.of(), List.of()), List.of(across, across),
-                none, new SoftSolve.Settings(10, 0.45, 1, 0, 0, 300, 2, 1, 0.02, 0.05, 0.75, 0, true));
+                List.of(1, 1), List.of(), none,
+                new SoftSolve.Settings(10, 0.45, 1, 0, 0, 300, 2, 1, 0.02, 0.05, 0.75, 0, true, false));
         final SoftSolve.Moment m = solved(wrapped);
         final double after = gap(inSlab, wrapped);
         assertTrue(after < before - 0.3, "wrapped, pressed together: " + before + " to " + after);
@@ -220,6 +224,23 @@ class SoftSolveTest {
         assertTrue(shared < 0.05 * 1.8 * 1.8 * 1.8, "and not into each other: " + shared + " cm3 shared");
         assertTrue(m.sleeve() > 0, "the sleeve holds them");
         assertEquals(0, wrapped.inverted());
+    }
+
+    @Test
+    void inLayersTheDeepLiesWhereItWasAndTheShallowOnIt() {
+        final List<Box> boxes = List.of(box(new V3(0.1, 0.1, 0.1), new V3(2.9, 1.9, 1.9)),
+                box(new V3(1.6, 0.1, 0.1), new V3(4.4, 1.9, 1.9)));
+        final SoftSolve s = new SoftSolve(ROOM, boxes.stream().map(Box::lattice).toList(),
+                boxes.stream().map(Box::surface).toList(), List.of(List.of(), List.of()), List.of(across, across),
+                List.of(2, 1), List.of(), none,
+                new SoftSolve.Settings(10, 0.45, 0.35, 60, 150, 100, 2, 1, 0.02, 0.05, 0.75, 0, false, true));
+        solved(s);
+        final Lattice deep = s.lattices().get(0);
+        for (int i = 0; i < deep.nodeCount(); i++) {
+            assertEquals(0, deep.node(i).minus(boxes.get(0).lattice().node(i)).length(), 0.1, "the deep where it was");
+        }
+        assertTrue(shared(boxes, s) < 0.05 * 2.8 * 1.8 * 1.8, "the shallow off it: " + shared(boxes, s) + " cm3");
+        assertEquals(0, s.inverted());
     }
 
     /** How much room the two boxes share, cm3, as {@code s} has carried them, found on a grid 0.1 apart. */

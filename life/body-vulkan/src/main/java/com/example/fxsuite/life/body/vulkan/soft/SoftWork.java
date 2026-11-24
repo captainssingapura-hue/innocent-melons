@@ -12,7 +12,9 @@ import com.example.fxsuite.life.body.muscle.MuscleSurface;
 import com.example.fxsuite.life.body.muscle.Musculature;
 import com.example.fxsuite.life.body.muscle.MuscleShape;
 import com.example.fxsuite.life.body.soft.CageLattice;
+import com.example.fxsuite.life.body.soft.BoneWalls;
 import com.example.fxsuite.life.body.soft.Lattice;
+import com.example.fxsuite.life.body.soft.TissueMap;
 import com.example.fxsuite.life.body.soft.LatticeMaker;
 import com.example.fxsuite.life.body.soft.RegionPieces;
 import com.example.fxsuite.life.body.soft.SoftScene;
@@ -41,6 +43,9 @@ public final class SoftWork implements AutoCloseable {
 
     private static final V3 HEEL = new V3(0, -6.4, -4.0);
     private static final double BILLION = 1e9;
+    /** How big the cells of one piece are, cm; and how wide a gap between muscles connective tissue fills, a half. */
+    private static final double ONE_CELL = 0.2;
+    private static final double CLOSE = 0.3;
 
     /** What is made once: every muscle on both sides, ready for the card; the bones; how far the body is lifted. */
     public record Made(List<RegionPieces.Piece> all, SoftPieces pieces, List<BodyPieces.Bone> bones, double lift) {
@@ -79,7 +84,7 @@ public final class SoftWork implements AutoCloseable {
 
     /** Every muscle made, and the bones: begun, not waited for. */
     public void begun() {
-        worker.submit(() -> {
+        worker.submit(said(() -> {
             bus.publish(new Bus.Working(true, "every muscle"));
             final long began = System.nanoTime();
             final List<RegionPieces.Piece> all = all();
@@ -87,7 +92,7 @@ public final class SoftWork implements AutoCloseable {
                     -rig.frame(Part.RIGHT_FOOT).place(HEEL).y()));
             bus.publish(new Bus.Working(false, "every muscle"));
             System.out.printf(Locale.ROOT, "every muscle made in %.1f s%n", (System.nanoTime() - began) / BILLION);
-        });
+        }));
     }
 
     /** What is made once, when it is. */
@@ -122,7 +127,7 @@ public final class SoftWork implements AutoCloseable {
         stopping = true;
         final Made m = made.get();
         bus.publish(new Bus.Working(true, "the region"));
-        worker.submit(() -> {
+        worker.submit(said(() -> {
             if (askedFor != a) {
                 return;
             }
@@ -140,11 +145,16 @@ public final class SoftWork implements AutoCloseable {
             }).orElse(null);
             showingSolved = a.solved() && asSolved != null;
             found.set(showingSolved ? asSolved : atRest);
+            if (a.onePiece()) {
+                onePiece(a, taken, m);
+                bus.publish(new Bus.Working(false, "the region"));
+                return;
+            }
             System.out.println(elements(lattices, filled, a.cell()));
             bus.publish(new SoftConsole.Listed(said(taken, filled) + "\n\n" + elements(lattices, filled, a.cell()),
                     SoftScene.INSTANCE.listed(taken, filled)));
             bus.publish(new Bus.Working(false, "the region"));
-        });
+        }));
     }
 
     /**
@@ -160,6 +170,38 @@ public final class SoftWork implements AutoCloseable {
                 p.muscle().ring(), p.surface().mesh(), a.cell());
     }
 
+    /**
+     * The region {@code a} asks for as one piece ({@link TissueMap}): each of its cells given to one tissue, the
+     * taken muscles, connective tissue between them, or bone; drawn, and how much each muscle kept said.
+     */
+    private void onePiece(final SoftAsked a, final RegionPieces.Taken taken, final Made m) {
+        final long began = System.nanoTime();
+        final TissueMap map = new TissueMap(a.region(), ONE_CELL,
+                taken.taken().stream().map(p -> p.surface().mesh()).toList(), new BoneWalls(a.region(), rig, 0.25),
+                CLOSE);
+        found.set(m.pieces().oneFound(a.region(), taken, map));
+        double kept = 0;
+        double drawn = 0;
+        final List<String> lost = new ArrayList<>();
+        for (int k = 0; k < taken.taken().size(); k++) {
+            kept += map.room(k);
+            drawn += map.drawn(k);
+            final RegionPieces.Piece p = taken.taken().get(k);
+            lost.add(String.format(Locale.ROOT, "%5.1f %s%s: %.1f of %.1f cm3", map.drawn(k) - map.room(k),
+                    p.muscle().name(), p.muscle().paired() ? p.left() ? ", left" : ", right" : "", map.room(k),
+                    map.drawn(k)));
+        }
+        lost.sort(java.util.Comparator.reverseOrder());
+        final String said = String.format(Locale.ROOT, "As one piece, cells %.2f cm a side, made in %.1f s: the %d"
+                        + " muscles keep %.0f cm3 of the %.0f cm3 drawn in the region (%.0f%%), none of it shared;"
+                        + " connective tissue fills %.0f cm3 between them.", ONE_CELL,
+                (System.nanoTime() - began) / BILLION, taken.taken().size(), kept, drawn, 100 * kept / drawn,
+                map.filler());
+        System.out.println(said);
+        bus.publish(new SoftConsole.Listed(said, "Given up most, cm3:\n" + String.join("\n",
+                lost.subList(0, Math.min(25, lost.size())))));
+    }
+
     /** The region last found solved at rest, if it is not being: begun, not waited for. */
     public void solve() {
         if (solving || made.get() == null) {
@@ -167,7 +209,7 @@ public final class SoftWork implements AutoCloseable {
         }
         solving = true;
         stopping = false;
-        worker.submit(() -> {
+        worker.submit(said(() -> {
             final Region r = region;
             if (r == null) {
                 solving = false;
@@ -185,7 +227,7 @@ public final class SoftWork implements AutoCloseable {
             solved = !stopping;
             solving = false;
             bus.publish(new Bus.Working(false, "the solve"));
-        });
+        }));
     }
 
     /** How {@code r}'s solve ended, {@code e}, kept, and shown as solved. */
@@ -203,6 +245,18 @@ public final class SoftWork implements AutoCloseable {
     /** A solve stopped, if one is going. */
     public void stop() {
         stopping = true;
+    }
+
+    /** {@code work}, any failure in it said, on the bus and printed, not lost in the worker. */
+    private Runnable said(final Runnable work) {
+        return () -> {
+            try {
+                work.run();
+            } catch (final RuntimeException failed) {
+                failed.printStackTrace();
+                bus.publish(new Bus.Problems("The soft bench's work failed: " + failed));
+            }
+        };
     }
 
     /** How much the region takes in, in a line. */

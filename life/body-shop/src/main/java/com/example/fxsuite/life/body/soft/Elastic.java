@@ -114,6 +114,10 @@ final class Elastic {
     void swept(final double[] x, final double[] w, final double scale) {
         final double cube = scale * scale * scale;
         for (int t = 0; t < room.length; t++) {
+            if (w[tets[4 * t]] == 0 && w[tets[4 * t + 1]] == 0 && w[tets[4 * t + 2]] == 0
+                    && w[tets[4 * t + 3]] == 0) {
+                continue;
+            }
             final double alphaD = 1 / (mu * room[t] * cube * quick);
             sheared[t] += solved(x, w, t, scale, false, alphaD, sheared[t]);
             final double alphaH = 1 / (lambda * room[t] * cube * quick);

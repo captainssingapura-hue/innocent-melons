@@ -124,6 +124,42 @@ public record RegionPieces() implements StatelessFunctionalObject {
         return new Filled(each, together * cube, shared * cube);
     }
 
+    /**
+     * The pairs of {@code taken} that share the most of {@code region}, cm3, the most first, no more than {@code most}:
+     * where the shared room of {@link #filled} is.
+     */
+    public List<Shared> pairs(final SoftRegion region, final List<Piece> taken, final int most) {
+        final double[] lo = {region.lo().x(), region.lo().y(), region.lo().z()};
+        final int[] n = {(int) Math.ceil((region.hi().x() - lo[0]) / CELL) + 1,
+            (int) Math.ceil((region.hi().y() - lo[1]) / CELL) + 1, (int) Math.ceil((region.hi().z() - lo[2]) / CELL) + 1};
+        final List<boolean[]> in = new ArrayList<>();
+        for (final Piece p : taken) {
+            in.add(Crossings.INSTANCE.inside(p.surface().mesh(), lo, CELL, n));
+        }
+        final java.util.Map<Long, Double> shared = new java.util.HashMap<>();
+        final List<Integer> here = new ArrayList<>();
+        for (int c = 0; c < n[0] * n[1] * n[2]; c++) {
+            here.clear();
+            for (int k = 0; k < in.size(); k++) {
+                if (in.get(k)[c]) {
+                    here.add(k);
+                }
+            }
+            for (int a = 0; a < here.size(); a++) {
+                for (int b = a + 1; b < here.size(); b++) {
+                    shared.merge((long) here.get(a) << 32 | here.get(b), CELL * CELL * CELL, Double::sum);
+                }
+            }
+        }
+        return shared.entrySet().stream().sorted((x, y) -> Double.compare(y.getValue(), x.getValue())).limit(most)
+                .map(e -> new Shared(taken.get((int) (e.getKey() >> 32)), taken.get((int) (long) e.getKey()),
+                        e.getValue())).toList();
+    }
+
+    /** Two muscles sharing so much room, cm3. */
+    public record Shared(Piece one, Piece other, double room) {
+    }
+
     private V3[] points(final Piece p) {
         final float[] f = p.surface().mesh().points();
         final V3[] at = new V3[f.length / 3];

@@ -39,14 +39,15 @@ final class SurfaceContact {
      * at the sweep's start, and each node then moved by the mean of what the points it carries asked of it, so that
      * many points carried by the same node do not each move it all the way. How many were inside another, and how
      * many in bone; and, if there is a {@code fascia}, drawn tighter, how many pressed on it, the muscle and the
-     * sleeve sharing what is between.
+     * sleeve sharing what is between. Only the muscles {@code taking} says take part, as points and as walls; and the
+     * points of those {@code firm} says, which do not move, push them back where they reach into them.
      */
     int[] kept(final double[] x, final double[] w, final double gap, final double clear, final boolean apart,
-               final Optional<Fascia> fascia) {
+               final Optional<Fascia> fascia, final boolean[] taking, final boolean[] firm) {
         fascia.ifPresent(Fascia::tightened);
         final double[] at = s.placed(x);
         if (apart) {
-            grid.sorted(at, s);
+            grid.sorted(at, s, taking);
         }
         int inside = 0;
         int bone = 0;
@@ -57,7 +58,7 @@ final class SurfaceContact {
         final double[] delta = new double[x.length];
         final int[] count = new int[w.length];
         for (int p = 0; p < s.count(); p++) {
-            if (!s.carried(p)) {
+            if (!s.carried(p) || !taking[s.owner(p)]) {
                 continue;
             }
             final double px = at[3 * p];
@@ -83,6 +84,9 @@ final class SurfaceContact {
                 pressed++;
             }
         }
+        if (apart) {
+            inside += reached(at, w, gap, firm, q, n, delta, count);
+        }
         fascia.ifPresent(f -> {
             f.yielded();
             f.keptOutOf(walls, clear);
@@ -95,6 +99,35 @@ final class SurfaceContact {
             }
         }
         return new int[] {inside, bone, pressed};
+    }
+
+    /**
+     * Where a point of a muscle that holds firm, a deeper layer at rest, lies inside a muscle that is moving, that
+     * muscle's surface there asked to move back past it, each corner of its nearest triangle as far: so a firm muscle's
+     * edge cannot reach into a moving one between its points. How many did.
+     */
+    private int reached(final double[] at, final double[] w, final double gap, final boolean[] firm, final double[] q,
+                        final double[] n, final double[] delta, final int[] count) {
+        final int[] tris = new int[s.muscles()];
+        int reached = 0;
+        for (int p = 0; p < s.count(); p++) {
+            if (!firm[s.owner(p)]) {
+                continue;
+            }
+            final int near = grid.nearestEach(at, s, p, at[3 * p], at[3 * p + 1], at[3 * p + 2], q, n, tris);
+            for (int k = 0; k < near; k++) {
+                final double depth = gap - ((at[3 * p] - q[3 * k]) * n[3 * k] + (at[3 * p + 1] - q[3 * k + 1])
+                        * n[3 * k + 1] + (at[3 * p + 2] - q[3 * k + 2]) * n[3 * k + 2]);
+                if (depth > 0) {
+                    for (int c = 0; c < 3; c++) {
+                        s.moved(delta, count, w, s.corner(tris[k], c), -n[3 * k] * depth, -n[3 * k + 1] * depth,
+                                -n[3 * k + 2] * depth);
+                    }
+                    reached++;
+                }
+            }
+        }
+        return reached;
     }
 
     /**
@@ -220,10 +253,13 @@ final class SurfaceContact {
          * Point {@code p} asked to move by {@code dx}, {@code dy}, {@code dz}, no further than {@link #MOST}: what
          * each of its nodes would move, added to {@code delta}, and counted in {@code count}, as each carries it, as
          * free, by its weight's part above nothing, so that a point just outside its element, carried by weights
-         * reaching past it, is not thrown far by its nodes.
+         * reaching past it, is not thrown far by its nodes. A point not carried, out of the region, is not moved.
          */
         void moved(final double[] delta, final int[] count, final double[] w, final int p, final double dx,
                    final double dy, final double dz) {
+            if (!carried(p)) {
+                return;
+            }
             final double far = Math.sqrt(dx * dx + dy * dy + dz * dz);
             final double cut = far > MOST ? MOST / far : 1;
             double sum = 0;

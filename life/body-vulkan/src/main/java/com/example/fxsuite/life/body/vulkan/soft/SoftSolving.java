@@ -81,17 +81,31 @@ public final class SoftSolving {
             fibres.add(new Fibres(p.muscle(), rig, p.left()));
         }
         final List<Mesher.Mesh> surfaces = taken.taken().stream().map(p -> p.surface().mesh()).toList();
-        final SoftSolve solve = new SoftSolve(region, lattices, surfaces, holds, fibres, walls, settings);
+        final List<Integer> depths = taken.taken().stream().map(p -> p.muscle().depth()).toList();
+        final SoftRegion near = new SoftRegion(region.lo().minus(new V3(1, 1, 1)), region.hi().plus(new V3(1, 1, 1)));
+        final List<Mesher.Mesh> around = new ArrayList<>();
+        for (final RegionPieces.Piece p : taken.held()) {
+            final float[] at = p.surface().mesh().points();
+            for (int i = 0; i < at.length; i += 3) {
+                if (near.has(new V3(at[i], at[i + 1], at[i + 2]))) {
+                    around.add(p.surface().mesh());
+                    break;
+                }
+            }
+        }
+        final SoftSolve solve = new SoftSolve(region, lattices, surfaces, holds, fibres, depths, around, walls,
+                settings);
         final String walled = String.format(Locale.ROOT, "walls found in %.1f s", seconds(began));
         began = System.nanoTime();
         SoftSolve.Moment m = null;
         while (!solve.done() && !stopped.getAsBoolean()) {
             m = solve.stepped();
             if (m.step() % SHOWN == 0 || solve.done()) {
-                final String said = String.format(Locale.ROOT, "%s: step %d of %d, rest shape %.0f%% of its size; %,d"
-                                + " surface points inside another muscle, %,d too near bone, %,d pressing on the"
-                                + " fascia; room %.0f%% of rest; fascia holds %.0f cm3. %.0f ms a step; %s.",
-                        m.phase(), m.step(),
+                final String said = String.format(Locale.ROOT, "%s, layer %d deep: step %d of %d, rest shape %.0f%%"
+                                + " of its size; %,d surface points inside another muscle, %,d too near bone, %,d"
+                                + " pressing on the fascia; room %.0f%% of rest; fascia holds %.0f cm3. %.0f ms a step;"
+                                + " %s.",
+                        m.phase(), m.depth(), m.step(),
                         m.steps(), 100 * m.scale(), m.touching(), m.inBone(), m.pressed(), 100 * m.room(),
                         m.sleeve(), 1000 * seconds(began) / m.step(), walled);
                 told.accept(new Told(pieces.found(region, taken, solve.lattices(), true,
@@ -119,11 +133,21 @@ public final class SoftSolving {
                     new Mesher.Mesh(now, s.mesh().triangles()), s.tendon(), s.parts(), s.shares(), s.depth())));
         }
         final RegionPieces.Filled after = RegionPieces.INSTANCE.filled(region, moved);
+        final StringBuilder most = new StringBuilder();
+        for (final RegionPieces.Shared s : RegionPieces.INSTANCE.pairs(region, moved, 8)) {
+            most.append(String.format(Locale.ROOT, "%n  %.1f cm3 %s (%d deep) and %s (%d deep)", s.room(),
+                    named(s.one()), s.one().muscle().depth(), named(s.other()), s.other().muscle().depth()));
+        }
         return String.format(Locale.ROOT, "Solved in %.1f s, %d steps; %,d elements turned inside out; room %.0f%% of"
                         + " rest. Two muscles or more fill %.0f cm3 of the region (%.0f%% of what they fill), %.0f cm3"
-                        + " before (%.0f%%).", took, m.step(), solve.inverted(), 100 * m.room(), after.shared(),
-                100 * after.shared() / Math.max(1e-9, after.together()), before.shared(),
-                100 * before.shared() / Math.max(1e-9, before.together()));
+                        + " before (%.0f%%). Most shared:%s", took, m.step(), solve.inverted(), 100 * m.room(),
+                after.shared(), 100 * after.shared() / Math.max(1e-9, after.together()), before.shared(),
+                100 * before.shared() / Math.max(1e-9, before.together()), most);
+    }
+
+    /** {@code p}'s name, and its side. */
+    private String named(final RegionPieces.Piece p) {
+        return p.muscle().name() + (p.muscle().paired() ? p.left() ? ", left" : ", right" : "");
     }
 
     private double seconds(final long since) {

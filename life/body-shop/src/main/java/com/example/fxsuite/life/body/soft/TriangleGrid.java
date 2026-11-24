@@ -25,8 +25,8 @@ final class TriangleGrid {
         this.cell = cell;
     }
 
-    /** The triangles of {@code s}, its points at {@code at}, sorted into a grid over them afresh. */
-    void sorted(final double[] at, final SurfaceContact.Surfaces s) {
+    /** The triangles of {@code s} of the muscles {@code taking} says, its points at {@code at}, sorted afresh. */
+    void sorted(final double[] at, final SurfaceContact.Surfaces s, final boolean[] taking) {
         final double[] hi = new double[3];
         Arrays.fill(lo, Double.MAX_VALUE);
         Arrays.fill(hi, -Double.MAX_VALUE);
@@ -47,6 +47,9 @@ final class TriangleGrid {
         }
         final int[] box = new int[6];
         for (int t = 0; t < s.triangles(); t++) {
+            if (!taking[s.triangleOwner(t)]) {
+                continue;
+            }
             box(at, s, t, box);
             for (int k = box[2]; k <= box[5]; k++) {
                 for (int j = box[1]; j <= box[4]; j++) {
@@ -64,6 +67,9 @@ final class TriangleGrid {
         }
         final int[] next = Arrays.copyOf(start, cells);
         for (int t = 0; t < s.triangles(); t++) {
+            if (!taking[s.triangleOwner(t)]) {
+                continue;
+            }
             box(at, s, t, box);
             for (int k = box[2]; k <= box[5]; k++) {
                 for (int j = box[1]; j <= box[4]; j++) {
@@ -100,6 +106,12 @@ final class TriangleGrid {
      */
     int nearestEach(final double[] at, final SurfaceContact.Surfaces s, final int p, final double x, final double y,
                     final double z, final double[] q, final double[] out) {
+        return nearestEach(at, s, p, x, y, z, q, out, new int[s.muscles()]);
+    }
+
+    /** The same, which triangle each is put into {@code tris}. */
+    int nearestEach(final double[] at, final SurfaceContact.Surfaces s, final int p, final double x, final double y,
+                    final double z, final double[] q, final double[] out, final int[] tris) {
         if (best.length < s.muscles()) {
             best = new double[s.muscles()];
             which = new int[s.muscles()];
@@ -137,6 +149,7 @@ final class TriangleGrid {
             closest(at, s, t, x, y, z, c);
             if (facing(at, s, t, out, 3 * found)) {
                 System.arraycopy(c, 0, q, 3 * found, 3);
+                tris[found] = t;
                 found++;
             }
         }

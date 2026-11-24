@@ -52,7 +52,7 @@ class SolveStoreTest {
                 List.of(lattice(0))));
         assertNotEquals(name, store.name(REGION, 0.25, s, List.of(lattice(0.001f))));
         assertNotEquals(name, store.name(REGION, 0.25, new SoftSolve.Settings(10, 0.45, 0.35, 40, 160, 60, 8, 300,
-                0.9, 0.25, 1, 0.08, true), List.of(lattice(0))));
+                0.9, 0.25, 1, 0.08, true, true), List.of(lattice(0))));
     }
 
     @TempDir

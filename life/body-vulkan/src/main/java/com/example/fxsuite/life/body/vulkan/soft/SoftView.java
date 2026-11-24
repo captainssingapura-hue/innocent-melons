@@ -71,7 +71,7 @@ public final class SoftView implements AutoCloseable {
         try {
             for (final Material m : List.of(new Materials.Muscle(), new Materials.Tendon(), new Materials.Bone(),
                     new Materials.Cartilage(), new Materials.ToothEnamel(), new Materials.GlossPaint(),
-                    new Materials.Glass())) {
+                    new Materials.Glass(), new Materials.Fat())) {
                 final Looked look = new Looked(card, new Look(laid, shades.of(m)));
                 closing.add(look);
                 looks.put(m, look);
@@ -156,7 +156,8 @@ public final class SoftView implements AutoCloseable {
             bones.forEach(s -> drawn(pass, s, camera));
         }
         for (final Sent s : found) {
-            if (s.kind() == SoftPieces.Kind.MARK || s.kind() == SoftPieces.Kind.SURFACE && asked.surfaces()
+            if (s.kind() == SoftPieces.Kind.MARK || (s.kind() == SoftPieces.Kind.SURFACE
+                    || s.kind() == SoftPieces.Kind.FILLER) && asked.surfaces()
                     || s.kind() == SoftPieces.Kind.ELEMENTS && asked.elements()) {
                 drawn(pass, s, camera);
             }
