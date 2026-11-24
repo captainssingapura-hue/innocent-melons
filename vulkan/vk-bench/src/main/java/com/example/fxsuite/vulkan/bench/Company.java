@@ -11,6 +11,7 @@ import com.example.fxsuite.vulkan.device.Pass;
 import com.example.fxsuite.vulkan.render.Overlay;
 import com.example.fxsuite.vulkan.space.Vec3;
 import com.example.fxsuite.vulkan.view.Camera;
+import melons.innocent.core.motion.Motion;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -98,6 +99,11 @@ public record Company(Run lead, Bot bot, Optional<Companion> companion) implemen
                 Gait.of(shown, lead.following().yaw(), lead.following().lookUp()), lead.otherLeg()));
         all.addAll(others(blend));
         return all;
+    }
+
+    @Override
+    public Optional<Motion> motion() {
+        return Optional.of(lead.motion());
     }
 
     /**

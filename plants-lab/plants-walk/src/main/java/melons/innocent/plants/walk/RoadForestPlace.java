@@ -4,6 +4,7 @@ import com.example.fxsuite.avatar.sim.Block;
 import com.example.fxsuite.avatar.sim.Obstacles;
 import com.example.fxsuite.historian.Civilization;
 import com.example.fxsuite.historian.CommonEras;
+import com.example.fxsuite.vulkan.bench.Dial;
 import com.example.fxsuite.vulkan.bench.Place;
 import com.example.fxsuite.vulkan.device.Card;
 import com.example.fxsuite.vulkan.device.Pass;
@@ -11,14 +12,19 @@ import com.example.fxsuite.vulkan.shade.Laid;
 import com.example.fxsuite.vulkan.space.Mat4;
 import com.example.fxsuite.vulkan.space.Vec3;
 import com.example.fxsuite.vulkan.view.Camera;
+import melons.innocent.core.motion.Motion;
+import melons.innocent.core.motion.Spot;
 import melons.innocent.plants.tree.Bough;
 import melons.innocent.plants.tree.Kind;
+import melons.innocent.plants.tree.Stage;
 import melons.innocent.road.surface.RoadSpec;
 import melons.innocent.road.surface.RoadSurface;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -31,7 +37,8 @@ import java.util.Set;
  * happens to cross it.
  *
  * <p>A square of the forest the road touches cannot be a copy of its sample, some of its trees being gone, so its
- * trees that are left are drawn one by one ({@link WoodDrawn}); every other square in the strip is its sample, as
+ * trees that are left are drawn one by one ({@link WoodDrawn}), each at the level its square is at, so they change
+ * with the squares round them and by no distances of their own; every other square in the strip is its sample, as
  * in the forest without a road. Where the road is no longer had, far behind, the forest stands whole again: it
  * closes over where the road was.
  *
@@ -56,6 +63,8 @@ public final class RoadForestPlace implements Place {
     /** How many squares each way from the eye's own the trunks are in the way, and how far it goes before more. */
     private static final long POSTED = 6;
     private static final long STRAYED = 2;
+    /** Within how many metres of the eye its squares cast shadows by rays, at most. */
+    private static final double SHADOWED = 300;
 
     private final List<WoodDrawn.Grown> grown = new ArrayList<>();
     /** Each grown tree's trunk: kept, since asking a tree for its boughs grows it afresh. */
@@ -72,10 +81,29 @@ public final class RoadForestPlace implements Place {
     private final WoodDrawn wood;
     /** The squares the road touched when their trees were last planted, each as its two numbers in one. */
     private Set<String> touched = new HashSet<>();
+    /** Which square each tree drawn one by one stands in, in the order planted. */
+    private List<String> standing = new ArrayList<>();
     private Vec3 eye = new Vec3(0, 0, 0);
     private double furthest;
     private long postedAcross;
     private long postedAlong;
+    /**
+     * How many seconds ahead the eye looks, a square being drawn as it will be needed at the nearest the eye comes
+     * to it in that while; and the speed above which nothing is drawn at its finest, every twig. Set while
+     * walking, and to begin with as the run says: {@code -Dforest.ahead=} (3) and {@code -Dforest.coarser=}
+     * kilometres an hour (50).
+     */
+    /** How far its finest level reaches, and its level with twigs gone, in metres: as its reaches have them first. */
+    private final Dial fine = new Dial("Finest out to, metres", 5, 100, new Reaches().fine());
+    private final Dial twigs = new Dial("Twigs gone out to, metres", 20, 250, new Reaches().twigs());
+    private final Dial ahead = new Dial("Looked ahead, seconds", 0, 60,
+            Double.parseDouble(System.getProperty("forest.ahead", "3")));
+    private final Dial coarser = new Dial("Finest level off above, km an hour", 10, 200,
+            Double.parseDouble(System.getProperty("forest.coarser", "50")));
+    /** The finest level any of its plants is drawn at, whatever its other rules would have: chosen while walking. */
+    private final Cap cap = new Cap();
+    /** How whoever looks at it is moving, as last told: standing still, until told. */
+    private Motion moving = new Motion(new Spot(0, 0, 0));
 
     /** The forest and a road nobody chose, on {@code card}, as the run says the forest. */
     public RoadForestPlace(final Card card, final Laid laid) {
@@ -108,7 +136,8 @@ public final class RoadForestPlace implements Place {
             throw refused;
         }
         try {
-            this.forest = new SampledDrawn(card, laid, endless, grown, reaches, reaches.far() * METRE, true);
+            this.forest = new SampledDrawn(card, laid, endless, grown, reaches,
+                    Math.min(SHADOWED, reaches.far()) * METRE, true);
         } catch (final RuntimeException refused) {
             wood.close();
             drawn.close();
@@ -138,6 +167,24 @@ public final class RoadForestPlace implements Place {
         return road.has(along) && road.off(across, along) <= clear;
     }
 
+    /** Its reaches as its dials now have them: the two nearest as set, the rest as they were. */
+    private Reaches reached() {
+        final double finest = fine.value();
+        final double gone = Math.max(finest, twigs.value());
+        return new Reaches(finest, gone, Math.max(gone, reaches.boughs()), Math.max(gone, reaches.limbs()),
+                Math.max(gone, reaches.far()));
+    }
+
+    @Override
+    public List<Dial> dials() {
+        return List.of(cap.dial(), fine, twigs, ahead, coarser);
+    }
+
+    @Override
+    public void moving(final Motion observer) {
+        moving = observer;
+    }
+
     @Override
     public void readied(final Camera camera) {
         eye = camera.eye();
@@ -150,7 +197,11 @@ public final class RoadForestPlace implements Place {
         final List<Endless.Seen> samples = new ArrayList<>();
         final List<WoodDrawn.Planted> trees = new ArrayList<>();
         final Set<String> touching = new HashSet<>();
-        for (final Endless.Seen seen : endless.seen(eye, reaches)) {
+        final List<String> squares = new ArrayList<>();
+        final Map<String, Stage> levels = new HashMap<>();
+        final Looking looking = cap.over(new Going(moving, ahead.value(), coarser.value()));
+        wood.noFinerThan(cap.stage());
+        for (final Endless.Seen seen : endless.seen(eye, reached(), looking)) {
             final Vec3 middle = endless.middle(seen.across(), seen.along());
             final double off = Math.abs(middle.x() - road.across(Math.clamp(middle.z(), road.from(), road.to())));
             if (off > STRIP + side) {
@@ -159,9 +210,14 @@ public final class RoadForestPlace implements Place {
             final List<WoodDrawn.Planted> stood = off > TOUCHING || !road.has(middle.z()) ? List.of()
                     : endless.placed(seen.across(), seen.along(), planted.get(seen.sample()));
             if (stood.stream().anyMatch(tree -> cleared(tree.placed().at(0, 3), tree.placed().at(2, 3)))) {
-                touching.add(seen.across() + " " + seen.along());
+                final String square = seen.across() + " " + seen.along();
+                touching.add(square);
+                levels.put(square, seen.level());
                 stood.stream().filter(tree -> !cleared(tree.placed().at(0, 3), tree.placed().at(2, 3)))
-                        .forEach(trees::add);
+                        .forEach(tree -> {
+                            trees.add(tree);
+                            squares.add(square);
+                        });
             } else {
                 samples.add(seen);
             }
@@ -170,7 +226,10 @@ public final class RoadForestPlace implements Place {
         if (!touching.equals(touched)) {
             wood.replanted(trees);
             touched = touching;
+            standing = squares;
         }
+        // each tree at its square's level, so the trees beside the road change as the squares round them do
+        wood.told(standing.stream().map(levels::get).toList());
     }
 
     @Override

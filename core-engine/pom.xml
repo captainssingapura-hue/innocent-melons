@@ -20,6 +20,8 @@
     <modules>
         <!-- How an observer moves: its speed and its way, its turning, and where it will be shortly. -->
         <module>core-motion</module>
+        <!-- How well an observer could see a thing: its sharpness, a number that changes smoothly. -->
+        <module>core-visibility</module>
     </modules>
 
     <properties>

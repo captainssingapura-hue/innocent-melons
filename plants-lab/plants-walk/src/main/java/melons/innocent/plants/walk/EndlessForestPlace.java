@@ -2,6 +2,7 @@ package melons.innocent.plants.walk;
 
 import com.example.fxsuite.avatar.sim.Block;
 import com.example.fxsuite.avatar.sim.Obstacles;
+import com.example.fxsuite.vulkan.bench.Dial;
 import com.example.fxsuite.vulkan.bench.Place;
 import com.example.fxsuite.vulkan.device.Card;
 import com.example.fxsuite.vulkan.device.Pass;
@@ -15,6 +16,8 @@ import com.example.fxsuite.vulkan.space.Vec3;
 import com.example.fxsuite.vulkan.term.Colour;
 import com.example.fxsuite.vulkan.term.Surface;
 import com.example.fxsuite.vulkan.view.Camera;
+import melons.innocent.core.motion.Motion;
+import melons.innocent.core.motion.Spot;
 import melons.innocent.plants.tree.Bough;
 import melons.innocent.plants.tree.Kind;
 
@@ -64,6 +67,23 @@ public final class EndlessForestPlace implements Place {
     private long along;
     private long postedAcross;
     private long postedAlong;
+    /**
+     * How many seconds ahead the eye looks, a square being drawn as it will be needed at the nearest the eye comes
+     * to it in that while; and the speed above which nothing is drawn at its finest, every twig. Set while
+     * walking, and to begin with as the run says: {@code -Dforest.ahead=} (3) and {@code -Dforest.coarser=}
+     * kilometres an hour (50).
+     */
+    /** How far its finest level reaches, and its level with twigs gone, in metres: as its reaches have them first. */
+    private final Dial fine = new Dial("Finest out to, metres", 5, 100, new Reaches().fine());
+    private final Dial twigs = new Dial("Twigs gone out to, metres", 20, 250, new Reaches().twigs());
+    private final Dial ahead = new Dial("Looked ahead, seconds", 0, 60,
+            Double.parseDouble(System.getProperty("forest.ahead", "3")));
+    private final Dial coarser = new Dial("Finest level off above, km an hour", 10, 200,
+            Double.parseDouble(System.getProperty("forest.coarser", "50")));
+    /** The finest level any of its plants is drawn at, whatever its other rules would have: chosen while walking. */
+    private final Cap cap = new Cap();
+    /** How whoever looks at it is moving, as last told: standing still, until told. */
+    private Motion moving = new Motion(new Spot(0, 0, 0));
 
     /** The forest on {@code card}, as the run says it. */
     public EndlessForestPlace(final Card card, final Laid laid) {
@@ -137,11 +157,30 @@ public final class EndlessForestPlace implements Place {
                 ? Optional.of(inTheWay()) : Optional.empty();
     }
 
+    /** Its reaches as its dials now have them: the two nearest as set, the rest as they were. */
+    private Reaches reached() {
+        final double finest = fine.value();
+        final double gone = Math.max(finest, twigs.value());
+        return new Reaches(finest, gone, Math.max(gone, reaches.boughs()), Math.max(gone, reaches.limbs()),
+                Math.max(gone, reaches.far()));
+    }
+
+    @Override
+    public List<Dial> dials() {
+        return List.of(cap.dial(), fine, twigs, ahead, coarser);
+    }
+
+    @Override
+    public void moving(final Motion observer) {
+        moving = observer;
+    }
+
     @Override
     public void readied(final Camera camera) {
         across = (long) Math.floor(camera.eye().x() / endless.samples().side());
         along = (long) Math.floor(camera.eye().z() / endless.samples().side());
-        forest.readied(camera);
+        forest.readied(camera, endless.seen(camera.eye(), reached(),
+                cap.over(new Going(moving, ahead.value(), coarser.value()))));
     }
 
     @Override

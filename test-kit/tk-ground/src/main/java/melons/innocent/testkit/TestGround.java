@@ -4,6 +4,7 @@ import com.example.fxsuite.avatar.sim.Block;
 import com.example.fxsuite.avatar.sim.Gate;
 import com.example.fxsuite.avatar.sim.Obstacles;
 import com.example.fxsuite.avatar.sim.Volume;
+import com.example.fxsuite.vulkan.bench.Dial;
 import com.example.fxsuite.vulkan.bench.Place;
 import com.example.fxsuite.vulkan.device.Card;
 import com.example.fxsuite.vulkan.device.Pass;
@@ -13,6 +14,7 @@ import com.example.fxsuite.vulkan.shade.Look;
 import com.example.fxsuite.vulkan.space.Mat4;
 import com.example.fxsuite.vulkan.space.Vec3;
 import com.example.fxsuite.vulkan.view.Camera;
+import melons.innocent.core.motion.Motion;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,6 +81,16 @@ public final class TestGround implements Place {
     @Override
     public boolean onTheFlat() {
         return false;
+    }
+
+    @Override
+    public List<Dial> dials() {
+        return stood.stream().flatMap(place -> place.dials().stream()).toList();
+    }
+
+    @Override
+    public void moving(final Motion observer) {
+        stood.forEach(place -> place.moving(observer));
     }
 
     @Override

@@ -1,6 +1,8 @@
 package melons.innocent.plants.walk;
 
 import com.example.fxsuite.vulkan.space.Vec3;
+import melons.innocent.core.motion.Motion;
+import melons.innocent.core.motion.Spot;
 import melons.innocent.plants.tree.Stage;
 import org.junit.jupiter.api.Test;
 
@@ -91,5 +93,66 @@ class EndlessTest {
         assertEquals(Optional.of(Stage.FINE), new Reaches(1_000, 1_000, 1_000, 1_000, 1_000).level(99_000),
                 "the finest as far as the furthest is the finest everywhere");
         assertThrows(IllegalArgumentException.class, () -> new Reaches(50, 20, 200, 600, 1_000));
+    }
+
+    @Test
+    void allInReachIsDrawnAsItWillBeNeededShortlyAndAtSpeedNothingAtItsFinestAndNeverTwoBelow() {
+        final Reaches reaches = new Reaches(25, 60, 300, 500, 1_200);
+        final Vec3 eye = new Vec3(0, 170, 0);
+        final Motion still = new Motion(new Spot(0, 170, 0));
+        final Motion slow = new Motion(new Spot(0, 170, 0), new Spot(0, 0, 1_000), 0);
+        final Motion fast = new Motion(new Spot(0, 170, 0), new Spot(0, 0, 4_166.67), 0);
+        assertEquals(Stage.FINE, new Going(still, 3, 50).finest(), "standing still, every level there is");
+        assertEquals(Stage.FINE, new Going(slow, 3, 50).finest(), "at 36 km an hour, still");
+        assertEquals(Stage.TWIGS_GONE, new Going(fast, 3, 50).finest(), "at 150 km an hour, nothing at its finest");
+        assertEquals(Stage.FINE, new Going(fast, 3, 200).finest(), "unless the walk sets that speed higher");
+        assertEquals(eye, new Going(still, 3, 50).soon(eye, new Vec3(0, 0, 9_000)), "going nowhere, it is where it is");
+        assertEquals(new Vec3(0, 170, 3_000), new Going(slow, 3, 50).soon(eye, new Vec3(0, 0, 9_000)),
+                "three seconds on, for a square further ahead than that");
+        assertEquals(new Vec3(0, 170, 2_000), new Going(slow, 3, 50).soon(eye, new Vec3(4_000, 0, 2_000)),
+                "abreast of a square it passes sooner");
+        assertEquals(eye, new Going(slow, 3, 50).soon(eye, new Vec3(0, 0, -5_000)), "and no earlier than now");
+        final List<Endless.Seen> plain = endless.seen(eye, reaches);
+        final List<Endless.Seen> atRest = endless.seen(eye, reaches, new Going(still, 3, 50));
+        final List<Endless.Seen> going = endless.seen(eye, reaches, new Going(slow, 3, 50));
+        final List<Endless.Seen> atSpeed = endless.seen(eye, reaches, new Going(fast, 3, 50));
+        assertEquals(plain, atRest, "standing still, as its distance alone has it");
+        assertTrue(plain.size() > 7_000, "everything within twelve hundred metres, all round: " + plain.size());
+        for (int square = 0; square < plain.size(); square++) {
+            final int needed = plain.get(square).level().ordinal();
+            assertEquals(plain.get(square).away(), atSpeed.get(square).away(), "the same squares, as far off");
+            assertTrue(going.get(square).level().ordinal() <= needed, "going slowly, never coarser than needed");
+            assertTrue(atSpeed.get(square).level().ordinal() <= needed + 1, "at speed, never two levels below");
+            assertTrue(needed == 0 || atSpeed.get(square).level().ordinal() <= needed,
+                    "and only what would have been finest is any coarser");
+        }
+        final Endless.Seen ahead = going.stream().filter(one -> one.across() == 0 && one.along() == 2).findFirst()
+                .orElseThrow();
+        assertEquals(Stage.FINE, ahead.level(), "a square fifty metres ahead, reached in the window: at its finest");
+        assertEquals(Stage.TWIGS_GONE, plain.stream().filter(one -> one.across() == 0 && one.along() == 2)
+                .findFirst().orElseThrow().level(), "which its distance alone would have with its twigs gone");
+        assertTrue(atSpeed.stream().filter(one -> one.level() == Stage.FINE).count() == 0, "at speed, none finest");
+    }
+
+    @Test
+    void underACapNothingIsFinerThanItAndWhatIsCoarserAlreadyIsAsItWas() {
+        final Reaches reaches = new Reaches(25, 60, 300, 500, 1_200);
+        final Vec3 eye = new Vec3(0, 170, 0);
+        final Motion fast = new Motion(new Spot(0, 170, 0), new Spot(0, 0, 4_166.67), 0);
+        final List<Endless.Seen> plain = endless.seen(eye, reaches);
+        assertEquals(plain, endless.seen(eye, reaches, new Capped(new Plainly(), Stage.FINE)),
+                "a cap at the finest caps nothing");
+        for (final Stage cap : Stage.values()) {
+            final List<Endless.Seen> capped = endless.seen(eye, reaches, new Capped(new Plainly(), cap));
+            assertEquals(plain.size(), capped.size(), "the same squares under a cap at " + cap);
+            for (int square = 0; square < plain.size(); square++) {
+                assertEquals(Math.max(cap.ordinal(), plain.get(square).level().ordinal()),
+                        capped.get(square).level().ordinal(), "no finer than " + cap + ", and no coarser for it");
+            }
+        }
+        assertEquals(Stage.TWIGS_GONE, new Capped(new Going(fast, 3, 50), Stage.FINE).finest(),
+                "what the looking itself puts off stays off under a finer cap");
+        assertEquals(Stage.LIMBS, new Capped(new Going(fast, 3, 50), Stage.LIMBS).finest(),
+                "and a coarser cap goes over it");
     }
 }

@@ -97,7 +97,7 @@ class RoadForestTest {
                 System.out.printf("ROAD: %.1f ms a frame over %d frames five metres apart; %s; %s%n",
                         (System.nanoTime() - began) / 1e6 / frames, frames, place.said().replace("\n", "; "),
                         card.memory().said());
-                assertTrue(road.has(50_000 + 40_000), "made on ahead of where it was reached");
+                assertTrue(road.has(50_000 + 120_000), "made on ahead of where it was reached");
                 assertFalse(road.has(10_000), "and let go far behind");
                 assertTrue(place.rearranged().isEmpty() && !place.inTheWay().blocks().isEmpty());
             }

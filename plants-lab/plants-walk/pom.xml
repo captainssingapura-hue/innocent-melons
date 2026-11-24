@@ -46,6 +46,12 @@
             <artifactId>road-surface</artifactId>
             <version>0.1.0-SNAPSHOT</version>
         </dependency>
+        <!-- the core engine: how sharply a thing is seen as its observer moves -->
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-visibility</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
         <!-- the curves a road is smoothed by -->
         <dependency>
             <groupId>melons.innocent.math</groupId>
