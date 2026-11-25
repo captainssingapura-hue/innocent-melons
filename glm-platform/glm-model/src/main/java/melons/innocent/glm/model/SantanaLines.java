@@ -155,12 +155,13 @@ record SantanaLines() {
 
     /**
      * How far out from the middle its side is, at {@code up} over the ground and {@code along} from the front axle,
-     * in centimetres: as the front view's section has it, drawn in a little round the tail's corners.
+     * in centimetres: as the front view's section has it, drawn in a little round the tail's corners and the nose's.
      */
     double half(final double along, final double up) {
         final double z = along * 10 / SCALE;
         final double tail = Math.clamp((-z - 3_300) / 290, 0, 1);
-        return (section(up * 10 / SCALE) - 30 * tail * tail) * SCALE / 10;
+        final double nose = Math.clamp((z - 650) / 150, 0, 1);
+        return (section(up * 10 / SCALE) - 30 * tail * tail - 30 * nose * nose) * SCALE / 10;
     }
 
     /** The section's half-width at {@code h} millimetres up, smoothly between the heights the drawing gives. */

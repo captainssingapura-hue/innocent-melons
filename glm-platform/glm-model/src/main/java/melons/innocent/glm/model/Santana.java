@@ -11,7 +11,7 @@ import java.util.List;
  * to the platform's least track, on the platform's chassis; its body built as the original's was, a pressed steel
  * shell, its root its underbody, every chassis mount on it: the body sides welded along it, the bulkhead and the tail
  * panel across it, and the roof's two headers across between the body sides, a cage for the roof's glass; and its
- * four doors hung in it.
+ * four doors hung in it and its front wings bolted on.
  */
 public record Santana() implements Bodywork {
 
@@ -47,6 +47,7 @@ public record Santana() implements Bodywork {
         final Part rear = panels.header("roof header, rear", LINES.rearHeader());
         final Part frontDoor = new Door("front door", LINES, LINES.frontDoor(), LINES.frontDivider()).part();
         final Part rearDoor = new Door("rear door", LINES, LINES.rearDoor(), LINES.rearDivider()).part();
+        final Part wing = new FrontWing(LINES).part();
         return List.of(
                 new Connection("body side", root, "body side, right", side, "body", Joining.WELDED),
                 new Connection("bulkhead", root, "bulkhead", bulkhead, "underbody", Joining.WELDED),
@@ -55,6 +56,7 @@ public record Santana() implements Bodywork {
                         Joining.WELDED),
                 new Connection("roof header, rear", side, "header, rear", rear, "body side, right", Joining.WELDED),
                 new Connection("front door", side, "front door, hinge", frontDoor, "hinge", Joining.HINGE),
-                new Connection("rear door", side, "rear door, hinge", rearDoor, "hinge", Joining.HINGE));
+                new Connection("rear door", side, "rear door, hinge", rearDoor, "hinge", Joining.HINGE),
+                new Connection("front wing", root, "front wing, right", wing, "shell", Joining.BOLTED));
     }
 }
