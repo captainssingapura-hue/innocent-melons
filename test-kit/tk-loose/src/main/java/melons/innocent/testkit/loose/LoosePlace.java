@@ -40,8 +40,9 @@ import java.util.TreeMap;
  * where it stands square and as a ramp where it leans, so a leaning beam is walked up and not through; what is in
  * motion is not. A list in the walk's window names every thing of the trial: the one chosen is taken away, and
  * its last entry begins the trial again. Another names every thing that moves: the one chosen is thrown, with the
- * energy, the way up and the way round the sliders under it say, and what came of the last throw is said. The
- * window says how many things are at rest and in motion and how many the check has looked at, which stands still while
+ * energy, the way up and the way round the sliders under it say, and what came of the last throw is said. A
+ * third sets the wagon going, as fast as its slider says, or stops it. The window says how many things are at rest
+ * and in motion and how many the check has looked at, which stands still while
  * nothing happens.
  */
 public final class LoosePlace implements Place {
@@ -65,11 +66,16 @@ public final class LoosePlace implements Place {
             Double.parseDouble(System.getProperty("loose.up", "45")));
     private final Dial round = new Dial("Thrown which way round, degrees from ahead", 0, 360,
             Double.parseDouble(System.getProperty("loose.round", "90")));
+    /** The window's list that sets the wagon going or stops it, and how fast it is set going. */
+    private final Dial wagon = new Dial("The wagon", List.of("set going", "stopped"));
+    private final Dial speed = new Dial("The wagon's speed when set going, km an hour", 5, 100,
+            Double.parseDouble(System.getProperty("loose.wagon", "36")));
     /** How steep the ramp is made when the trial is next begun again. */
     private final Dial slope;
     /** How many askings of each list have been done. */
     private long took;
     private long threw;
+    private long drove;
     private long told;
 
     /** The {@code trial}'s things on {@code card}, their layouts as {@code laid} says. */
@@ -108,7 +114,7 @@ public final class LoosePlace implements Place {
 
     @Override
     public List<Dial> dials() {
-        return List.of(taken, slope, thrown, joules, upward, round);
+        return List.of(taken, slope, thrown, joules, upward, round, wagon, speed);
     }
 
     /**
@@ -130,6 +136,10 @@ public final class LoosePlace implements Place {
             trial.thrown(trial.movable().get(thrown.step()),
                     new Throw(joules.value(), round.value(), upward.value()));
         }
+        if (wagon.asks() != drove) {
+            drove = wagon.asks();
+            trial.driven(wagon.step() == 0 ? speed.value() : 0);
+        }
     }
 
     /** Each thing at rest, in the way: as its own box where it stands square, as a ramp where it leans. */
@@ -138,7 +148,8 @@ public final class LoosePlace implements Place {
         final World world = trial.world();
         final List<Block> blocks = new ArrayList<>();
         for (final String name : world.things()) {
-            if (world.resting(name)) {
+            // what is going, the wagon and what rides it, is in nobody's way until it stops
+            if (world.resting(name) && world.moved(name).velocity().length() == 0) {
                 blocks.add(new StandIn().of(world.thing(name).shape(), world.placed(name).orElseThrow()));
             }
         }

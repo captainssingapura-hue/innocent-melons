@@ -9,11 +9,12 @@ import java.util.Locale;
 import java.util.Optional;
 
 /**
- * A throw, followed: what was thrown, from where, how fast and how far up from level; and, as the trial is ticked,
- * how high it has risen and where it first came down. It says those beside what the reckoning without air gives for
- * a throw over level ground, so that a throw can be tried at one energy and another and read off: as high as its
- * speed upward squared over twice gravity's pull, and as far as its speed squared times the sine of twice its angle
- * over gravity's pull.
+ * A throw, followed: what was thrown, from where, how fast, how far up from level and which way round; how it was
+ * already going when it was thrown, carried by a wagon; and, as the trial is ticked, how high it has risen and where
+ * it first came down. It says those beside what the reckoning without air gives for a throw over level ground: as
+ * high as its speed upward squared over twice gravity's pull, and as far the way it was thrown as its speed squared
+ * times the sine of twice its angle over gravity's pull. How far aside of that way it came down is what it was
+ * carried while it flew: nothing, thrown from rest.
  */
 public final class Flown {
 
@@ -24,15 +25,23 @@ public final class Flown {
     private final Spot from;
     private final double speed;
     private final double upward;
+    private final double round;
+    private final Spot carrying;
     private double highest;
     private Optional<Spot> down = Optional.empty();
 
-    /** {@code thing} thrown from {@code from} at so many centimetres a second, so many degrees {@code upward}. */
-    public Flown(final String thing, final Spot from, final double speed, final double upward) {
+    /**
+     * {@code thing} thrown from {@code from} at so many centimetres a second, so many degrees {@code upward} and
+     * {@code round} from ahead, while it was going as {@code carrying} says.
+     */
+    public Flown(final String thing, final Spot from, final double speed, final double upward, final double round,
+                 final Spot carrying) {
         this.thing = thing;
         this.from = from;
         this.speed = speed;
         this.upward = upward;
+        this.round = round;
+        this.carrying = carrying;
         this.highest = from.up();
     }
 
@@ -53,9 +62,16 @@ public final class Flown {
         return highest - from.up();
     }
 
-    /** How far off it first came down, over the ground, in centimetres; none, while it is still in the air. */
+    /** How far the way it was thrown it first came down, in centimetres; none, while it is still in the air. */
     public Optional<Double> carried() {
-        return down.map(at -> Math.hypot(at.across() - from.across(), at.along() - from.along()));
+        return down.map(at -> (at.across() - from.across()) * Math.sin(Math.toRadians(round))
+                + (at.along() - from.along()) * Math.cos(Math.toRadians(round)));
+    }
+
+    /** How far aside of the way it was thrown it came down, in centimetres: what it was carried as it flew. */
+    public Optional<Double> aside() {
+        return down.map(at -> Math.abs((at.across() - from.across()) * Math.cos(Math.toRadians(round))
+                - (at.along() - from.along()) * Math.sin(Math.toRadians(round))));
     }
 
     /** How high the reckoning without air says it rises, in centimetres. */
@@ -71,9 +87,11 @@ public final class Flown {
 
     /** What it has to say of itself, in metres. */
     public String said() {
+        final String aside = carrying.length() == 0 ? "" : String.format(Locale.ENGLISH,
+                " and %.2f m aside, carried on at %.1f m/s", aside().orElse(0.0) / METRE, carrying.length() / METRE);
         final String came = carried().map(far -> String.format(Locale.ENGLISH,
-                "came down %.2f m off (%.2f reckoned on the level)", far / METRE, reckonedCarry() / METRE))
-                .orElse("still in the air");
+                "came down %.2f m the way it was thrown (%.2f reckoned on the level)%s", far / METRE,
+                reckonedCarry() / METRE, aside)).orElse("still in the air");
         return String.format(Locale.ENGLISH,
                 "Thrown: %s at %.1f m/s, %.0f degrees up; rose %.2f m (%.2f reckoned); %s", thing, speed / METRE,
                 upward, rose() / METRE, reckonedRise() / METRE, came);

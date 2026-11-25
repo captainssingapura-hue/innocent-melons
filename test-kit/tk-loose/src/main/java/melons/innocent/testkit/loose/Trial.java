@@ -3,6 +3,7 @@ package melons.innocent.testkit.loose;
 import melons.innocent.core.loose.Loose;
 import melons.innocent.core.motion.Spot;
 import melons.innocent.core.motion.Turn;
+import melons.innocent.core.rest.Asked;
 import melons.innocent.core.rest.Box;
 import melons.innocent.core.rest.Ellipsoid;
 import melons.innocent.core.rest.Ground;
@@ -31,8 +32,12 @@ import java.util.TreeMap;
  * chock, and the melon and the ball roll down and out across the ground. Its supports go of themselves so many
  * seconds in where the run says, the stack's pillar and the beam's right-hand one first and the beam's left-hand one
  * as long after; and it can be begun again as it was described, its ramp at another slope. Any thing of it but
- * the ramp can be thrown, with so much energy, a way round and a way up, and the last throw is followed: how high
- * it rose and where it came down ({@link Flown}).
+ * the ramp and the wagon can be thrown, with so much energy, a way round and a way up, and the last throw is
+ * followed: how high it rose and where it came down ({@link Flown}).
+ *
+ * <p>Nearer, six metres ahead, a flat wagon stands on a track across the walk's way with a ball, a watermelon and a
+ * crate on it, the watermelon chocked before and behind. Set going, it carries them; what is thrown from it keeps
+ * its way; and since it stops and sets off at once, the ball, which nothing chocks, rolls off it.
  */
 public final class Trial {
 
@@ -44,8 +49,13 @@ public final class Trial {
     /** What goes at the first asking, unless the run says, and at the second, of what is still there. */
     private static final String FIRST = "the stack's pillar, the beam's right pillar";
     private static final String SECOND = "the beam's left pillar";
-    /** The one thing of it that never moves. */
+    /** The one thing of it that never moves, and the one that is driven. */
     private static final String FIXED = "the ramp";
+    private static final String WAGON = "the wagon";
+    /** How far ahead the wagon's track lies, where along it the wagon begins, and how far along it stops of itself. */
+    private static final double TRACK = 600;
+    private static final double BEGINS = -2_000;
+    private static final double FAR = 30_000;
 
     /** What each thing is made of, by its name, in the order they are described. */
     private final Map<String, Stuff> made = new LinkedHashMap<>();
@@ -66,6 +76,8 @@ public final class Trial {
     /** What is to be thrown at the next tick, each with the motion it is given; and the last throw, followed. */
     private final Map<String, Moved> flung = new TreeMap<>();
     private Optional<Flown> flown = Optional.empty();
+    /** How the wagon is to be driven from the next tick, where that has been asked. */
+    private Optional<Moved> drive = Optional.empty();
 
     /**
      * A trial as the run says: {@code -Dloose.after=} seconds to each taking away of itself, none unless said;
@@ -105,12 +117,24 @@ public final class Trial {
         sloped(described, "the melon", Stuff.RIND, new Ellipsoid(36, 28, 26), -80, 14, 168);
         sloped(described, "the ball", Stuff.RUBBER, new Ellipsoid(30), 0, 15, 170);
         sloped(described, "the crate on the ramp", Stuff.TIMBER, new Box(50, 50, 50), 95, 25, 190);
+        // the wagon: on a track across the walk's way, six metres ahead, standing until it is set going
+        made.put(WAGON, Stuff.CONCRETE);
+        described.driven(new Rigid(WAGON, new Box(1_200, 100, 300), Stuff.CONCRETE.dense()),
+                new Placed(new Spot(BEGINS, 50, TRACK)), new Moved());
+        stood(described, "the wagon's ball", Stuff.RUBBER, new Ellipsoid(30), new Spot(BEGINS - 300, 115, TRACK));
+        stood(described, "the wagon's melon", Stuff.RIND, new Ellipsoid(26, 28, 36), new Spot(BEGINS, 114, TRACK));
+        // chocked before and behind, so it rides when the wagon sets off or stops at once; the ball is not
+        final Box chock = new Box(10, 34, 60);
+        stood(described, "the wagon's rear chock", Stuff.TIMBER, chock, new Spot(BEGINS - 18, 117, TRACK));
+        stood(described, "the wagon's front chock", Stuff.TIMBER, chock, new Spot(BEGINS + 18, 117, TRACK));
+        stood(described, "the wagon's crate", Stuff.TIMBER, new Box(60, 60, 60), new Spot(BEGINS + 300, 130, TRACK));
         return described;
     }
 
-    private void stood(final World described, final String name, final Stuff stuff, final Box box, final Spot at) {
+    private void stood(final World described, final String name, final Stuff stuff, final ShapeImpl<?> shape,
+                       final Spot at) {
         made.put(name, stuff);
-        described.stood(new Rigid(name, box, stuff.dense()), new Placed(at));
+        described.stood(new Rigid(name, shape, stuff.dense()), new Placed(at));
     }
 
     /**
@@ -147,7 +171,18 @@ public final class Trial {
         named.clear();
         going.removeIf(name -> !world.things().contains(name));
         flung.keySet().removeIf(name -> !world.things().contains(name) || going.contains(name));
-        final List<Happened> happened = world.ticked(going, flung, TICK);
+        if (ticks == 1 && !System.getProperty("loose.wagon", "").isBlank()) {
+            driven(Double.parseDouble(System.getProperty("loose.wagon")));
+        }
+        // the wagon stops of itself once it is far out along its track
+        if (world.things().contains(WAGON) && world.moved(WAGON).velocity().length() > 0
+                && world.placed(WAGON).orElseThrow().at().across() > FAR) {
+            driven(0);
+        }
+        final Map<String, Moved> driving = drive.isPresent() && world.things().contains(WAGON)
+                && !going.contains(WAGON) ? Map.of(WAGON, drive.get()) : Map.of();
+        drive = Optional.empty();
+        final List<Happened> happened = world.ticked(new Asked(going, flung, driving), TICK);
         flung.clear();
         flown.ifPresent(last -> last.followed(world, happened));
         changes += happened.stream().filter(one -> !(one instanceof Happened.Landed)).count();
@@ -174,7 +209,12 @@ public final class Trial {
         }
         flung.put(name, thrown.of(world.thing(name)));
         flown = Optional.of(new Flown(name, world.placed(name).orElseThrow().at(), thrown.speed(world.thing(name)),
-                thrown.upward()));
+                thrown.upward(), thrown.round(), world.moved(name).velocity()));
+    }
+
+    /** The wagon is to go so many kilometres an hour along its track from the next tick: none, and it stops. */
+    public void driven(final double hourly) {
+        drive = Optional.of(new Moved(new Spot(hourly * 100_000 / 3_600, 0, 0), new Spot(0, 0, 0)));
     }
 
     /** The last throw, followed: none, where nothing has been thrown since it began. */
@@ -182,9 +222,9 @@ public final class Trial {
         return flown;
     }
 
-    /** The names of the things it describes that can be thrown: all but what never moves. */
+    /** The names of the things it describes that can be thrown: all but what never moves and what is driven. */
     public List<String> movable() {
-        return made.keySet().stream().filter(name -> !FIXED.equals(name)).toList();
+        return made.keySet().stream().filter(name -> !FIXED.equals(name) && !WAGON.equals(name)).toList();
     }
 
     /** Begun again, as it was described, its ramp sloping so many {@code degrees}. */
@@ -197,6 +237,7 @@ public final class Trial {
         named.clear();
         flung.clear();
         flown = Optional.empty();
+        drive = Optional.empty();
         changes++;
     }
 

@@ -17,7 +17,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * described, its ramp at the slope then said. Its melon and its ball are held on the ramp by the chock; that taken
  * away, both roll down and out over the ground and come to rest there, while the crate beside them stays; and on a
  * ramp with no slope neither stirs. A thing thrown is followed: it rises as high and, on the level, comes down as
- * far as the reckoning says. And each thing is made of something the lab has.
+ * far as the reckoning says. A melon thrown sideways from the wagon as it goes comes down carried along its track.
+ * And each thing is made of something the lab has.
  */
 class TrialTest {
 
@@ -83,7 +84,7 @@ class TrialTest {
     void aThingThrownIsFollowedAndComesDownWhereTheReckoningSays() {
         final Trial trial = new Trial(-1, 12);
         ticked(trial, 240);
-        assertEquals(12, trial.movable().size(), "every thing but the ramp can be thrown");
+        assertEquals(17, trial.movable().size(), "every thing but the ramp and the wagon can be thrown");
         assertTrue(trial.flown().isEmpty());
         final Throw thrown = new Throw(3_000, 180, 45);
         trial.thrown("the crate in the air", thrown);
@@ -107,6 +108,31 @@ class TrialTest {
     }
 
     @Test
+    void aMelonThrownSidewaysFromTheWagonComesDownCarriedAlongItsTrack() {
+        final Trial trial = new Trial(-1, 12);
+        ticked(trial, 60);
+        assertEquals(Set.of("the wagon", "the wagon's front chock", "the wagon's rear chock"),
+                trial.world().under("the wagon's melon"), "chocked before and behind");
+        trial.driven(36);
+        ticked(trial, 120);
+        assertEquals(-2_000 + 1_000, trial.world().placed("the wagon's melon").orElseThrow().at().across(), 10,
+                "a second on, ten metres along, carried");
+        assertTrue(trial.world().resting("the wagon's melon"));
+        trial.thrown("the wagon's melon", new Throw(300, 180, 35));
+        ticked(trial, 360);
+        final Flown flown = trial.flown().orElseThrow();
+        assertEquals(flown.reckonedRise(), flown.rose(), 0.05, "it rises as the throw alone would have it");
+        assertTrue(flown.carried().orElseThrow() > flown.reckonedCarry(),
+                "out to the side, and a metre's fall further");
+        assertTrue(flown.aside().orElseThrow() > 800, "and carried ten metres a second along the track as it flew");
+        assertTrue(flown.said().contains("aside, carried on at 10.0 m/s"), flown.said());
+        trial.driven(0);
+        ticked(trial, 1_200);
+        assertEquals(Set.of("the wagon"), trial.world().under("the wagon's crate"));
+        assertEquals(Set.of(GROUND), trial.world().under("the wagon's ball"), "the ball, unchocked, rolled off");
+    }
+
+    @Test
     void withATimeSaidItsSupportsGoOfThemselvesAndBegunAgainItIsAsDescribed() {
         final Trial trial = new Trial(2, 12);
         ticked(trial, 239);
@@ -117,10 +143,10 @@ class TrialTest {
         ticked(trial, 240);
         assertFalse(trial.world().things().contains("the beam's left pillar"), "and the last, two seconds after");
         trial.again(20);
-        assertEquals(13, trial.world().things().size());
+        assertEquals(19, trial.world().things().size());
         assertEquals(20, trial.slope(), 0);
         assertEquals(150, trial.world().placed("the crate in the air").orElseThrow().at().up(), 0);
-        assertEquals(13, trial.made().size());
+        assertEquals(19, trial.made().size());
         assertTrue(trial.made().values().stream().allMatch(stuff -> stuff.dense() > 0 && stuff.material() != null));
     }
 }

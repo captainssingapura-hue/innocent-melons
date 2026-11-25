@@ -77,6 +77,22 @@ public record Loose(Reckoning reckoning, double slack) implements Simulator {
         if (rigid.rolls()) {
             return new Rolling(reckoning, slack).stepped(rigid, now, around, seconds);
         }
+        final List<Touch> first = around.touches(rigid, now.placed());
+        final Spot frame = first.isEmpty() ? new Spot(0, 0, 0) : first.getFirst().going();
+        if (frame.length() == 0) {
+            return cornered(rigid, now, around, seconds);
+        }
+        // on something that is itself going: carried on with it, and stepped as it stands and moves against that
+        final Stepped within = cornered(rigid, new Mover(now.placed().moved(frame.times(seconds)),
+                new Moved(now.moved().velocity().minus(frame), now.moved().spin()), now.landed(), now.still()),
+                (shape, placed) -> around.touches(shape, placed).stream()
+                        .map(touch -> touch.carried(touch.going().minus(frame))).toList(), seconds);
+        return new Stepped(new Mover(within.next().placed(), new Moved(within.next().moved().velocity().plus(frame),
+                within.next().moved().spin()), within.next().landed(), within.next().still()), within.on());
+    }
+
+    /** A part of a tick of a thing with corners, among things that stand still: it flies, tips, or is held. */
+    private Stepped cornered(final Rigid rigid, final Mover now, final Around around, final double seconds) {
         final List<Touch> touches = around.touches(rigid, now.placed());
         // thrown up off what it stood on, it is in flight though it still touches it
         if (!touches.isEmpty() && touches.stream().allMatch(touch ->
@@ -105,8 +121,9 @@ public record Loose(Reckoning reckoning, double slack) implements Simulator {
         // lifted straight up until its deepest corner only touches
         final double lift = around.touches(rigid, fell).stream().filter(touch -> touch.deep() > slack)
                 .mapToDouble(touch -> touch.deep() / touch.pushes().up()).max().orElse(0);
-        return new Stepped(new Mover(fell.moved(new Spot(0, lift, 0)), new Moved(), true, 0),
-                met.map(Touch::on));
+        // stopped against what it has come down on, which may itself be going
+        return new Stepped(new Mover(fell.moved(new Spot(0, lift, 0)),
+                new Moved(met.get().going(), new Spot(0, 0, 0)), true, 0), met.map(Touch::on));
     }
 
     /** Tipping: its turning about its hinge changed, carried round by it, and stopped where it lands. */

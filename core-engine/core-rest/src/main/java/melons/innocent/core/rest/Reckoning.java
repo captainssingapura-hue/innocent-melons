@@ -48,7 +48,7 @@ public record Reckoning(double gravity, double slack, double rolling) {
         }
         final Hull.Edge edge = held.nearest(placed.at());
         final Spot arm = placed.at().minus(edge.from());
-        // what its weight does to turn it about the spot it is held at: kilograms, centimetres squared, a second squared
+        // what its weight does to turn it about the spot it is held at
         final Spot turning = arm.cross(new Spot(0, -1, 0)).times(rigid.kilograms() * gravity);
         if (turning.length() < 1e-9) {
             return new Reckoned();

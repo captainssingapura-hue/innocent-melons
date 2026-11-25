@@ -1,5 +1,7 @@
 package melons.innocent.core.rest;
 
+import melons.innocent.core.motion.Spot;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -19,11 +21,15 @@ import java.util.stream.Collectors;
  * given, the lowest first, until it has come down, been held without moving for a little while, and stands at rest
  * again on what it came down on.
  *
- * <p>A tick, in order: what is destroyed is taken away and what is thrown is set going; the check runs over what
- * that touched, supporters before what they hold; the things in motion are stepped; and those that have settled go
- * to rest. What happened is given back.
- * It is kept as it is ticked, and from the same beginning and the same things destroyed at the same ticks it is the
- * same world every time.
+ * <p>A thing may be driven: it goes as it is told, whatever is on it or under it, and what rests on it rides it, at
+ * rest in its frame and carried with it ({@link Carrying}). What leaves a driven thing, let go or thrown, keeps the
+ * way it was being carried: so a thing thrown sideways from a train goes on along the train's way as it flies.
+ *
+ * <p>A tick, in order: what is destroyed is taken away, what is driven otherwise is set going so, and what is thrown
+ * is set going; the check runs over what all that touched, supporters before what they hold; the driven things go
+ * on, and what rides them with them; the things in motion are stepped; and those that have settled go to rest. What
+ * happened is given back. It is kept as it is ticked, and from the same beginning and the same things asked of it at
+ * the same ticks it is the same world every time.
  *
  * <p>For now every thing is looked at when one is asked what touches it, and things described as run into each
  * other are only said so, once, and left as they are.
@@ -41,6 +47,7 @@ public final class World {
     private final Map<String, Placed> resting = new TreeMap<>();
     private final Map<String, Simulator.Mover> moving = new TreeMap<>();
     private final Supports supports = new Supports();
+    private final Carrying carrying = new Carrying();
     /** The things at rest that something has happened to since they were last checked. */
     private final Set<String> dirty = new TreeSet<>();
     /** Whether the things have been looked over for any described as run into each other. */
@@ -70,25 +77,43 @@ public final class World {
         return this;
     }
 
-    /** The world a tick of so many {@code seconds} on, the things named {@code destroyed} first taken out of it. */
-    public List<Happened> ticked(final Collection<String> destroyed, final double seconds) {
-        return ticked(destroyed, Map.of(), seconds);
+    /**
+     * {@code rigid} stood in the world as a driven thing, going as {@code going} says until it is driven otherwise:
+     * never checked and never let go, and a frame for whatever rests on it.
+     */
+    public World driven(final Rigid rigid, final Placed placed, final Moved going) {
+        stood(rigid, placed);
+        dirty.remove(rigid.name());
+        carrying.driven(rigid.name(), going);
+        return this;
     }
 
-    /**
-     * The world a tick of so many {@code seconds} on: the things named {@code destroyed} first taken out of it, and
-     * then each thing named in {@code thrown} given the motion said with it, on top of whatever motion it had.
-     */
+    /** The world a tick of so many {@code seconds} on, the things named {@code destroyed} first taken out of it. */
+    public List<Happened> ticked(final Collection<String> destroyed, final double seconds) {
+        return ticked(new Asked(destroyed, Map.of(), Map.of()), seconds);
+    }
+
+    /** The same, each thing named in {@code thrown} then given the motion said with it, on top of what it had. */
     public List<Happened> ticked(final Collection<String> destroyed, final Map<String, Moved> thrown,
                                  final double seconds) {
+        return ticked(new Asked(destroyed, thrown, Map.of()), seconds);
+    }
+
+    /** The world a tick of so many {@code seconds} on, what is {@code asked} of it done first. */
+    public List<Happened> ticked(final Asked asked, final double seconds) {
         final List<Happened> happened = new ArrayList<>();
-        new TreeSet<>(destroyed).forEach(gone -> destroyed(gone, happened));
+        dirty.addAll(carrying.ridden(supports, resting));
+        new TreeSet<>(asked.destroyed()).forEach(gone -> destroyed(gone, happened));
         if (!looked) {
             overlapping(happened);
             looked = true;
         }
-        new TreeMap<>(thrown).forEach((name, with) -> thrown(name, with, happened));
+        new TreeMap<>(asked.driven()).forEach((name, going) -> redriven(name, going, happened));
+        new TreeMap<>(asked.thrown()).forEach((name, with) -> thrown(name, with, happened));
         checked(seconds, happened);
+        // who rides what, now that what is held is known; and then the driven things go on, their riders with them
+        dirty.addAll(carrying.ridden(supports, resting));
+        carrying.carried(resting, seconds);
         for (final String name : lowestFirst(moving.keySet())) {
             final Simulator.Stepped stepped = loose.stepped(things.get(name), moving.get(name),
                     (rigid, placed) -> touches(name, rigid, placed, true), seconds);
@@ -100,32 +125,65 @@ public final class World {
     }
 
     private void destroyed(final String gone, final List<Happened> happened) {
-        if (things.remove(gone) == null) {
+        if (!things.containsKey(gone)) {
             throw new IllegalArgumentException("nothing is called " + gone);
         }
+        unridden(gone, happened);
+        things.remove(gone);
         dirty.addAll(supports.over(gone));
         supports.gone(gone);
         resting.remove(gone);
         moving.remove(gone);
         dirty.remove(gone);
+        carrying.left(gone);
         happened.add(new Happened.Destroyed(gone));
+    }
+
+    /** A driven thing set going otherwise: what rode it let go first, keeping the way it was being carried. */
+    private void redriven(final String name, final Moved going, final List<Happened> happened) {
+        if (!carrying.drives(name)) {
+            throw new IllegalArgumentException("nothing driven is called " + name);
+        }
+        unridden(name, happened);
+        carrying.driven(name, going);
+        happened.add(new Happened.Driven(name));
+    }
+
+    /** Whatever rides the driven thing called {@code name} let go, each going on as it was being carried. */
+    private void unridden(final String name, final List<Happened> happened) {
+        if (carrying.drives(name)) {
+            for (final String rider : carrying.riders(name, supports, resting)) {
+                letGo(rider);
+                happened.add(new Happened.Unsettled(rider));
+            }
+        }
     }
 
     /** A thing given a motion: let go of what held it, if it was at rest, and what stood on it to be checked. */
     private void thrown(final String name, final Moved with, final List<Happened> happened) {
-        if (!things.containsKey(name) || things.get(name).unmoving()) {
-            throw new IllegalArgumentException("nothing that moves is called " + name);
+        if (!things.containsKey(name) || things.get(name).unmoving() || carrying.drives(name)) {
+            throw new IllegalArgumentException("nothing that can be thrown is called " + name);
         }
         if (resting.containsKey(name)) {
-            moving.put(name, new Simulator.Mover(resting.remove(name)));
-            supports.over(name).stream().filter(resting::containsKey).forEach(dirty::add);
-            supports.left(name);
-            dirty.remove(name);
+            letGo(name);
         }
         final Simulator.Mover was = moving.get(name);
         moving.put(name, new Simulator.Mover(was.placed(), new Moved(
                 was.moved().velocity().plus(with.velocity()), was.moved().spin().plus(with.spin())), false, 0));
         happened.add(new Happened.Thrown(name));
+    }
+
+    /**
+     * A thing at rest let go: in motion from now, going as whatever carried it was going, and what stood on it to
+     * be checked.
+     */
+    private void letGo(final String name) {
+        final Moved going = new Moved(carrying.going(name), new Spot(0, 0, 0));
+        moving.put(name, new Simulator.Mover(resting.remove(name), going, false, 0));
+        supports.over(name).stream().filter(resting::containsKey).forEach(dirty::add);
+        supports.left(name);
+        dirty.remove(name);
+        carrying.left(name);
     }
 
     /** Every pair of things run well into each other where they stand, said once. */
@@ -143,7 +201,7 @@ public final class World {
 
     /** The check, over what is dirty: the lowest first, and whatever stands on a thing let go checked in its turn. */
     private void checked(final double seconds, final List<Happened> happened) {
-        dirty.retainAll(resting.keySet());
+        dirty.removeIf(name -> !resting.containsKey(name) || carrying.drives(name));
         while (!dirty.isEmpty()) {
             final String name = lowestFirst(dirty).getFirst();
             dirty.remove(name);
@@ -152,9 +210,7 @@ public final class World {
             if (reckoning.of(things.get(name), resting.get(name), touches, seconds).held()) {
                 supports.stands(name, touches.stream().map(Touch::on).collect(Collectors.toSet()));
             } else {
-                moving.put(name, new Simulator.Mover(resting.remove(name)));
-                supports.over(name).stream().filter(resting::containsKey).forEach(dirty::add);
-                supports.left(name);
+                letGo(name);
                 happened.add(new Happened.Unsettled(name));
             }
         }
@@ -180,20 +236,23 @@ public final class World {
     }
 
     /**
-     * Where {@code rigid}, called {@code name} and placed so, is touched from below: by the ground, by the things at
-     * rest and, where {@code landedToo}, by the things in motion that have come down and stopped.
+     * Where {@code rigid}, called {@code name} and placed so, is touched: by the ground, by the things at rest and,
+     * where {@code landedToo}, by the things in motion that have come down and stopped; each touch with how what
+     * touches it there is going, driven, riding or still.
      */
     private List<Touch> touches(final String name, final Rigid rigid, final Placed placed,
                                 final boolean landedToo) {
         final List<Touch> touches = new ArrayList<>(touching.grounded(rigid.shape(), placed, ground));
         resting.forEach((other, stands) -> {
             if (!other.equals(name)) {
-                touches.addAll(touching.held(rigid.shape(), placed, other, things.get(other).shape(), stands));
+                touching.held(rigid.shape(), placed, other, things.get(other).shape(), stands)
+                        .forEach(touch -> touches.add(touch.carried(carrying.going(other))));
             }
         });
         moving.forEach((other, mover) -> {
             if (landedToo && mover.landed() && !other.equals(name)) {
-                touches.addAll(touching.held(rigid.shape(), placed, other, things.get(other).shape(), mover.placed()));
+                touching.held(rigid.shape(), placed, other, things.get(other).shape(), mover.placed())
+                        .forEach(touch -> touches.add(touch.carried(mover.moved().velocity())));
             }
         });
         return touches;
@@ -222,12 +281,16 @@ public final class World {
                 .or(() -> Optional.ofNullable(moving.get(name)).map(Simulator.Mover::placed));
     }
 
-    /** How the thing called {@code name} is moving: not at all, where it is at rest. */
+    /**
+     * How the thing called {@code name} is moving over the ground: as it goes, where it is in motion; as it is
+     * driven or carried, where it is driven or rides; not at all, where it rests on what does not move.
+     */
     public Moved moved(final String name) {
-        return Optional.ofNullable(moving.get(name)).map(Simulator.Mover::moved).orElseGet(Moved::new);
+        return Optional.ofNullable(moving.get(name)).map(Simulator.Mover::moved)
+                .orElseGet(() -> new Moved(carrying.going(name), new Spot(0, 0, 0)));
     }
 
-    /** Whether the thing called {@code name} is at rest. */
+    /** Whether the thing called {@code name} is at rest: on the ground, or in the frame of what carries it. */
     public boolean resting(final String name) {
         return resting.containsKey(name);
     }

@@ -22,7 +22,8 @@ import java.util.Optional;
  *
  * <p>While it touches anything it is slowed by a share of gravity's pull, so on the level it comes to a stop; and
  * stopped, touching, it is counted toward its rest. After it has moved it is set back out of whatever it has run
- * into. A crate or a chock in its way stops it, as the ground does, and is not moved by it.
+ * into. A crate or a chock in its way stops it, as the ground does, and is not moved by it. What it touches may
+ * itself be going, a train's deck: then it is pushed, slowed and stopped against that, and so is carried along.
  *
  * @param reckoning gravity's pull, and how much of it slows what rolls
  * @param slack     how far into something it may be and count as only touching it, in centimetres
@@ -36,14 +37,17 @@ record Rolling(Reckoning reckoning, double slack) {
         final List<Touch> touches = around.touches(rigid, now.placed());
         Moved moved = flight.pulled(now.moved(), seconds);
         boolean pushed = false;
+        // how what it presses on is itself going: it is slowed, and stopped, against that and not against the ground
+        Spot frame = new Spot(0, 0, 0);
         for (final Touch touch : touches) {
             final Optional<Moved> stuck = stuck(rigid, now.placed(), touch, moved);
+            frame = pushed || stuck.isEmpty() ? frame : touch.going();
             pushed = pushed || stuck.isPresent();
             moved = stuck.orElse(moved);
         }
         // slowed only by what it presses on: thrown up off the ground, or in the air, nothing slows it
         if (pushed) {
-            moved = slowed(moved, reckoning.rolling() * reckoning.gravity() * seconds);
+            moved = slowed(moved, frame, reckoning.rolling() * reckoning.gravity() * seconds);
         }
         // pushed by nothing it is carried as flight carries it; pushed, by what it has once it has been pushed
         final Placed gone = flight.carried(now.placed(), pushed ? moved : now.moved(), moved, seconds);
@@ -54,7 +58,7 @@ record Rolling(Reckoning reckoning, double slack) {
                 out = out.plus(touch.pushes().times(touch.deep()));
             }
         }
-        final boolean stopped = pushed && moved.still();
+        final boolean stopped = pushed && moved.velocity().minus(frame).length() == 0 && moved.spin().length() == 0;
         // it has landed in the part of a tick it comes out of the air in, whether it stops there or rolls on
         return new Simulator.Stepped(new Simulator.Mover(gone.moved(out), moved, stopped,
                 stopped ? now.still() + 1 : 0),
@@ -63,12 +67,15 @@ record Rolling(Reckoning reckoning, double slack) {
 
     /**
      * {@code moved} after the push at {@code touch} that stops the spot of the thing there: none, where that spot is
-     * already leaving what it touches, or where it does not press on it at all.
+     * leaving what it touches or is not moving into it at all, so that a wall or a chock it merely touches does not
+     * keep it from falling, or from being thrown along it.
      */
     private Optional<Moved> stuck(final Rigid rigid, final Placed placed, final Touch touch, final Moved moved) {
         final Spot arm = touch.at().minus(placed.at());
-        final Spot slipping = moved.velocity().plus(moved.spin().cross(arm));
-        if (slipping.dot(touch.pushes()) > 1e-9) {
+        // how the spot of it there is moving against what it touches, which may itself be going
+        final Spot slipping = moved.velocity().plus(moved.spin().cross(arm)).minus(touch.going());
+        // only what it is moving into holds it: what it merely touches, or is leaving, does not grip it
+        if (slipping.dot(touch.pushes()) >= -1e-9) {
             return Optional.empty();
         }
         final double kilograms = rigid.kilograms();
@@ -80,7 +87,6 @@ record Rolling(Reckoning reckoning, double slack) {
         final Spot wanted = slipping.times(-1);
         final Spot push = new Spot(wanted.dot(up.cross(along)) / all, across.dot(wanted.cross(along)) / all,
                 across.dot(up.cross(wanted)) / all);
-        // only what it presses on holds it: a wall it merely touches does not keep it from falling
         if (push.dot(touch.pushes()) <= 1e-9) {
             return Optional.empty();
         }
@@ -101,12 +107,17 @@ record Rolling(Reckoning reckoning, double slack) {
                 lying.up() / rigid.turnsHard(new Spot(0, 1, 0)), lying.along() / rigid.turnsHard(new Spot(0, 0, 1))));
     }
 
-    /** {@code moved} with so much {@code less} speed, and as much less turning with it; stopped, where it had less. */
-    private Moved slowed(final Moved moved, final double less) {
-        final double speed = moved.velocity().length();
+    /**
+     * {@code moved} with so much {@code less} speed against what it presses on, which is going as {@code frame}
+     * says, and as much less turning with it; stopped against that, where it had less.
+     */
+    private Moved slowed(final Moved moved, final Spot frame, final double less) {
+        final Spot against = moved.velocity().minus(frame);
+        final double speed = against.length();
         if (speed <= less || speed == 0) {
-            return new Moved();
+            return new Moved(frame, new Spot(0, 0, 0));
         }
-        return new Moved(moved.velocity().times((speed - less) / speed), moved.spin().times((speed - less) / speed));
+        return new Moved(frame.plus(against.times((speed - less) / speed)),
+                moved.spin().times((speed - less) / speed));
     }
 }

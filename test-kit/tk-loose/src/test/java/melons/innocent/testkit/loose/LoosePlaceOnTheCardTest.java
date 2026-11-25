@@ -12,6 +12,7 @@ import com.example.fxsuite.vulkan.space.Vec3;
 import com.example.fxsuite.vulkan.view.Camera;
 import com.example.fxsuite.vulkan.view.Orbit;
 import com.example.fxsuite.vulkan.worked.Daylight;
+import melons.innocent.core.motion.Spot;
 import melons.innocent.core.rest.Ground;
 import melons.innocent.testkit.BaseMap;
 import melons.innocent.testkit.Outline;
@@ -60,7 +61,7 @@ class LoosePlaceOnTheCardTest {
              Place place = kit.placing().apply(card, laid)) {
             final Dial choice = place.dials().getFirst();
             assertEquals("Take away", choice.name());
-            assertEquals(14, choice.steps().size(), "each of the thirteen things, and everything back");
+            assertEquals(20, choice.steps().size(), "each of the nineteen things, and everything back");
             assertTrue(choice.asking(), "a list that asks: the same thing can be chosen twice running");
             ticked(place, trial, 240);
             assertEquals(0, trial.world().moving(), "as it stands, all is at rest once the crate has fallen");
@@ -91,7 +92,7 @@ class LoosePlaceOnTheCardTest {
             ticked(place, trial, 240);
             assertEquals(Set.of(GROUND), trial.world().under("the middle crate"), "the two above it have come down");
             assertEquals(Set.of("the middle crate"), trial.world().under("the highest crate"));
-            assertEquals(9, trial.world().things().size(), "three pillars and a crate gone");
+            assertEquals(15, trial.world().things().size(), "three pillars and a crate gone");
             choice.chosen(choice.steps().indexOf("the chock"));
             ticked(place, trial, 150);
             assertTrue(trial.world().moved("the melon").velocity().length() > 80, "the chock gone, the melon rolls");
@@ -103,11 +104,11 @@ class LoosePlaceOnTheCardTest {
             pictured(canvas, place, "loose-all-down");
             choice.chosen(choice.steps().size() - 1);
             ticked(place, trial, 1);
-            assertEquals(13, trial.world().things().size(), "begun again, every thing is back");
+            assertEquals(19, trial.world().things().size(), "begun again, every thing is back");
             assertTrue(place.said().contains("Loose bodies"));
             final Dial throwing = place.dials().get(2);
             assertEquals("Throw", throwing.name());
-            assertEquals(12, throwing.steps().size(), "every thing but the ramp");
+            assertEquals(17, throwing.steps().size(), "every thing but the ramp and the wagon");
             ticked(place, trial, 120);
             throwing.chosen(throwing.steps().indexOf("the ball"));
             ticked(place, trial, 60);
@@ -117,6 +118,20 @@ class LoosePlaceOnTheCardTest {
             throwing.chosen(throwing.steps().indexOf("the ball"));
             ticked(place, trial, 2);
             assertTrue(trial.world().moved("the ball").velocity().up() > 300, "and thrown again from where it is");
+            final Dial driving = place.dials().get(6);
+            assertEquals("The wagon", driving.name());
+            final int stood = place.inTheWay().blocks().size();
+            driving.chosen(0);
+            ticked(place, trial, 180);
+            assertEquals(new Spot(1_000, 0, 0), trial.world().moved("the wagon's crate").velocity(),
+                    "set going, the wagon carries its crate at ten metres a second");
+            assertTrue(place.inTheWay().blocks().size() < stood, "and going, they are in nobody's way");
+            pictured(canvas, place, new Orbit(new Vec3(-600, 100, 600), 0, 10, 2_200).camera(48, 10), "loose-wagon");
+            driving.chosen(1);
+            ticked(place, trial, 600);
+            assertEquals(Set.of("the wagon"), trial.world().under("the wagon's crate"), "stopped, the crate stays");
+            assertTrue(trial.world().under("the wagon's melon").contains("the wagon"), "so does its chocked melon");
+            assertEquals(Set.of(GROUND), trial.world().under("the wagon's ball"), "and its ball has rolled off");
             assertEquals(List.of(), card.heard(), "the validation layer has nothing to say");
         }
     }
