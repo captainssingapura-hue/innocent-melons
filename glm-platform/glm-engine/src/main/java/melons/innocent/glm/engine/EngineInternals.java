@@ -17,7 +17,8 @@ import java.util.Map;
 
 /**
  * What turns and runs inside an engine's block, joined as it moves, and the heads over it, each bolted to its bank's
- * deck ({@link CylinderHead}): the crankshaft turning in the block's main
+ * deck ({@link CylinderHead}), with what opens and shuts their valves ({@link Valvetrain}): the crankshaft turning in
+ * the block's main
  * bearings; each connecting rod's big end turning on its crankpin and its small end on its gudgeon pin; each gudgeon
  * pin seated in its piston; each piston sliding in its bore. Made once, its parts kept, so it can say how far each has
  * moved from where it was made when the crank has turned so far: the crank turned about its axis, each rod carried
@@ -34,11 +35,13 @@ public final class EngineInternals {
     private final List<Connection> inside = new ArrayList<>();
     private final Map<Part, String> pistons = new LinkedHashMap<>();
     private final List<Part> heads = new ArrayList<>();
+    private final Valvetrain valvetrain;
 
     /** Its parts, made to {@code figures}. */
     public EngineInternals(final EngineFigures figures) {
         this.figures = figures;
         this.crank = new Crankshaft(figures).part();
+        this.valvetrain = new Valvetrain(figures);
         for (int b = 0; b < figures.banks(); b++) {
             heads.add(new CylinderHead(figures, b).part());
             for (int k = 0; k < figures.perBank(); k++) {
@@ -79,6 +82,7 @@ public final class EngineInternals {
             joined.add(new Connection(heads.get(b).name() + " on its deck", block, "deck, bank " + (b + 1),
                     heads.get(b), "deck", Joining.BOLTED));
         }
+        joined.addAll(valvetrain.joined(heads));
         joined.addAll(inside);
         pistons.forEach((piston, at) -> joined.add(new Connection(figures.name() + " " + at + " in its bore", piston,
                 "bore", block, "cylinder " + at, Joining.SLIDING)));
@@ -107,7 +111,13 @@ public final class EngineInternals {
         if (slid != null) {
             return new Mat4(slid.smallEnd(turned).minus(slid.smallEnd()));
         }
-        return new Mat4();
+        final Mat4 worked = valvetrain.moved(part, turned);
+        return worked != null ? worked : new Mat4();
+    }
+
+    /** What opens and shuts its valves. */
+    Valvetrain valvetrain() {
+        return valvetrain;
     }
 
     /** Whether {@code part} is one of its cylinder heads, cast as its block is. */

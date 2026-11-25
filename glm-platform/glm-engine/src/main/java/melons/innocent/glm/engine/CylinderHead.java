@@ -52,6 +52,13 @@ record CylinderHead(EngineFigures figures, int bank) {
             final Vec3 cam = head.cam(inlet);
             points.add(new Point((inlet ? "inlet" : "exhaust") + " camshaft, front", head.at(bank, 0,
                     new Vec3(cam.x(), cam.y(), head.front(bank) - figures.along(bank, 0)))));
+            for (int k = 0; k < figures.perBank(); k++) {
+                for (final int side : List.of(-1, 1)) {
+                    final Valve valve = new Valve(figures, bank, k, inlet, side);
+                    points.add(new Point(valve.called(), valve.seat()));
+                    points.add(new Point(valve.called().replace("valve", "spring seat"), valve.springAt()));
+                }
+            }
         }
         return new Part(called(), Group.ENGINE, false, points, mesh(head), new Made(Material.ALUMINIUM, true));
     }
@@ -149,6 +156,7 @@ record CylinderHead(EngineFigures figures, int bank) {
                 final double to = head.stem() - 2.2;
                 made.add(new Sleeve(head.at(bank, k, seat.plus(axis.times((from + to) / 2))), head.way(bank, axis),
                         to - from, GUIDE, GUIDE_BORE, ROUND).mesh());
+                made.addAll(housing(head, new Valve(figures, bank, k, inlet, s)));
                 final Vec3 bend = seat.plus(axis.times(1.6));
                 final double out = (inlet ? 1 : -1) * head.side(inlet);
                 final Vec3 elbow = new Vec3((bend.x() + out) / 2, PORT, seat.z());
@@ -158,6 +166,21 @@ record CylinderHead(EngineFigures figures, int bank) {
             }
         }
         return made;
+    }
+
+    /**
+     * Where {@code valve} is worked: the pad its spring sits on, round its guide; and the bore its bucket slides in,
+     * as deep as the bucket goes with the valve open the most.
+     */
+    private List<Mesh> housing(final HeadFigures head, final Valve valve) {
+        final Vec3 way = valve.way();
+        final Vec3 pad = valve.springAt();
+        final double top = head.cam(valve.inlet()).minus(head.seat(valve.inlet(), 0)).length() - head.journal() * 1.1;
+        final double from = head.stem() - 0.3 - new ValveTiming(figures).most() - 0.2;
+        final Vec3 seat = valve.seat();
+        final double bore = valve.bucket() + 0.05;
+        return List.of(new Sleeve(pad.minus(way.times(0.1)), way, 0.2, 1.3, GUIDE_BORE, ROUND).mesh(),
+                new Sleeve(seat.plus(way.times((from + top) / 2)), way, top - from, bore + 0.35, bore, ROUND).mesh());
     }
 
     /** How far round a port is: an inlet's, or an exhaust's, a little narrower than its valve. */
