@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.core</groupId>
+        <artifactId>core-engine</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>core-rest</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        The world at rest: what stands on what, as a graph, and the check that says by its forces whether a thing is
+        held where it stands or how its velocity and its turning change if it is not. Checked each tick only where
+        something has happened that could have changed it. What is found no longer held is handed to a simulator,
+        whose shape is said here and which is fitted from outside; the loose body is the first (core-loose).
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-motion</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- what exists in physics: the kinds of shape the shapes here are typed to -->
+        <dependency>
+            <groupId>melons.innocent.physics</groupId>
+            <artifactId>physics-existences</artifactId>
+            <version>${physics.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

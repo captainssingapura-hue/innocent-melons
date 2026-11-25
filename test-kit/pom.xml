@@ -23,11 +23,14 @@
         <vulkan.version>0.1.0-SNAPSHOT</vulkan.version>
         <lab.version>0.1.0-SNAPSHOT</lab.version>
         <places.version>0.1.0-SNAPSHOT</places.version>
+        <core.version>0.1.0-SNAPSHOT</core.version>
     </properties>
 
     <modules>
         <!-- The test ground: the base map, what stands on it, and the walk round it. -->
         <module>tk-ground</module>
+        <!-- Loose bodies on the test ground: things that fall, topple and come to rest, to be walked round. -->
+        <module>tk-loose</module>
     </modules>
 
     <dependencyManagement>
@@ -54,6 +57,27 @@
                 <groupId>com.example.fxsuite.places</groupId>
                 <artifactId>pl-yard</artifactId>
                 <version>${places.version}</version>
+            </dependency>
+            <!-- the core engine: the world at rest, its check, and the loose body -->
+            <dependency>
+                <groupId>melons.innocent.core</groupId>
+                <artifactId>core-loose</artifactId>
+                <version>${core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.core</groupId>
+                <artifactId>core-interaction</artifactId>
+                <version>${core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example.fxsuite</groupId>
+                <artifactId>fxsuite-existence</artifactId>
+                <version>${core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.testkit</groupId>
+                <artifactId>tk-ground</artifactId>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.junit.jupiter</groupId>

@@ -18,6 +18,7 @@
         <module>historian</module>
         <module>taxonomy</module>
         <module>math</module>
+        <module>physics</module>
         <module>core-engine</module>
         <module>road</module>
         <module>forms</module>
@@ -27,6 +28,7 @@
         <module>vehicles</module>
         <module>places</module>
         <module>test-kit</module>
+        <module>doors</module>
         <module>terrain</module>
         <module>plants-lab</module>
         <module>vehicles-lab</module>

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>melons.innocent.doors</groupId>
+    <artifactId>doors</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <description>
+        Doors: a generic swing door, described once by a typed parameter (its design and what it is made of, which
+        side it is hung on and which way it opens, and its size), from which come its parts as meshes, what of it is
+        in the way, and the hinge it turns on; and a walk on the test ground through a wall with one of each design.
+        Its code keeps CQ's basic rules, which the studio checks from each module's jar and its sources jar.
+    </description>
+
+    <properties>
+        <maven.compiler.release>25</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- the renderer and its bench, the material lab and the places: the one place each one's version is said -->
+        <vulkan.version>0.1.0-SNAPSHOT</vulkan.version>
+        <lab.version>0.1.0-SNAPSHOT</lab.version>
+        <places.version>0.1.0-SNAPSHOT</places.version>
+        <core.version>0.1.0-SNAPSHOT</core.version>
+        <kit.version>0.1.0-SNAPSHOT</kit.version>
+    </properties>
+
+    <modules>
+        <!-- The swing door: its typed description, its parts, what is in the way, and its hinge. -->
+        <module>door-swing</module>
+        <!-- Doors on the card, in a wall on the test ground, opened and shut by whoever walks up to them. -->
+        <module>door-walk</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.example.fxsuite.vulkan</groupId>
+                <artifactId>vk-drawing</artifactId>
+                <version>${vulkan.version}</version>
+            </dependency>
+            <!-- the renderer's bench: the card, and the avatar that walks about on it -->
+            <dependency>
+                <groupId>com.example.fxsuite.vulkan</groupId>
+                <artifactId>vk-bench</artifactId>
+                <version>${vulkan.version}</version>
+            </dependency>
+            <!-- the material lab: what the ground is covered with -->
+            <dependency>
+                <groupId>com.example.fxsuite.texture</groupId>
+                <artifactId>tx-materials</artifactId>
+                <version>${lab.version}</version>
+            </dependency>
+            <!-- the yard's walls: the wall the doors stand in -->
+            <dependency>
+                <groupId>com.example.fxsuite.places</groupId>
+                <artifactId>pl-yard</artifactId>
+                <version>${places.version}</version>
+            </dependency>
+            <!-- the core engine: what turns on a hinge, and what can be done with a thing -->
+            <dependency>
+                <groupId>melons.innocent.core</groupId>
+                <artifactId>core-mechanism</artifactId>
+                <version>${core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.core</groupId>
+                <artifactId>core-interaction</artifactId>
+                <version>${core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example.fxsuite</groupId>
+                <artifactId>fxsuite-existence</artifactId>
+                <version>${core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.testkit</groupId>
+                <artifactId>tk-ground</artifactId>
+                <version>${kit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.doors</groupId>
+                <artifactId>door-swing</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>5.11.3</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.13.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.5.2</version>
+                </plugin>
+                <plugin>
+                    <!-- its sources in a jar beside its classes, installed with it: what the studio's checks read it by -->
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>3.3.1</version>
+                    <executions>
+                        <execution>
+                            <id>sources</id>
+                            <goals>
+                                <goal>jar-no-fork</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>

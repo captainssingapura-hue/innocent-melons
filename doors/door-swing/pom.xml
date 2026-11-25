@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.doors</groupId>
+        <artifactId>doors</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>door-swing</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        The swing door, with no card in it: its typed description (a design and what it is made of, the side it is
+        hung on and the way it opens, its size); its parts as meshes, each of one of the lab's materials and either
+        fixed or turning with the leaf; where it stands, what of it is in the way however far open it is; and the
+        hinge it turns on, which is the core engine's.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-drawing</artifactId>
+        </dependency>
+        <!-- the material lab: every part of a door is of one of its leaves; and through it the engine's blocks -->
+        <dependency>
+            <groupId>com.example.fxsuite.texture</groupId>
+            <artifactId>tx-materials</artifactId>
+        </dependency>
+        <!-- the core engine's hinge: how a leaf swings from shut to open and back -->
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-mechanism</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

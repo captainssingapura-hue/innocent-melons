@@ -18,6 +18,7 @@ import melons.innocent.core.motion.Motion;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -96,6 +97,21 @@ public final class TestGround implements Place {
     @Override
     public void readied(final Camera camera) {
         stood.forEach(place -> place.readied(camera));
+    }
+
+    /**
+     * What is in the way now, where any thing stood on it says what is in its way has changed: the wall and every
+     * thing's together again. Each thing is asked, since being asked is how a thing knows its change was taken up.
+     */
+    @Override
+    public Optional<Obstacles> rearranged() {
+        final List<Optional<Obstacles>> changed = new ArrayList<>();
+        stood.forEach(place -> changed.add(place.rearranged()));
+        if (changed.stream().noneMatch(Optional::isPresent)) {
+            return Optional.empty();
+        }
+        inTheWay.set(0, together());
+        return Optional.of(inTheWay.getFirst());
     }
 
     @Override
