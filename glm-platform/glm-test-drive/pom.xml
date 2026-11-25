@@ -25,6 +25,11 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>melons.innocent.glm</groupId>
+            <artifactId>glm-engine-bench</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>melons.innocent.testkit</groupId>
             <artifactId>tk-ground</artifactId>
             <version>${lab.version}</version>

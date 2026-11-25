@@ -9,6 +9,7 @@ import com.example.fxsuite.vulkan.bench.play.Keeping;
 import com.example.fxsuite.vulkan.bench.play.Source;
 import melons.innocent.glm.bench.OnShow;
 import melons.innocent.glm.core.Assembled;
+import melons.innocent.glm.engine.EngineFigures;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,14 +17,19 @@ import java.util.Optional;
 /**
  * Test drives of the GLM car, for a walk to move: each run the car {@code built} driven from {@code start}, as the
  * avatar engine drives a land vehicle as big as {@code chassis} says, its engine running and its controls taken, at a
- * standstill to begin with.
+ * standstill to begin with; its wheels steered and turning as {@code wheeling} says; the engine in its bay heard,
+ * unless {@code quiet}.
  *
- * @param chassis how the avatar engine knows the car
- * @param built   the car as it is made, put together
- * @param shown   which of its groups are shown, and in what
- * @param start   where it starts
+ * @param chassis  how the avatar engine knows the car
+ * @param built    the car as it is made, put together
+ * @param shown    which of its groups are shown, and in what
+ * @param wheeling how its wheels steer and turn
+ * @param engine   the engine in its bay; or none
+ * @param quiet    whether it is kept quiet, as a run with nobody listening is
+ * @param start    where it starts
  */
-public record TestDriving(GlmChassis chassis, Assembled built, OnShow shown, Place start) implements Roamer {
+public record TestDriving(GlmChassis chassis, Assembled built, OnShow shown, Wheeling wheeling,
+                          Optional<EngineFigures> engine, boolean quiet, Place start) implements Roamer {
 
     /** It is none of the place's own pieces. */
     private static final int OWN = -1;
@@ -31,7 +37,8 @@ public record TestDriving(GlmChassis chassis, Assembled built, OnShow shown, Pla
     @Override
     public Roaming roaming(final Source source, final Optional<Keeping> keeping, final Skies skies) {
         final Lift first = new Lift(OWN, chassis.chassis(), start, 0, 0, 0, true, true, 0, 0, 0, 0);
-        return new TestDriven(source, keeping, Optional.of(skies), chassis, new CarDrawn(built, shown), first);
+        return new TestDriven(source, keeping, Optional.of(skies), chassis, new CarDrawn(built, shown, wheeling),
+                new EngineHeard(engine, quiet), first);
     }
 
     @Override

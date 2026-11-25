@@ -28,8 +28,9 @@ import java.util.Optional;
  * tells it, kept and checked as any run is. Driven as the avatar engine drives a land vehicle ({@link Lift}), its
  * test engine: W or Up the throttle, S or Down the brake and then reverse, A and D or Left and Right the wheel, Space
  * the handbrake, Shift held to go carefully; over whatever is in its way, up ramps and onto decks, as the engine has
- * its wheels find the ground. The car itself is drawn as it is made, turned and tipped as it goes
- * ({@link CarDrawn}); its speed over the picture.
+ * its wheels find the ground. The car itself is drawn as it is made, turned and tipped as it goes, its front wheels
+ * steered and every wheel turning as it rolls ({@link CarDrawn}); its engine heard at the revs its speed makes
+ * ({@link EngineHeard}); its speed, revs and gear over the picture.
  */
 final class TestDriven implements Roaming {
 
@@ -42,22 +43,29 @@ final class TestDriven implements Roaming {
     private final Optional<Skies> skies;
     private final GlmChassis chassis;
     private final CarDrawn car;
+    private final EngineHeard engine;
     private Obstacles world = Obstacles.NONE;
     private Lift now;
     private Lift before;
+    private double rolled;
+    private double rolledBefore;
     private Chasing chasing = FIRST;
     private Chasing chased = FIRST;
     private Clock clock = Clock.START;
     private long step;
 
-    /** {@code chassis} driven from {@code first}, told by {@code source}, drawn as {@code car}. */
+    /**
+     * {@code chassis} driven from {@code first}, told by {@code source}, drawn as {@code car}, heard as
+     * {@code engine}.
+     */
     TestDriven(final Source source, final Optional<Keeping> keeping, final Optional<Skies> skies,
-               final GlmChassis chassis, final CarDrawn car, final Lift first) {
+               final GlmChassis chassis, final CarDrawn car, final EngineHeard engine, final Lift first) {
         this.source = source;
         this.keeping = keeping;
         this.skies = skies;
         this.chassis = chassis;
         this.car = car;
+        this.engine = engine;
         this.now = first;
         this.before = first;
     }
@@ -80,7 +88,11 @@ final class TestDriven implements Roaming {
     private void taken(final Step told) {
         before = now;
         chased = chasing;
-        now = now.step(controls(told), Clock.STEP, world, List.of());
+        final Controls asked = controls(told);
+        now = now.step(asked, Clock.STEP, world, List.of());
+        rolledBefore = rolled;
+        rolled += now.ahead() * Clock.STEP;
+        engine.driven(now.ahead(), asked.forward());
         chasing = chasing.stepped(told, Clock.STEP);
         step++;
         skies.ifPresent(sky -> sky.stepped(Clock.STEP));
@@ -171,16 +183,20 @@ final class TestDriven implements Roaming {
     public void drawn(final Pass pass, final Camera camera, final double blend) {
         final double tilt = before.tilt() + (now.tilt() - before.tilt()) * blend;
         final double roll = before.roll() + (now.roll() - before.roll()) * blend;
-        car.drawn(pass, camera, chassis.carried(place(blend), tilt, roll));
+        final double steer = before.steer() + (now.steer() - before.steer()) * blend;
+        car.drawn(pass, camera, chassis.carried(place(blend), tilt, roll), steer,
+                rolledBefore + (rolled - rolledBefore) * blend);
     }
 
     @Override
     public void overlaid(final Pass pass, final Overlay.Over over, final double blend) {
-        car.overlaid(pass, over, before.ahead() + (now.ahead() - before.ahead()) * blend);
+        car.overlaid(pass, over, before.ahead() + (now.ahead() - before.ahead()) * blend, engine.rpm(),
+                engine.gear());
     }
 
     @Override
     public void uncarded() {
         car.close();
+        engine.close();
     }
 }
