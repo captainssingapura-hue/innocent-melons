@@ -40,7 +40,7 @@ class LooseTest {
     }
 
     private double lowest(final World world, final String name) {
-        return world.placed(name).orElseThrow().corners(world.thing(name).box()).stream()
+        return world.placed(name).orElseThrow().corners((Box) world.thing(name).shape()).stream()
                 .mapToDouble(Spot::up).min().orElseThrow();
     }
 

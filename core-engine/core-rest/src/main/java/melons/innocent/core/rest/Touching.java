@@ -27,8 +27,51 @@ public record Touching(double slack, double skin, double steep) {
         this(0.01, 20, 0.5);
     }
 
+    /** Where a thing of {@code shape} placed so touches the {@code ground}. */
+    public List<Touch> grounded(final ShapeImpl<?> shape, final Placed placed, final Ground ground) {
+        return switch (shape) {
+            case Ellipsoid round -> new RoundTouch(slack, skin).grounded(round, placed, ground);
+            case Box box -> cornered(box, placed, ground);
+            case Slab slab -> cornered(slab.box(), placed, ground);
+        };
+    }
+
+    /**
+     * Where a thing of {@code shape} placed so is touched by {@code other}, called {@code on}, standing as said:
+     * from below, for a thing with corners; wherever it meets it, for a round one. Nothing rests on a round thing
+     * yet, so none touches it.
+     */
+    public List<Touch> held(final ShapeImpl<?> shape, final Placed placed, final String on,
+                            final ShapeImpl<?> other, final Placed stands) {
+        if (other instanceof Ellipsoid
+                || placed.at().minus(stands.at()).length() > shape.reaches() + other.reaches() + slack) {
+            return List.of();
+        }
+        return switch (shape) {
+            case Ellipsoid round -> new RoundTouch(slack, skin).met(round, placed, on, boxed(other), stands);
+            case Box box -> cornered(box, placed, on, boxed(other), stands);
+            case Slab slab -> cornered(slab.box(), placed, on, boxed(other), stands);
+        };
+    }
+
+    /** Whether two things are run well into each other where they stand; never said of a round one. */
+    public boolean overlapping(final ShapeImpl<?> shape, final Placed placed, final ShapeImpl<?> other,
+                               final Placed stands) {
+        return !(shape instanceof Ellipsoid) && !(other instanceof Ellipsoid)
+                && overlapping(boxed(shape), placed, boxed(other), stands);
+    }
+
+    /** The box a shape with corners meets other things as. */
+    private Box boxed(final ShapeImpl<?> shape) {
+        return switch (shape) {
+            case Box box -> box;
+            case Slab slab -> slab.box();
+            case Ellipsoid round -> throw new IllegalArgumentException("a round thing has no corners");
+        };
+    }
+
     /** Where a {@code box} placed so touches the {@code ground}: each corner on it or under it. */
-    public List<Touch> grounded(final Box box, final Placed placed, final Ground ground) {
+    private List<Touch> cornered(final Box box, final Placed placed, final Ground ground) {
         final List<Touch> touches = new ArrayList<>();
         for (final Spot corner : placed.corners(box)) {
             final double deep = ground.level() - corner.up();
@@ -40,12 +83,9 @@ public record Touching(double slack, double skin, double steep) {
     }
 
     /** Where a {@code box} placed so is touched from below by {@code other}, called {@code on}, standing as said. */
-    public List<Touch> held(final Box box, final Placed placed, final String on, final Box other,
-                            final Placed stands) {
+    private List<Touch> cornered(final Box box, final Placed placed, final String on, final Box other,
+                                 final Placed stands) {
         final List<Touch> touches = new ArrayList<>();
-        if (placed.at().minus(stands.at()).length() > box.half().length() + other.half().length() + slack) {
-            return touches;
-        }
         for (final Spot corner : placed.corners(box)) {
             faced(corner, other, stands, 1).ifPresent(face ->
                     touches.add(new Touch(corner, face.pushes(), face.deep(), on)));
@@ -62,7 +102,7 @@ public record Touching(double slack, double skin, double steep) {
      * Two that do not overlap can be told apart along a face of one, a face of the other, or a line square to an
      * edge of each.
      */
-    public boolean overlapping(final Box box, final Placed placed, final Box other, final Placed stands) {
+    private boolean overlapping(final Box box, final Placed placed, final Box other, final Placed stands) {
         final List<Spot> ways = new ArrayList<>();
         for (int axis = 0; axis < 3; axis++) {
             final Spot unit = new Spot(axis == 0 ? 1 : 0, axis == 1 ? 1 : 0, axis == 2 ? 1 : 0);

@@ -46,4 +46,17 @@ public record Box(double across, double up, double along) implements ShapeImpl<S
     public double room() {
         return across * up * along / 1_000_000;
     }
+
+    @Override
+    public double reaches() {
+        return half().length();
+    }
+
+    @Override
+    public double turnsHard(final Spot along, final double kilograms) {
+        final double twelfth = kilograms / 12;
+        return twelfth * (up * up + this.along * this.along) * along.across() * along.across()
+                + twelfth * (across * across + this.along * this.along) * along.up() * along.up()
+                + twelfth * (across * across + up * up) * along.along() * along.along();
+    }
 }

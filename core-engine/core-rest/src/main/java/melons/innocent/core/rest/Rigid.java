@@ -1,18 +1,21 @@
 package melons.innocent.core.rest;
 
 import melons.innocent.core.motion.Spot;
+import melons.innocent.physics.existences.Rolls;
+import melons.innocent.physics.existences.Unmoving;
 
 /**
  * A thing that keeps its shape, as the check and the simulators know it: its name, by which the world tells it from
  * every other; its shape; and how dense what it is made of is, in kilograms a cubic metre. Its mass, its middle of
  * mass and how hard it is to set turning are worked out from those, never said beside them: it is of one stuff all
- * through, so its middle of mass is the middle of its shape.
+ * through, so its middle of mass is the middle of its shape. Whether it rolls, and whether it ever moves at all,
+ * are its shape's kind's to say.
  *
  * @param name  what the world calls it
- * @param box   its shape
+ * @param shape its shape
  * @param dense how many kilograms a cubic metre of it weighs
  */
-public record Rigid(String name, Box box, double dense) {
+public record Rigid(String name, ShapeImpl<?> shape, double dense) {
 
     public Rigid {
         if (name.isBlank()) {
@@ -25,7 +28,7 @@ public record Rigid(String name, Box box, double dense) {
 
     /** Its mass, in kilograms. */
     public double kilograms() {
-        return dense * box.room();
+        return dense * shape.room();
     }
 
     /**
@@ -33,11 +36,16 @@ public record Rigid(String name, Box box, double dense) {
      * thing's own frame and one long: in kilograms times centimetres squared.
      */
     public double turnsHard(final Spot along) {
-        final double twelfth = kilograms() / 12;
-        final double across = twelfth * (box.up() * box.up() + box.along() * box.along());
-        final double up = twelfth * (box.across() * box.across() + box.along() * box.along());
-        final double lengthways = twelfth * (box.across() * box.across() + box.up() * box.up());
-        return across * along.across() * along.across() + up * along.up() * along.up()
-                + lengthways * along.along() * along.along();
+        return shape.turnsHard(along, kilograms());
+    }
+
+    /** Whether it is of a shape that rolls. */
+    public boolean rolls() {
+        return shape.kind().answer(Rolls.class).isPresent();
+    }
+
+    /** Whether it is of a shape that never moves: always at rest, holding up what stands on it. */
+    public boolean unmoving() {
+        return shape.kind().answer(Unmoving.class).isPresent();
     }
 }

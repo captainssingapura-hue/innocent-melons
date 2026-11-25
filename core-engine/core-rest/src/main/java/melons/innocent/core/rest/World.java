@@ -53,13 +53,19 @@ public final class World {
         this.loose = loose;
     }
 
-    /** {@code rigid} stood in the world as it is described: taken as at rest until the check says otherwise. */
+    /**
+     * {@code rigid} stood in the world as it is described: taken as at rest until the check says otherwise, which
+     * of a thing whose shape never moves it never does.
+     */
     public World stood(final Rigid rigid, final Placed placed) {
         if (things.putIfAbsent(rigid.name(), rigid) != null) {
             throw new IllegalArgumentException("there is already a thing called " + rigid.name());
         }
         resting.put(rigid.name(), placed);
-        dirty.add(rigid.name());
+        // what never moves is never checked: it is at rest, whatever is or is not under it
+        if (!rigid.unmoving()) {
+            dirty.add(rigid.name());
+        }
         return this;
     }
 
@@ -99,8 +105,8 @@ public final class World {
         final List<String> names = List.copyOf(resting.keySet());
         for (int one = 0; one < names.size(); one++) {
             for (int other = one + 1; other < names.size(); other++) {
-                if (touching.overlapping(things.get(names.get(one)).box(), resting.get(names.get(one)),
-                        things.get(names.get(other)).box(), resting.get(names.get(other)))) {
+                if (touching.overlapping(things.get(names.get(one)).shape(), resting.get(names.get(one)),
+                        things.get(names.get(other)).shape(), resting.get(names.get(other)))) {
                     happened.add(new Happened.Overlapping(names.get(one), names.get(other)));
                 }
             }
@@ -151,15 +157,15 @@ public final class World {
      */
     private List<Touch> touches(final String name, final Rigid rigid, final Placed placed,
                                 final boolean landedToo) {
-        final List<Touch> touches = new ArrayList<>(touching.grounded(rigid.box(), placed, ground));
+        final List<Touch> touches = new ArrayList<>(touching.grounded(rigid.shape(), placed, ground));
         resting.forEach((other, stands) -> {
             if (!other.equals(name)) {
-                touches.addAll(touching.held(rigid.box(), placed, other, things.get(other).box(), stands));
+                touches.addAll(touching.held(rigid.shape(), placed, other, things.get(other).shape(), stands));
             }
         });
         moving.forEach((other, mover) -> {
             if (landedToo && mover.landed() && !other.equals(name)) {
-                touches.addAll(touching.held(rigid.box(), placed, other, things.get(other).box(), mover.placed()));
+                touches.addAll(touching.held(rigid.shape(), placed, other, things.get(other).shape(), mover.placed()));
             }
         });
         return touches;

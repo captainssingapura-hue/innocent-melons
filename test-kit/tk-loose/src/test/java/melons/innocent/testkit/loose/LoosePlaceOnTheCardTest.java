@@ -47,22 +47,25 @@ class LoosePlaceOnTheCardTest {
     private final Daylight day = new Daylight();
     private final Laid laid = new Laid();
     private final Camera camera = new Orbit(new Vec3(100, 80, 1_200), 0, 12, 2_600).camera(48, 10);
+    /** The ramp and the ground before it, from near by. */
+    private final Camera beside = new Orbit(new Vec3(1_560, 40, 1_150), 28, 13, 900).camera(48, 10);
 
     @Test
     void theWindowsListTakesAnyThingAwayAndBeginsAgain() throws IOException {
         Files.createDirectories(Path.of("target", "card"));
-        final Trial trial = new Trial(-1);
+        final Trial trial = new Trial(-1, 12);
         final TestKit kit = new TestKit("tried", new BaseMap(Outline.CIRCLE, 100, Grounds.TURF))
                 .with((card, laying) -> new LoosePlace(card, laying, trial));
         try (Card card = new Card(); Canvas canvas = card.canvas(WIDTH, HEIGHT);
              Place place = kit.placing().apply(card, laid)) {
             final Dial choice = place.dials().getFirst();
             assertEquals("Take away", choice.name());
-            assertEquals(10, choice.steps().size(), "nothing, each of the eight things, and everything back");
+            assertEquals(15, choice.steps().size(), "nothing, each of the thirteen things, and everything back");
             ticked(place, trial, 240);
             assertEquals(0, trial.world().moving(), "as it stands, all is at rest once the crate has fallen");
             final int inTheWay = place.inTheWay().blocks().size();
             pictured(canvas, place, "loose-as-it-stands");
+            pictured(canvas, place, beside, "loose-ramp-held");
             choice.set(choice.steps().indexOf("the stack's pillar"));
             ticked(place, trial, 2);
             choice.set(choice.steps().indexOf("the beam's right pillar"));
@@ -72,7 +75,7 @@ class LoosePlaceOnTheCardTest {
             ticked(place, trial, 300);
             assertEquals(Set.of("the beam's left pillar", GROUND), trial.world().under("the beam"));
             assertEquals(inTheWay - 2, place.inTheWay().blocks().size(), "two pillars gone");
-            final Block ramp = place.inTheWay().blocks().stream().filter(block -> block.toe() < block.top() - 50)
+            final Block ramp = place.inTheWay().blocks().stream().filter(block -> block.toe() < block.top() - 50 && block.halfWidth() == 20)
                     .findFirst().orElseThrow();
             assertEquals(20, ramp.toe(), 2, "the leaning beam is in the way as a ramp, from its end on the ground");
             assertEquals(130, ramp.top(), 8, "up to its end over the pillar it leans on");
@@ -86,11 +89,19 @@ class LoosePlaceOnTheCardTest {
             ticked(place, trial, 240);
             assertEquals(Set.of(GROUND), trial.world().under("the middle crate"), "the two above it have come down");
             assertEquals(Set.of("the middle crate"), trial.world().under("the highest crate"));
-            assertEquals(4, trial.world().things().size(), "three pillars and a crate gone");
+            assertEquals(9, trial.world().things().size(), "three pillars and a crate gone");
+            choice.set(choice.steps().indexOf("the chock"));
+            ticked(place, trial, 150);
+            assertTrue(trial.world().moved("the melon").velocity().length() > 80, "the chock gone, the melon rolls");
+            pictured(canvas, place, "loose-rolling");
+            pictured(canvas, place, beside, "loose-ramp-rolling");
+            ticked(place, trial, 1_500);
+            assertEquals(0, trial.world().moving(), "and comes to rest out on the ground");
+            pictured(canvas, place, beside, "loose-ramp-at-rest");
             pictured(canvas, place, "loose-all-down");
             choice.set(choice.steps().size() - 1);
             ticked(place, trial, 1);
-            assertEquals(8, trial.world().things().size(), "begun again, every thing is back");
+            assertEquals(13, trial.world().things().size(), "begun again, every thing is back");
             assertTrue(place.said().contains("Loose bodies"));
             assertEquals(List.of(), card.heard(), "the validation layer has nothing to say");
         }
@@ -108,8 +119,13 @@ class LoosePlaceOnTheCardTest {
     }
 
     private void pictured(final Canvas canvas, final Place place, final String name) throws IOException {
-        canvas.drawn(day.sky(), new Framed(laid, camera, day.light()).filling((double) WIDTH / HEIGHT),
-                pass -> place.drawn(pass, camera));
+        pictured(canvas, place, camera, name);
+    }
+
+    private void pictured(final Canvas canvas, final Place place, final Camera seen, final String name)
+            throws IOException {
+        canvas.drawn(day.sky(), new Framed(laid, seen, day.light()).filling((double) WIDTH / HEIGHT),
+                pass -> place.drawn(pass, seen));
         final BufferedImage image = new com.example.fxsuite.vulkan.worked.Picture(canvas.width(), canvas.pixels())
                 .image();
         ImageIO.write(image, "png", Path.of("target", "card", name + ".png").toFile());

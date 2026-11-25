@@ -8,6 +8,7 @@ import com.example.fxsuite.vulkan.bench.Place;
 import com.example.fxsuite.vulkan.device.Card;
 import com.example.fxsuite.vulkan.device.Pass;
 import com.example.fxsuite.vulkan.form.Cuboid;
+import com.example.fxsuite.vulkan.form.Mesh;
 import com.example.fxsuite.vulkan.render.Looked;
 import com.example.fxsuite.vulkan.render.Shaped;
 import com.example.fxsuite.vulkan.shade.Laid;
@@ -18,7 +19,10 @@ import com.example.fxsuite.vulkan.view.Camera;
 import melons.innocent.core.motion.Spot;
 import melons.innocent.core.motion.Turn;
 import melons.innocent.core.rest.Box;
+import melons.innocent.core.rest.Ellipsoid;
 import melons.innocent.core.rest.Placed;
+import melons.innocent.core.rest.ShapeImpl;
+import melons.innocent.core.rest.Slab;
 import melons.innocent.core.rest.World;
 
 import java.util.ArrayList;
@@ -42,6 +46,8 @@ public final class LoosePlace implements Place {
 
     private static final String NOTHING = "nothing yet";
     private static final String AGAIN = "everything back: begin again";
+    /** How many points go round a round thing's mesh. */
+    private static final int ROUND = 48;
 
     private final Trial trial;
     private final Map<Stuff, Looked> looks = new EnumMap<>(Stuff.class);
@@ -50,6 +56,8 @@ public final class LoosePlace implements Place {
     private final List<String> names;
     /** The window's choice: nothing, then each thing by its name, then everything back again. */
     private final Dial taken;
+    /** How steep the ramp is made when the trial is next begun again. */
+    private final Dial slope;
     private int chosen;
     private long told;
 
@@ -61,14 +69,14 @@ public final class LoosePlace implements Place {
         choices.addAll(names);
         choices.add(AGAIN);
         this.taken = new Dial("Take away", choices, 0);
+        this.slope = new Dial("The ramp's slope when begun again, degrees", 0, 30, trial.slope());
         final Shades shades = new Shades();
         try {
             for (final Stuff stuff : Stuff.values()) {
                 looks.put(stuff, new Looked(card, new Look(laid, shades.of(stuff.material()))));
             }
             for (final String name : trial.world().things()) {
-                final Box box = trial.world().thing(name).box();
-                shapes.put(name, new Shaped(card, laid, new Cuboid(box.across(), box.up(), box.along()).formed()));
+                shapes.put(name, new Shaped(card, laid, meshed(trial.world().thing(name).shape())));
             }
         } catch (final RuntimeException refused) {
             close();
@@ -77,9 +85,19 @@ public final class LoosePlace implements Place {
         this.told = trial.changes();
     }
 
+    /** A thing's shape as a mesh: a box or a slab its six faces, a round thing round. */
+    private Mesh meshed(final ShapeImpl<?> shape) {
+        return switch (shape) {
+            case Box box -> new Cuboid(box.across(), box.up(), box.along()).formed();
+            case Slab slab -> new Cuboid(slab.box().across(), slab.box().up(), slab.box().along()).formed();
+            case Ellipsoid round -> new com.example.fxsuite.vulkan.form.Ellipsoid(round.across(), round.up(),
+                    round.along()).formed(ROUND, ROUND / 2);
+        };
+    }
+
     @Override
     public List<Dial> dials() {
-        return List.of(taken);
+        return List.of(taken, slope);
     }
 
     /**
@@ -93,7 +111,7 @@ public final class LoosePlace implements Place {
             return;
         }
         if (now > names.size()) {
-            trial.again();
+            trial.again(slope.value());
         } else if (now > 0) {
             trial.take(names.get(now - 1));
         }
@@ -107,49 +125,12 @@ public final class LoosePlace implements Place {
         final List<Block> blocks = new ArrayList<>();
         for (final String name : world.things()) {
             if (world.resting(name)) {
-                blocks.add(standsIn(world.thing(name).box(), world.placed(name).orElseThrow()));
+                blocks.add(new StandIn().of(world.thing(name).shape(), world.placed(name).orElseThrow()));
             }
         }
         return new Obstacles(blocks);
     }
 
-    /**
-     * What stands in for a box placed so, to the avatar. Standing square it is itself. Leaning, it is a ramp along
-     * its longest way, from its lower end up to its higher, as wide as it is and solid down to the ground under it,
-     * so it is walked up and not through. Standing on end, it is the box round its corners.
-     */
-    private Block standsIn(final Box box, final Placed placed) {
-        if (Math.abs(placed.turned().w()) > 0.999_999) {
-            return new Block(placed.at().across(), placed.at().along(), box.across() / 2, box.along() / 2, 0,
-                    placed.at().up() - box.up() / 2, placed.at().up() + box.up() / 2);
-        }
-        final int longest = box.across() >= box.up() && box.across() >= box.along() ? 0
-                : box.up() >= box.along() ? 1 : 2;
-        final Spot reach = placed.turned().turned(new Spot(longest == 0 ? 1 : 0, longest == 1 ? 1 : 0,
-                longest == 2 ? 1 : 0)).times(reach(box, longest) / 2);
-        final Spot upper = reach.up() >= 0 ? reach : reach.times(-1);
-        final List<Spot> corners = placed.corners(box);
-        final double high = corners.stream().filter(corner -> corner.minus(placed.at()).dot(upper) > 0)
-                .mapToDouble(Spot::up).max().orElseThrow();
-        final double low = corners.stream().filter(corner -> corner.minus(placed.at()).dot(upper) < 0)
-                .mapToDouble(Spot::up).max().orElseThrow();
-        if (Math.hypot(upper.across(), upper.along()) < 1) {
-            final double across = corners.stream().mapToDouble(corner -> Math.abs(corner.across()
-                    - placed.at().across())).max().orElseThrow();
-            final double along = corners.stream().mapToDouble(corner -> Math.abs(corner.along()
-                    - placed.at().along())).max().orElseThrow();
-            return new Block(placed.at().across(), placed.at().along(), across, along, 0, 0, Math.max(high, low));
-        }
-        final Spot foot = placed.at().minus(upper);
-        final Spot head = placed.at().plus(upper);
-        return Block.ramp(foot.across(), foot.along(), low, head.across(), head.along(), high,
-                Math.max(reach(box, (longest + 1) % 3), reach(box, (longest + 2) % 3)));
-    }
-
-    /** How far a box reaches the way numbered: 0 across, 1 up, 2 along. */
-    private double reach(final Box box, final int way) {
-        return way == 0 ? box.across() : way == 1 ? box.up() : box.along();
-    }
 
     @Override
     public Optional<Obstacles> rearranged() {

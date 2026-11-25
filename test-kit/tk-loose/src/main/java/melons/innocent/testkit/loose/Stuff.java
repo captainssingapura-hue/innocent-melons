@@ -17,7 +17,11 @@ public enum Stuff {
     /** Cast concrete: a pillar. */
     CONCRETE(2_400, Materials.Concrete::new),
     /** Steel: a beam. */
-    STEEL(7_850, Materials.Steel::new);
+    STEEL(7_850, Materials.Steel::new),
+    /** A watermelon, rind and all. */
+    RIND(960, Materials.Rind::new),
+    /** Rubber: a ball. */
+    RUBBER(1_100, Materials.Rubber::new);
 
     private final double dense;
     private final Supplier<Material> material;

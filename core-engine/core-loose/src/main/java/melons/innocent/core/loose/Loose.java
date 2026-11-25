@@ -27,6 +27,9 @@ import java.util.Optional;
  * <li><b>It is held</b>, balanced on what it touches: it does not move, and the tick is counted toward its rest.</li>
  * </ul>
  *
+ * <p>That is a thing with corners. A thing of a shape that rolls keeps its motion and is stepped otherwise
+ * ({@link Rolling}).
+ *
  * <p>A landing stops: where falling or tipping would carry it into what could hold it, it is set down just touching
  * and loses all its motion, to be reckoned afresh from there at the next tick. Nothing bounces and nothing slides,
  * and it meets only what is at rest or has itself landed: two loose bodies meeting in the air pass through each
@@ -47,6 +50,9 @@ public record Loose(Reckoning reckoning, double slack) implements Simulator {
 
     @Override
     public Stepped stepped(final Rigid rigid, final Mover now, final Around around, final double seconds) {
+        if (rigid.rolls()) {
+            return new Rolling(reckoning, slack).stepped(rigid, now, around, seconds);
+        }
         final List<Touch> touches = around.touches(rigid, now.placed());
         final Reckoned reckoned = reckoning.of(rigid, now.placed(), touches, seconds);
         if (reckoned.held()) {
