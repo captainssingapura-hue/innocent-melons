@@ -56,6 +56,7 @@ public record Finishes(Map<Group, Coat> coats, Map<Material, Coat> bare) {
                 Map.entry(Group.BRAKES, new Coat(Coat.Kind.STEEL)),
                 Map.entry(Group.CALIPERS, new Coat(Coat.Kind.GLOSS_PAINT, "#b3261e")),
                 Map.entry(Group.STEERING, new Coat(Coat.Kind.GLOSS_PAINT, "#1e2023")),
+                Map.entry(Group.ENGINE, new Coat(Coat.Kind.GLOSS_PAINT, "#2b2d30")),
                 Map.entry(Group.WHEELS, new Coat(Coat.Kind.GUN_METAL)),
                 Map.entry(Group.TYRES, new Coat(Coat.Kind.RUBBER, "#1b1d20"))));
     }

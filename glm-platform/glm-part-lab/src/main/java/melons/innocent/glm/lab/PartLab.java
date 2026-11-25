@@ -19,6 +19,7 @@ import javafx.application.Platform;
 import melons.innocent.glm.core.Assembled;
 import melons.innocent.glm.core.Assembly;
 import melons.innocent.glm.core.Material;
+import melons.innocent.glm.engine.EngineShow;
 import melons.innocent.glm.core.PartAt;
 import melons.innocent.glm.model.Finishes;
 import melons.innocent.glm.model.GlmPlatform;
@@ -37,7 +38,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * light is set. Two windows, as every bench has: the card's, where the mouse moves the view (drag to turn, right-drag
  * or Shift-drag to move across, scroll to come nearer), turning about what is looked at whenever another part or
  * level is chosen; and a JavaFX window beside it ({@link LabConsole}) to choose the part, how it is looked at, what is
- * shown round it and what the parts are made of.
+ * shown round it and what the parts are made of. Run with {@code -Dlab.platform=engines}, it shows the engines on
+ * their stands instead of the platform.
  *
  * <p>For a run with nobody at it: {@code -Dlab.part=} the start of a part's name, as the window lists it ("Links:
  * right toe"); {@code -Dlab.level=assembly}; {@code -Dlab.others=} ghost, finished, chassis, group or hidden; {@code
@@ -67,7 +69,8 @@ public final class PartLab {
             new Asked.Sun(said("bench.sun.high", noon.sunHigh()), said("bench.sun.round", noon.sunRound())));
     private final Skies skies = new Skies(asked);
     private final Bus bus = new Bus();
-    private final Assembled built = new Assembly(new GlmPlatform().platform()).assembled();
+    private final Assembled built = new Assembly("engines".equals(System.getProperty("lab.platform"))
+            ? new EngineShow().platform() : new GlmPlatform().platform()).assembled();
     private final Finishes finishes = new Finishes();
     private final AtomicReference<LabShow> shown = new AtomicReference<>();
     private Orbit orbit;

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.glm</groupId>
+        <artifactId>glm-platform</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>glm-engine</artifactId>
+
+    <description>
+        The GLM engines, from one modular design: their blocks cast in aluminium to their figures, an inline four or
+        five, a V6, V8 or V12, each a part of the platform. No card, no window.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>melons.innocent.glm</groupId>
+            <artifactId>glm-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.vehiclelab</groupId>
+            <artifactId>vl-forms</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

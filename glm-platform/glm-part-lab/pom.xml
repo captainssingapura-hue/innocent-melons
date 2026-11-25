@@ -26,6 +26,10 @@
         </dependency>
         <dependency>
             <groupId>melons.innocent.glm</groupId>
+            <artifactId>glm-engine</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.glm</groupId>
             <artifactId>glm-bench</artifactId>
             <version>${project.version}</version>
         </dependency>
