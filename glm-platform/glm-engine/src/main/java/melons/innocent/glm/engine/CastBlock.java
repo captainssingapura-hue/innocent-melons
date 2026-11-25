@@ -12,7 +12,8 @@ import java.util.List;
 
 /**
  * An engine's block, cast in aluminium, bare, to its figures, in its own frame: the crank's axis along z from the
- * block's front. Its points: the crank's axis at its front and at its rear, where the gearbox is bolted; the middle of
+ * block's front. Its points: the crank's axis at its front and at its rear, where the gearbox is bolted; each main
+ * bearing; the middle of
  * each bank's deck, where its head is bolted; each cylinder's middle at its deck; and its mounts, right and left.
  *
  * @param figures the engine's figures
@@ -25,6 +26,10 @@ public record CastBlock(EngineFigures figures) {
         final List<Point> points = new ArrayList<>();
         points.add(new Point("crank, front", new Vec3(0, 0, 0)));
         points.add(new Point("crank, rear", new Vec3(0, 0, figures.length())));
+        final List<Double> mains = form.bulkheads();
+        for (int j = 0; j < mains.size(); j++) {
+            points.add(new Point("main bearing " + (j + 1), new Vec3(0, 0, mains.get(j))));
+        }
         for (int b = 0; b < figures.banks(); b++) {
             final Vec3 deck = form.up(b).times(figures.deck());
             points.add(new Point("deck, bank " + (b + 1), deck.plus(new Vec3(0, 0, figures.length() / 2))));

@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * Engines on show: each on a stand of its own, side by side across the floor, its crank level with the others',
  * every one put together so it can be looked at alone or beside the rest. The stands are one steel part, painted,
- * the root; each engine bolted to its stand at its crank's front.
+ * the root; each engine bolted to its stand at its crank's front, its crank, rods and pistons in it.
  *
  * @param engines the engines shown, from the left
  */
@@ -58,6 +58,7 @@ public record EngineShow(List<EngineFigures> engines) {
         for (int k = 0; k < engines.size(); k++) {
             joined.add(new Connection(engines.get(k).name() + " on its stand", stand, engines.get(k).name(),
                     blocks.get(k), "crank, front", Joining.BOLTED));
+            joined.addAll(new EngineInternals(engines.get(k)).joined(blocks.get(k)));
         }
         return new Platform("the GLM engines on show", stand, joined);
     }

@@ -15,17 +15,25 @@ import java.util.List;
  *
  * @param course   the line it follows
  * @param sections its section at each of its course's points, as many as there are, each as many corners as the next
+ * @param across   the way its sections' across always runs, square to its course, for a bar that bends in one plane
+ *                 only, as a connecting rod does; or none, to keep them upright
  */
-public record Profiled(Course course, List<List<Spot>> sections) {
+public record Profiled(Course course, List<List<Spot>> sections, Vec3 across) {
 
     public Profiled {
         final List<List<Spot>> copied = sections.stream().map(List::copyOf).toList();
         sections = copied;
         final int corners = copied.getFirst().size();
+        across = across == null ? null : across.unit();
         if (copied.size() != course.through().size()
                 || copied.stream().anyMatch(s -> s.size() != corners || s.size() < 3)) {
             throw new IllegalArgumentException("a section at each point of the course, each as many corners");
         }
+    }
+
+    /** One kept upright as it bends. */
+    public Profiled(final Course course, final List<List<Spot>> sections) {
+        this(course, sections, null);
     }
 
     /** It. */
@@ -95,6 +103,9 @@ public record Profiled(Course course, List<List<Spot>> sections) {
 
     /** Across and up, square to {@code way}, up kept as near the world's up as it can be. */
     private Vec3[] upright(final Vec3 way) {
+        if (across != null) {
+            return new Vec3[]{across, across.cross(way).unit()};
+        }
         final Vec3 up = Math.abs(way.y()) > 0.95 ? new Vec3(0, 0, 1) : new Vec3(0, 1, 0);
         final Vec3 across = way.cross(up).unit();
         return new Vec3[]{across, across.cross(way).unit()};

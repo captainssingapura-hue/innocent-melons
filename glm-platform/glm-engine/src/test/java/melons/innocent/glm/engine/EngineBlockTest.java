@@ -51,7 +51,30 @@ class EngineBlockTest {
     void theRangePutTogetherOnItsStands() {
         final Assembled shown = new Assembly(new EngineShow().platform()).assembled();
         assertEquals(List.of(), shown.problems(1e-6));
-        assertEquals(1 + 5, shown.placed().size(), "the stands and five blocks");
+        assertEquals(1 + 5 + 5 + 3 * (4 + 5 + 6 + 8 + 12), shown.placed().size(),
+                "the stands, five blocks, five cranks, and a rod, a piston and a pin in every cylinder");
+    }
+
+    @Test
+    void everyRodItsLengthEveryPistonInItsBoreAndTheV6sPinsSplit() {
+        for (final EngineFigures e : range.all()) {
+            for (int b = 0; b < e.banks(); b++) {
+                for (int k = 0; k < e.perBank(); k++) {
+                    final Cylinder c = new Cylinder(e, b, k);
+                    assertEquals(e.rod(), c.smallEnd().minus(c.bigEnd()).length(), 1e-9, c.called());
+                    final double up = c.smallEnd().minus(c.deck()).dot(c.up()) + e.crown();
+                    assertTrue(up <= 1e-9 && up >= -e.stroke() - 1e-9, c.called() + " in its bore: " + up);
+                    assertEquals(0, c.smallEnd().minus(c.deck()).minus(c.up().times(c.smallEnd().minus(c.deck())
+                            .dot(c.up()))).length(), 1e-9, "on its bore's axis");
+                }
+            }
+        }
+        final CrankFigures v6 = new CrankFigures(range.v6());
+        assertEquals(30, v6.angle(1, 0) - v6.angle(0, 0), 1e-9, "the V6's pins split");
+        final CrankFigures v8 = new CrankFigures(range.v8());
+        assertEquals(v8.angle(0, 1), v8.angle(1, 1), 1e-9, "the V8's banks sharing a pin");
+        final Cylinder top = new Cylinder(range.l4(), 0, 0);
+        assertEquals(top.deck().y(), top.smallEnd().y() + range.l4().crown(), 1e-9, "the first at the top, flush");
     }
 
     @Test
