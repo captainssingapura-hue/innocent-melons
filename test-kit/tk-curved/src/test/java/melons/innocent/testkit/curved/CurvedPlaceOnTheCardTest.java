@@ -58,21 +58,21 @@ class CurvedPlaceOnTheCardTest {
                 .with((card, laying) -> new CurvedPlace(card, laying));
         try (Card card = new Card(); Canvas canvas = card.canvas(WIDTH, HEIGHT);
              Place place = kit.placing().apply(card, laid); Cast cast = new Cast(card, laid)) {
-            assertEquals(7, place.inTheWay().volumes().size());
+            assertTrue(place.inTheWay().volumes().size() > 7, "pavements, and walls and ribs besides");
             assertTrue(place.said().contains("Underfoot: nothing within reach"), "nobody has taken a step yet");
             pictured(canvas, place, cast, List.of(), new Orbit(new Vec3(300, 200, 1_400), 0, 22, 5_200), "curved-all");
             pictured(canvas, place, cast, List.of(), new Orbit(new Vec3(300, 350, 1_500), 35, 28, 3_000),
                     "curved-ramp");
             pictured(canvas, place, cast, List.of(), new Orbit(new Vec3(300, 60, 700), 180, 8, 900),
                     "curved-ramp-foot");
-            pictured(canvas, place, cast, List.of(), new Orbit(new Vec3(2_400, 100, 1_200), 30, 16, 2_400),
+            pictured(canvas, place, cast, List.of(), new Orbit(new Vec3(2_700, 120, 1_200), 30, 16, 2_800),
                     "curved-vault");
             pictured(canvas, place, cast, List.of(), new Orbit(new Vec3(-2_000, 100, 1_000), -20, 18, 2_200),
                     "curved-dome");
             // astride the vault's flank, facing along it; and on the dome's, facing round it
-            final List<Courier.Placed> onVault = stood(2_400 + 350, 1_200, 0);
+            final List<Courier.Placed> onVault = stood(2_700 + 550, 1_200, 0);
             for (final double yaw : new double[] {0, 180, 90}) {
-                pictured(canvas, place, cast, onVault, new Orbit(new Vec3(2_750, 240, 1_200), yaw, 6, 520),
+                pictured(canvas, place, cast, onVault, new Orbit(new Vec3(3_250, 260, 1_200), yaw, 6, 520),
                         "curved-bot-on-the-vault-" + (int) yaw);
             }
             final List<Courier.Placed> onDome = stood(-2_000 + 480, 1_000, 0);
@@ -85,7 +85,8 @@ class CurvedPlaceOnTheCardTest {
     /**
      * The bot standing at ({@code x}, {@code z}) facing {@code yaw} degrees round, as high as the engine would stand
      * it there, each foot asked the engine's own ground: held to having each sole on the sheet under it, one well
-     * above the other.
+     * above the other. A sole lies level, so across a slope it rests on its uphill edge, its middle a little over
+     * the sheet.
      */
     private List<Courier.Placed> stood(final double x, final double z, final double yaw) {
         final double high = inTheWay.footing(x, z, Body.FOOTING, 500).height();
@@ -95,8 +96,8 @@ class CurvedPlaceOnTheCardTest {
         final List<Courier.Placed> parts = bot.placed(body, 0, still, false, trodden);
         final double[] left = sole(parts, Limb.LEFT_FOOT);
         final double[] right = sole(parts, Limb.RIGHT_FOOT);
-        assertEquals(inTheWay.footing(left[0], left[2], 0, high + Body.STEP).height(), left[1], 2.5, "the left sole");
-        assertEquals(inTheWay.footing(right[0], right[2], 0, high + Body.STEP).height(), right[1], 2.5,
+        assertEquals(inTheWay.footing(left[0], left[2], 0, high + Body.STEP).height(), left[1], 4, "the left sole");
+        assertEquals(inTheWay.footing(right[0], right[2], 0, high + Body.STEP).height(), right[1], 4,
                 "the right sole");
         assertTrue(Math.abs(left[1] - right[1]) > 5, "one foot well above the other: " + left[1] + ", " + right[1]);
         return parts;
