@@ -35,6 +35,8 @@
         <module>glm-model</module>
         <!-- The GLM bench: the platform on the card, its groups shown and finished as chosen. -->
         <module>glm-bench</module>
+        <!-- The GLM part lab: each part alone or put together, inside a grid as a drawing office has. -->
+        <module>glm-part-lab</module>
     </modules>
 
     <dependencyManagement>
