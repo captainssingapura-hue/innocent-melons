@@ -42,11 +42,8 @@ public final class Controls {
         this.card = card;
     }
 
-    /**
-     * Shown, with their top left corner {@code x} across the screen and {@code y} down. To be called on JavaFX's
-     * thread.
-     */
-    public void shown(final double x, final double y) {
+    /** Shown where {@code arranged} puts a console, with its two buttons. To be called on JavaFX's thread. */
+    public void shown(final Arranged arranged) {
         final Label time = new Label("A frame: not drawn yet");
         final Label view = new Label("");
         taken.set(time);
@@ -59,15 +56,14 @@ public final class Controls {
             asked.further(Math.pow(2, now.doubleValue()));
             far.setText(further(asked.further()));
         });
-        final VBox all = new VBox(GAP, new Label("Drawn on: " + card), time, view, first, far, doubled,
+        final VBox all = new VBox(GAP, new Label("Drawn on: " + card), arranged.bar(), time, view, first, far, doubled,
                 new Label("In the card's window:\n  drag to turn\n  right-drag or Shift-drag to move across\n"
                         + "  scroll to come nearer or go further"));
         all.setPadding(new Insets(GAP));
         final Stage stage = new Stage();
         stage.setTitle("The renderer's bench");
         stage.setScene(new Scene(all, WIDTH, HEIGHT));
-        stage.setX(x);
-        stage.setY(y);
+        arranged.placed(stage);
         stage.setOnCloseRequest(closing -> asked.stop());
         stage.show();
     }

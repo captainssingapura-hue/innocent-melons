@@ -66,6 +66,8 @@ public final class Bench {
             said("bench.pitch", 8), METRE * said("bench.distance", 2.1));
     /** The way the fruit is looked at now: the card's thread's own, moved by the mouse in the card's window. */
     private Orbit orbit = first;
+    /** How its two windows are arranged over the screens: as they always were, until it runs. */
+    private Arranged arranged = new Arranged(false, LEFT, TOP, BESIDE);
 
     public static void main(final String[] args) throws IOException {
         new Bench().run();
@@ -78,9 +80,11 @@ public final class Bench {
                      HEIGHT);
              Formed fruit = new Formed(card, look, watermelon.formed(96))) {
             final Controls controls = new Controls(asked, card.name());
-            Platform.startup(() -> controls.shown(LEFT, TOP));
+            // a run nobody attends keeps the windows where they have always been, and as big
+            arranged = new Arranged(Long.getLong("bench.settle", -1) < 0, LEFT, TOP, BESIDE);
+            Platform.startup(() -> controls.shown(arranged));
             controls.seen(orbit);
-            window.shown(LEFT + BESIDE, TOP);
+            arranged.shown(window, desk);
             drawn(desk, card, window, fruit, controls);
             final String snapshot = System.getProperty("bench.snapshot", "");
             if (!snapshot.isEmpty()) {
@@ -103,6 +107,7 @@ public final class Bench {
         int frames = 0;
         while (window.open() && !asked.stopped()) {
             desk.heard();
+            arranged.heard(window, desk);
             final Moved mouse = window.mouse();
             final Orbit moved = asked.firstWanted() ? first : moved(mouse);
             if (!moved.equals(orbit)) {

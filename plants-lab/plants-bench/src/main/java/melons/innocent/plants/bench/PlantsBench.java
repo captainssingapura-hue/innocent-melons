@@ -1,6 +1,7 @@
 package melons.innocent.plants.bench;
 
 import com.example.fxsuite.avatar.bench.kit.Bus;
+import com.example.fxsuite.vulkan.bench.Arranged;
 import com.example.fxsuite.vulkan.bench.Asked;
 import com.example.fxsuite.vulkan.bench.Skies;
 import com.example.fxsuite.vulkan.device.Canvas;
@@ -68,6 +69,8 @@ public final class PlantsBench {
     private final Asked asked = new Asked(1, Boolean.parseBoolean(System.getProperty("bench.shadows", "true")),
             new Asked.Sun(said("bench.sun.high", noon.sunHigh()), said("bench.sun.round", noon.sunRound())));
     private final Skies skies = new Skies(asked);
+    /** How its two windows are arranged over the screens: as they always were, until it runs. */
+    private Arranged arranged = new Arranged(false, LEFT, TOP, BESIDE);
     private final Bus bus = new Bus();
     private final AtomicReference<OnShow> shown = new AtomicReference<>(new Told().first());
     /** A way of looking asked for in the window, not yet taken up. */
@@ -96,8 +99,10 @@ public final class PlantsBench {
              Canvas measured = card.canvas(MEASURED_WIDE, MEASURED_HIGH);
              PlantsView view = new PlantsView(card, new Laid().asking(card.rays()), shown.get())) {
             asked.offered(view.offered());
-            Platform.startup(() -> console.shown(LEFT, TOP));
-            window.shown(LEFT + BESIDE, TOP);
+            // a run nobody attends keeps the windows where they have always been, and as big
+            arranged = new Arranged(Long.getLong("bench.settle", -1) < 0, LEFT, TOP, BESIDE);
+            Platform.startup(() -> console.shown(arranged));
+            arranged.shown(window, desk);
             drawn(desk, card, window, measured, view, console);
             final String snapshot = System.getProperty("bench.snapshot.card", "");
             if (!snapshot.isEmpty()) {
@@ -122,6 +127,7 @@ public final class PlantsBench {
         int frames = 0;
         while (window.open() && !asked.stopped()) {
             desk.heard();
+            arranged.heard(window, desk);
             orbit = moved(window.mouse());
             final long now = System.nanoTime();
             skies.stepped((now - last) / BILLION);

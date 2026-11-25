@@ -82,6 +82,11 @@ public record Company(Run lead, Bot bot, Optional<Companion> companion) implemen
     }
 
     @Override
+    public double tilt(final double blend) {
+        return lead.following().lookUp();
+    }
+
+    @Override
     public Camera camera(final double blend) {
         return lead.following().camera(lead.inTheWay(), blend);
     }

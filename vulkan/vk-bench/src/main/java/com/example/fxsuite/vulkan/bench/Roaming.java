@@ -45,6 +45,11 @@ public interface Roaming {
     /** Which way round the lead is turned, so far, in degrees. */
     double yaw(double blend);
 
+    /** How far above its usual tilt the lead's view looks, in degrees: how far up the lead looks, and aims. */
+    default double tilt(final double blend) {
+        return 0;
+    }
+
     /** The camera as the one moving it would have it: following the lead. */
     Camera camera(double blend);
 

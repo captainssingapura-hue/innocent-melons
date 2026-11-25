@@ -2,6 +2,7 @@ package melons.innocent.plants.bench;
 
 import com.example.fxsuite.avatar.bench.kit.Bus;
 import com.example.fxsuite.avatar.bench.kit.Shell;
+import com.example.fxsuite.vulkan.bench.Arranged;
 import com.example.fxsuite.vulkan.bench.Asked;
 import com.example.fxsuite.vulkan.bench.LightBoard;
 import javafx.geometry.Insets;
@@ -57,8 +58,8 @@ public final class Console {
         this.light = new LightBoard(asked);
     }
 
-    /** Shown, its top left corner {@code x} across the screen and {@code y} down. To be called on JavaFX's thread. */
-    public void shown(final double x, final double y) {
+    /** Shown where {@code arranged} puts a console, with its two buttons. To be called on JavaFX's thread. */
+    public void shown(final Arranged arranged) {
         final List<String> stages = Arrays.stream(melons.innocent.plants.tree.Stage.values()).map(this::titled)
                 .toList();
         final ComboBox<String> subject = choice(titles(Subject.values()), first.subject().ordinal());
@@ -89,15 +90,15 @@ public final class Console {
         final VBox lit = new VBox(GAP, new Label("The light"), light.shown());
         lit.setPadding(new Insets(GAP));
         lit.setPrefWidth(LIGHT_WIDE);
-        final VBox middle = new VBox(GAP, new Label("What stands"), subject, new Label("Of which kinds"), kinds,
+        final VBox middle = new VBox(GAP, arranged.bar(), new Label("What stands"), subject,
+                new Label("Of which kinds"), kinds,
                 new Label("At which stage"), stage, new Label("A patch: trees along each side"), rows,
                 new Label("An area: its outline, and how far across"), new HBox(GAP, outline, across),
                 new Label("Drawn"), joined, beside, new Label("Looked at"), angles(), logged, shell.working(),
                 shell.figures(), shell.problems());
         middle.setPadding(new Insets(GAP));
         final Stage window = new Stage();
-        window.setX(x);
-        window.setY(y);
+        arranged.placed(window);
         window.setOnCloseRequest(closing -> asked.stop());
         shell.barless().left(new ScrollPane(lit)).middle(middle).show(window, WIDE, TALL);
         bus.publish(first);

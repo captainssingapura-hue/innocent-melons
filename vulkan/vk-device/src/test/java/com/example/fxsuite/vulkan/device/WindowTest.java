@@ -73,6 +73,30 @@ class WindowTest {
     }
 
     @Test
+    void theDeskSaysItsScreensAndAWindowSaysWhereItStandsAndIsMadeAnotherSize() {
+        try (Desk desk = new Desk(); Card card = new Card(desk)) {
+            final List<Monitor> monitors = desk.monitors();
+            assertTrue(!monitors.isEmpty() && monitors.getFirst().primary(), "its first screen first");
+            assertEquals(1, monitors.stream().filter(Monitor::primary).count(), "and one screen is the first");
+            final Monitor first = monitors.getFirst();
+            assertTrue(first.wide() > 0 && first.high() > 0, "with room for windows");
+            assertTrue(first.holds(first.left() + 1, first.top() + 1));
+            assertTrue(!first.holds(first.left() - 1, first.top() + 1));
+            try (Window window = card.window("a window never shown", 320, 240)) {
+                final Stands stands = window.stands();
+                assertEquals(320, stands.width(), 1, "as wide as it was asked to be, in the screen's measure");
+                assertEquals(240, stands.height(), 1);
+                assertTrue(stands.larger() >= 1 && !stands.maximized());
+                window.sized(400, 200);
+                desk.heard();
+                assertEquals(400, window.stands().width(), 1);
+                assertEquals(200, window.stands().height(), 1);
+            }
+            assertEquals(List.of(), card.heard(), "the validation layer has nothing to say");
+        }
+    }
+
+    @Test
     void aCardOpenedForPicturesOnlyHasNoWindows() {
         try (Card card = new Card()) {
             assertThrows(IllegalStateException.class, () -> card.window("none", 64, 64));

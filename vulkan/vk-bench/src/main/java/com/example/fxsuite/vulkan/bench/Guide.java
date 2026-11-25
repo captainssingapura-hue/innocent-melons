@@ -74,6 +74,16 @@ public final class Guide {
 
     /** Shown, its top left corner {@code x} across the screen and {@code y} down. To be called on JavaFX's thread. */
     public void shown(final double x, final double y) {
+        shown(Optional.empty(), x, y);
+    }
+
+    /** Shown where {@code arranged} puts a console, with its two buttons. To be called on JavaFX's thread. */
+    public void shown(final Arranged arranged) {
+        shown(Optional.of(arranged), 0, 0);
+    }
+
+    private void shown(final Optional<Arranged> arranged, final double x, final double y) {
+        final Stage stage = new Stage();
         final Label time = new Label("A frame: not drawn yet");
         taken.set(time);
         final CheckBox logged = new CheckBox("Log these, a line each time they are told");
@@ -83,13 +93,14 @@ public final class Guide {
         final VBox all = new VBox(GAP, new Label("Drawn on: " + card), time, logged, dialled(), light.shown(),
                 new Separator(), new Label(String.join("\n", lines)));
         all.setPadding(new Insets(GAP));
-        final Stage stage = new Stage();
+        arranged.ifPresent(spread -> all.getChildren().add(1, spread.bar()));
         stage.setTitle("The renderer's bench");
         // scrolled where it is taller than a screen has room for, as it is with several dials
         stage.setScene(new Scene(new ScrollPane(all), WIDTH + SCROLLED,
                 Math.min(TALLEST, LINE * (lines.size() + SET + DIALLED * dials.size()))));
         stage.setX(x);
         stage.setY(y);
+        arranged.ifPresent(spread -> spread.placed(stage));
         stage.setOnCloseRequest(closing -> asked.stop());
         stage.show();
         window.set(stage);

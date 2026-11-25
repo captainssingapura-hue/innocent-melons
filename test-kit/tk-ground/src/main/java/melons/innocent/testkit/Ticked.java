@@ -77,6 +77,11 @@ final class Ticked implements Roaming {
     }
 
     @Override
+    public double tilt(final double blend) {
+        return going.tilt(blend);
+    }
+
+    @Override
     public Camera camera(final double blend) {
         return going.camera(blend);
     }

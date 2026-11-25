@@ -17,12 +17,25 @@ import java.util.TreeSet;
 public record Step(Set<String> held, List<String> pressed, double turn, double tilt, boolean flies, int circling,
                    double scrolled, boolean behind) {
 
+    /** The name the trigger is held by: the mouse's first button, or a script's {@code FIRE}. */
+    private static final String TRIGGER = "FIRE";
+
     public Step {
         held = Set.copyOf(new TreeSet<>(held));
         pressed = List.copyOf(pressed);
         if (circling < -1 || circling > 1) {
             throw new IllegalArgumentException("the view swings one way, the other, or not at all: " + circling);
         }
+    }
+
+    /** The name the trigger is held by, among the keys held: the engine heeds no such key. */
+    public String trigger() {
+        return TRIGGER;
+    }
+
+    /** Whether the trigger is held through it. */
+    public boolean triggered() {
+        return held.contains(TRIGGER);
     }
 
     /** A step in which nothing is held, pressed, turned or done. */

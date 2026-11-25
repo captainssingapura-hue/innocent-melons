@@ -151,22 +151,35 @@ class LoosePlaceOnTheCardTest {
             assertEquals(List.of("Carry / Put down", "Cut", "Crush", "Throw", "Eat", "Open or shut"),
                     place.dials().getFirst().steps());
             ticked(place, trial, 60);
-            handling.stepped(none, new Spot(-90, 160, 220), 0);
+            handling.stepped(none, new Spot(-90, 160, 220), 0, 0);
             assertTrue(place.said().contains("At hand: the near melon, a watermelon: Carry, Cut, Crush"), place.said());
             pictured(canvas, place, near, "loose-at-hand");
-            handling.stepped(taking, new Spot(-90, 160, 220), 0);
+            handling.stepped(taking, new Spot(-90, 160, 220), 0, 0);
             ticked(place, trial, 2);
             assertTrue(place.said().contains("In hand: the near melon"), place.said());
             pictured(canvas, place, near, "loose-held");
-            handling.stepped(taking, new Spot(-90, 160, 220), 0);
+            // readied from the menu, and wound up for a second: held up, with the way it would fly
+            for (final String key : List.of("G", "DOWN", "T")) {
+                handling.stepped(new Step(Set.of(), List.of(key), 0, 0, false, 0, 0, false),
+                        new Spot(-90, 160, 220), 0, 0);
+            }
+            for (int step = 0; step < 120; step++) {
+                handling.stepped(new Step(Set.of("FIRE"), List.of(), 0, 0, false, 0, 0, false),
+                        new Spot(-90, 160, 220), 0, 0);
+            }
+            assertTrue(place.said().contains("throwing, power 67%"), place.said());
+            pictured(canvas, place, new Orbit(new Vec3(100, 120, 500), 60, 14, 1_100).camera(48, 10),
+                    "loose-winding-up");
+            handling.stepped(taking, new Spot(-90, 160, 220), 0, 0);
+            handling.stepped(taking, new Spot(-90, 160, 220), 0, 0);
             ticked(place, trial, 240);
-            handling.stepped(none, new Spot(-90, 160, 220), 0);
+            handling.stepped(none, new Spot(-90, 160, 220), 0, 0);
             place.dials().getFirst().chosen(1);
             place.readied(camera);
-            handling.stepped(none, new Spot(-90, 160, 220), 0);
+            handling.stepped(none, new Spot(-90, 160, 220), 0, 0);
             ticked(place, trial, 240);
             assertTrue(trial.world().things().contains("slice 1 of the near melon"), place.said());
-            handling.stepped(none, new Spot(-90, 160, 220), 0);
+            handling.stepped(none, new Spot(-90, 160, 220), 0, 0);
             assertTrue(place.said().contains(", a melon slice: Carry, Eat"), place.said());
             pictured(canvas, place, near, "loose-slices");
             assertEquals(List.of(), card.heard(), "the validation layer has nothing to say");

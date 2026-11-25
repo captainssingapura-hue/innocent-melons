@@ -8,6 +8,7 @@ import com.example.fxsuite.vulkan.bench.play.Played;
 import com.example.fxsuite.vulkan.bench.play.Replayed;
 import com.example.fxsuite.vulkan.bench.play.Scripted;
 import com.example.fxsuite.vulkan.bench.play.Source;
+import com.example.fxsuite.vulkan.bench.play.Step;
 import com.example.fxsuite.vulkan.bench.subject.Courier;
 import com.example.fxsuite.vulkan.device.Canvas;
 import com.example.fxsuite.vulkan.device.Card;
@@ -36,6 +37,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
@@ -110,6 +112,8 @@ public final class Walk {
     private boolean beside;
     /** The layouts of every look: asking rays, once the card is open, where the card answers them. */
     private Laid laid = new Laid();
+    /** How the run's two windows are arranged over the screens: as they always were, until a run opens them. */
+    private Arranged arranged = new Arranged(false, LEFT, TOP, BESIDE);
     /** The bench's day, for where its sun stands: where the sliders begin unless the run is told otherwise. */
     private final Light noon = new Daylight().light();
     /** What the JavaFX window asks: shadows or none, and where the sun stands; to begin with, as the run is told. */
@@ -197,8 +201,10 @@ public final class Walk {
              Hearing hearing = Hearing.open(roaming.ends() || settle >= 0)) {
             final Guide guide = new Guide(asked, card.name(), roamer.keys(), place.dials());
             asked.offered(shadows.offered());
-            try (Shown shown = new Shown(guide, beside, LEFT, TOP)) {
-                window.shown(LEFT + BESIDE, TOP);
+            // a run nobody attends keeps the windows where they have always been, and as big
+            arranged = new Arranged(!roaming.ends() && settle < 0, LEFT, TOP, BESIDE);
+            try (Shown shown = new Shown(guide, beside, arranged)) {
+                arranged.shown(window, desk);
                 final Staged staged = new Staged(place, cast, shadows, overlay);
                 drawn(desk, card, window, staged, guide, hearing, roaming);
                 final String snapshot = System.getProperty("bench.snapshot", "");
@@ -223,6 +229,7 @@ public final class Walk {
         while (window.open() && !asked.stopped() && !roaming.over()) {
             desk.heard();
             driven.heard(window);
+            arranged.heard(window, desk);
             if (!roaming.pointing() && (driven.taken(Key.ESCAPE) || frames == 0 && !roaming.ends() && settle < 0)) {
                 taken = !taken;
                 window.taken(taken);
@@ -231,7 +238,12 @@ public final class Walk {
             // what a click means is told to the next step with the keys pressed, so a kept run plays it again
             final List<String> pressed = new ArrayList<>(driven.pressed());
             window.clicks().forEach(click -> pressed.addAll(roaming.clicked(click, window.width(), window.height())));
-            played.told(driven.held(), pressed, taken ? mouse.across() * SENSITIVITY : 0,
+            // the mouse's button held, while the mouse is the walk's, is told as a key held: the trigger
+            final Set<String> held = driven.held();
+            if (taken && window.pressing()) {
+                held.add(new Step().trigger());
+            }
+            played.told(held, pressed, taken ? mouse.across() * SENSITIVITY : 0,
                     taken ? -mouse.down() * SENSITIVITY : 0, mouse.scrolled());
             final long now = System.nanoTime();
             final double blend = roaming.stepped((now - last) / BILLION);

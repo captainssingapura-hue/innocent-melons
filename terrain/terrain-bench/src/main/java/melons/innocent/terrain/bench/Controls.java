@@ -1,5 +1,6 @@
 package melons.innocent.terrain.bench;
 
+import com.example.fxsuite.vulkan.bench.Arranged;
 import melons.innocent.terrain.drawn.Painting;
 
 import javafx.application.Platform;
@@ -49,8 +50,8 @@ public final class Controls {
         this.legend = List.copyOf(legend);
     }
 
-    /** Made and shown at ({@code x}, {@code y}) on the screen: on JavaFX's thread. */
-    public void shown(final double x, final double y) {
+    /** Made and shown where {@code arranged} puts a console, with its two buttons: on JavaFX's thread. */
+    public void shown(final Arranged arranged) {
         final Label what = new Label(about);
         what.setWrapText(true);
         final Label seen = new Label();
@@ -69,13 +70,12 @@ public final class Controls {
             key.getChildren().add(new HBox(GAP, new Rectangle(SWATCH, SWATCH,
                     Color.color(shown.red(), shown.green(), shown.blue())), new Label(shown.label())));
         }
-        final VBox box = new VBox(GAP, what, seen, took, coloured, first, speed(), how, key);
+        final VBox box = new VBox(GAP, arranged.bar(), what, seen, took, coloured, first, speed(), how, key);
         box.setPadding(new Insets(GAP * 2));
         final Stage stage = new Stage();
         stage.setTitle("Terrain bench");
         stage.setScene(new Scene(box, WIDTH, -1));
-        stage.setX(x);
-        stage.setY(y);
+        arranged.placed(stage);
         stage.setOnHidden(event -> wanted.stop());
         stage.show();
     }

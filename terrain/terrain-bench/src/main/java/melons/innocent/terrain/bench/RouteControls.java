@@ -1,5 +1,6 @@
 package melons.innocent.terrain.bench;
 
+import com.example.fxsuite.vulkan.bench.Arranged;
 import melons.innocent.terrain.drawn.TiledLand;
 
 import javafx.application.Platform;
@@ -53,8 +54,8 @@ public final class RouteControls {
         this.height = height;
     }
 
-    /** Made and shown at ({@code x}, {@code y}) on the screen: on JavaFX's thread. */
-    public void shown(final double x, final double y) {
+    /** Made and shown where {@code arranged} puts a console, with its two buttons: on JavaFX's thread. */
+    public void shown(final Arranged arranged) {
         final Label how = new Label("Click the map to add a waypoint, or near one to choose it; drag in the card's "
                 + "window to look round.");
         how.setWrapText(true);
@@ -64,14 +65,13 @@ public final class RouteControls {
         final Label counted = new Label();
         going.set(moving);
         tiles.set(counted);
-        final VBox box = new VBox(GAP, how, map.map(), map.profile(), heights(), speeds(), aheads(), checks(),
-                buttons(), moving, counted);
+        final VBox box = new VBox(GAP, arranged.bar(), how, map.map(), map.profile(), heights(), speeds(), aheads(),
+                checks(), buttons(), moving, counted);
         box.setPadding(new Insets(GAP * 2));
         final Stage stage = new Stage();
         stage.setTitle("Route bench");
         stage.setScene(new Scene(box, WIDTH, -1));
-        stage.setX(x);
-        stage.setY(y);
+        arranged.placed(stage);
         stage.setOnHidden(event -> steering.stop());
         stage.show();
         redrawn();

@@ -49,7 +49,8 @@
             <artifactId>vk-render</artifactId>
         </dependency>
         <!-- the lab's materials: what the land is drawn in; the lab reaches the engine through the renderer's bench,
-             for the avatar's tones, which no material the land is drawn in needs, so the engine is left out -->
+             for the avatar's tones, which no material the land is drawn in needs, so the engine is left out; the
+             renderer's bench comes with it, for how a bench's two windows are arranged over the screens -->
         <dependency>
             <groupId>com.example.fxsuite.texture</groupId>
             <artifactId>tx-materials</artifactId>
