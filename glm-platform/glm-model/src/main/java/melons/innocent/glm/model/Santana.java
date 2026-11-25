@@ -10,7 +10,8 @@ import java.util.List;
  * The retro saloon on the GLM platform: the early-eighties notchback saloon kept as it was drawn, made larger evenly
  * to the platform's least track, on the platform's chassis; its body built as the original's was, a pressed steel
  * shell, its root its underbody, every chassis mount on it: the body sides welded along it, the bulkhead and the tail
- * panel across it, and the roof's two headers across between the body sides, a cage for the roof's glass.
+ * panel across it, and the roof's two headers across between the body sides, a cage for the roof's glass; and its
+ * four doors hung in it.
  */
 public record Santana() implements Bodywork {
 
@@ -44,12 +45,16 @@ public record Santana() implements Bodywork {
         final Part tail = panels.tailPanel();
         final Part front = panels.header("roof header, front", LINES.frontHeader());
         final Part rear = panels.header("roof header, rear", LINES.rearHeader());
+        final Part frontDoor = new Door("front door", LINES, LINES.frontDoor(), LINES.frontDivider()).part();
+        final Part rearDoor = new Door("rear door", LINES, LINES.rearDoor(), LINES.rearDivider()).part();
         return List.of(
                 new Connection("body side", root, "body side, right", side, "body", Joining.WELDED),
                 new Connection("bulkhead", root, "bulkhead", bulkhead, "underbody", Joining.WELDED),
                 new Connection("tail panel", root, "tail panel", tail, "underbody", Joining.WELDED),
                 new Connection("roof header, front", side, "header, front", front, "body side, right",
                         Joining.WELDED),
-                new Connection("roof header, rear", side, "header, rear", rear, "body side, right", Joining.WELDED));
+                new Connection("roof header, rear", side, "header, rear", rear, "body side, right", Joining.WELDED),
+                new Connection("front door", side, "front door, hinge", frontDoor, "hinge", Joining.HINGE),
+                new Connection("rear door", side, "rear door, hinge", rearDoor, "hinge", Joining.HINGE));
     }
 }

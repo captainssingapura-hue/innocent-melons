@@ -31,7 +31,11 @@ record SantanaLines() {
     private static final double WAIST = 920;
     private static final double RAIL = 1_290;
     /** Along where the rear door's back edge comes down to the wheel's arch. */
-    private static final double DOOR_BACK = -2_350;
+    private static final double DOOR_BACK = -2_355;
+    /** How high the doors' glass begins, over the chrome along the waist; where each door's window is divided. */
+    private static final double BELT = 935;
+    private static final double FRONT_DIVIDER = -959;
+    private static final double REAR_DIVIDER = -2_097;
     /** Where the tail panel stands along; how high the boot's floor is, the rear quarter carried down to it. */
     private static final double TAIL = -3_470;
     private static final double BOOT = 430;
@@ -58,6 +62,26 @@ record SantanaLines() {
     /** How high its boot's floor is. */
     double boot() {
         return BOOT * SCALE / 10;
+    }
+
+    /** How high the doors' glass begins. */
+    double belt() {
+        return BELT * SCALE / 10;
+    }
+
+    /** Where the front door's window is divided, the small vent ahead of the divider. */
+    double frontDivider() {
+        return FRONT_DIVIDER * SCALE / 10;
+    }
+
+    /** Where the rear door's window is divided, the small fixed pane behind the divider. */
+    double rearDivider() {
+        return REAR_DIVIDER * SCALE / 10;
+    }
+
+    /** How high the doors' waist is. */
+    double waist() {
+        return WAIST * SCALE / 10;
     }
 
     /** Where its roof's front header runs across, along and up. */
@@ -107,12 +131,13 @@ record SantanaLines() {
     }
 
     /**
-     * The rear door's opening: up the B pillar, along under the roof's rail, straight down its back edge, the door's
-     * shut line, round clear of the rear wheel's arch, and along over the sill.
+     * The rear door's opening: up the B pillar, along under the roof's rail, down its window frame's back edge, leaning
+     * back along the C pillar, to the waist, then straight down, the door's shut line, round clear of the rear wheel's
+     * arch, and along over the sill.
      */
     List<Spot> rearDoor() {
         final List<Spot> out = new ArrayList<>(spots(new double[][] {
-            {-1_565, DOOR_FOOT}, {-1_565, WAIST}, {-1_598, RAIL}, {-2_342, RAIL}, {DOOR_BACK, WAIST}}));
+            {-1_565, DOOR_FOOT}, {-1_565, WAIST}, {-1_598, RAIL}, {-2_205, RAIL}, {DOOR_BACK, WAIST}}));
         final double reach = ARCH + ARCH_CLEAR;
         out.addAll(arch(reach, Math.toDegrees(Math.acos((DOOR_BACK - ARCH_ALONG) / reach)), rise(reach, DOOR_FOOT)));
         return out;

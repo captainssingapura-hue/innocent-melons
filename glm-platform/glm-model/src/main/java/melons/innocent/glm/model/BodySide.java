@@ -42,7 +42,7 @@ record BodySide(SantanaLines lines, Vec3 anchor, ShellPanels headers) {
         points.put("header, rear", headers.end(lines.rearHeader()));
         final List<List<Spot>> cut = List.of(lines.frontDoor(), lines.rearDoor(), lines.quarterLight());
         return PRESSED.part("body side", Group.BODYWORK, true, points, new Pressing(lines.side(), cut, this::on,
-                new Vec3(1, 0, 0), SHEET, FLANGE, ALONG, UP).mesh());
+                new Vec3(1, 0, 0), SHEET, SHEET, FLANGE, ALONG, UP).mesh());
     }
 
     /** Where a spot of the side view, along and up, comes to on its outer face. */

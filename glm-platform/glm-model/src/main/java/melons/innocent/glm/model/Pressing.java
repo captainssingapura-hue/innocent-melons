@@ -12,22 +12,23 @@ import java.util.List;
 /**
  * A panel pressed from sheet steel: its outline and the openings cut in it drawn flat, along {@code u} and up
  * {@code v}, then laid on the curved face the press gives it, {@code laid} saying where each spot of the drawing comes
- * to. Its outer face that face, facing {@code outward}'s way; its inner face a sheet's thickness in; round each opening
- * its edge turned in, a flange as deep as {@code flange}, as a body side's is round its door openings. Its faces cut
- * finer than the drawing's own corners, at every {@code along} along and every {@code up} up, so they follow the
- * curve.
+ * to. Its outer face that face, facing {@code outward}'s way; its inner face a sheet's thickness in; its outline's edge
+ * turned in as deep as {@code rim}, as a door's skin is folded over its frame; round each opening its edge turned in, a
+ * flange as deep as {@code flange}, as a body side's is round its door openings. Its faces cut finer than the
+ * drawing's own corners, at every {@code along} along and every {@code up} up, so they follow the curve.
  *
  * @param outline its outline, drawn
  * @param holes   the openings cut in it, drawn
  * @param laid    where each spot of the drawing comes to
  * @param outward roughly the way its outer face faces
  * @param thick   how thick the sheet is
+ * @param rim     how deep its outline's edge is turned in, no deeper than the sheet is thick for a bare edge
  * @param flange  how deep the openings' edges are turned in
  * @param along   how finely its faces are cut along
  * @param up      how finely its faces are cut up
  */
-record Pressing(List<Spot> outline, List<List<Spot>> holes, Laid laid, Vec3 outward, double thick, double flange,
-                double along, double up) {
+record Pressing(List<Spot> outline, List<List<Spot>> holes, Laid laid, Vec3 outward, double thick, double rim,
+                double flange, double along, double up) {
 
     /** Where each spot of a drawing comes to, laid on a curved face. */
     interface Laid {
@@ -58,7 +59,7 @@ record Pressing(List<Spot> outline, List<List<Spot>> holes, Laid laid, Vec3 outw
         sizes.add(outline.size());
         holes.forEach(h -> sizes.add(h.size()));
         for (int k = 0; k < sizes.size(); k++) {
-            edged(forming, spots.subList(from, from + sizes.get(k)), k == 0 ? thick : flange);
+            edged(forming, spots.subList(from, from + sizes.get(k)), k == 0 ? rim : flange);
             from += sizes.get(k);
         }
         return forming.formed();
