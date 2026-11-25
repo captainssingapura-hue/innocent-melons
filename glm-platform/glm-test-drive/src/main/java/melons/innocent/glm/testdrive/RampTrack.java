@@ -23,7 +23,7 @@ import melons.innocent.testkit.TestKit;
  * turn and a half round a core at its far end, back to the ground; the gravel all round to drive back on to the ramp's
  * foot. The car starts on the ground 25 m short of the ramp's foot, heading up it.
  */
-public record TestTrack() {
+public record RampTrack() implements Track {
 
     /** How far short of the ramp's foot the car starts, and how far up the ramp it looks to find which way it runs. */
     private static final double SHORT = 2_500;
@@ -37,6 +37,7 @@ public record TestTrack() {
     }
 
     /** The test kit, called {@code title}: its base map of gravel, the road stood on it, as the lab looks it. */
+    @Override
     public TestKit kit(final String title) {
         final Structure road = road();
         final LabLooks looks = new LabLooks();
@@ -46,6 +47,7 @@ public record TestTrack() {
     }
 
     /** Where the car starts: on the ground short of the ramp's foot, heading up it, as high as it rides. */
+    @Override
     public Place start(final double ride) {
         final Course course = new GenericElevatedRoad().ramp(SPEC).course();
         final Point foot = course.at(0);

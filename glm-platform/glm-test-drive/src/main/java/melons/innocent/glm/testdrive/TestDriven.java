@@ -30,7 +30,8 @@ import java.util.Optional;
  * the handbrake, Shift held to go carefully; over whatever is in its way, up ramps and onto decks, as the engine has
  * its wheels find the ground. The car itself is drawn as it is made, turned and tipped as it goes, its front wheels
  * steered and every wheel turning as it rolls ({@link CarDrawn}); its engine heard at the revs its speed makes
- * ({@link EngineHeard}); its speed, revs and gear over the picture.
+ * ({@link EngineHeard}); its speed, revs and gear over the picture. Seen behind it or from on it, as its views say
+ * ({@link DriveViews}).
  */
 final class TestDriven implements Roaming {
 
@@ -44,6 +45,7 @@ final class TestDriven implements Roaming {
     private final GlmChassis chassis;
     private final CarDrawn car;
     private final EngineHeard engine;
+    private final DriveViews views;
     private Obstacles world = Obstacles.NONE;
     private Lift now;
     private Lift before;
@@ -56,16 +58,18 @@ final class TestDriven implements Roaming {
 
     /**
      * {@code chassis} driven from {@code first}, told by {@code source}, drawn as {@code car}, heard as
-     * {@code engine}.
+     * {@code engine}, seen in {@code views}.
      */
     TestDriven(final Source source, final Optional<Keeping> keeping, final Optional<Skies> skies,
-               final GlmChassis chassis, final CarDrawn car, final EngineHeard engine, final Lift first) {
+               final GlmChassis chassis, final CarDrawn car, final EngineHeard engine, final DriveViews views,
+               final Lift first) {
         this.source = source;
         this.keeping = keeping;
         this.skies = skies;
         this.chassis = chassis;
         this.car = car;
         this.engine = engine;
+        this.views = views;
         this.now = first;
         this.before = first;
     }
@@ -93,6 +97,7 @@ final class TestDriven implements Roaming {
         rolledBefore = rolled;
         rolled += now.ahead() * Clock.STEP;
         engine.driven(now.ahead(), asked.forward());
+        views.told(told);
         chasing = chasing.stepped(told, Clock.STEP);
         step++;
         skies.ifPresent(sky -> sky.stepped(Clock.STEP));
@@ -160,7 +165,16 @@ final class TestDriven implements Roaming {
 
     @Override
     public Camera camera(final double blend) {
-        return chasing.between(chased, blend).camera(head(blend), yaw(blend), (x, z) -> 0);
+        return views.camera(chasing.between(chased, blend), head(blend), place(blend), tilt(blend), roll(blend));
+    }
+
+    /** How far its nose is tipped up, {@code blend} of the way between its last two steps; and its left side up. */
+    private double tilt(final double blend) {
+        return before.tilt() + (now.tilt() - before.tilt()) * blend;
+    }
+
+    private double roll(final double blend) {
+        return before.roll() + (now.roll() - before.roll()) * blend;
     }
 
     @Override
@@ -181,10 +195,8 @@ final class TestDriven implements Roaming {
 
     @Override
     public void drawn(final Pass pass, final Camera camera, final double blend) {
-        final double tilt = before.tilt() + (now.tilt() - before.tilt()) * blend;
-        final double roll = before.roll() + (now.roll() - before.roll()) * blend;
         final double steer = before.steer() + (now.steer() - before.steer()) * blend;
-        car.drawn(pass, camera, chassis.carried(place(blend), tilt, roll), steer,
+        car.drawn(pass, camera, chassis.carried(place(blend), tilt(blend), roll(blend)), steer,
                 rolledBefore + (rolled - rolledBefore) * blend);
     }
 
@@ -192,6 +204,7 @@ final class TestDriven implements Roaming {
     public void overlaid(final Pass pass, final Overlay.Over over, final double blend) {
         car.overlaid(pass, over, before.ahead() + (now.ahead() - before.ahead()) * blend, engine.rpm(),
                 engine.gear());
+        car.said(pass, over, views.view().title(), rolledBefore + (rolled - rolledBefore) * blend);
     }
 
     @Override

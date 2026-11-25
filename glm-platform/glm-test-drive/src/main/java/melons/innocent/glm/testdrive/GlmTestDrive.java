@@ -20,12 +20,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * The GLM car test driven on the test track ({@link TestTrack}): the bare vehicle, its engine in its bay and covered,
- * its front wheels steering and every wheel turning, its engine heard but in a run that ends by itself, is filmed or
- * has its time set, driven from the keyboard by the avatar engine's own land vehicle, its test engine
- * ({@link TestDriving}), in the
- * walks' windows, with their sky, shadows, kept runs, scripts and films. {@code -Dglm.engine=} the engine in it, L4,
- * L5, V6, V8 or V12, or none, the V6 unless; {@code -Dbench.hidden=} groups not shown, UNDERBODY for the body, say.
+ * The GLM car test driven on a test track: the 2 km straight ({@link StraightTrack}), or with {@code
+ * -Dglm.track=ramp} the ramp, viaduct and spiral ({@link RampTrack}). The bare vehicle, its engine in its bay and
+ * covered, its front wheels steering and every wheel turning, its engine heard but in a run that ends by itself, is
+ * filmed or has its time set, driven from the keyboard by the avatar engine's own land vehicle, its test engine
+ * ({@link TestDriving}), seen in the views a racing game has, in the walks' windows, with their sky, shadows, kept runs,
+ * scripts and films. {@code -Dglm.engine=} the engine in it, L4, L5, V6, V8 or V12, or none, the V6 unless;
+ * {@code -Dbench.hidden=} groups not shown, UNDERBODY for the body, say; {@code -Dglm.view=} the view to begin in,
+ * CHASE_FAR unless.
  */
 public final class GlmTestDrive {
 
@@ -41,9 +43,11 @@ public final class GlmTestDrive {
         final Optional<EngineFigures> engine = engine();
         final Assembled built = new Assembly(new GlmPlatform(proportions, new BodyFigures(),
                 engine.map(e -> new EngineBay(e, true)).orElse(null)).platform()).assembled();
-        final TestTrack track = new TestTrack();
+        final Track track = "ramp".equalsIgnoreCase(System.getProperty("glm.track", "straight")) ? new RampTrack()
+                : new StraightTrack();
+        final DriveViews.View view = DriveViews.View.valueOf(System.getProperty("glm.view", "CHASE_FAR"));
         track.kit(TITLE).walk(new TestDriving(chassis, built, new OnShow(new Finishes().coats(), hidden(),
-                new MadeOf()), new Wheeling(proportions), engine, quiet(), track.start(chassis.ride()))).run();
+                new MadeOf()), new Wheeling(proportions), engine, quiet(), view, track.start(chassis.ride()))).run();
     }
 
     /** The engine in its bay, as the run says, the V6 unless; or none. */
