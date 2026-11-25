@@ -2,6 +2,7 @@ package melons.innocent.vehiclelab.motorcycle;
 
 import com.example.fxsuite.vulkan.form.Mesh;
 import com.example.fxsuite.vulkan.space.Vec3;
+import melons.innocent.vehiclelab.forms.Shapes;
 
 import java.util.ArrayList;
 import java.util.List;

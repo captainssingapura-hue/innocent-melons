@@ -4,6 +4,14 @@ import com.example.fxsuite.avatar.bench.kit.Bus;
 import com.example.fxsuite.avatar.bench.kit.Shell;
 import com.example.fxsuite.vulkan.bench.Asked;
 import com.example.fxsuite.vulkan.bench.LightBoard;
+import melons.innocent.vehiclelab.forms.Coat;
+import melons.innocent.vehiclelab.motorcycle.Livery;
+import melons.innocent.vehiclelab.motorcycle.Part;
+
+import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.Locale;
+import java.util.Map;
 import javafx.geometry.Insets;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ColorPicker;
@@ -15,14 +23,6 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-import melons.innocent.vehiclelab.motorcycle.Coat;
-import melons.innocent.vehiclelab.motorcycle.Livery;
-import melons.innocent.vehiclelab.motorcycle.Part;
-
-import java.util.Arrays;
-import java.util.EnumMap;
-import java.util.Locale;
-import java.util.Map;
 
 /**
  * The bench's JavaFX window, beside the card's, laid out by the engine's bench kit as every bench's is. On its left,

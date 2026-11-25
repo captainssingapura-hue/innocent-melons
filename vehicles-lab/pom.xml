@@ -27,6 +27,8 @@
     <modules>
         <!-- A frame of tubes, as a graph: where its tubes meet and how thick each is. No card, no window. -->
         <module>vl-frame</module>
+        <!-- What a vehicle's parts are made of and finished in: its shapes, and its finishes. No card, no window. -->
+        <module>vl-forms</module>
         <!-- A motorcycle as it is made: the boxer, its parts, what each is finished in and what it turns with. -->
         <module>vl-motorcycle</module>
         <!-- A vehicle on the card, each part in the material lab's material for its finish. -->
@@ -58,6 +60,11 @@
             <dependency>
                 <groupId>melons.innocent.vehiclelab</groupId>
                 <artifactId>vl-frame</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.vehiclelab</groupId>
+                <artifactId>vl-forms</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

@@ -6,7 +6,10 @@ import com.example.fxsuite.texture.stone.RubbleWall;
 import com.example.fxsuite.vulkan.bench.subject.FlakedLacquer;
 import com.example.fxsuite.vulkan.bench.subject.Tone;
 import com.example.fxsuite.vulkan.bench.subject.Watermelon;
+import com.example.fxsuite.vulkan.term.Colour;
 import com.example.fxsuite.vulkan.term.Surface;
+
+import java.util.List;
 
 /**
  * How each material is drawn: for every leaf of the tree of materials, its surface. Whatever is in the tree is
@@ -27,6 +30,7 @@ public record Shades() {
             case Materials.Titanium titanium -> Tone.TITANIUM.surface();
             case Materials.Gunmetal gunmetal -> Tone.GUNMETAL.surface();
             case Materials.Steel steel -> Tone.STEEL.surface();
+            case Materials.Aluminium aluminium -> aluminium();
             case Materials.CommonRedBrick brick -> Brickwork.COMMON_RED.wall().surface();
             case Materials.ChineseGreyBrick brick -> Brickwork.CHINESE_GREY.wall().surface();
             case Materials.Adobe adobe -> Brickwork.ADOBE.wall().surface();
@@ -84,5 +88,14 @@ public record Shades() {
             default -> throw new IllegalArgumentException(material.title() + " is in no tree of materials that is"
                     + " shaded here");
         };
+    }
+
+    /**
+     * Aluminium as cast or pushed through a die, bare: a light grey, paler than steel, that mirrors less and less
+     * sharply, its highlight broad, as a casting's skin is.
+     */
+    private Surface aluminium() {
+        return new Surface(new Colour("#5a5d62"), List.of(), new Colour("#b4b8be"), 12)
+                .mirroring(new Colour("#6e7278"));
     }
 }

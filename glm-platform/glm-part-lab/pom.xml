@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.glm</groupId>
+        <artifactId>glm-platform</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>glm-part-lab</artifactId>
+
+    <description>
+        The GLM part lab: the platform's parts one at a time, alone in their own frames with the points they are joined
+        at marked, or put together, the part looked at finished and the rest as glass, finished or hidden; inside a grid
+        as a drawing office has, floor and two walls, ruled every 10 cm and every metre, or every centimetre and 10 cm
+        to work a part fine, each thing shown or not at will. mvn -pl glm-platform/glm-part-lab exec:java
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>melons.innocent.glm</groupId>
+            <artifactId>glm-model</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.glm</groupId>
+            <artifactId>glm-engine</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.glm</groupId>
+            <artifactId>glm-bench</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.vehiclelab</groupId>
+            <artifactId>vl-drawn</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-bench</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <!-- mvn -pl glm-platform/glm-part-lab exec:java opens the lab -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.6.3</version>
+                <configuration>
+                    <mainClass>melons.innocent.glm.lab.PartLab</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

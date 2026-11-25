@@ -32,6 +32,7 @@
         <module>terrain</module>
         <module>plants-lab</module>
         <module>vehicles-lab</module>
+        <module>glm-platform</module>
         <module>integrated-demos</module>
         <module>lifts-lab</module>
         <module>buildings-lab</module>

@@ -1,6 +1,7 @@
 package melons.innocent.vehiclelab.motorcycle;
 
 import com.example.fxsuite.vulkan.space.Vec3;
+import melons.innocent.vehiclelab.forms.Coat;
 import melons.innocent.vehiclelab.frame.Frame;
 import org.junit.jupiter.api.Test;
 

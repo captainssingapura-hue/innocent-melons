@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.glm</groupId>
+        <artifactId>glm-platform</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>glm-engine-bench</artifactId>
+
+    <description>
+        The GLM engine bench: one of the engines running on the card, its crank turning, its rods swinging and its
+        pistons sliding, slowed so the eye can follow; heard as it runs, at its true revs, its sound made as it runs.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>melons.innocent.glm</groupId>
+            <artifactId>glm-engine</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.glm</groupId>
+            <artifactId>glm-model</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.glm</groupId>
+            <artifactId>glm-drive</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.vehiclelab</groupId>
+            <artifactId>vl-drawn</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-bench</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <!-- mvn -pl glm-platform/glm-engine-bench exec:java opens the bench -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.6.3</version>
+                <configuration>
+                    <mainClass>melons.innocent.glm.enginebench.EngineBench</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -1,4 +1,4 @@
-package melons.innocent.vehiclelab.motorcycle;
+package melons.innocent.vehiclelab.forms;
 
 /**
  * What a finish is: a {@link Kind} of surface, and the colour it is where the kind takes one, as paint does, said as
@@ -18,6 +18,7 @@ public record Coat(Kind kind, String colour) {
         TITANIUM("Titanium", false),
         GUN_METAL("Gun metal", false),
         STEEL("Steel", false),
+        ALUMINIUM("Aluminium", false),
         BRONZE("Bronze", false),
         GOLD("Gold", false),
         RUBBER("Rubber", false),
