@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.ToDoubleFunction;
 
 /**
  * Where the skin of the head ends and the neck's begins, as anatomy draws it, not level: from under the chin along the
@@ -36,7 +37,7 @@ public record HeadLine() implements StatelessFunctionalObject {
      */
     public Part[] split(final Part[] patches, final Sheet sheet, final int[] triangles, final Rig bind) {
         final Rig.Frame head = bind.frame(Part.HEAD);
-        final List<V3> line = line();
+        final ToDoubleFunction<V3> above = above();
         final Part[] split = patches.clone();
         for (int t = 0; t < split.length; t++) {
             if (split[t] != Part.HEAD && split[t] != Part.NECK) {
@@ -45,11 +46,20 @@ public record HeadLine() implements StatelessFunctionalObject {
             final V3 middle = sheet.point(triangles[3 * t]).plus(sheet.point(triangles[3 * t + 1]))
                     .plus(sheet.point(triangles[3 * t + 2])).times(1.0 / 3);
             final V3 p = head.local(middle);
-            split[t] = p.y() > height(line, round(p)) ? Part.HEAD : Part.NECK;
+            split[t] = above.applyAsDouble(p) > 0 ? Part.HEAD : Part.NECK;
         }
         whole(split, triangles, Part.NECK);
         whole(split, triangles, Part.HEAD);
         return split;
+    }
+
+    /**
+     * How far above the line a point is, cm, the point in the head's frame as the body was bound: up, not square to
+     * it; the line found once, for many points.
+     */
+    public ToDoubleFunction<V3> above() {
+        final List<V3> line = line();
+        return p -> p.y() - height(line, round(p));
     }
 
     /**
