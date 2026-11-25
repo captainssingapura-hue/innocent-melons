@@ -5,6 +5,7 @@ import com.example.fxsuite.vulkan.device.Card;
 import com.example.fxsuite.vulkan.device.Pass;
 import com.example.fxsuite.vulkan.device.Target;
 import com.example.fxsuite.vulkan.render.Framed;
+import com.example.fxsuite.vulkan.render.Overlay;
 import com.example.fxsuite.vulkan.render.Shaded;
 import com.example.fxsuite.vulkan.render.Shadowing;
 import com.example.fxsuite.vulkan.render.Shaped;
@@ -17,6 +18,8 @@ import com.example.fxsuite.vulkan.worked.Daylight;
 import melons.innocent.glm.core.Assembled;
 import melons.innocent.glm.core.Part;
 import melons.innocent.glm.core.PartAt;
+import melons.innocent.glm.drive.Drivetrain;
+import melons.innocent.glm.drive.Instruments;
 import melons.innocent.glm.engine.EngineInternals;
 import melons.innocent.glm.model.Finishes;
 import melons.innocent.glm.model.MadeOf;
@@ -30,8 +33,9 @@ import java.util.function.Consumer;
 
 /**
  * The engine bench's view, on the card: the engine on show, its block as glass, finished or hidden, and every part
- * inside drawn where it has moved to for the crank's angle, standing on the ground, casting its shadows. A new engine
- * is sent to the card afresh, the old one gone. Closed, all of it is gone.
+ * inside drawn where it has moved to for the crank's angle, standing on the ground, casting its shadows; over it all,
+ * the instruments of the car it drives. A new engine is sent to the card afresh, the old one gone. Closed, all of it
+ * is gone.
  */
 final class EngineView implements AutoCloseable {
 
@@ -45,6 +49,8 @@ final class EngineView implements AutoCloseable {
     private final Coats coats;
     private final Cast cast;
     private final Shaded shadows;
+    private final Overlay overlay;
+    private final Instruments instruments = new Instruments();
     private final Finishes finishes = new Finishes();
     private final Map<PartAt, Shaped> parts = new IdentityHashMap<>();
     private Assembled built;
@@ -58,6 +64,7 @@ final class EngineView implements AutoCloseable {
         this.coats = new Coats(card, laid);
         this.cast = new Cast(card, laid);
         this.shadows = new Shaded(card, laid, PIXELS);
+        this.overlay = new Overlay(card, laid);
     }
 
     /** The ways its shadows can be found. */
@@ -78,23 +85,26 @@ final class EngineView implements AutoCloseable {
     /**
      * One frame drawn on {@code target}: the engine, the crank turned {@code turned} degrees, its block shown as
      * {@code block}, made of what {@code madeOf} says, lifted {@code lift} off the floor, seen by {@code camera} in
-     * {@code time}'s light; with shadows, found {@code by} that way, where {@code shadowed}.
+     * {@code time}'s light; with shadows, found {@code by} that way, where {@code shadowed}; over it, the instruments
+     * of {@code driven}.
      */
     void drawn(final Target target, final double turned, final EngineRun.Block block, final MadeOf madeOf,
                final Vec3 lift, final Camera camera, final Daylight time, final boolean shadowed,
-               final Shadowing by) {
+               final Shadowing by, final Drivetrain driven) {
+        final double aspect = (double) target.width() / target.height();
         final Framed framed = new Framed(laid, camera, time.light());
         final Consumer<Pass> solid = pass -> parts(pass, camera, turned, block, madeOf, lift, false);
         final Consumer<Pass> all = pass -> {
             cast.ground(pass, camera);
             solid.accept(pass);
             parts(pass, camera, turned, block, madeOf, lift, true);
+            instruments.drawn(pass, overlay.over(camera, aspect), driven);
         };
         if (shadowed) {
             final Beam beam = new Beam(lift, time.light().sunTowards(), SHADED, SHADED);
             shadows.drawn(target, time.sky(), framed, by, beam, solid, all);
         } else {
-            target.drawn(time.sky(), framed.filling((double) target.width() / target.height()), all);
+            target.drawn(time.sky(), framed.filling(aspect), all);
         }
     }
 
@@ -118,6 +128,7 @@ final class EngineView implements AutoCloseable {
     public void close() {
         parts.values().forEach(Shaped::close);
         parts.clear();
+        overlay.close();
         shadows.close();
         cast.close();
         coats.close();

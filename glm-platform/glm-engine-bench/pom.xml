@@ -27,6 +27,10 @@
             <artifactId>glm-model</artifactId>
         </dependency>
         <dependency>
+            <groupId>melons.innocent.glm</groupId>
+            <artifactId>glm-drive</artifactId>
+        </dependency>
+        <dependency>
             <groupId>melons.innocent.vehiclelab</groupId>
             <artifactId>vl-drawn</artifactId>
         </dependency>

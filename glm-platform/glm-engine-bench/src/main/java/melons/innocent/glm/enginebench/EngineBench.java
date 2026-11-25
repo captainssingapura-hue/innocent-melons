@@ -2,8 +2,8 @@ package melons.innocent.glm.enginebench;
 
 import com.example.fxsuite.avatar.bench.kit.Bus;
 import com.example.fxsuite.avatar.sound.Engine;
-import com.example.fxsuite.avatar.sound.Revs;
 import com.example.fxsuite.avatar.sound.Turbo;
+import com.example.fxsuite.avatar.sound.Vehicle;
 import com.example.fxsuite.vulkan.bench.Asked;
 import com.example.fxsuite.vulkan.bench.Skies;
 import com.example.fxsuite.vulkan.device.Canvas;
@@ -22,6 +22,9 @@ import com.example.fxsuite.vulkan.worked.Picture;
 import javafx.application.Platform;
 import melons.innocent.glm.core.Assembly;
 import melons.innocent.glm.core.Material;
+import melons.innocent.glm.drive.Driver;
+import melons.innocent.glm.drive.DriverKeys;
+import melons.innocent.glm.drive.Drivetrain;
 import melons.innocent.glm.engine.EngineFigures;
 import melons.innocent.glm.engine.EngineInternals;
 import melons.innocent.glm.engine.EngineRange;
@@ -37,14 +40,16 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * The GLM engine bench: one engine of the range running, seen and heard. On the card, its crank turns in its block,
  * its rods swinging and its pistons sliding, slowed as much as asked so the eye can follow; on the speakers, the same
- * engine at its true revs, its sound made as it runs by the engines' own voice, turbocharged if asked. It revs free on
- * its throttle, up as briskly as that engine does and back to its idle, bouncing off its limiter held flat out; or it
- * is held at the revs said. Two windows, as every bench has: the card's, where the mouse moves the view; and a JavaFX
- * window beside it ({@link EngineConsole}) to run it.
+ * engine at its true revs, its sound made as it runs by the engines' own voice, turbocharged if asked. It drives a car
+ * as that engine would ({@link Drivetrain}), driven at the card's window by its keys ({@link DriverKeys}): pulling
+ * away, changing gear by itself or at the driver's word, held at a speed by its cruise control; its revs, gear and
+ * speed drawn over the picture. Two windows, as every bench has: the card's, where the keys drive and the mouse moves
+ * the view; and a JavaFX window beside it ({@link EngineConsole}) to set the engine up.
  *
  * <p>For a run with nobody at it, played quietly: {@code -Dengine.pick=} the engine's place in the range from nought;
- * {@code -Dengine.rpm=} holds it there; {@code -Dengine.turned=} the crank's angle to begin at; {@code -Dbench.yaw=},
- * {@code -Dbench.pitch=}, {@code -Dbench.distance=} in metres; {@code -Dbench.settle=} so many thousandths of a second
+ * {@code -Dengine.throttle=} holds its throttle open so far, nought to one; {@code -Dengine.turned=} the crank's angle
+ * to begin at; {@code -Dengine.actual=true} shows it at its actual speed; {@code -Dbench.yaw=}, {@code -Dbench.pitch=},
+ * {@code -Dbench.distance=} in metres; {@code -Dbench.settle=} so many thousandths of a second
  * ends it; {@code -Dbench.snapshot.card=} a file the card's picture is saved to as it ends.
  */
 public final class EngineBench {
@@ -61,6 +66,9 @@ public final class EngineBench {
     /** How high the crank stands over the floor; the keys the engines' voices go by, in the range's order. */
     private static final Vec3 LIFT = new Vec3(0, 45, 0);
     private static final List<String> VOICES = List.of("I4", "I5", "V6", "V8", "V12");
+    /** The car each engine of the range drives, in the range's order, its own engine put in. */
+    private static final List<Vehicle> CARS = List.of(Vehicle.HATCHBACK, Vehicle.RALLY, Vehicle.SALOON,
+            Vehicle.MUSCLE, Vehicle.SUPERCAR);
 
     private final Light noon = new Daylight().light();
     private final Asked asked = new Asked(1, true, new Asked.Sun(noon.sunHigh(), noon.sunRound()));
@@ -68,7 +76,10 @@ public final class EngineBench {
     private final Bus bus = new Bus();
     private final List<EngineFigures> range = new EngineRange().all();
     private final AtomicReference<EngineRun> run = new AtomicReference<>();
+    private final DriverKeys keys = new DriverKeys();
+    private final String held = System.getProperty("engine.throttle");
     private Orbit orbit;
+    private Drivetrain driven;
     private double turned = said("engine.turned", 0);
 
     public static void main(final String[] args) throws IOException {
@@ -98,10 +109,9 @@ public final class EngineBench {
     /** How the engine runs to begin with, as the run says. */
     private EngineRun first() {
         final EngineRun plain = new EngineRun();
-        final int pick = Integer.getInteger("engine.pick", plain.engine());
-        final boolean held = System.getProperty("engine.rpm") != null;
-        return new EngineRun(pick, !held, plain.throttle(), said("engine.rpm", plain.rpm()), plain.load(),
-                plain.slow(), plain.turbo(), plain.volume(), plain.block(), plain.made());
+        return new EngineRun(Integer.getInteger("engine.pick", plain.engine()),
+                Boolean.getBoolean("engine.actual") ? 1 : plain.slow(), plain.turbo(), plain.volume(), plain.block(),
+                plain.made());
     }
 
     /** Frame after frame, until a window is closed, the time asked for is up or the validation layer speaks. */
@@ -113,8 +123,6 @@ public final class EngineBench {
         int frames = 0;
         int showing = -1;
         boolean turbo = false;
-        Engine voice = null;
-        Revs revs = null;
         EngineFigures engine = null;
         while (window.open() && !asked.stopped()) {
             desk.heard();
@@ -131,25 +139,27 @@ public final class EngineBench {
                 }
                 showing = now.engine();
                 turbo = now.turbo();
-                voice = voice(now);
+                final Engine voice = voice(now);
                 sound.engine(voice);
-                revs = Revs.idling(voice);
+                driven = new Drivetrain(CARS.get(now.engine()).with(voice));
             }
             orbit = moved(window.mouse());
             final long time = System.nanoTime();
             final double seconds = (time - last) / BILLION;
             last = time;
-            revs = now.free() ? revs.step(voice, now.throttle(), seconds) : new Revs(now.rpm(), 0, 0);
-            turned = (turned + revs.rpm() / 60 * 360 * seconds * now.slow()) % 720;
-            sound.set(revs.rpm(), now.free() ? now.throttle() : 0.3, now.load());
+            driven.step(held != null ? new Driver(Double.parseDouble(held)) : keys.read(window, seconds), seconds);
+            turned = (turned + driven.rpm() / 60 * 360 * seconds * now.slow()) % 720;
+            sound.set(driven.rpm(), driven.firing(), driven.load());
             sound.volume(now.volume());
             skies.stepped(seconds);
             frame(window, view, now);
             if (++frames % EVENED == 0) {
-                bus.publish(new Bus.Figures(String.format(Locale.ENGLISH, "%s, %.0f cc%n%.0f rpm, firing %.0f a"
-                        + " second%nBoost %.2f bar%nShown %.0f times slower%nPlays on %s", engine.name(),
-                        engine.displacement(), revs.rpm(), revs.rpm() / 120 * engine.cylinders(), sound.boost(),
-                        1 / now.slow(), sound.device())));
+                bus.publish(new Bus.Figures(String.format(Locale.ENGLISH, "%s, %.0f cc, in the %s%n%.0f rpm, firing"
+                        + " %.0f a second%nGear %s, %s, %.0f km/h%nBoost %.2f bar%n%s%nPlays on %s", engine.name(),
+                        engine.displacement(), driven.vehicle().name().toLowerCase(Locale.ENGLISH), driven.rpm(),
+                        driven.rpm() / 120 * engine.cylinders(), driven.gear(), driven.automatic() ? "automatic"
+                        : "manual", driven.kmh(), sound.boost(), now.slow() >= 1 ? "Shown at its actual speed"
+                        : String.format(Locale.ENGLISH, "Shown %.0f times slower", 1 / now.slow()), sound.device())));
                 console.sky(skies.said());
             }
             final List<String> heard = card.heard();
@@ -172,7 +182,7 @@ public final class EngineBench {
     /** One frame of the engine as it runs now, drawn on {@code target}. */
     private void frame(final Target target, final EngineView view, final EngineRun now) {
         view.drawn(target, turned, now.block(), new MadeOf().with(Material.TITANIUM, now.made()), LIFT,
-                orbit.camera(48, 1), skies.lit(), asked.shadowed(), asked.shadowing());
+                orbit.camera(48, 1), skies.lit(), asked.shadowed(), asked.shadowing(), driven);
     }
 
     /** The voice the engine {@code now} picks is heard in, turbocharged if asked and it can be. */

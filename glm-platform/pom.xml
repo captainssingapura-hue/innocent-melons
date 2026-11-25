@@ -35,6 +35,8 @@
         <module>glm-model</module>
         <!-- The GLM engines: blocks cast from one modular design, inline fours and fives, V6, V8 and V12. No card. -->
         <module>glm-engine</module>
+        <!-- Driving: the driver's keys, the drivetrain they drive, its cruise control, its instruments. -->
+        <module>glm-drive</module>
         <!-- The GLM bench: the platform on the card, its groups shown and finished as chosen. -->
         <module>glm-bench</module>
         <!-- The GLM part lab: each part alone or put together, inside a grid as a drawing office has. -->
@@ -92,6 +94,11 @@
             <dependency>
                 <groupId>melons.innocent.glm</groupId>
                 <artifactId>glm-engine</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.glm</groupId>
+                <artifactId>glm-drive</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
