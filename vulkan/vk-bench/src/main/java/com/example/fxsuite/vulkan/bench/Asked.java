@@ -21,6 +21,7 @@ public final class Asked {
 
     private final AtomicBoolean stopped = new AtomicBoolean();
     private final AtomicBoolean logged = new AtomicBoolean();
+    private final AtomicBoolean steady = new AtomicBoolean(true);
     private final AtomicBoolean first = new AtomicBoolean();
     private final AtomicReference<Double> further;
     private final AtomicBoolean shadowed;
@@ -193,6 +194,15 @@ public final class Asked {
     /** Whether the first view has been asked for since this was last asked; once answered, it is not wanted again. */
     public boolean firstWanted() {
         return first.getAndSet(false);
+    }
+
+    /** Whether the view from the avatar's own eyes is steadied, and does not move as its head does. */
+    public void steadied(final boolean on) {
+        steady.set(on);
+    }
+
+    public boolean steady() {
+        return steady.get();
     }
 
     /** Whether what the bench tells of itself, a frame's time and the memory held, is logged as it is told. */

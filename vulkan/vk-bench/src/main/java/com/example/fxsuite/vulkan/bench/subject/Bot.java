@@ -135,6 +135,21 @@ public record Bot(Build build, double tall, Finish finish) {
     }
 
     /**
+     * {@code placed}, which is its parts as they are drawn, without those of its head: what it sees of itself from
+     * its own eyes, where its head, being round them, is not before them.
+     */
+    public List<Courier.Placed> headless(final List<Courier.Placed> placed) {
+        final List<Courier.Piece> pieces = pieces();
+        final List<Courier.Placed> rest = new ArrayList<>();
+        for (int part = 0; part < placed.size(); part++) {
+            if (part >= pieces.size() || pieces.get(part).limb() != Limb.HEAD) {
+                rest.add(placed.get(part));
+            }
+        }
+        return rest;
+    }
+
+    /**
      * How far below the ground the lower of its soles stands, holding the pose {@code joints} gives it: less than
      * nothing where both are above it, as a stride lifts them. The figure is lowered by as much, which plants it.
      */

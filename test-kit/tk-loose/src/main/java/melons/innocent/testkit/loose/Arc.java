@@ -20,8 +20,10 @@ record Arc(Spot from, Spot going, double floor) {
     /** How far apart in time its spots are, in seconds, and how many there are at most. */
     private static final double APART = 0.05;
     private static final int MOST = 100;
+    /** How far from where it is let go its first spot is, at the least: nearer ones would be in the thrower's face. */
+    private static final double CLEAR = 120;
 
-    /** Where it is each twentieth of a second, until it is down. */
+    /** Where it is each twentieth of a second, from a little way out until it is down. */
     List<Spot> spots() {
         final List<Spot> spots = new ArrayList<>();
         for (int spot = 1; spot <= MOST; spot++) {
@@ -30,7 +32,9 @@ record Arc(Spot from, Spot going, double floor) {
             if (at.up() < floor) {
                 break;
             }
-            spots.add(at);
+            if (at.minus(from).length() >= CLEAR) {
+                spots.add(at);
+            }
         }
         return spots;
     }

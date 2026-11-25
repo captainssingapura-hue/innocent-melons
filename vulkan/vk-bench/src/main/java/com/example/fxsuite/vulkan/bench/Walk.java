@@ -40,6 +40,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * The avatar walking about a place, drawn by the card: the way anything being built is gone round and looked at
@@ -164,6 +165,7 @@ public final class Walk {
     public void run() throws IOException {
         asked.night(Boolean.getBoolean("bench.night"));
         asked.logged(!System.getProperty("bench.log", "").isBlank());
+        asked.steadied(!"false".equals(System.getProperty("bench.steady", "true")));
         asked.clocked(Boolean.getBoolean("bench.sky"));
         asked.quickened(said("bench.sky.speed", asked.quickened()));
         asked.shadowing(System.getProperty("bench.shadows.mode", ""));
@@ -246,6 +248,7 @@ public final class Walk {
             played.told(held, pressed, taken ? mouse.across() * SENSITIVITY : 0,
                     taken ? -mouse.down() * SENSITIVITY : 0, mouse.scrolled());
             final long now = System.nanoTime();
+            roaming.steadied(asked.steady());
             final double blend = roaming.stepped((now - last) / BILLION);
             last = now;
             frame(window, staged, roaming, roaming.camera(blend), blend);
@@ -324,23 +327,26 @@ public final class Walk {
         roaming.motion().ifPresent(staged.place()::moving);
         staged.place().readied(camera);
         staged.place().rearranged().ifPresent(roaming::inTheWay);
-        final List<Courier.Placed> figures = roaming.figures(blend);
+        // shadows are cast by every figure whole; the picture shows them as whoever's view it is sees them
+        final List<Courier.Placed> whole = roaming.figures(blend);
+        final List<Courier.Placed> seen = roaming.seen(blend);
         final double aspect = (double) target.width() / target.height();
         final Daylight time = skies.lit();
         final Light lit = time.light();
         final Framed framed = new Framed(laid, camera, lit);
-        final Consumer<Pass> standing = pass -> {
+        final Function<List<Courier.Placed>, Consumer<Pass>> stood = figures -> pass -> {
             staged.place().drawn(pass, camera);
             staged.cast().figure(pass, figures, camera);
             roaming.drawn(pass, camera, blend);
             // last, what is seen through: it is laid over all the rest, and leaves nothing in the sun's picture
             staged.place().seenThrough(pass, camera);
         };
+        final Consumer<Pass> standing = stood.apply(whole);
         final Consumer<Pass> all = pass -> {
             if (staged.place().onTheFlat()) {
                 staged.cast().ground(pass, camera);
             }
-            standing.accept(pass);
+            stood.apply(seen).accept(pass);
             roaming.overlaid(pass, staged.overlay().over(camera, aspect), blend);
         };
         if (asked.shadowed()) {

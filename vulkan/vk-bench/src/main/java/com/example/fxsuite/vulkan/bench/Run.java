@@ -172,6 +172,9 @@ public final class Run {
         avatar = stepped.avatar();
         step++;
         recentred();
+        if (told.pressed().contains("V")) {
+            following.viewed();
+        }
         following.stepped(moved(avatar, across, along).body(), told.tilt(), told.circling(), told.scrolled(),
                 told.behind());
         journal.append(step, stepped.events());

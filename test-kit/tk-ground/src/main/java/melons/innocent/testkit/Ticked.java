@@ -82,6 +82,11 @@ final class Ticked implements Roaming {
     }
 
     @Override
+    public void steadied(final boolean steady) {
+        going.steadied(steady);
+    }
+
+    @Override
     public Camera camera(final double blend) {
         return going.camera(blend);
     }
@@ -94,6 +99,11 @@ final class Ticked implements Roaming {
     @Override
     public List<Courier.Placed> figures(final double blend) {
         return going.figures(blend);
+    }
+
+    @Override
+    public List<Courier.Placed> seen(final double blend) {
+        return going.seen(blend);
     }
 
     @Override

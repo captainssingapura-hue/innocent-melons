@@ -4,9 +4,11 @@ import com.example.fxsuite.avatar.hear.Hearing;
 import com.example.fxsuite.avatar.look.Gait;
 import com.example.fxsuite.avatar.sim.Avatar;
 import com.example.fxsuite.avatar.sim.Body;
+import com.example.fxsuite.avatar.view.Chase;
 import com.example.fxsuite.avatar.sim.Obstacles;
 import com.example.fxsuite.vulkan.bench.subject.Bot;
 import com.example.fxsuite.vulkan.bench.subject.Courier;
+import com.example.fxsuite.vulkan.bench.subject.Tone;
 import com.example.fxsuite.vulkan.device.Pass;
 import com.example.fxsuite.vulkan.render.Overlay;
 import com.example.fxsuite.vulkan.space.Vec3;
@@ -87,8 +89,66 @@ public record Company(Run lead, Bot bot, Optional<Companion> companion) implemen
     }
 
     @Override
+    public void steadied(final boolean steady) {
+        lead.following().steadied(steady);
+    }
+
+    @Override
     public Camera camera(final double blend) {
-        return lead.following().camera(lead.inTheWay(), blend);
+        return lead.following().own() ? lead.following().camera(eyes(blend), yaw(blend), blend)
+                : lead.following().camera(lead.inTheWay(), blend);
+    }
+
+    /** From its own eyes the lead sees itself without its head, which is round the eye and not before it. */
+    @Override
+    public List<Courier.Placed> seen(final double blend) {
+        if (!lead.following().own()) {
+            return figures(blend);
+        }
+        final List<Courier.Placed> all = new ArrayList<>(bot.headless(own(blend)));
+        all.addAll(others(blend));
+        return all;
+    }
+
+    /**
+     * Where the lead's own view is taken from, {@code blend} of the way between its last two steps. Steadied, it
+     * is where its eyes would be if it stood still where it is, facing as it faces: it goes as the body goes,
+     * smoothly, and not as the head does. Not steadied, it is where its eyes are as the figure is drawn, dipping
+     * and rising with its stride.
+     */
+    private Vec3 eyes(final double blend) {
+        if (!lead.following().steady()) {
+            return glowing(own(blend)).orElseGet(() -> head(blend));
+        }
+        // the figure standing still at the world's middle, facing ahead: where its eyes are from its feet
+        final Avatar still = new Avatar(new Start("0,0,0").body(), false);
+        final Vec3 from = glowing(bot.placed(still.body(), 0, Gait.of(still, 0, 0), false))
+                .orElse(new Vec3(0, Chase.EYE_HEIGHT, 0));
+        final Body body = lead.shown(blend).body();
+        final double sin = Math.sin(Math.toRadians(body.yaw()));
+        final double cos = Math.cos(Math.toRadians(body.yaw()));
+        return new Vec3(body.position().x() + cos * from.x() + sin * from.z(), -body.position().y() + from.y(),
+                body.position().z() - sin * from.x() + cos * from.z());
+    }
+
+    /** Midway between the eyes that glow among {@code parts}; nowhere, where the figure has none. */
+    private Optional<Vec3> glowing(final List<Courier.Placed> parts) {
+        final List<Courier.Placed> glowing = parts.stream().filter(part -> part.tone() == Tone.VISOR).toList();
+        if (glowing.isEmpty()) {
+            return Optional.empty();
+        }
+        Vec3 sum = new Vec3(0, 0, 0);
+        for (final Courier.Placed eye : glowing) {
+            sum = sum.plus(new Vec3(eye.stands().at(0, 3), eye.stands().at(1, 3), eye.stands().at(2, 3)));
+        }
+        return Optional.of(sum.times(1.0 / glowing.size()));
+    }
+
+    /** The lead's own parts, as they are drawn {@code blend} of the way between its last two steps. */
+    private List<Courier.Placed> own(final double blend) {
+        final Avatar shown = lead.shown(blend);
+        return bot.placed(shown.body(), shown.body().thrust(),
+                Gait.of(shown, lead.following().yaw(), lead.following().lookUp()), lead.otherLeg());
     }
 
     @Override
@@ -99,9 +159,7 @@ public record Company(Run lead, Bot bot, Optional<Companion> companion) implemen
 
     @Override
     public List<Courier.Placed> figures(final double blend) {
-        final Avatar shown = lead.shown(blend);
-        final List<Courier.Placed> all = new ArrayList<>(bot.placed(shown.body(), shown.body().thrust(),
-                Gait.of(shown, lead.following().yaw(), lead.following().lookUp()), lead.otherLeg()));
+        final List<Courier.Placed> all = new ArrayList<>(own(blend));
         all.addAll(others(blend));
         return all;
     }

@@ -89,8 +89,11 @@ public final class Guide {
         final CheckBox logged = new CheckBox("Log these, a line each time they are told");
         logged.setSelected(asked.logged());
         logged.setOnAction(set -> asked.logged(logged.isSelected()));
+        final CheckBox steady = new CheckBox("From its own eyes (V): a steady view, not moving as the head does");
+        steady.setSelected(asked.steady());
+        steady.setOnAction(set -> asked.steadied(steady.isSelected()));
         time.setWrapText(true);
-        final VBox all = new VBox(GAP, new Label("Drawn on: " + card), time, logged, dialled(), light.shown(),
+        final VBox all = new VBox(GAP, new Label("Drawn on: " + card), time, logged, steady, dialled(), light.shown(),
                 new Separator(), new Label(String.join("\n", lines)));
         all.setPadding(new Insets(GAP));
         arranged.ifPresent(spread -> all.getChildren().add(1, spread.bar()));
