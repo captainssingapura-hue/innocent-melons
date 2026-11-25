@@ -5,6 +5,7 @@ import com.example.fxsuite.vulkan.device.Pass;
 import com.example.fxsuite.vulkan.render.Shaped;
 import com.example.fxsuite.vulkan.shade.Laid;
 import com.example.fxsuite.vulkan.space.Mat4;
+import com.example.fxsuite.vulkan.space.Vec3;
 import com.example.fxsuite.vulkan.view.Camera;
 import melons.innocent.glm.core.Assembled;
 import melons.innocent.glm.core.PartAt;
@@ -33,10 +34,15 @@ public final class PlatformDrawn implements AutoCloseable {
 
     /** {@code built}, on {@code card}, its layouts as {@code laid} says. */
     public PlatformDrawn(final Card card, final Laid laid, final Assembled built) {
+        this(card, laid, built, new Vec3(0, 0, 0));
+    }
+
+    /** The same, its own nought standing at {@code at}, as somewhere it is walked round has it. */
+    public PlatformDrawn(final Card card, final Laid laid, final Assembled built, final Vec3 at) {
         try {
             this.coats = new Coats(card, laid);
-            built.placed().forEach((part, at) -> drawn.add(new Drawn(part, new Shaped(card, laid,
-                    part.shape().form()), new Mat4(at))));
+            built.placed().forEach((part, placed) -> drawn.add(new Drawn(part, new Shaped(card, laid,
+                    part.shape().form()), new Mat4(at.plus(placed)))));
         } catch (final RuntimeException refused) {
             close();
             throw refused;

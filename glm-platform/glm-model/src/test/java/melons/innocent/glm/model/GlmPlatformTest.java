@@ -24,7 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class GlmPlatformTest {
 
-    private final Assembled built = new Assembly(new GlmPlatform().platform()).assembled();
+    private final Assembled built = new Assembly(new GlmPlatform(new Proportions(), new BodyFigures()).platform())
+            .assembled();
 
     @Test
     void bothAxlesPutTogetherEveryPieceMetWhereItWasMadeTo() {

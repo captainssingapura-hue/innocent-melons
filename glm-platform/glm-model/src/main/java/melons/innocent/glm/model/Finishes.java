@@ -12,7 +12,7 @@ import java.util.Map;
  * What the platform's parts are seen in: a part whose skin is coated in its group's coat, a part whose skin is bare in
  * what it is made of. To begin with, when nothing else is said, as such parts come: the underbody and the subframes
  * painted dark, the coated links black, the calipers painted red, the wheels gun metal, the dampers gun metal; and
- * bare, steel as steel, cast iron dark, aluminium and titanium as themselves, rubber black.
+ * bare, steel as steel, cast iron dark, aluminium and titanium as themselves, rubber black, plastic a dull dark grey.
  *
  * @param coats each group's coat, for its coated parts
  * @param bare  how each material looks, bare
@@ -41,7 +41,8 @@ public record Finishes(Map<Group, Coat> coats, Map<Material, Coat> bare) {
                 Material.IRON, new Coat(Coat.Kind.GUN_METAL),
                 Material.ALUMINIUM, new Coat(Coat.Kind.ALUMINIUM),
                 Material.TITANIUM, new Coat(Coat.Kind.TITANIUM),
-                Material.RUBBER, new Coat(Coat.Kind.RUBBER, "#1b1d20")));
+                Material.RUBBER, new Coat(Coat.Kind.RUBBER, "#1b1d20"),
+                Material.PLASTIC, new Coat(Coat.Kind.RUBBER, "#2a2d31")));
     }
 
     /** As such parts come. */
@@ -57,6 +58,7 @@ public record Finishes(Map<Group, Coat> coats, Map<Material, Coat> bare) {
                 Map.entry(Group.CALIPERS, new Coat(Coat.Kind.GLOSS_PAINT, "#b3261e")),
                 Map.entry(Group.STEERING, new Coat(Coat.Kind.GLOSS_PAINT, "#1e2023")),
                 Map.entry(Group.ENGINE, new Coat(Coat.Kind.GLOSS_PAINT, "#2b2d30")),
+                Map.entry(Group.COVERS, new Coat(Coat.Kind.GLOSS_PAINT, "#2b2d30")),
                 Map.entry(Group.WHEELS, new Coat(Coat.Kind.GUN_METAL)),
                 Map.entry(Group.TYRES, new Coat(Coat.Kind.RUBBER, "#1b1d20"))));
     }

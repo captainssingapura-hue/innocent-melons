@@ -59,6 +59,8 @@ final class EngineConsole {
         turbo.setSelected(first.turbo());
         final CheckBox actual = new CheckBox("Shown at its actual speed, as fast as it runs");
         actual.setSelected(first.slow() >= 1);
+        final CheckBox covered = new CheckBox("Covered: its head covers, its timing cover and its trim cover on");
+        covered.setSelected(first.covered());
         final Slider slow = new Slider(SLOWEST, FASTEST, Math.log10(Math.min(first.slow(), Math.pow(10, FASTEST))));
         slow.disableProperty().bind(actual.selectedProperty());
         final Slider volume = new Slider(0, 1, first.volume());
@@ -69,9 +71,9 @@ final class EngineConsole {
         final Runnable changed = () -> bus.publish(new EngineRun(engine.getSelectionModel().getSelectedIndex(),
                 actual.isSelected() ? 1 : Math.pow(10, slow.getValue()), turbo.isSelected(), volume.getValue(),
                 EngineRun.Block.values()[block.getSelectionModel().getSelectedIndex()],
-                METALS.get(made.getSelectionModel().getSelectedIndex())));
+                METALS.get(made.getSelectionModel().getSelectedIndex()), covered.isSelected()));
         List.of(engine, block, made).forEach(c -> c.setOnAction(set -> changed.run()));
-        List.of(turbo, actual).forEach(c -> c.setOnAction(set -> changed.run()));
+        List.of(turbo, actual, covered).forEach(c -> c.setOnAction(set -> changed.run()));
         List.of(slow, volume).forEach(s -> s.valueProperty().addListener((o, was, now) -> changed.run()));
         final GridPane rows = new GridPane(GAP, GAP);
         rows.addRow(0, new Label("Engine"), engine);
@@ -86,7 +88,7 @@ final class EngineConsole {
         final VBox lit = new VBox(GAP, new Label("The light"), light.shown());
         lit.setPadding(new Insets(GAP));
         lit.setPrefWidth(LIGHT_WIDE);
-        final VBox middle = new VBox(GAP, new Label("The engine fitted"), rows, turbo, actual, keys,
+        final VBox middle = new VBox(GAP, new Label("The engine fitted"), rows, turbo, actual, covered, keys,
                 shell.figures(), shell.problems());
         middle.setPadding(new Insets(GAP));
         final Stage window = new Stage();

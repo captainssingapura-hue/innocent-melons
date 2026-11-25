@@ -91,6 +91,11 @@ record HeadFigures(EngineFigures figures) {
         return Math.max(cam(true).y(), cam(false).y());
     }
 
+    /** The middle of bank {@code bank}'s head's top, where its walls stop, in the block's frame. */
+    Vec3 top(final int bank) {
+        return at(bank, 0, new Vec3(0, high(), (front(bank) + rear(bank)) / 2 - figures.along(bank, 0)));
+    }
+
     /** Where along the crank its front and its rear are, bank {@code bank}'s. */
     double front(final int bank) {
         return figures.along(bank, 0) - figures.margin();

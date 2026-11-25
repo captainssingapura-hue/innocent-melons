@@ -19,27 +19,37 @@ import com.example.fxsuite.vulkan.worked.Picture;
 import javafx.application.Platform;
 import melons.innocent.glm.core.Assembled;
 import melons.innocent.glm.core.Assembly;
-import melons.innocent.glm.model.Proportions;
+import melons.innocent.glm.core.Group;
+import melons.innocent.glm.engine.EngineRange;
 import melons.innocent.glm.model.BodyFigures;
+import melons.innocent.glm.model.EngineBay;
+import melons.innocent.glm.model.Finishes;
 import melons.innocent.glm.model.GlmPlatform;
+import melons.innocent.glm.model.MadeOf;
+import melons.innocent.glm.model.Proportions;
 
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
- * The GLM bench: the platform put together, a large SUV's, both its axles as far as each is made, on level ground,
+ * The GLM bench: the platform put together, a large SUV's, both its axles as far as each is made and its engine in
+ * its bay, covered, its covers a group of their own to show or hide, on level ground,
  * looked at on the card from any side, in whatever light is set. Two windows, as the vehicles bench has: the card's,
  * where the mouse moves the view as on every bench (drag to turn, right-drag or Shift-drag to move across, scroll to
  * come nearer); and a JavaFX window beside it ({@link GlmConsole}) to show or hide each group, choose what it is
  * finished in and what its parts are made of, titanium wherever aluminium is, say. What
  * the assembly found, every part reached and every gap where parts meet again, is told beside it.
  *
- * <p>For a run with nobody at it: {@code -Dbench.yaw=}, {@code -Dbench.pitch=} and {@code -Dbench.distance=}
+ * <p>For a run with nobody at it: {@code -Dglm.engine=} the engine in its bay, L4, L5, V6, V8 or V12, or none;
+ * {@code -Dbench.hidden=} the groups hidden to begin with, COVERS for the engine without its covers, say;
+ * {@code -Dbench.yaw=}, {@code -Dbench.pitch=} and {@code -Dbench.distance=}
  * (metres) where it is seen from; the light's options as on every bench; {@code -Dbench.settle=} so many thousandths
  * of a second ends it; {@code -Dbench.snapshot.card=} a file the card's picture is saved to as it ends.
  */
@@ -64,9 +74,11 @@ public final class GlmBench {
             new Asked.Sun(said("bench.sun.high", noon.sunHigh()), said("bench.sun.round", noon.sunRound())));
     private final Skies skies = new Skies(asked);
     private final Bus bus = new Bus();
-    private final AtomicReference<OnShow> shown = new AtomicReference<>(new OnShow());
+    private final AtomicReference<OnShow> shown = new AtomicReference<>(new OnShow(new Finishes().coats(), hidden(),
+            new MadeOf()));
     private final Proportions proportions = new Proportions();
-    private final Assembled built = new Assembly(new GlmPlatform(proportions, new BodyFigures()).platform()).assembled();
+    private final Assembled built = new Assembly(new GlmPlatform(proportions, new BodyFigures(), bay()).platform())
+            .assembled();
     private final Vec3 middle = new Vec3(0, proportions.tyre(), proportions.back() / 2);
     private Orbit orbit = new Orbit(middle, said("bench.yaw", 35), said("bench.pitch", 18),
             METRE * said("bench.distance", 6));
@@ -155,6 +167,23 @@ public final class GlmBench {
     /** One frame of what is on show, looked at as it is now, drawn on {@code target}. */
     private void frame(final Target target, final GlmView view) {
         view.drawn(target, shown.get(), orbit.camera(48, 10), skies.lit(), asked.shadowed(), asked.shadowing());
+    }
+
+    /**
+     * The engine in its bay, the one the run was told as {@code -Dglm.engine=} (L4, L5, V6, V8 or V12; or none), the
+     * V6 where it was told none; covered, its covers shown or hidden as a group of their own.
+     */
+    private EngineBay bay() {
+        final String called = System.getProperty("glm.engine", "V6");
+        return called.equalsIgnoreCase("none") ? null : new EngineBay(new EngineRange().all().stream()
+                .filter(e -> e.name().equalsIgnoreCase(called)).findFirst().orElseThrow(), true);
+    }
+
+    /** The groups the run was told to hide to begin with, as {@code -Dbench.hidden=COVERS,UNDERBODY}; or none. */
+    private Set<Group> hidden() {
+        final String told = System.getProperty("bench.hidden", "");
+        return told.isBlank() ? Set.of() : Arrays.stream(told.split(",")).map(String::strip).map(Group::valueOf)
+                .collect(Collectors.toSet());
     }
 
     /** The number the run was told as {@code name}, or {@code otherwise} where it was told none. */

@@ -51,6 +51,7 @@ final class FrontSubframe {
         final Map<String, Vec3> onStrut = new LinkedHashMap<>();
         onStrut.put("foot", points.strutFoot());
         onStrut.put("head", points.strutHead());
+        onStrut.put("engine mount", points.engineMount());
         this.strut = COATED.part("front strut", Group.SUBFRAMES, true, onStrut, pieces.strutTube());
         final Map<String, Vec3> onMount = new LinkedHashMap<>();
         onMount.put("body", points.mountFront());

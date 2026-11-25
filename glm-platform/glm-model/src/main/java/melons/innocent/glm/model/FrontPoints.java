@@ -126,6 +126,11 @@ record FrontPoints(Proportions proportions) implements WheelEnd {
         return at(42, 1.4, 38.5);
     }
 
+    /** Where the engine's mount sits on the strut tube: on its top, between its last two bends, ahead of the axle. */
+    Vec3 engineMount() {
+        return at(39, 6, 24);
+    }
+
     /** Where the steering gear is bolted to the node's boss. */
     Vec3 steeringMount() {
         return at(31.5, -1, 8.5);

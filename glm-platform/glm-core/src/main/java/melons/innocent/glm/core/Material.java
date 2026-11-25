@@ -4,15 +4,16 @@ package melons.innocent.glm.core;
  * What a part is made of, and what that means for how it bears its load: how heavy it is for its size, how stiff,
  * and how hard it may be pulled before it gives for good. The figures a handbook gives for each as a car's chassis
  * uses it: high-strength steel, hydroformed or pressed; grey cast iron, as a brake's disc is; aluminium, cast or
- * pushed through a die and heat treated; titanium, as its common alloy (Ti-6Al-4V); and rubber, as a bush is or a
- * tyre.
+ * pushed through a die and heat treated; titanium, as its common alloy (Ti-6Al-4V); rubber, as a bush is or a tyre;
+ * and plastic, glass-filled polyamide moulded, as an engine's covers and its coils' are.
  */
 public enum Material {
     STEEL("High-strength steel", true, 7_850, 210, 420),
     IRON("Cast iron", true, 7_200, 110, 250),
     ALUMINIUM("Aluminium", true, 2_700, 70, 220),
     TITANIUM("Titanium", true, 4_430, 114, 880),
-    RUBBER("Rubber", false, 1_100, 0.005, 15);
+    RUBBER("Rubber", false, 1_100, 0.005, 15),
+    PLASTIC("Plastic", false, 1_350, 9, 150);
 
     private final String title;
     private final boolean metal;

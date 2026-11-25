@@ -36,12 +36,14 @@ public final class EngineInternals {
     private final Map<Part, String> pistons = new LinkedHashMap<>();
     private final List<Part> heads = new ArrayList<>();
     private final Valvetrain valvetrain;
+    private final Covers covers;
 
     /** Its parts, made to {@code figures}. */
     public EngineInternals(final EngineFigures figures) {
         this.figures = figures;
         this.crank = new Crankshaft(figures).part();
         this.valvetrain = new Valvetrain(figures);
+        this.covers = new Covers(figures);
         for (int b = 0; b < figures.banks(); b++) {
             heads.add(new CylinderHead(figures, b).part());
             for (int k = 0; k < figures.perBank(); k++) {
@@ -64,14 +66,25 @@ public final class EngineInternals {
         }
     }
 
-    /** The engine alone, its block the root and all of it inside. */
+    /** The engine alone, its block the root and all of it inside, its heads open. */
     public Platform platform() {
-        final Part block = new CastBlock(figures).part();
-        return new Platform("the " + figures.name() + " engine", block, joined(block));
+        return platform(false);
     }
 
-    /** How what turns and runs is joined to {@code block}, in the order they are walked. */
+    /** The same, closed in by its covers if {@code covered} ({@link Covers}). */
+    public Platform platform(final boolean covered) {
+        final Part block = new CastBlock(figures).part();
+        return new Platform("the " + figures.name() + " engine" + (covered ? ", covered" : ""), block,
+                joined(block, covered));
+    }
+
+    /** How what turns and runs is joined to {@code block}, in the order they are walked, its heads open. */
     public List<Connection> joined(final Part block) {
+        return joined(block, false);
+    }
+
+    /** The same, closed in by its covers if {@code covered}. */
+    public List<Connection> joined(final Part block, final boolean covered) {
         final List<Connection> joined = new ArrayList<>();
         final int mains = new BlockForm(figures).bulkheads().size();
         for (int j = 1; j <= mains; j++) {
@@ -86,7 +99,15 @@ public final class EngineInternals {
         joined.addAll(inside);
         pistons.forEach((piston, at) -> joined.add(new Connection(figures.name() + " " + at + " in its bore", piston,
                 "bore", block, "cylinder " + at, Joining.SLIDING)));
+        if (covered) {
+            joined.addAll(covers.joined(block, heads));
+        }
         return joined;
+    }
+
+    /** Whether {@code part} is one of what closes it in: a head's cover, its coils, the timing cover, the trim. */
+    public boolean cover(final Part part) {
+        return covers.has(part);
     }
 
     /**

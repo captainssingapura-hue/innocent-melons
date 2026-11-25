@@ -35,7 +35,7 @@ record Camshaft(EngineFigures figures, int bank, boolean inlet) {
     private static final int LOBE = 90;
     private static final double LOBE_WIDE = 1.5;
     private static final double JOURNAL_WIDE = 1.8;
-    private static final double WHEEL = 3.2;
+    static final double WHEEL = 3.2;
 
     /** What it is called. */
     String called() {

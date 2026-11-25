@@ -22,8 +22,10 @@ import java.util.List;
  * through the head from the ridge's middle, and a guide's boss up each valve's stem; from each inlet valve's seat a
  * port curving out to the inlet side, from each exhaust valve's an exhaust port out to the other; its side walls
  * standing to its camshafts' axes, opened where the ports come out; and a tower across between each pair of cylinders
- * and at each end, bored for both camshafts' journals. Open on top, for its camshafts and its cover. Its points: the
- * middle of its deck, bolted to the block's; each chamber at its deck; and each camshaft's axis at its front.
+ * and at each end, its camshafts' bearings in its top and their caps bolted over them ({@link CamTower}). Open on
+ * top, for its camshafts and its cover. Its points: the middle of its deck, bolted to the block's; the middle of its
+ * top, where its cover is bolted; each chamber at its deck; each camshaft's axis at its front; and each valve's seat
+ * and each valve spring's.
  *
  * @param figures the engine's figures
  * @param bank    which bank it is, from nought
@@ -45,6 +47,7 @@ record CylinderHead(EngineFigures figures, int bank) {
         final List<Point> points = new ArrayList<>();
         final Vec3 deck = new BlockForm(figures).up(bank).times(figures.deck());
         points.add(new Point("deck", deck.plus(new Vec3(0, 0, figures.length() / 2))));
+        points.add(new Point("top", head.top(bank)));
         for (int k = 0; k < figures.perBank(); k++) {
             points.add(new Point("chamber " + (bank + 1) + "." + (k + 1), head.at(bank, k, new Vec3(0, 0, 0))));
         }
@@ -74,8 +77,9 @@ record CylinderHead(EngineFigures figures, int bank) {
         for (final boolean inlet : List.of(true, false)) {
             made.add(side(head, inlet));
         }
+        final CamTower tower = new CamTower(head, bank);
         for (final double z : towers(head)) {
-            made.add(tower(head, z));
+            made.addAll(tower.at(z));
         }
         final Chamber chamber = new Chamber(head);
         for (int k = 0; k < figures.perBank(); k++) {
@@ -125,20 +129,6 @@ record CylinderHead(EngineFigures figures, int bank) {
             at.add(figures.along(bank, k) + figures.spacing() / 2);
         }
         return at;
-    }
-
-    /** A tower across at {@code z} along the crank, from its deck to over its camshafts, bored for their journals. */
-    private Mesh tower(final HeadFigures head, final double z) {
-        final Outlines outlines = new Outlines(ROUND);
-        final double top = head.high() + head.journal() + 0.6;
-        final List<Spot> outline = List.of(new Spot(-head.side(false), 0), new Spot(head.side(true), 0),
-                new Spot(head.side(true), top), new Spot(-head.side(false), top));
-        final List<List<Spot>> journals = new ArrayList<>();
-        for (final boolean inlet : List.of(true, false)) {
-            journals.add(outlines.circle(new Spot(head.cam(inlet).x(), head.cam(inlet).y()), head.journal()));
-        }
-        return new Plate(outline, journals, head.at(bank, 0, new Vec3(0, 0, z - figures.along(bank, 0))),
-                head.way(bank, new Vec3(1, 0, 0)), head.way(bank, new Vec3(0, 1, 0)), 2).mesh();
     }
 
     /** Over cylinder {@code k}: its plug's tube, its valves' guides and its ports. */
