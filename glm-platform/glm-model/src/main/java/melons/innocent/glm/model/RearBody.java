@@ -3,6 +3,8 @@ package melons.innocent.glm.model;
 import com.example.fxsuite.vulkan.form.Mesh;
 import com.example.fxsuite.vulkan.space.Vec3;
 import melons.innocent.glm.core.Group;
+import melons.innocent.glm.core.Made;
+import melons.innocent.glm.core.Material;
 import melons.innocent.glm.core.Part;
 import melons.innocent.vehiclelab.forms.Course;
 import melons.innocent.vehiclelab.forms.Section;
@@ -19,12 +21,15 @@ import java.util.Map;
  * subframe's mounts, low ahead of the axle and rising over it to the back mounts, high; the floor between them, rising
  * with them; and a tower each side, outboard of its rail and clear of the wheel, holding the spring's top and the
  * damper's. Its points, both sides: the subframe's mounts, ahead of the axle and behind, under the rails, where the
- * bushes' sleeves are; the springs' tops; the dampers' tops.
+ * bushes' sleeves are; the springs' tops; the dampers' tops; and where the front underbody is joined to it.
  *
  * @param points the rear axle's points
  * @param shapes what it is shaped with
  */
 record RearBody(RearPoints points, Shapes shapes) {
+
+    /** What its parts are made of, and whether they are bare. */
+    private static final Making BODY = new Making(new Made(Material.STEEL, false));
 
     /** How far the rails reach ahead of the axle and behind it; how wide and deep they are; how thick the floor is. */
     private static final double AHEAD = 90;
@@ -52,7 +57,8 @@ record RearBody(RearPoints points, Shapes shapes) {
             named.put("spring top" + s, mirrored(points.springTop(), side));
             named.put("damper top" + s, mirrored(points.damperTop(), side));
         }
-        return new Making().root("underbody", Group.UNDERBODY, named, form());
+        named.put("front underbody", new FrontBody(new FrontPoints(points.proportions())).join());
+        return BODY.root("underbody", Group.UNDERBODY, named, form());
     }
 
     /** Its rails, its floor and its towers. */

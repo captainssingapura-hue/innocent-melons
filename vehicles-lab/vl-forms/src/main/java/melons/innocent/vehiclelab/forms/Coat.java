@@ -18,6 +18,7 @@ public record Coat(Kind kind, String colour) {
         TITANIUM("Titanium", false),
         GUN_METAL("Gun metal", false),
         STEEL("Steel", false),
+        ALUMINIUM("Aluminium", false),
         BRONZE("Bronze", false),
         GOLD("Gold", false),
         RUBBER("Rubber", false),

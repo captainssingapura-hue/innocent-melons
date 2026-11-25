@@ -60,6 +60,7 @@ public final class Coats implements AutoCloseable {
             case TITANIUM -> new Materials.Titanium();
             case GUN_METAL -> new Materials.Gunmetal();
             case STEEL -> new Materials.Steel();
+            case ALUMINIUM -> new Materials.Aluminium();
             case BRONZE -> new Materials.Bronze();
             case GOLD -> new Materials.Gold();
             case RUBBER -> new Materials.Rubber();

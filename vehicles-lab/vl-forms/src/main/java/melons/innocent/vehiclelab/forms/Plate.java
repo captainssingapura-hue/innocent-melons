@@ -65,6 +65,9 @@ public record Plate(List<Spot> outline, List<List<Spot>> holes, Vec3 origin, Vec
             final Spot a = loop.get(k);
             final Spot b = loop.get((k + 1) % loop.size());
             final Spot way = a.to(b);
+            if (Math.hypot(way.u(), way.v()) < 1e-12) {
+                continue;
+            }
             final Vec3 out = u.times(way.v()).minus(v.times(way.u()));
             final int p = forming.point(where(a, 1), out);
             final int q = forming.point(where(b, 1), out);

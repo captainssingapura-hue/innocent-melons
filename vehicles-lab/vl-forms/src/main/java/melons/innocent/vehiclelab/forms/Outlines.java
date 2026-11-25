@@ -5,8 +5,8 @@ import java.util.List;
 
 /**
  * Outlines a pressing is drawn with, each round to the left, every round one {@code round} points round: a round hole;
- * a slot, two half rounds joined straight; and a tab, as a bracket's cheek is, wide at its foot and rounded round the
- * hole at its tip.
+ * a slot, two half rounds joined straight, round where it is no longer than wide; and a tab, as a bracket's cheek is,
+ * wide at its foot and rounded round the hole at its tip.
  *
  * @param round how many points a whole round is drawn in
  */
@@ -26,6 +26,9 @@ public record Outlines(int round) {
     public List<Spot> slot(final Spot middle, final double length, final double wide) {
         final double r = wide / 2;
         final double reach = Math.max(0, length / 2 - r);
+        if (reach < 1e-9) {
+            return circle(middle, r);
+        }
         final List<Spot> spots = new ArrayList<>();
         final int half = Math.max(2, round / 2);
         for (int k = 0; k <= half; k++) {

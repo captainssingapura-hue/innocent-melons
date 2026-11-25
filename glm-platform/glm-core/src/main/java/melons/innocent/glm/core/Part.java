@@ -10,22 +10,24 @@ import java.util.Set;
 
 /**
  * One part of the platform: what it is called, which group it belongs to, whether there is one on each side, the
- * points it is joined at, by name, and its form; its points and its form in its own frame. A part on each side is said
- * as the right one; the left is its mirror. A part down the middle that is joined to both sides names its points on
- * each side {@code ", right"} and {@code ", left"}.
+ * points it is joined at, by name, its form, and what it is made of; its points and its form in its own frame. A part
+ * on each side is said as the right one; the left is its mirror. A part down the middle that is joined to both sides
+ * names its points on each side {@code ", right"} and {@code ", left"}.
  *
  * @param name   what it is called
  * @param group  which group it belongs to
  * @param paired whether there is one on each side
  * @param points where it is joined
  * @param form   its form
+ * @param made   what it is made of, and whether its skin is bare
  */
-public record Part(String name, Group group, boolean paired, List<Point> points, Mesh form) {
+public record Part(String name, Group group, boolean paired, List<Point> points, Mesh form, Made made) {
 
     public Part {
         points = List.copyOf(points);
-        if (name == null || group == null || form == null) {
-            throw new IllegalArgumentException("a part is named, of some group, and has a form: " + name);
+        if (name == null || group == null || form == null || made == null) {
+            throw new IllegalArgumentException("a part is named, of some group, has a form and is made of something: "
+                    + name);
         }
         final Set<String> named = new HashSet<>();
         for (final Point p : points) {
@@ -59,7 +61,7 @@ public record Part(String name, Group group, boolean paired, List<Point> points,
 
     /** The same, on the other side of the middle: its points and its form mirrored. */
     public Part mirrored() {
-        return new Part(name, group, paired, points.stream().map(Point::mirrored).toList(), mirrored(form));
+        return new Part(name, group, paired, points.stream().map(Point::mirrored).toList(), mirrored(form), made);
     }
 
     /** {@code mesh} mirrored across the middle, its triangles turned so they still face out. */

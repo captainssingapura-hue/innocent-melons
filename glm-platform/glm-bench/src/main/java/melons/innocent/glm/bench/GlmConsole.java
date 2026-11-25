@@ -15,9 +15,11 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import melons.innocent.glm.core.Group;
+import melons.innocent.glm.core.Material;
 import melons.innocent.vehiclelab.forms.Coat;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Locale;
@@ -27,8 +29,9 @@ import java.util.Set;
 /**
  * The bench's JavaFX window, beside the card's, laid out by the engine's bench kit as every bench's is. On its left,
  * the light. In its middle: for each group of the platform's parts, whether it is shown, what it is finished in, and
- * its colour where its finish takes one; and what the assembly found, said back from the bench. It draws nothing
- * itself: it says what is on show as a message on the bench's bus ({@link OnShow}), and never calls what draws.
+ * its colour where its finish takes one; for each metal the parts are designed in, which metal they are made of
+ * instead; and what the assembly found, said back from the bench. It draws nothing itself: it says what is on show
+ * as a message on the bench's bus ({@link OnShow}), and never calls what draws.
  */
 public final class GlmConsole {
 
@@ -41,13 +44,18 @@ public final class GlmConsole {
     private final Asked asked;
     private final OnShow first;
     private final LightBoard light;
+    private final MadeOfChoice made;
 
-    /** A console on {@code bus}, its light asking {@code asked}, with {@code first} on show to begin with. */
-    public GlmConsole(final Bus bus, final Asked asked, final OnShow first) {
+    /**
+     * A console on {@code bus}, its light asking {@code asked}, with {@code first} on show to begin with, offering
+     * another metal for each in {@code used}.
+     */
+    public GlmConsole(final Bus bus, final Asked asked, final OnShow first, final Collection<Material> used) {
         this.bus = bus;
         this.asked = asked;
         this.first = first;
         this.light = new LightBoard(asked);
+        this.made = new MadeOfChoice(used, first.madeOf());
     }
 
     /** Shown, its top left corner {@code x} across the screen and {@code y} down. To be called on JavaFX's thread. */
@@ -74,7 +82,7 @@ public final class GlmConsole {
         final Runnable changed = () -> {
             kinds.forEach((group, kind) -> colours.get(group).setDisable(!Coat.Kind.values()[kind
                     .getSelectionModel().getSelectedIndex()].coloured()));
-            bus.publish(new OnShow(coats(kinds, colours), hidden(showing)));
+            bus.publish(new OnShow(coats(kinds, colours), hidden(showing), made.madeOf()));
         };
         showing.values().forEach(box -> box.setOnAction(set -> changed.run()));
         kinds.values().forEach(choice -> choice.setOnAction(set -> changed.run()));
@@ -83,7 +91,8 @@ public final class GlmConsole {
         final VBox lit = new VBox(GAP, new Label("The light"), light.shown());
         lit.setPadding(new Insets(GAP));
         lit.setPrefWidth(LIGHT_WIDE);
-        final VBox middle = new VBox(GAP, new Label("The rear axle's groups: shown, and finished in"), groups,
+        final VBox middle = new VBox(GAP, new Label("The groups: shown, and their coated parts coated in"), groups,
+                new Label("What their parts are made of, seen where bare"), made.shown(changed),
                 shell.working(), shell.figures(), shell.problems());
         middle.setPadding(new Insets(GAP));
         final Stage window = new Stage();

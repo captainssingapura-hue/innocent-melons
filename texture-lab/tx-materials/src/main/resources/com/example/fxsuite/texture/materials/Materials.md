@@ -33,6 +33,10 @@ A bronze with zinc in it, cast for what must bear wear.
 
 Iron with a little carbon in it: strong and cheap, drawn into tube and pressed into sheet.
 
+## Aluminium
+
+A light metal, a third the weight of steel: cast into a car's nodes and knuckles, pushed out through a die into its beams.
+
 ## Masonry
 
 Stone, or what is made to stand in for stone, laid piece on piece to stand.

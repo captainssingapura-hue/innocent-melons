@@ -18,9 +18,11 @@ import com.example.fxsuite.vulkan.worked.Picture;
 import javafx.application.Platform;
 import melons.innocent.glm.core.Assembled;
 import melons.innocent.glm.core.Assembly;
+import melons.innocent.glm.core.Material;
 import melons.innocent.glm.core.PartAt;
 import melons.innocent.glm.model.Finishes;
-import melons.innocent.glm.model.RearAxle;
+import melons.innocent.glm.model.GlmPlatform;
+import melons.innocent.glm.model.MadeOf;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -30,18 +32,19 @@ import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * The GLM part lab: the platform's parts one at a time, the rear subframe to begin with, alone in their own frames or
- * put together with the rest, inside a grid as a drawing office rules one, on the card, in whatever light is set. Two
- * windows, as every bench has: the card's, where the mouse moves the view (drag to turn, right-drag or Shift-drag to
- * move across, scroll to come nearer), turning about what is looked at whenever another part or level is chosen; and
- * a JavaFX window beside it ({@link LabConsole}) to choose the part, how it is looked at, and what is shown round it.
+ * The GLM part lab: the platform's parts one at a time, both axles', the rear subframe to begin with, alone in their
+ * own frames or put together with the rest, inside a grid as a drawing office rules one, on the card, in whatever
+ * light is set. Two windows, as every bench has: the card's, where the mouse moves the view (drag to turn, right-drag
+ * or Shift-drag to move across, scroll to come nearer), turning about what is looked at whenever another part or
+ * level is chosen; and a JavaFX window beside it ({@link LabConsole}) to choose the part, how it is looked at, what is
+ * shown round it and what the parts are made of.
  *
  * <p>For a run with nobody at it: {@code -Dlab.part=} the start of a part's name, as the window lists it ("Links:
  * right toe"); {@code -Dlab.level=assembly}; {@code -Dlab.others=} ghost, finished, group or hidden; {@code
- * -Dlab.fine=true}; {@code -Dlab.grid=false}; {@code -Dlab.ground=false}; {@code -Dbench.yaw=}, {@code
- * -Dbench.pitch=}; the light's options as on every bench; {@code
- * -Dbench.settle=} so many thousandths of a second ends it; {@code -Dbench.snapshot.card=} a file the card's picture
- * is saved to as it ends.
+ * -Dlab.instead=aluminium:titanium}; {@code -Dlab.fine=true}; {@code -Dlab.grid=false}; {@code -Dlab.ground=false};
+ * {@code -Dbench.yaw=}, {@code -Dbench.pitch=}; the light's options as on every bench; {@code -Dbench.settle=} so
+ * many thousandths of a second ends it; {@code -Dbench.snapshot.card=} a file the card's picture is saved to as it
+ * ends.
  */
 public final class PartLab {
 
@@ -64,7 +67,7 @@ public final class PartLab {
             new Asked.Sun(said("bench.sun.high", noon.sunHigh()), said("bench.sun.round", noon.sunRound())));
     private final Skies skies = new Skies(asked);
     private final Bus bus = new Bus();
-    private final Assembled built = new Assembly(new RearAxle().platform()).assembled();
+    private final Assembled built = new Assembly(new GlmPlatform().platform()).assembled();
     private final Finishes finishes = new Finishes();
     private final AtomicReference<LabShow> shown = new AtomicReference<>();
     private Orbit orbit;
@@ -101,7 +104,22 @@ public final class PartLab {
         return new LabShow(part, "assembly".equals(System.getProperty("lab.level")) ? LabShow.Level.ASSEMBLY
                 : LabShow.Level.PART, others(), !"false".equals(System.getProperty("lab.grid")),
                 !"false".equals(System.getProperty("lab.ground")), true,
-                Boolean.getBoolean("lab.fine") ? Spacing.FINE : Spacing.NORMAL);
+                Boolean.getBoolean("lab.fine") ? Spacing.FINE : Spacing.NORMAL, madeOf());
+    }
+
+    /**
+     * What the parts are made of to begin with, as the run says: {@code aluminium:titanium}, say, for titanium
+     * wherever aluminium is, several said with commas between; as designed if it says nothing.
+     */
+    private MadeOf madeOf() {
+        MadeOf made = new MadeOf();
+        for (final String pair : System.getProperty("lab.instead", "").split(",")) {
+            final String[] said = pair.trim().toUpperCase(Locale.ROOT).split(":");
+            if (said.length == 2) {
+                made = made.with(Material.valueOf(said[0]), Material.valueOf(said[1]));
+            }
+        }
+        return made;
     }
 
     /** How the rest are shown to begin with, as the run says: as glass if it says nothing. */

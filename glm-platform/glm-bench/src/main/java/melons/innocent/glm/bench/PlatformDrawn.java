@@ -56,7 +56,7 @@ public final class PlatformDrawn implements AutoCloseable {
     private void drawn(final Pass pass, final Camera camera, final OnShow shown, final boolean seenThrough) {
         for (final Drawn part : drawn) {
             if (!shown.hidden().contains(part.part().part().group())) {
-                final Coat coat = shown.coats().get(part.part().part().group());
+                final Coat coat = shown.coat(part.part().part());
                 if (coats.seenThrough(coat) == seenThrough) {
                     coats.drawn(pass, part.form(), part.at(), camera, coat);
                 }

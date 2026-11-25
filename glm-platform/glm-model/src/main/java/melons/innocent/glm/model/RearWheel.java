@@ -3,6 +3,8 @@ package melons.innocent.glm.model;
 import com.example.fxsuite.vulkan.form.Mesh;
 import com.example.fxsuite.vulkan.space.Vec3;
 import melons.innocent.glm.core.Group;
+import melons.innocent.glm.core.Made;
+import melons.innocent.glm.core.Material;
 import melons.innocent.glm.core.Part;
 import melons.innocent.vehiclelab.forms.Shapes;
 
@@ -21,6 +23,10 @@ import java.util.Map;
  * @param shapes      what it is shaped with
  */
 record RearWheel(Proportions proportions, RearPoints points, Shapes shapes) {
+
+    /** What its parts are made of, and whether they are bare. */
+    private static final Making WHEEL_MADE = new Making(new Made(Material.ALUMINIUM, false));
+    private static final Making TYRE_MADE = new Making(new Made(Material.RUBBER, true));
 
     /** How many spokes; how thick the rim is; how far out its face is from the wheel's middle; its cap, how round. */
     private static final int SPOKES = 10;
@@ -46,7 +52,7 @@ record RearWheel(Proportions proportions, RearPoints points, Shapes shapes) {
             final Vec3 out = new Vec3(0, Math.sin(turn), Math.cos(turn));
             forms.add(shapes.capsule(face.plus(out.times(CAP - 1)), face.plus(out.times(reach)), SPOKE));
         }
-        return new Making().part("wheel", Group.WHEELS, true, named, shapes.joined(forms));
+        return WHEEL_MADE.part("wheel", Group.WHEELS, true, named, shapes.joined(forms));
     }
 
     /** The tyre, seated on the rim. */
@@ -54,7 +60,7 @@ record RearWheel(Proportions proportions, RearPoints points, Shapes shapes) {
         final Map<String, Vec3> named = new LinkedHashMap<>();
         named.put("rim", points.wheel());
         final double out = proportions.wall() / 2;
-        return new Making().part("tyre", Group.TYRES, true, named, shapes.ring(points.wheel(),
+        return TYRE_MADE.part("tyre", Group.TYRES, true, named, shapes.ring(points.wheel(),
                 proportions.rimRadius() + out, proportions.width() * 0.1 / 2, out));
     }
 }

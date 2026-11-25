@@ -18,14 +18,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class AssemblyTest {
 
     private final Mesh nothing = new Mesh(List.of(), List.of(), List.of());
+    private final Made steel = new Made(Material.STEEL, false);
 
     private final Part beam = new Part("beam", Group.SUBFRAMES, false, List.of(
             new Point("arm, right", new Vec3(50, 0, 0)), new Point("arm, left", new Vec3(-50, 0, 0)),
-            new Point("stay, right", new Vec3(50, 30, 0)), new Point("stay, left", new Vec3(-50, 30, 0))), nothing);
+            new Point("stay, right", new Vec3(50, 30, 0)), new Point("stay, left", new Vec3(-50, 30, 0))), nothing,
+            steel);
     private final Part arm = new Part("arm", Group.LINKS, true, List.of(new Point("inner", new Vec3(0, 0, 0)),
-            new Point("outer", new Vec3(40, 0, 0)), new Point("stay", new Vec3(0, 30, 0))), nothing);
+            new Point("outer", new Vec3(40, 0, 0)), new Point("stay", new Vec3(0, 30, 0))), nothing, steel);
     private final Part wheel = new Part("wheel", Group.WHEELS, true, List.of(new Point("hub", new Vec3(0, 0, 0))),
-            nothing);
+            nothing, steel);
 
     @Test
     void eachPartPlacedOnItsNeighboursPointTheLeftTheRightsMirror() {
@@ -50,7 +52,7 @@ class AssemblyTest {
     @Test
     void whatIsNotReachedToldAndAPointItHasNotRefused() {
         final Part loose = new Part("loose", Group.TYRES, true, List.of(new Point("rim", new Vec3(0, 0, 0))),
-                nothing);
+                nothing, steel);
         final Assembled built = new Assembly(new Platform("test", beam, List.of(
                 new Connection("arm", beam, "arm, right", arm, "inner", Joining.BUSHED),
                 new Connection("loose", wheel, "hub", loose, "rim", Joining.SEATED)))).assembled();
@@ -58,7 +60,7 @@ class AssemblyTest {
         assertThrows(IllegalArgumentException.class, () -> new Connection("bad", beam, "nowhere", arm, "inner",
                 Joining.BOLTED));
         final Part lopsided = new Part("lopsided", Group.UNDERBODY, false, List.of(new Point("mount, right",
-                new Vec3(10, 0, 0))), nothing);
+                new Vec3(10, 0, 0))), nothing, steel);
         assertThrows(IllegalArgumentException.class, () -> new Connection("one side", lopsided, "mount, right",
                 wheel, "hub", Joining.BOLTED), "a pair joined to a part down the middle on its right, and its left");
     }

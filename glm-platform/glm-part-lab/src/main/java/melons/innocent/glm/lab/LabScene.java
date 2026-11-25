@@ -18,7 +18,7 @@ import java.util.List;
  *
  * @param built    the platform put together
  * @param show     what is shown
- * @param finishes what each group is finished in
+ * @param finishes what the parts are seen in
  */
 public record LabScene(Assembled built, LabShow show, Finishes finishes) {
 
@@ -55,7 +55,7 @@ public record LabScene(Assembled built, LabShow show, Finishes finishes) {
     /** Every part drawn. */
     public List<Placement> placements() {
         final PartAt looked = show.part();
-        final Coat own = finishes.of(looked.part().group());
+        final Coat own = finishes.of(looked.part(), show.madeOf());
         if (show.level() == LabShow.Level.PART) {
             return List.of(new Placement(looked, new Vec3(0, 0, 0), own));
         }
@@ -67,7 +67,7 @@ public record LabScene(Assembled built, LabShow show, Finishes finishes) {
                 all.add(new Placement(part, at, new Coat(Coat.Kind.GLASS)));
             } else if (show.others() == LabShow.Others.FINISHED
                     || show.others() == LabShow.Others.GROUP && part.part().group() == looked.part().group()) {
-                all.add(new Placement(part, at, finishes.of(part.part().group())));
+                all.add(new Placement(part, at, finishes.of(part.part(), show.madeOf())));
             }
         });
         return all;

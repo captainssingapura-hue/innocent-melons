@@ -4,6 +4,8 @@ import com.example.fxsuite.vulkan.form.Mesh;
 import com.example.fxsuite.vulkan.space.Vec3;
 import melons.innocent.glm.core.Connection;
 import melons.innocent.glm.core.Group;
+import melons.innocent.glm.core.Made;
+import melons.innocent.glm.core.Material;
 import melons.innocent.glm.core.Joining;
 import melons.innocent.glm.core.Part;
 import melons.innocent.vehiclelab.forms.Clevis;
@@ -42,7 +44,7 @@ final class RearSubframe {
         this.points = points;
         this.lines = new SubframeLines(points);
         final SubframePieces pieces = new SubframePieces(lines);
-        final Making making = new Making();
+        final Making making = new Making(new Made(Material.STEEL, false));
         clevis(pieces, "upper front link", lines.sideCourse(), points.upperFrontInner(), points.upperFrontOuter(),
                 5.2, 2.6);
         clevis(pieces, "spring link", lines.sideCourse(), points.springInner(), points.springOuter(), 6.5, 3);
@@ -70,7 +72,7 @@ final class RearSubframe {
         onFront.put("middle", lines.webMiddle());
         both(onFront, "side member", lines.webEnd());
         both(onFront, "differential mount", lines.diffFrontAt());
-        this.front = making.part("front cross member", Group.SUBFRAMES, false, onFront, pieces.frontCrossMember());
+        this.front = making.part("pressed cross member", Group.SUBFRAMES, false, onFront, pieces.frontCrossMember());
         this.backSleeve = sleeve(making, "back mount sleeve", true, pieces.mountSleeve(points.mountBack()).mesh(),
                 points.mountBack());
         this.frontSleeve = sleeve(making, "front mount sleeve", true, pieces.mountSleeve(points.mountFront()).mesh(),
@@ -119,7 +121,8 @@ final class RearSubframe {
         named.put("foot", made.foot());
         named.put("pivot", inner);
         feet.put(link, made.foot());
-        clevises.put(link, new Making().part(link + " clevis", Group.SUBFRAMES, true, named, made.mesh()));
+        clevises.put(link, new Making(new Made(Material.STEEL, false)).part(link + " clevis", Group.SUBFRAMES, true,
+                named, made.mesh()));
     }
 
     private Vec3 foot(final String link) {

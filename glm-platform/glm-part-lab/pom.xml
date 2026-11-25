@@ -25,6 +25,11 @@
             <artifactId>glm-model</artifactId>
         </dependency>
         <dependency>
+            <groupId>melons.innocent.glm</groupId>
+            <artifactId>glm-bench</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>melons.innocent.vehiclelab</groupId>
             <artifactId>vl-drawn</artifactId>
         </dependency>

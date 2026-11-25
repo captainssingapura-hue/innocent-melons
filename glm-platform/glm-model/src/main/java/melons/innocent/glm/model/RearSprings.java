@@ -2,6 +2,8 @@ package melons.innocent.glm.model;
 
 import com.example.fxsuite.vulkan.space.Vec3;
 import melons.innocent.glm.core.Group;
+import melons.innocent.glm.core.Made;
+import melons.innocent.glm.core.Material;
 import melons.innocent.glm.core.Part;
 import melons.innocent.vehiclelab.forms.Shapes;
 
@@ -19,6 +21,10 @@ import java.util.Map;
  */
 record RearSprings(RearPoints points, Shapes shapes) {
 
+    /** What its parts are made of, and whether they are bare. */
+    private static final Making AIR_MADE = new Making(new Made(Material.RUBBER, true));
+    private static final Making DAMPER_MADE = new Making(new Made(Material.STEEL, false));
+
     /** How round the air spring is; how round the damper's body is and its rod; how much of it is body. */
     private static final double BELLOWS = 7;
     private static final double BODY = 3.2;
@@ -31,7 +37,7 @@ record RearSprings(RearPoints points, Shapes shapes) {
         named.put("seat", points.springSeat());
         named.put("top", points.springTop());
         final Vec3 lift = new Vec3(0, BELLOWS, 0);
-        return new Making().part("air spring", Group.SPRINGS, true, named,
+        return AIR_MADE.part("air spring", Group.SPRINGS, true, named,
                 shapes.capsule(points.springSeat().plus(lift), points.springTop().minus(lift), BELLOWS));
     }
 
@@ -42,7 +48,7 @@ record RearSprings(RearPoints points, Shapes shapes) {
         named.put("top", points.damperTop());
         final Vec3 foot = points.damperFoot();
         final Vec3 knee = foot.plus(points.damperTop().minus(foot).times(BODY_SHARE));
-        return new Making().part("damper", Group.DAMPERS, true, named, shapes.joined(List.of(
+        return DAMPER_MADE.part("damper", Group.DAMPERS, true, named, shapes.joined(List.of(
                 shapes.capsule(foot, knee, BODY), shapes.drum(knee, points.damperTop(), ROD))));
     }
 }

@@ -13,6 +13,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import melons.innocent.glm.bench.MadeOfChoice;
 import melons.innocent.glm.core.Assembled;
 import melons.innocent.glm.core.PartAt;
 import melons.innocent.glm.core.Point;
@@ -21,14 +22,15 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 /**
  * The lab's JavaFX window, beside the card's, laid out by the engine's bench kit as every bench's is. On its left, the
  * light. In its middle: which part is looked at, among all the platform's, by group; alone or put together, and the
  * rest as glass, finished or hidden; whether the grid, the ground and the part's points are shown, and how finely the
- * grid is ruled; and the part's points, each by name, where it is in the part's own frame and, put together, on the
- * platform, in centimetres. It draws nothing itself: it says what is shown as a message on the lab's bus
- * ({@link LabShow}), and never calls what draws.
+ * grid is ruled; what the parts are made of, another metal for each they are designed in; and the part's points,
+ * each by name, where it is in the part's own frame and, put together, on the platform, in centimetres. It draws
+ * nothing itself: it says what is shown as a message on the lab's bus ({@link LabShow}), and never calls what draws.
  */
 public final class LabConsole {
 
@@ -71,13 +73,15 @@ public final class LabConsole {
         final CheckBox grid = check("The grid", first.grid());
         final CheckBox ground = check("The ground", first.ground());
         final CheckBox points = check("Its points marked", first.points());
+        final MadeOfChoice made = new MadeOfChoice(built.placed().keySet().stream()
+                .map(p -> p.part().made().material()).collect(Collectors.toSet()), first.madeOf());
         final TextArea said = new TextArea();
         said.setEditable(false);
         said.setPrefRowCount(14);
         final Runnable changed = () -> {
             final LabShow show = new LabShow(parts.get(at(part)), LabShow.Level.values()[at(level)],
                     LabShow.Others.values()[at(others)], grid.isSelected(), ground.isSelected(), points.isSelected(),
-                    Spacing.values()[at(spacing)]);
+                    Spacing.values()[at(spacing)], made.madeOf());
             said.setText(said(show.part()));
             bus.publish(show);
         };
@@ -89,6 +93,7 @@ public final class LabConsole {
         lit.setPrefWidth(LIGHT_WIDE);
         final VBox middle = new VBox(GAP, new Label("The part"), part, new Label("Looked at"), level, others,
                 new Label("Round it"), new HBox(GAP, grid, ground, points), spacing,
+                new Label("What the parts are made of, seen where bare"), made.shown(changed),
                 new Label("Its points: in its own frame; put together, on the platform (cm)"), said,
                 shell.figures(), shell.problems());
         middle.setPadding(new Insets(GAP));

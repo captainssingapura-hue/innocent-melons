@@ -20,7 +20,7 @@ import javafx.application.Platform;
 import melons.innocent.glm.core.Assembled;
 import melons.innocent.glm.core.Assembly;
 import melons.innocent.glm.model.Proportions;
-import melons.innocent.glm.model.RearAxle;
+import melons.innocent.glm.model.GlmPlatform;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -28,12 +28,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 /**
- * The GLM bench: the platform put together, a large SUV's rear axle to begin with, on level ground, looked at on the
- * card from any side, in whatever light is set. Two windows, as the vehicles bench has: the card's, where the mouse
- * moves the view as on every bench (drag to turn, right-drag or Shift-drag to move across, scroll to come nearer); and
- * a JavaFX window beside it ({@link GlmConsole}) to show or hide each group and choose what it is finished in. What
+ * The GLM bench: the platform put together, a large SUV's, both its axles as far as each is made, on level ground,
+ * looked at on the card from any side, in whatever light is set. Two windows, as the vehicles bench has: the card's,
+ * where the mouse moves the view as on every bench (drag to turn, right-drag or Shift-drag to move across, scroll to
+ * come nearer); and a JavaFX window beside it ({@link GlmConsole}) to show or hide each group, choose what it is
+ * finished in and what its parts are made of, titanium wherever aluminium is, say. What
  * the assembly found, every part reached and every gap where parts meet again, is told beside it.
  *
  * <p>For a run with nobody at it: {@code -Dbench.yaw=}, {@code -Dbench.pitch=} and {@code -Dbench.distance=}
@@ -63,10 +65,10 @@ public final class GlmBench {
     private final Bus bus = new Bus();
     private final AtomicReference<OnShow> shown = new AtomicReference<>(new OnShow());
     private final Proportions proportions = new Proportions();
-    private final Assembled built = new Assembly(new RearAxle(proportions).platform()).assembled();
-    private final Vec3 middle = new Vec3(0, proportions.tyre(), proportions.back());
+    private final Assembled built = new Assembly(new GlmPlatform(proportions).platform()).assembled();
+    private final Vec3 middle = new Vec3(0, proportions.tyre(), proportions.back() / 2);
     private Orbit orbit = new Orbit(middle, said("bench.yaw", 35), said("bench.pitch", 18),
-            METRE * said("bench.distance", 4));
+            METRE * said("bench.distance", 6));
 
     public static void main(final String[] args) throws IOException {
         new GlmBench().run();
@@ -76,7 +78,8 @@ public final class GlmBench {
         asked.night(Boolean.getBoolean("bench.night"));
         asked.shadowing(System.getProperty("bench.shadows.mode", ""));
         bus.subscribe(OnShow.class, shown::set, Bus.HERE);
-        final GlmConsole console = new GlmConsole(bus, asked, shown.get());
+        final GlmConsole console = new GlmConsole(bus, asked, shown.get(), built.placed().keySet().stream()
+                .map(p -> p.part().made().material()).collect(Collectors.toSet()));
         try (Desk desk = new Desk();
              Card card = new Card(desk);
              Window window = card.window("The GLM bench, drawn on " + card.name(), WIDTH, HEIGHT);

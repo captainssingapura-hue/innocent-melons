@@ -32,8 +32,9 @@ public record Materials() {
     /** The tree, read from its leaves, each node with its meaning. */
     public Taxonomy tree() {
         return new Taxonomy("materials", new Matter(), List.of(new Gold(), new Bronze(),
-                new Titanium(), new Gunmetal(), new Steel(), new CommonRedBrick(), new ChineseGreyBrick(),
-                new Adobe(), new Rubble(), new DressedStone(), new Concrete(), new Asphalt(), new RoadPaint(),
+                new Titanium(), new Gunmetal(), new Steel(), new Aluminium(), new CommonRedBrick(),
+                new ChineseGreyBrick(), new Adobe(), new Rubble(), new DressedStone(), new Concrete(), new Asphalt(),
+                new RoadPaint(),
                 new Enamel(), new Rubber(), new GlossPaint(), new MetallicPaint(), new Glass(), new LitGlass(),
                 new Flame(), new LitPaper(),
                 new Rind(), new Timber(), new OakBark(), new WalnutBark(), new BirchBark(), new PoplarBark(),
@@ -55,6 +56,7 @@ public record Materials() {
     public record Titanium() implements Leaf<Metal>, Material { public Metal parent() { return new Metal(); } }
     public record Gunmetal() implements Leaf<Metal>, Material { public Metal parent() { return new Metal(); } }
     public record Steel() implements Leaf<Metal>, Material { public Metal parent() { return new Metal(); } }
+    public record Aluminium() implements Leaf<Metal>, Material { public Metal parent() { return new Metal(); } }
 
     // Masonry: laid piece on piece
     public record Masonry() implements L1<Matter> { public Matter parent() { return new Matter(); } }

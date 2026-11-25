@@ -3,6 +3,8 @@ package melons.innocent.glm.model;
 import com.example.fxsuite.vulkan.form.Mesh;
 import com.example.fxsuite.vulkan.space.Vec3;
 import melons.innocent.glm.core.Group;
+import melons.innocent.glm.core.Made;
+import melons.innocent.glm.core.Material;
 import melons.innocent.glm.core.Part;
 import melons.innocent.vehiclelab.forms.Shapes;
 
@@ -21,6 +23,12 @@ import java.util.Map;
  * @param shapes what it is shaped with
  */
 record RearCorner(RearPoints points, Shapes shapes) {
+
+    /** What its parts are made of, and whether they are bare. */
+    private static final Making CARRIER_MADE = new Making(new Made(Material.ALUMINIUM, true));
+    private static final Making HUB_MADE = new Making(new Made(Material.STEEL, true));
+    private static final Making DISC_MADE = new Making(new Made(Material.IRON, true));
+    private static final Making CALIPER_MADE = new Making(new Made(Material.ALUMINIUM, false));
 
     /** The carrier: how wide, how far it reaches over and under the wheel's middle, how long; its bosses. */
     private static final double CARRIER_WIDE = 7;
@@ -54,7 +62,7 @@ record RearCorner(RearPoints points, Shapes shapes) {
         forms.add(shapes.body(middle, CARRIER_WIDE, CARRIER_OVER + CARRIER_UNDER, CARRIER_LONG));
         named.values().stream().skip(1).forEach(p -> forms.add(shapes.capsule(p, middle.plus(p.minus(middle)
                 .times(0.6)), BOSS)));
-        return new Making().part("wheel carrier", Group.CARRIERS, true, named, shapes.joined(forms));
+        return CARRIER_MADE.part("wheel carrier", Group.CARRIERS, true, named, shapes.joined(forms));
     }
 
     /** The hub, from the carrier out to its flange. */
@@ -63,7 +71,7 @@ record RearCorner(RearPoints points, Shapes shapes) {
         named.put("carrier", points.hub());
         named.put("disc", points.disc());
         named.put("wheel", points.hubFace());
-        return new Making().part("hub", Group.CARRIERS, true, named, shapes.drum(points.hub(), points.hubFace(), HUB));
+        return HUB_MADE.part("hub", Group.CARRIERS, true, named, shapes.drum(points.hub(), points.hubFace(), HUB));
     }
 
     /** The brake's disc, on the hub's flange. */
@@ -71,7 +79,7 @@ record RearCorner(RearPoints points, Shapes shapes) {
         final Map<String, Vec3> named = new LinkedHashMap<>();
         named.put("hub", points.disc());
         final Vec3 across = new Vec3(DISC_THICK / 2, 0, 0);
-        return new Making().part("brake disc", Group.BRAKES, true, named,
+        return DISC_MADE.part("brake disc", Group.BRAKES, true, named,
                 shapes.drum(points.disc().minus(across), points.disc().plus(across), DISC));
     }
 
@@ -81,7 +89,7 @@ record RearCorner(RearPoints points, Shapes shapes) {
         named.put("carrier", points.caliper());
         final Vec3 wheel = points.wheel();
         final Vec3 middle = new Vec3(points.disc().x(), wheel.y() + CALIPER_TALL / 3, wheel.z() - DISC + 1);
-        return new Making().part("brake caliper", Group.CALIPERS, true, named, shapes.joined(List.of(
+        return CALIPER_MADE.part("brake caliper", Group.CALIPERS, true, named, shapes.joined(List.of(
                 shapes.box(middle, CALIPER_WIDE, CALIPER_TALL, CALIPER_LONG),
                 shapes.capsule(points.caliper(), middle, BOSS))));
     }
