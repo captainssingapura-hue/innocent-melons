@@ -61,9 +61,14 @@ record CrankFigures(EngineFigures figures) {
         return throwAt;
     }
 
-    /** Where that pin's middle is, under its rod, in the block's frame. */
+    /** Where that pin's middle is, under its rod, in the block's frame, at rest. */
     Vec3 pin(final int bank, final int k) {
-        final double a = Math.toRadians(angle(bank, k));
+        return pin(bank, k, 0);
+    }
+
+    /** The same, the crank turned {@code turned} degrees on from rest, the way it runs. */
+    Vec3 pin(final int bank, final int k, final double turned) {
+        final double a = Math.toRadians(angle(bank, k) + turned);
         return new Vec3(throwing() * Math.sin(a), throwing() * Math.cos(a), figures.along(bank, k));
     }
 

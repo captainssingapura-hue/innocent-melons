@@ -78,6 +78,42 @@ class EngineBlockTest {
     }
 
     @Test
+    void posedAtAnyAngleTheCrankTurnedTheRodsSwungThePistonsSlid() {
+        for (final EngineFigures e : List.of(range.l5(), range.v6(), range.v12())) {
+            final EngineInternals inside = new EngineInternals(e);
+            final Assembled built = new Assembly(inside.platform()).assembled();
+            assertEquals(List.of(), built.problems(1e-6));
+            for (final double turned : List.of(37.0, 180.0, 291.0)) {
+                for (final var placed : built.placed().keySet()) {
+                    final Part part = placed.part();
+                    for (final var point : part.points()) {
+                        final Vec3 now = moved(inside.moved(part, turned), point.at());
+                        if (part.name().contains("rod")) {
+                            final Cylinder c = cylinder(e, part.name());
+                            assertEquals(0, now.minus(point.name().equals("big end") ? c.bigEnd(turned)
+                                    : c.smallEnd(turned)).length(), 1e-9, part.name() + " at " + turned);
+                        }
+                        if (part.name().contains("piston") && point.name().equals("pin")) {
+                            assertEquals(0, now.minus(cylinder(e, part.name()).smallEnd(turned)).length(), 1e-9);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private Cylinder cylinder(final EngineFigures e, final String name) {
+        final String[] at = name.substring(name.lastIndexOf(' ') + 1).split("[.]");
+        return new Cylinder(e, Integer.parseInt(at[0]) - 1, Integer.parseInt(at[1]) - 1);
+    }
+
+    private Vec3 moved(final com.example.fxsuite.vulkan.space.Mat4 m, final Vec3 p) {
+        return new Vec3(m.at(0, 0) * p.x() + m.at(0, 1) * p.y() + m.at(0, 2) * p.z() + m.at(0, 3),
+                m.at(1, 0) * p.x() + m.at(1, 1) * p.y() + m.at(1, 2) * p.z() + m.at(1, 3),
+                m.at(2, 0) * p.x() + m.at(2, 1) * p.y() + m.at(2, 2) * p.z() + m.at(2, 3));
+    }
+
+    @Test
     void figuresThatCannotBeCastRefused() {
         assertThrows(IllegalArgumentException.class, () -> new EngineFigures("V7", 2, 90, 7, 8.45, 8.9, 9.3, 1.8,
                 15.4, 3));

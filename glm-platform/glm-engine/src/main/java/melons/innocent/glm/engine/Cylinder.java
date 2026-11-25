@@ -47,14 +47,24 @@ record Cylinder(EngineFigures figures, int bank, int k) {
         return new BlockForm(figures).up(bank);
     }
 
-    /** Where its crankpin is under its rod. */
+    /** Where its crankpin is under its rod, at rest. */
     Vec3 bigEnd() {
-        return new CrankFigures(figures).pin(bank, k);
+        return bigEnd(0);
     }
 
-    /** Where its gudgeon pin is: up the bore as far as the rod reaches from the crankpin. */
+    /** The same, the crank turned {@code turned} degrees on. */
+    Vec3 bigEnd(final double turned) {
+        return new CrankFigures(figures).pin(bank, k, turned);
+    }
+
+    /** Where its gudgeon pin is: up the bore as far as the rod reaches from the crankpin, at rest. */
     Vec3 smallEnd() {
-        final Vec3 p = bigEnd();
+        return smallEnd(0);
+    }
+
+    /** The same, the crank turned {@code turned} degrees on. */
+    Vec3 smallEnd(final double turned) {
+        final Vec3 p = bigEnd(turned);
         final Vec3 flat = new Vec3(p.x(), p.y(), 0);
         final double along = flat.dot(up());
         final double s = along + Math.sqrt(figures.rod() * figures.rod() - flat.dot(flat) + along * along);

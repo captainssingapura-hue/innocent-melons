@@ -39,6 +39,8 @@
         <module>glm-bench</module>
         <!-- The GLM part lab: each part alone or put together, inside a grid as a drawing office has. -->
         <module>glm-part-lab</module>
+        <!-- The GLM engine bench: an engine running on the card, its crank, rods and pistons turning, heard as it runs. -->
+        <module>glm-engine-bench</module>
     </modules>
 
     <dependencyManagement>
