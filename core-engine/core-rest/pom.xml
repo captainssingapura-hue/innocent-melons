@@ -26,6 +26,12 @@
             <artifactId>core-motion</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- what exists in physics: the kinds of shape the shapes here are typed to -->
+        <dependency>
+            <groupId>melons.innocent.physics</groupId>
+            <artifactId>physics-existences</artifactId>
+            <version>${physics.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

@@ -2,6 +2,9 @@ package melons.innocent.core.rest;
 
 import melons.innocent.core.motion.Spot;
 import melons.innocent.core.motion.Turn;
+import melons.innocent.physics.existences.Rolls;
+import melons.innocent.physics.existences.Shapes;
+import melons.innocent.physics.existences.Tips;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,7 +18,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * turning not at all. Standing on the ground, or with its middle anywhere over the ground it is held on, it is held
  * and nothing changes. Held only under one end, it tips about the edge of what holds it nearest its middle, as fast
  * as its weight's turning there over how hard it is to turn about that line, and the way that lowers its middle. A
- * box's corners are where its size says, turned as it is turned; it weighs what its size and its stuff make it; and
+ * box's corners are where its size says, turned as it is turned; it weighs what its size and its stuff make it, and
+ * is of the kind physics calls a box; and
  * the outline round where a thing is touched holds what is over it and says the nearest of its edges.
  */
 class ReckoningTest {
@@ -71,6 +75,9 @@ class ReckoningTest {
 
     @Test
     void aBoxWeighsWhatItsSizeAndStuffMakeItAndItsCornersAreWhereItsSizeSays() {
+        assertEquals(new Shapes.Box(), beam.box().kind(), "of the kind of shape physics calls a box");
+        assertTrue(beam.box().kind().answer(Tips.class).isPresent()
+                && beam.box().kind().answer(Rolls.class).isEmpty(), "which tips, and never rolls");
         assertEquals(7_850 * 4 * 0.2 * 0.4, beam.kilograms(), 1e-9);
         assertEquals(beam.kilograms() / 12 * (20 * 20 + 40 * 40), beam.turnsHard(new Spot(1, 0, 0)), 1e-6);
         final Placed onEnd = new Placed(new Spot(0, 200, 0), new Turn(new Spot(0, 0, 1), Math.PI / 2));

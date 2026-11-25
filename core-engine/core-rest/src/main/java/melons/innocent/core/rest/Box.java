@@ -1,24 +1,30 @@
 package melons.innocent.core.rest;
 
 import melons.innocent.core.motion.Spot;
+import melons.innocent.physics.existences.Shapes;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A box, the first shape a thing in the world at rest may have: so far across, so far up and so far along, in
- * centimetres, about its own middle.
+ * A box, the first shape a thing in the world at rest may have, and the first the core engine reckons with of the
+ * shapes physics knows: so far across, so far up and so far along, in centimetres, about its own middle.
  *
  * @param across how far across it is, side to side
  * @param up     how high it is
  * @param along  how far along it is
  */
-public record Box(double across, double up, double along) {
+public record Box(double across, double up, double along) implements ShapeImpl<Shapes.Box> {
 
     public Box {
         if (!(across > 0) || !(up > 0) || !(along > 0)) {
             throw new IllegalArgumentException("a box of some size each way: " + across + ", " + up + ", " + along);
         }
+    }
+
+    @Override
+    public Shapes.Box kind() {
+        return new Shapes.Box();
     }
 
     /** How far its faces are from its middle, each way. */
@@ -36,7 +42,7 @@ public record Box(double across, double up, double along) {
         return corners;
     }
 
-    /** How much room it takes, in cubic metres. */
+    @Override
     public double room() {
         return across * up * along / 1_000_000;
     }
