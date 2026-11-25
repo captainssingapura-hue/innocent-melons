@@ -284,6 +284,11 @@ public final class Handling {
                 BEFORE + lifted.rigid().shape().reaches(), mode.isPresent() ? RAISED : 0), lifted.turned())));
     }
 
+    /** Where the walker's feet are, once they have taken a step. */
+    public Optional<Spot> feet() {
+        return hands.map(now -> now.at().plus(new Spot(0, HANDS - FEET, 0)));
+    }
+
     /** The name of what is at hand, where nothing is held and it is still there. */
     public Optional<String> atHand() {
         return held.isPresent() ? Optional.empty() : target();

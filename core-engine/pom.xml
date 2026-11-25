@@ -31,6 +31,8 @@
         <module>core-interaction</module>
         <!-- What moves only as it is made to: a thing on a hinge, a door's leaf first. -->
         <module>core-mechanism</module>
+        <!-- What a mover is on: the question it asks of a surface, and the answer its provider gives. -->
+        <module>core-surface</module>
     </modules>
 
     <properties>

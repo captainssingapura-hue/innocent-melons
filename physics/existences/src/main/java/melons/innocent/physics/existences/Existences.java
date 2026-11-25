@@ -5,14 +5,16 @@ import com.example.fxsuite.taxonomy.Taxonomy;
 import java.util.List;
 
 /**
- * What exists in physics, as far as the worlds need it: the one tree so far, the shapes a thing that keeps its shape
- * may have ({@link Shapes}). The concepts are beyond any one engine, which types what it reckons with to them.
+ * What exists in physics, as far as the worlds need it: the shapes a thing that keeps its shape may have
+ * ({@link Shapes}); whatever goes over a surface, by how it meets it ({@link Movers}); the forms a surface that is
+ * moved over may have ({@link Surfaces}); and the state a surface is in at a spot ({@link Conditions}). The concepts
+ * are beyond any one engine, which types what it reckons with to them.
  */
 public record Existences() {
 
     /** The trees. */
     public List<Taxonomy> trees() {
-        return List.of(new Shapes().tree());
+        return List.of(new Shapes().tree(), new Movers().tree(), new Surfaces().tree(), new Conditions().tree());
     }
 
     /** Everything wrong with any of them, each said with its tree's name; none if nothing is. */

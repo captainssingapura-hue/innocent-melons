@@ -45,6 +45,11 @@
             <groupId>melons.innocent.core</groupId>
             <artifactId>core-interaction</artifactId>
         </dependency>
+        <!-- what a mover is on: asked for whoever walks the trial -->
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-surface</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.example.fxsuite</groupId>
             <artifactId>fxsuite-existence</artifactId>

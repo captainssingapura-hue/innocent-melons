@@ -23,11 +23,54 @@ class ExistencesTest {
     @Test
     void nothingWrongWithItsTreeEveryNodeWithItsMeaning() {
         assertEquals(List.of(), new Existences().problems());
-        assertEquals(List.of("shapes"), new Existences().trees().stream().map(Taxonomy::name).toList());
+        assertEquals(List.of("shapes", "movers", "surfaces", "conditions"),
+                new Existences().trees().stream().map(Taxonomy::name).toList());
         assertEquals(16, shapes.leaves().size());
         assertEquals(23, shapes.nodes().size());
         assertEquals("Half of a ball or of an ellipsoid: the half melon a melon house is, a bowl turned over.",
                 shapes.meaning(new Shapes.Dome()));
+    }
+
+    @Test
+    void moversByHowTheyMeetASurfaceAndWhetherTheyDriveThemselves() {
+        final Taxonomy movers = new Movers().tree();
+        assertEquals(11, movers.leaves().size());
+        assertEquals(18, movers.nodes().size());
+        assertEquals(List.of(new Movers.Walker(), new Movers.Stepping(), new Movers.Mover()),
+                new Movers.Walker().lineage());
+        assertEquals(List.of(new Movers.Car(), new Movers.Motorcycle(), new Movers.Wagon()),
+                movers.under(new Movers.Wheeled()));
+        assertTrue(new Movers.Walker().answer(DrivesItself.class).isPresent(), "said once, on its branch");
+        assertTrue(new Movers.Car().answer(DrivesItself.class).isPresent());
+        assertTrue(new Movers.Wagon().answer(OnlyPushed.class).isPresent(), "a wagon goes as it is pulled");
+        assertFalse(new Movers.Wagon().answer(DrivesItself.class).isPresent());
+        assertTrue(new Movers.Roller().answer(OnlyPushed.class).isPresent(), "a melon goes as the slope sends it");
+        assertTrue(new Movers.Dragged().answer(OnlyPushed.class).isPresent());
+        assertTrue(new Movers.Boat().answer(DrivesItself.class).isPresent()
+                && new Movers.Raft().answer(OnlyPushed.class).isPresent());
+        // every mover is one or the other, and none both
+        for (final Node mover : movers.leaves()) {
+            assertTrue(mover.answer(DrivesItself.class).isPresent() != mover.answer(OnlyPushed.class).isPresent(),
+                    mover.name());
+        }
+    }
+
+    @Test
+    void aSurfacesFormAndItsConditionAreToldApart() {
+        final Taxonomy surfaces = new Surfaces().tree();
+        assertEquals(6, surfaces.leaves().size());
+        assertEquals(10, surfaces.nodes().size());
+        assertEquals(List.of(new Surfaces.Level(), new Surfaces.Slope(), new Surfaces.Stepped(), new Surfaces.Land()),
+                surfaces.under(new Surfaces.Firm()));
+        assertEquals(List.of(new Surfaces.Liquid(), new Surfaces.Yielding(), new Surfaces.Surface()),
+                new Surfaces.Liquid().lineage());
+        final Taxonomy conditions = new Conditions().tree();
+        assertEquals(5, conditions.leaves().size());
+        assertEquals(9, conditions.nodes().size());
+        assertEquals(List.of(new Conditions.Wet(), new Conditions.Icy()), conditions.under(new Conditions.Slick()));
+        assertEquals("Under ice or frost, which very little grips.", conditions.meaning(new Conditions.Icy()));
+        // a slope among the shapes is the shape of a thing; a slope among the surfaces is a form to move over
+        assertFalse(new Surfaces.Slope().equals(new Shapes.Slope()));
     }
 
     @Test

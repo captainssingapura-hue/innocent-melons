@@ -2,6 +2,7 @@ package melons.innocent.testkit.loose;
 
 import com.example.fxsuite.avatar.sim.Block;
 import com.example.fxsuite.avatar.sim.Obstacles;
+import com.example.fxsuite.taxonomy.Node;
 import com.example.fxsuite.texture.materials.Materials;
 import com.example.fxsuite.texture.materials.Shades;
 import com.example.fxsuite.vulkan.bench.Dial;
@@ -94,6 +95,9 @@ public final class LoosePlace implements Place {
             .map(action -> action.offered(Relation.NEAR).map(near -> action.offered(Relation.HELD)
                     .filter(held -> !held.equals(near)).map(held -> near + " / " + held).orElse(near))
                     .orElseGet(() -> action.offered(Relation.HELD).orElse(action.id()))).toList());
+    /** What the walker stands on, asked as any mover asks; and the window's list of states to put the ramp in. */
+    private final Footing footing;
+    private final Dial ramped;
     /** How many askings of each list have been done. */
     private long did;
     private long took;
@@ -112,6 +116,8 @@ public final class LoosePlace implements Place {
         this.laid = laid;
         this.trial = trial;
         this.handling = handling;
+        this.footing = new Footing(trial);
+        this.ramped = new Dial("The ramp's surface is", footing.conditions().stream().map(Node::name).toList(), 0);
         this.names = trial.names();
         final List<String> choices = new ArrayList<>(names);
         choices.add(AGAIN);
@@ -155,7 +161,7 @@ public final class LoosePlace implements Place {
 
     @Override
     public List<Dial> dials() {
-        return List.of(doing, taken, slope, thrown, joules, upward, round, wagon, speed);
+        return List.of(doing, taken, slope, ramped, thrown, joules, upward, round, wagon, speed);
     }
 
     /**
@@ -166,6 +172,7 @@ public final class LoosePlace implements Place {
     public void readied(final Camera camera) {
         shaped();
         handling.full(joules.value());
+        footing.conditioned(footing.conditions().get(ramped.step()));
         if (doing.asks() != did) {
             did = doing.asks();
             handling.asked(Action.values()[doing.step()]);
@@ -218,6 +225,7 @@ public final class LoosePlace implements Place {
         final World world = trial.world();
         return String.format(Locale.ENGLISH, "Loose bodies: %d at rest, %d in motion; %d checked since it began",
                 world.things().size() - world.moving(), world.moving(), world.checks())
+                + System.lineSeparator() + footing.said(handling.feet())
                 + System.lineSeparator() + handling.said()
                 + trial.flown().map(flown -> System.lineSeparator() + flown.said()).orElse("")
                 + trial.struck().map(struck -> System.lineSeparator() + struck).orElse("");

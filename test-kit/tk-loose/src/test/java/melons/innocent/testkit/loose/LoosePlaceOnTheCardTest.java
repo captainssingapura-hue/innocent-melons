@@ -107,7 +107,10 @@ class LoosePlaceOnTheCardTest {
             ticked(place, trial, 1);
             assertEquals(22, trial.world().things().size(), "begun again, every thing is back");
             assertTrue(place.said().contains("Loose bodies"));
-            final Dial throwing = place.dials().get(3);
+            assertTrue(place.said().contains("Underfoot: nothing within reach"), "nobody has taken a step yet");
+            assertEquals("The ramp's surface is", place.dials().get(3).name());
+            assertEquals(List.of("dry", "wet", "icy", "loose", "flooded"), place.dials().get(3).steps());
+            final Dial throwing = place.dials().get(4);
             assertEquals("Throw", throwing.name());
             assertEquals(20, throwing.steps().size(), "every thing but the ramp and the wagon");
             ticked(place, trial, 120);
@@ -119,7 +122,7 @@ class LoosePlaceOnTheCardTest {
             throwing.chosen(throwing.steps().indexOf("the ball"));
             ticked(place, trial, 2);
             assertTrue(trial.world().moved("the ball").velocity().up() > 300, "and thrown again from where it is");
-            final Dial driving = place.dials().get(7);
+            final Dial driving = place.dials().get(8);
             assertEquals("The wagon", driving.name());
             final int stood = place.inTheWay().blocks().size();
             driving.chosen(0);
