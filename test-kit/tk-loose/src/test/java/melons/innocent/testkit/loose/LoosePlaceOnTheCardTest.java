@@ -60,37 +60,39 @@ class LoosePlaceOnTheCardTest {
              Place place = kit.placing().apply(card, laid)) {
             final Dial choice = place.dials().getFirst();
             assertEquals("Take away", choice.name());
-            assertEquals(15, choice.steps().size(), "nothing, each of the thirteen things, and everything back");
+            assertEquals(14, choice.steps().size(), "each of the thirteen things, and everything back");
+            assertTrue(choice.asking(), "a list that asks: the same thing can be chosen twice running");
             ticked(place, trial, 240);
             assertEquals(0, trial.world().moving(), "as it stands, all is at rest once the crate has fallen");
             final int inTheWay = place.inTheWay().blocks().size();
             pictured(canvas, place, "loose-as-it-stands");
             pictured(canvas, place, beside, "loose-ramp-held");
-            choice.set(choice.steps().indexOf("the stack's pillar"));
+            choice.chosen(choice.steps().indexOf("the stack's pillar"));
             ticked(place, trial, 2);
-            choice.set(choice.steps().indexOf("the beam's right pillar"));
+            choice.chosen(choice.steps().indexOf("the beam's right pillar"));
             ticked(place, trial, 40);
             assertTrue(trial.world().moving() > 0, "supports taken away, things are coming down");
             pictured(canvas, place, "loose-coming-down");
             ticked(place, trial, 300);
             assertEquals(Set.of("the beam's left pillar", GROUND), trial.world().under("the beam"));
             assertEquals(inTheWay - 2, place.inTheWay().blocks().size(), "two pillars gone");
-            final Block ramp = place.inTheWay().blocks().stream().filter(block -> block.toe() < block.top() - 50 && block.halfWidth() == 20)
+            final Block ramp = place.inTheWay().blocks().stream()
+                    .filter(block -> block.toe() < block.top() - 50 && block.halfWidth() == 20)
                     .findFirst().orElseThrow();
             assertEquals(20, ramp.toe(), 2, "the leaning beam is in the way as a ramp, from its end on the ground");
             assertEquals(130, ramp.top(), 8, "up to its end over the pillar it leans on");
             assertEquals(20, ramp.halfWidth(), 1e-9, "as wide as the beam");
             assertEquals(192, ramp.halfDepth(), 2, "and as long as it reaches over the ground");
             pictured(canvas, place, "loose-come-down");
-            choice.set(choice.steps().indexOf("the beam's left pillar"));
+            choice.chosen(choice.steps().indexOf("the beam's left pillar"));
             ticked(place, trial, 360);
             assertEquals(Set.of(GROUND), trial.world().under("the beam"));
-            choice.set(choice.steps().indexOf("the lowest crate"));
+            choice.chosen(choice.steps().indexOf("the lowest crate"));
             ticked(place, trial, 240);
             assertEquals(Set.of(GROUND), trial.world().under("the middle crate"), "the two above it have come down");
             assertEquals(Set.of("the middle crate"), trial.world().under("the highest crate"));
             assertEquals(9, trial.world().things().size(), "three pillars and a crate gone");
-            choice.set(choice.steps().indexOf("the chock"));
+            choice.chosen(choice.steps().indexOf("the chock"));
             ticked(place, trial, 150);
             assertTrue(trial.world().moved("the melon").velocity().length() > 80, "the chock gone, the melon rolls");
             pictured(canvas, place, "loose-rolling");
@@ -99,10 +101,22 @@ class LoosePlaceOnTheCardTest {
             assertEquals(0, trial.world().moving(), "and comes to rest out on the ground");
             pictured(canvas, place, beside, "loose-ramp-at-rest");
             pictured(canvas, place, "loose-all-down");
-            choice.set(choice.steps().size() - 1);
+            choice.chosen(choice.steps().size() - 1);
             ticked(place, trial, 1);
             assertEquals(13, trial.world().things().size(), "begun again, every thing is back");
             assertTrue(place.said().contains("Loose bodies"));
+            final Dial throwing = place.dials().get(2);
+            assertEquals("Throw", throwing.name());
+            assertEquals(12, throwing.steps().size(), "every thing but the ramp");
+            ticked(place, trial, 120);
+            throwing.chosen(throwing.steps().indexOf("the ball"));
+            ticked(place, trial, 60);
+            assertTrue(trial.world().placed("the ball").orElseThrow().at().up() > 150, "thrown, it is in the air");
+            assertTrue(place.said().contains("Thrown: the ball at 8.0 m/s, 45 degrees up"), place.said());
+            pictured(canvas, place, beside, "loose-thrown");
+            throwing.chosen(throwing.steps().indexOf("the ball"));
+            ticked(place, trial, 2);
+            assertTrue(trial.world().moved("the ball").velocity().up() > 300, "and thrown again from where it is");
             assertEquals(List.of(), card.heard(), "the validation layer has nothing to say");
         }
     }

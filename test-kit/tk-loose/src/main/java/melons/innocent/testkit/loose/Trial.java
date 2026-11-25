@@ -7,16 +7,20 @@ import melons.innocent.core.rest.Box;
 import melons.innocent.core.rest.Ellipsoid;
 import melons.innocent.core.rest.Ground;
 import melons.innocent.core.rest.Happened;
+import melons.innocent.core.rest.Moved;
 import melons.innocent.core.rest.Placed;
 import melons.innocent.core.rest.Rigid;
 import melons.innocent.core.rest.ShapeImpl;
 import melons.innocent.core.rest.Slab;
+import melons.innocent.core.rest.Throw;
 import melons.innocent.core.rest.World;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.TreeMap;
 
 /**
  * The trial of the world at rest and the loose body, set out to be walked round: four scenes side by side, twelve
@@ -26,7 +30,9 @@ import java.util.Map;
  * It is ticked with the walk, a tick a step. Any thing of it is taken away when that is asked, by its name: the
  * chock, and the melon and the ball roll down and out across the ground. Its supports go of themselves so many
  * seconds in where the run says, the stack's pillar and the beam's right-hand one first and the beam's left-hand one
- * as long after; and it can be begun again as it was described, its ramp at another slope.
+ * as long after; and it can be begun again as it was described, its ramp at another slope. Any thing of it but
+ * the ramp can be thrown, with so much energy, a way round and a way up, and the last throw is followed: how high
+ * it rose and where it came down ({@link Flown}).
  */
 public final class Trial {
 
@@ -38,6 +44,8 @@ public final class Trial {
     /** What goes at the first asking, unless the run says, and at the second, of what is still there. */
     private static final String FIRST = "the stack's pillar, the beam's right pillar";
     private static final String SECOND = "the beam's left pillar";
+    /** The one thing of it that never moves. */
+    private static final String FIXED = "the ramp";
 
     /** What each thing is made of, by its name, in the order they are described. */
     private final Map<String, Stuff> made = new LinkedHashMap<>();
@@ -55,6 +63,9 @@ public final class Trial {
     private final List<String> named = new ArrayList<>();
     /** How many times what is at rest in it has changed: a thing let go, come to rest, or gone. */
     private long changes;
+    /** What is to be thrown at the next tick, each with the motion it is given; and the last throw, followed. */
+    private final Map<String, Moved> flung = new TreeMap<>();
+    private Optional<Flown> flown = Optional.empty();
 
     /**
      * A trial as the run says: {@code -Dloose.after=} seconds to each taking away of itself, none unless said;
@@ -89,7 +100,7 @@ public final class Trial {
         stood(described, "the beam's right pillar", Stuff.CONCRETE, new Box(40, 100, 40), new Spot(880, 50, AHEAD));
         stood(described, "the beam", Stuff.STEEL, new Box(400, 20, 40), new Spot(700, 110, AHEAD));
         // the ramp: its top's lower edge on the ground, twelve metres ahead, and on it what is to roll
-        sloped(described, "the ramp", Stuff.CONCRETE, new Slab(300, 20, LONG), 0, -10, 0);
+        sloped(described, FIXED, Stuff.CONCRETE, new Slab(300, 20, LONG), 0, -10, 0);
         sloped(described, "the chock", Stuff.TIMBER, new Box(280, 34, 10), 0, 17, 150);
         sloped(described, "the melon", Stuff.RIND, new Ellipsoid(36, 28, 26), -80, 14, 168);
         sloped(described, "the ball", Stuff.RUBBER, new Ellipsoid(30), 0, 15, 170);
@@ -122,6 +133,11 @@ public final class Trial {
         if (after > 0 && (ticks == after || ticks == 2 * after)) {
             asked++;
         }
+        if (ticks == after && !System.getProperty("loose.thrown", "").isBlank()) {
+            thrown(System.getProperty("loose.thrown"), new Throw(Double.parseDouble(System.getProperty(
+                    "loose.joules", "500")), Double.parseDouble(System.getProperty("loose.round", "90")),
+                    Double.parseDouble(System.getProperty("loose.up", "45"))));
+        }
         final List<String> going = new ArrayList<>();
         while (taken < asked) {
             going.addAll(List.of((taken == 0 ? first : taken == 1 ? SECOND : "").split(", ")));
@@ -130,7 +146,10 @@ public final class Trial {
         going.addAll(named);
         named.clear();
         going.removeIf(name -> !world.things().contains(name));
-        final List<Happened> happened = world.ticked(going, TICK);
+        flung.keySet().removeIf(name -> !world.things().contains(name) || going.contains(name));
+        final List<Happened> happened = world.ticked(going, flung, TICK);
+        flung.clear();
+        flown.ifPresent(last -> last.followed(world, happened));
         changes += happened.stream().filter(one -> !(one instanceof Happened.Landed)).count();
         return happened;
     }
@@ -145,6 +164,29 @@ public final class Trial {
         named.add(name);
     }
 
+    /**
+     * The thing called {@code name} is to be thrown at the next tick as {@code thrown} says, if it is still there;
+     * and that throw is the one followed from now on.
+     */
+    public void thrown(final String name, final Throw thrown) {
+        if (!world.things().contains(name)) {
+            return;
+        }
+        flung.put(name, thrown.of(world.thing(name)));
+        flown = Optional.of(new Flown(name, world.placed(name).orElseThrow().at(), thrown.speed(world.thing(name)),
+                thrown.upward()));
+    }
+
+    /** The last throw, followed: none, where nothing has been thrown since it began. */
+    public Optional<Flown> flown() {
+        return flown;
+    }
+
+    /** The names of the things it describes that can be thrown: all but what never moves. */
+    public List<String> movable() {
+        return made.keySet().stream().filter(name -> !FIXED.equals(name)).toList();
+    }
+
     /** Begun again, as it was described, its ramp sloping so many {@code degrees}. */
     public void again(final double degrees) {
         slope = degrees;
@@ -153,6 +195,8 @@ public final class Trial {
         taken = 0;
         asked = 0;
         named.clear();
+        flung.clear();
+        flown = Optional.empty();
         changes++;
     }
 

@@ -15,6 +15,10 @@ public sealed interface Happened {
     record Destroyed(String thing) implements Happened {
     }
 
+    /** A thing was thrown: given a motion all at once, and in motion from this tick. */
+    record Thrown(String thing) implements Happened {
+    }
+
     /** A thing at rest was found no longer held, and is in motion from this tick. */
     record Unsettled(String thing) implements Happened {
     }

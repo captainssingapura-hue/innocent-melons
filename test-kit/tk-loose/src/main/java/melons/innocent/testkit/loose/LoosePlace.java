@@ -23,6 +23,7 @@ import melons.innocent.core.rest.Ellipsoid;
 import melons.innocent.core.rest.Placed;
 import melons.innocent.core.rest.ShapeImpl;
 import melons.innocent.core.rest.Slab;
+import melons.innocent.core.rest.Throw;
 import melons.innocent.core.rest.World;
 
 import java.util.ArrayList;
@@ -37,14 +38,14 @@ import java.util.TreeMap;
  * The trial's things on the card: each a box of its own size, in the lab's material it is made of, drawn where the
  * core's world has it at the moment, at rest or falling or tipping. What is at rest is in the avatar's way, as a box
  * where it stands square and as a ramp where it leans, so a leaning beam is walked up and not through; what is in
- * motion is not. A list in the walk's window names
- * every thing of the trial: the one chosen is taken away, and its last entry begins the trial again. The window
- * says how many things are at rest and in motion and how many the check has looked at, which stands still while
+ * motion is not. A list in the walk's window names every thing of the trial: the one chosen is taken away, and
+ * its last entry begins the trial again. Another names every thing that moves: the one chosen is thrown, with the
+ * energy, the way up and the way round the sliders under it say, and what came of the last throw is said. The
+ * window says how many things are at rest and in motion and how many the check has looked at, which stands still while
  * nothing happens.
  */
 public final class LoosePlace implements Place {
 
-    private static final String NOTHING = "nothing yet";
     private static final String AGAIN = "everything back: begin again";
     /** How many points go round a round thing's mesh. */
     private static final int ROUND = 48;
@@ -54,21 +55,31 @@ public final class LoosePlace implements Place {
     private final Map<String, Shaped> shapes = new TreeMap<>();
     /** The things that can be taken away, in the order the trial describes them. */
     private final List<String> names;
-    /** The window's choice: nothing, then each thing by its name, then everything back again. */
+    /** The window's list to take away from: each thing by its name, then everything back again. */
     private final Dial taken;
+    /** The window's list to throw from, each thing that moves by its name; and how it is thrown. */
+    private final Dial thrown;
+    private final Dial joules = new Dial("Thrown with, joules", 50, 5_000,
+            Double.parseDouble(System.getProperty("loose.joules", "500")));
+    private final Dial upward = new Dial("Thrown so far up from level, degrees", 0, 85,
+            Double.parseDouble(System.getProperty("loose.up", "45")));
+    private final Dial round = new Dial("Thrown which way round, degrees from ahead", 0, 360,
+            Double.parseDouble(System.getProperty("loose.round", "90")));
     /** How steep the ramp is made when the trial is next begun again. */
     private final Dial slope;
-    private int chosen;
+    /** How many askings of each list have been done. */
+    private long took;
+    private long threw;
     private long told;
 
     /** The {@code trial}'s things on {@code card}, their layouts as {@code laid} says. */
     public LoosePlace(final Card card, final Laid laid, final Trial trial) {
         this.trial = trial;
         this.names = trial.names();
-        final List<String> choices = new ArrayList<>(List.of(NOTHING));
-        choices.addAll(names);
+        final List<String> choices = new ArrayList<>(names);
         choices.add(AGAIN);
-        this.taken = new Dial("Take away", choices, 0);
+        this.taken = new Dial("Take away", choices);
+        this.thrown = new Dial("Throw", trial.movable());
         this.slope = new Dial("The ramp's slope when begun again, degrees", 0, 30, trial.slope());
         final Shades shades = new Shades();
         try {
@@ -97,25 +108,28 @@ public final class LoosePlace implements Place {
 
     @Override
     public List<Dial> dials() {
-        return List.of(taken, slope);
+        return List.of(taken, slope, thrown, joules, upward, round);
     }
 
     /**
-     * What the window's choice asks, done once each time the choice changes: the thing chosen taken away at the next
-     * tick, if it is still there, or the trial begun again.
+     * What the window's lists ask, each asking done once: the thing chosen taken away at the next tick, if it is
+     * still there, or the trial begun again; and the thing chosen thrown, as the sliders then stand.
      */
     @Override
     public void readied(final Camera camera) {
-        final int now = taken.step();
-        if (now == chosen) {
-            return;
+        if (taken.asks() != took) {
+            took = taken.asks();
+            if (taken.step() >= names.size()) {
+                trial.again(slope.value());
+            } else {
+                trial.take(names.get(taken.step()));
+            }
         }
-        if (now > names.size()) {
-            trial.again(slope.value());
-        } else if (now > 0) {
-            trial.take(names.get(now - 1));
+        if (thrown.asks() != threw) {
+            threw = thrown.asks();
+            trial.thrown(trial.movable().get(thrown.step()),
+                    new Throw(joules.value(), round.value(), upward.value()));
         }
-        chosen = now;
     }
 
     /** Each thing at rest, in the way: as its own box where it stands square, as a ramp where it leans. */
@@ -145,7 +159,8 @@ public final class LoosePlace implements Place {
     public String said() {
         final World world = trial.world();
         return String.format(Locale.ENGLISH, "Loose bodies: %d at rest, %d in motion; %d checked since it began",
-                world.things().size() - world.moving(), world.moving(), world.checks());
+                world.things().size() - world.moving(), world.moving(), world.checks())
+                + trial.flown().map(flown -> System.lineSeparator() + flown.said()).orElse("");
     }
 
     @Override

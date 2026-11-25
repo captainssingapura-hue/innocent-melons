@@ -50,8 +50,8 @@ class LooseTest {
                 .stood(new Rigid("crate", new Box(100, 100, 100), 600), new Placed(new Spot(0, 150, 0)));
         assertEquals(List.of(new Happened.Unsettled("crate")), world.ticked(List.of(), TICK));
         assertEquals(-981 * TICK, world.moved("crate").velocity().up(), 1e-12, "its velocity, changed for the tick");
-        assertEquals(150 - 981 * TICK * TICK, world.placed("crate").orElseThrow().at().up(), 1e-12,
-                "and where that velocity has taken it");
+        assertEquals(150 - 981 * TICK * TICK / 2, world.placed("crate").orElseThrow().at().up(), 1e-12,
+                "and where gravity's pull has taken it in that tick");
         final List<Happened> fell = run(world, 52, List.of());
         assertTrue(fell.isEmpty(), "for 0.44 of a second it only falls: " + fell);
         assertTrue(world.moved("crate").velocity().up() < -430, "at over four metres a second by then");

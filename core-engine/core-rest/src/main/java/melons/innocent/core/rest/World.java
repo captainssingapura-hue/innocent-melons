@@ -19,8 +19,9 @@ import java.util.stream.Collectors;
  * given, the lowest first, until it has come down, been held without moving for a little while, and stands at rest
  * again on what it came down on.
  *
- * <p>A tick, in order: what is destroyed is taken away; the check runs over what that touched, supporters before what
- * they hold; the things in motion are stepped; and those that have settled go to rest. What happened is given back.
+ * <p>A tick, in order: what is destroyed is taken away and what is thrown is set going; the check runs over what
+ * that touched, supporters before what they hold; the things in motion are stepped; and those that have settled go
+ * to rest. What happened is given back.
  * It is kept as it is ticked, and from the same beginning and the same things destroyed at the same ticks it is the
  * same world every time.
  *
@@ -71,12 +72,22 @@ public final class World {
 
     /** The world a tick of so many {@code seconds} on, the things named {@code destroyed} first taken out of it. */
     public List<Happened> ticked(final Collection<String> destroyed, final double seconds) {
+        return ticked(destroyed, Map.of(), seconds);
+    }
+
+    /**
+     * The world a tick of so many {@code seconds} on: the things named {@code destroyed} first taken out of it, and
+     * then each thing named in {@code thrown} given the motion said with it, on top of whatever motion it had.
+     */
+    public List<Happened> ticked(final Collection<String> destroyed, final Map<String, Moved> thrown,
+                                 final double seconds) {
         final List<Happened> happened = new ArrayList<>();
         new TreeSet<>(destroyed).forEach(gone -> destroyed(gone, happened));
         if (!looked) {
             overlapping(happened);
             looked = true;
         }
+        new TreeMap<>(thrown).forEach((name, with) -> thrown(name, with, happened));
         checked(seconds, happened);
         for (final String name : lowestFirst(moving.keySet())) {
             final Simulator.Stepped stepped = loose.stepped(things.get(name), moving.get(name),
@@ -98,6 +109,23 @@ public final class World {
         moving.remove(gone);
         dirty.remove(gone);
         happened.add(new Happened.Destroyed(gone));
+    }
+
+    /** A thing given a motion: let go of what held it, if it was at rest, and what stood on it to be checked. */
+    private void thrown(final String name, final Moved with, final List<Happened> happened) {
+        if (!things.containsKey(name) || things.get(name).unmoving()) {
+            throw new IllegalArgumentException("nothing that moves is called " + name);
+        }
+        if (resting.containsKey(name)) {
+            moving.put(name, new Simulator.Mover(resting.remove(name)));
+            supports.over(name).stream().filter(resting::containsKey).forEach(dirty::add);
+            supports.left(name);
+            dirty.remove(name);
+        }
+        final Simulator.Mover was = moving.get(name);
+        moving.put(name, new Simulator.Mover(was.placed(), new Moved(
+                was.moved().velocity().plus(with.velocity()), was.moved().spin().plus(with.spin())), false, 0));
+        happened.add(new Happened.Thrown(name));
     }
 
     /** Every pair of things run well into each other where they stand, said once. */

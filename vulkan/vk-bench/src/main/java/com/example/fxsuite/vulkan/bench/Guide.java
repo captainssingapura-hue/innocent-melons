@@ -6,6 +6,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
 import javafx.scene.control.Slider;
@@ -116,13 +117,34 @@ public final class Guide {
         return sliders;
     }
 
-    /** A list of a dial's named steps to choose one from, setting the dial to the one chosen. */
+    /**
+     * A list of a dial's named steps to choose one from, setting the dial to the one chosen. Where the dial asks,
+     * each choosing is told to it as an asking and the list then goes back to saying nothing, so the same one can be
+     * chosen again.
+     */
     private ComboBox<String> stepped(final Dial dial) {
         final ComboBox<String> chosen = new ComboBox<>();
         chosen.getItems().addAll(dial.steps());
-        chosen.getSelectionModel().select(dial.step());
-        chosen.setOnAction(set -> dial.set(chosen.getSelectionModel().getSelectedIndex()));
         chosen.setMaxWidth(Double.MAX_VALUE);
+        if (!dial.asking()) {
+            chosen.getSelectionModel().select(dial.step());
+            chosen.setOnAction(set -> dial.set(chosen.getSelectionModel().getSelectedIndex()));
+            return chosen;
+        }
+        chosen.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(final String item, final boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? "choose one" : item);
+            }
+        });
+        chosen.setOnAction(set -> {
+            final int step = chosen.getSelectionModel().getSelectedIndex();
+            if (step >= 0) {
+                dial.chosen(step);
+                Platform.runLater(() -> chosen.getSelectionModel().clearSelection());
+            }
+        });
         return chosen;
     }
 

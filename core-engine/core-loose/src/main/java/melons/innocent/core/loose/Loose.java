@@ -20,8 +20,8 @@ import java.util.Optional;
  * thing by what it then has, the new velocity first. So it does one of three things in a tick:
  *
  * <ul>
- * <li><b>It falls</b>, touched by nothing: its velocity gains gravity's pull, it goes on turning as it was, and
- *     it moves by both.</li>
+ * <li><b>It flies</b>, touched by nothing, or thrown up off what it stood on: its velocity gains gravity's pull,
+ *     it goes on turning as it was, and it moves by both ({@link Flight}), whatever its shape.</li>
  * <li><b>It tips</b>, touched but not balanced: its turning gains what its weight makes about the line it is held
  *     along, and it is carried round that line, which does not slip.</li>
  * <li><b>It is held</b>, balanced on what it touches: it does not move, and the tick is counted toward its rest.</li>
@@ -42,18 +42,47 @@ public record Loose(Reckoning reckoning, double slack) implements Simulator {
 
     /** How many times a tipping's last tick is halved to find where it lands. */
     private static final int HALVINGS = 24;
+    /** How far a thing may go in one part of a tick, in centimetres: less than the thinnest thing it should meet. */
+    private static final double STRIDE = 8;
 
     /** A loose body on the Earth, touching within a hundredth of a centimetre. */
     public Loose() {
         this(new Reckoning(), 0.01);
     }
 
+    /**
+     * A tick of a thing. One going fast is taken through the tick in parts, each short enough that it goes no more
+     * than a stride, so it cannot pass through a thin thing between one look and the next; it is counted toward its
+     * rest once a tick, however many parts the tick was cut in.
+     */
     @Override
     public Stepped stepped(final Rigid rigid, final Mover now, final Around around, final double seconds) {
+        final int parts = (int) Math.max(1, Math.ceil(now.moved().velocity().length() * seconds / STRIDE));
+        if (parts == 1) {
+            return once(rigid, now, around, seconds);
+        }
+        Mover mover = now;
+        Optional<String> on = Optional.empty();
+        for (int part = 0; part < parts; part++) {
+            final Stepped stepped = once(rigid, mover, around, seconds / parts);
+            mover = stepped.next();
+            on = on.isPresent() ? on : stepped.on();
+        }
+        return new Stepped(new Mover(mover.placed(), mover.moved(), mover.landed(),
+                mover.landed() ? now.still() + 1 : 0), on);
+    }
+
+    /** One part of a tick: what rolls is rolled; what has corners flies, tips, or is held. */
+    private Stepped once(final Rigid rigid, final Mover now, final Around around, final double seconds) {
         if (rigid.rolls()) {
             return new Rolling(reckoning, slack).stepped(rigid, now, around, seconds);
         }
         final List<Touch> touches = around.touches(rigid, now.placed());
+        // thrown up off what it stood on, it is in flight though it still touches it
+        if (!touches.isEmpty() && touches.stream().allMatch(touch ->
+                now.moved().velocity().dot(touch.pushes()) > 0)) {
+            return fallen(rigid, now, around, seconds);
+        }
         final Reckoned reckoned = reckoning.of(rigid, now.placed(), touches, seconds);
         if (reckoned.held()) {
             // held: stopped where it is, and said to have landed if it was not already down
@@ -61,19 +90,17 @@ public record Loose(Reckoning reckoning, double slack) implements Simulator {
                     now.landed() ? Optional.empty() : Optional.of(touches.getFirst().on()));
         }
         return reckoned.hinge().map(hinge -> tipped(rigid, now, around, seconds, reckoned, hinge))
-                .orElseGet(() -> fallen(rigid, now, around, seconds, reckoned));
+                .orElseGet(() -> fallen(rigid, now, around, seconds));
     }
 
-    /** Falling: its velocity changed, moved by it and turned as it was turning, and set down where it lands. */
-    private Stepped fallen(final Rigid rigid, final Mover now, final Around around, final double seconds,
-                           final Reckoned reckoned) {
-        final Spot velocity = now.moved().velocity().plus(reckoned.velocity());
-        final Spot spin = now.moved().spin();
-        final Placed fell = new Placed(now.placed().at().plus(velocity.times(seconds)), spin.length() == 0
-                ? now.placed().turned() : now.placed().turned().then(new Turn(spin, spin.length() * seconds)));
+    /** In flight ({@link Flight}): gravity's pull taken, moved by what it then has, and set down where it lands. */
+    private Stepped fallen(final Rigid rigid, final Mover now, final Around around, final double seconds) {
+        final Flight flight = new Flight(reckoning.gravity());
+        final Moved flying = flight.pulled(now.moved(), seconds);
+        final Placed fell = flight.carried(now.placed(), now.moved(), flying, seconds);
         final Optional<Touch> met = deepest(around.touches(rigid, fell));
         if (met.isEmpty()) {
-            return new Stepped(new Mover(fell, new Moved(velocity, spin), false, 0), Optional.empty());
+            return new Stepped(new Mover(fell, flying, false, 0), Optional.empty());
         }
         // lifted straight up until its deepest corner only touches
         final double lift = around.touches(rigid, fell).stream().filter(touch -> touch.deep() > slack)

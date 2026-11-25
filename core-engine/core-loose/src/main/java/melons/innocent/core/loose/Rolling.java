@@ -1,7 +1,6 @@
 package melons.innocent.core.loose;
 
 import melons.innocent.core.motion.Spot;
-import melons.innocent.core.motion.Turn;
 import melons.innocent.core.rest.Moved;
 import melons.innocent.core.rest.Placed;
 import melons.innocent.core.rest.Reckoning;
@@ -18,7 +17,8 @@ import java.util.Optional;
  * touches, it is pushed just so much that the spot of it there is not moving, neither into what it touches nor
  * along it: it does not slip. What is left of its motion is turning about that spot, which is rolling, and the spot
  * moves round it as it goes. So on a slope a ball gains speed at five sevenths of what a thing sliding freely would,
- * and a thing that falls onto the ground with speed along it rolls on from where it lands.
+ * and a thing that falls onto the ground with speed along it rolls on from where it lands. In the air it is in
+ * flight as any shape is ({@link Flight}).
  *
  * <p>While it touches anything it is slowed by a share of gravity's pull, so on the level it comes to a stop; and
  * stopped, touching, it is counted toward its rest. After it has moved it is set back out of whatever it has run
@@ -32,40 +32,44 @@ record Rolling(Reckoning reckoning, double slack) {
     /** {@code rigid}, standing and moving as {@code now} says, a tick of so many {@code seconds} on. */
     Simulator.Stepped stepped(final Rigid rigid, final Simulator.Mover now, final Simulator.Around around,
                               final double seconds) {
+        final Flight flight = new Flight(reckoning.gravity());
         final List<Touch> touches = around.touches(rigid, now.placed());
-        Moved moved = new Moved(now.moved().velocity().plus(new Spot(0, -reckoning.gravity() * seconds, 0)),
-                now.moved().spin());
+        Moved moved = flight.pulled(now.moved(), seconds);
+        boolean pushed = false;
         for (final Touch touch : touches) {
-            moved = stuck(rigid, now.placed(), touch, moved);
+            final Optional<Moved> stuck = stuck(rigid, now.placed(), touch, moved);
+            pushed = pushed || stuck.isPresent();
+            moved = stuck.orElse(moved);
         }
-        if (!touches.isEmpty()) {
+        // slowed only by what it presses on: thrown up off the ground, or in the air, nothing slows it
+        if (pushed) {
             moved = slowed(moved, reckoning.rolling() * reckoning.gravity() * seconds);
         }
-        final Spot spin = moved.spin();
-        final Placed gone = new Placed(now.placed().at().plus(moved.velocity().times(seconds)),
-                spin.length() == 0 ? now.placed().turned()
-                        : now.placed().turned().then(new Turn(spin, spin.length() * seconds)));
+        // pushed by nothing it is carried as flight carries it; pushed, by what it has once it has been pushed
+        final Placed gone = flight.carried(now.placed(), pushed ? moved : now.moved(), moved, seconds);
+        final List<Touch> met = around.touches(rigid, gone);
         Spot out = new Spot(0, 0, 0);
-        for (final Touch touch : around.touches(rigid, gone)) {
+        for (final Touch touch : met) {
             if (touch.deep() > slack) {
                 out = out.plus(touch.pushes().times(touch.deep()));
             }
         }
-        final boolean stopped = !touches.isEmpty() && moved.still();
+        final boolean stopped = pushed && moved.still();
+        // it has landed in the part of a tick it comes out of the air in, whether it stops there or rolls on
         return new Simulator.Stepped(new Simulator.Mover(gone.moved(out), moved, stopped,
                 stopped ? now.still() + 1 : 0),
-                stopped && !now.landed() ? Optional.of(touches.getFirst().on()) : Optional.empty());
+                touches.isEmpty() && !met.isEmpty() ? Optional.of(met.getFirst().on()) : Optional.empty());
     }
 
     /**
      * {@code moved} after the push at {@code touch} that stops the spot of the thing there: none, where that spot is
-     * already leaving what it touches, or where only a pull would hold it.
+     * already leaving what it touches, or where it does not press on it at all.
      */
-    private Moved stuck(final Rigid rigid, final Placed placed, final Touch touch, final Moved moved) {
+    private Optional<Moved> stuck(final Rigid rigid, final Placed placed, final Touch touch, final Moved moved) {
         final Spot arm = touch.at().minus(placed.at());
         final Spot slipping = moved.velocity().plus(moved.spin().cross(arm));
         if (slipping.dot(touch.pushes()) > 1e-9) {
-            return moved;
+            return Optional.empty();
         }
         final double kilograms = rigid.kilograms();
         // what a push each way does to the spot's own velocity: its middle's share, and its turning's
@@ -76,11 +80,12 @@ record Rolling(Reckoning reckoning, double slack) {
         final Spot wanted = slipping.times(-1);
         final Spot push = new Spot(wanted.dot(up.cross(along)) / all, across.dot(wanted.cross(along)) / all,
                 across.dot(up.cross(wanted)) / all);
-        if (push.dot(touch.pushes()) < 0) {
-            return moved;
+        // only what it presses on holds it: a wall it merely touches does not keep it from falling
+        if (push.dot(touch.pushes()) <= 1e-9) {
+            return Optional.empty();
         }
-        return new Moved(moved.velocity().plus(push.times(1 / kilograms)),
-                moved.spin().plus(turned(rigid, placed, arm.cross(push))));
+        return Optional.of(new Moved(moved.velocity().plus(push.times(1 / kilograms)),
+                moved.spin().plus(turned(rigid, placed, arm.cross(push)))));
     }
 
     /** How the velocity of the spot at {@code arm} from the thing's middle changes for a push of one, {@code way}. */

@@ -1,6 +1,7 @@
 package melons.innocent.testkit.loose;
 
 import melons.innocent.core.rest.Ground;
+import melons.innocent.core.rest.Throw;
 import org.junit.jupiter.api.Test;
 
 import java.util.Set;
@@ -15,7 +16,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * for again, the beam lies flat. With a time said, the same happens of itself. Begun again, it is as it was
  * described, its ramp at the slope then said. Its melon and its ball are held on the ramp by the chock; that taken
  * away, both roll down and out over the ground and come to rest there, while the crate beside them stays; and on a
- * ramp with no slope neither stirs. And each thing is made of something the lab has.
+ * ramp with no slope neither stirs. A thing thrown is followed: it rises as high and, on the level, comes down as
+ * far as the reckoning says. And each thing is made of something the lab has.
  */
 class TrialTest {
 
@@ -75,6 +77,33 @@ class TrialTest {
         ticked(level, 600);
         assertEquals(0, level.world().moving(), "on a ramp with no slope, nothing rolls");
         assertEquals(170, level.world().placed("the ball").orElseThrow().at().along() - 1_450, 0.01);
+    }
+
+    @Test
+    void aThingThrownIsFollowedAndComesDownWhereTheReckoningSays() {
+        final Trial trial = new Trial(-1, 12);
+        ticked(trial, 240);
+        assertEquals(12, trial.movable().size(), "every thing but the ramp can be thrown");
+        assertTrue(trial.flown().isEmpty());
+        final Throw thrown = new Throw(3_000, 180, 45);
+        trial.thrown("the crate in the air", thrown);
+        ticked(trial, 5);
+        final Flown flown = trial.flown().orElseThrow();
+        assertTrue(flown.carried().isEmpty() && flown.said().contains("still in the air"), flown.said());
+        ticked(trial, 240);
+        assertEquals(flown.reckonedRise(), flown.rose(), 0.05, "as high as the reckoning says");
+        assertEquals(flown.reckonedCarry(), flown.carried().orElseThrow(), 4, "and as far, on the level");
+        assertTrue(trial.world().placed("the crate in the air").orElseThrow().at().along() < 1_150, "toward the start");
+        assertTrue(flown.said().startsWith("Thrown: the crate in the air at 3.2 m/s, 45 degrees up"), flown.said());
+        // thrown up the slope, away from the chock it lies against
+        trial.thrown("the melon", new Throw(800, 0, 45));
+        ticked(trial, 600);
+        final Flown melon = trial.flown().orElseThrow();
+        assertEquals(melon.reckonedRise(), melon.rose(), 0.05);
+        assertTrue(melon.carried().orElseThrow() > melon.reckonedCarry(), "from up on the ramp it carries further");
+        trial.thrown("the ramp gone", thrown);
+        trial.again(12);
+        assertTrue(trial.flown().isEmpty(), "begun again, no throw is followed");
     }
 
     @Test
