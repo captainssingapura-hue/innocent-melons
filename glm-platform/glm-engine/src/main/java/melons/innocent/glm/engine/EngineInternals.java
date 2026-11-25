@@ -1,5 +1,6 @@
 package melons.innocent.glm.engine;
 
+import com.example.fxsuite.vulkan.form.Mesh;
 import com.example.fxsuite.vulkan.space.Mat4;
 import com.example.fxsuite.vulkan.space.Turned;
 import com.example.fxsuite.vulkan.space.Vec3;
@@ -15,7 +16,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * What turns and runs inside an engine's block, joined as it moves: the crankshaft turning in the block's main
+ * What turns and runs inside an engine's block, joined as it moves, and the heads over it, each bolted to its bank's
+ * deck ({@link CylinderHead}), with what opens and shuts their valves ({@link Valvetrain}): the crankshaft turning in
+ * the block's main
  * bearings; each connecting rod's big end turning on its crankpin and its small end on its gudgeon pin; each gudgeon
  * pin seated in its piston; each piston sliding in its bore. Made once, its parts kept, so it can say how far each has
  * moved from where it was made when the crank has turned so far: the crank turned about its axis, each rod carried
@@ -24,8 +27,6 @@ import java.util.Map;
 public final class EngineInternals {
 
     private static final Vec3 AXIS = new Vec3(0, 0, 1);
-    /** How high the head's combustion chamber is over the deck, in centimetres: an estimate. */
-    private static final double HEAD = 1.0;
 
     private final EngineFigures figures;
     private final Part crank;
@@ -33,12 +34,18 @@ public final class EngineInternals {
     private final Map<Part, Cylinder> sliding = new IdentityHashMap<>();
     private final List<Connection> inside = new ArrayList<>();
     private final Map<Part, String> pistons = new LinkedHashMap<>();
+    private final List<Part> heads = new ArrayList<>();
+    private final Valvetrain valvetrain;
+    private final Covers covers;
 
     /** Its parts, made to {@code figures}. */
     public EngineInternals(final EngineFigures figures) {
         this.figures = figures;
         this.crank = new Crankshaft(figures).part();
+        this.valvetrain = new Valvetrain(figures);
+        this.covers = new Covers(figures);
         for (int b = 0; b < figures.banks(); b++) {
+            heads.add(new CylinderHead(figures, b).part());
             for (int k = 0; k < figures.perBank(); k++) {
                 final Cylinder cylinder = new Cylinder(figures, b, k);
                 final Part rod = cylinder.rod();
@@ -59,24 +66,48 @@ public final class EngineInternals {
         }
     }
 
-    /** The engine alone, its block the root and all of it inside. */
+    /** The engine alone, its block the root and all of it inside, its heads open. */
     public Platform platform() {
-        final Part block = new CastBlock(figures).part();
-        return new Platform("the " + figures.name() + " engine", block, joined(block));
+        return platform(false);
     }
 
-    /** How what turns and runs is joined to {@code block}, in the order they are walked. */
+    /** The same, closed in by its covers if {@code covered} ({@link Covers}). */
+    public Platform platform(final boolean covered) {
+        final Part block = new CastBlock(figures).part();
+        return new Platform("the " + figures.name() + " engine" + (covered ? ", covered" : ""), block,
+                joined(block, covered));
+    }
+
+    /** How what turns and runs is joined to {@code block}, in the order they are walked, its heads open. */
     public List<Connection> joined(final Part block) {
+        return joined(block, false);
+    }
+
+    /** The same, closed in by its covers if {@code covered}. */
+    public List<Connection> joined(final Part block, final boolean covered) {
         final List<Connection> joined = new ArrayList<>();
         final int mains = new BlockForm(figures).bulkheads().size();
         for (int j = 1; j <= mains; j++) {
             joined.add(new Connection(figures.name() + " main bearing " + j, block, "main bearing " + j, crank,
                     "main " + j, Joining.HINGE));
         }
+        for (int b = 0; b < heads.size(); b++) {
+            joined.add(new Connection(heads.get(b).name() + " on its deck", block, "deck, bank " + (b + 1),
+                    heads.get(b), "deck", Joining.BOLTED));
+        }
+        joined.addAll(valvetrain.joined(heads));
         joined.addAll(inside);
         pistons.forEach((piston, at) -> joined.add(new Connection(figures.name() + " " + at + " in its bore", piston,
                 "bore", block, "cylinder " + at, Joining.SLIDING)));
+        if (covered) {
+            joined.addAll(covers.joined(block, heads));
+        }
         return joined;
+    }
+
+    /** Whether {@code part} is one of what closes it in: a head's cover, its coils, the timing cover, the trim. */
+    public boolean cover(final Part part) {
+        return covers.has(part);
     }
 
     /**
@@ -101,20 +132,41 @@ public final class EngineInternals {
         if (slid != null) {
             return new Mat4(slid.smallEnd(turned).minus(slid.smallEnd()));
         }
-        return new Mat4();
+        final Mat4 worked = valvetrain.moved(part, turned);
+        return worked != null ? worked : new Mat4();
+    }
+
+    /** What opens and shuts its valves. */
+    Valvetrain valvetrain() {
+        return valvetrain;
+    }
+
+    /** Whether {@code part} is one of its cylinder heads, cast as its block is. */
+    public boolean head(final Part part) {
+        return heads.contains(part);
+    }
+
+    /** A cylinder's combustion chamber whole, in its own frame, as the charge burning in it fills it. */
+    public Mesh flame() {
+        return new Chamber(new HeadFigures(figures)).filled();
+    }
+
+    /** What carries bank {@code bank}'s cylinder {@code k}'s own frame, its nought at its bore's top, to the block's. */
+    public Mat4 frame(final int bank, final int k) {
+        return new HeadFigures(figures).frame(bank, k);
     }
 
     /**
-     * Where bank {@code bank}'s cylinder {@code k} burns, the crank turned {@code turned} degrees on from rest, in the
-     * block's frame: from its piston's crown up its bore to the deck, and on into the head's chamber, where the head
-     * will be; as what carries a drum a unit round and a unit high, from nought straight up, there.
+     * Where bank {@code bank}'s cylinder {@code k} burns in its bore, the crank turned {@code turned} degrees on from
+     * rest, in the block's frame: from its piston's crown up its bore to the deck, over which its head's chamber is
+     * ({@link #flame}); as what carries a drum a unit round and a unit high, from nought straight up, there.
      */
     public Mat4 chamber(final int bank, final int k, final double turned) {
         final Cylinder cylinder = new Cylinder(figures, bank, k);
         final Vec3 up = cylinder.up();
         final Vec3 side = up.cross(AXIS);
         final Vec3 crown = cylinder.smallEnd(turned).plus(up.times(figures.crown()));
-        final double high = cylinder.deck().minus(crown).dot(up) + HEAD;
+        final double high = cylinder.deck().minus(crown).dot(up);
         final double round = figures.bore() / 2 - 0.05;
         return new Mat4(new double[] {side.x() * round, up.x() * high, 0, crown.x(),
             side.y() * round, up.y() * high, 0, crown.y(), side.z() * round, up.z() * high, round, crown.z(),

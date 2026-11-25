@@ -38,8 +38,9 @@ public record CastBlock(EngineFigures figures) {
                         figures.along(b, k)))));
             }
         }
-        points.add(new Point("mount, right", form.mount(1)));
-        points.add(new Point("mount, left", form.mount(-1)));
+        // its right, seen from behind as the car's is, is -x in its own frame, its front at nought
+        points.add(new Point("mount, right", form.mount(-1)));
+        points.add(new Point("mount, left", form.mount(1)));
         return new Part(figures.name() + " block", Group.ENGINE, false, points, form.mesh(),
                 new Made(Material.ALUMINIUM, true));
     }

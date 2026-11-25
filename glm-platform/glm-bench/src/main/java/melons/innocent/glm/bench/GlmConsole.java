@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -44,7 +45,7 @@ public final class GlmConsole {
     private final Asked asked;
     private final OnShow first;
     private final LightBoard light;
-    private final MadeOfChoice made;
+    private final List<Material> used;
 
     /**
      * A console on {@code bus}, its light asking {@code asked}, with {@code first} on show to begin with, offering
@@ -55,11 +56,13 @@ public final class GlmConsole {
         this.asked = asked;
         this.first = first;
         this.light = new LightBoard(asked);
-        this.made = new MadeOfChoice(used, first.madeOf());
+        this.used = List.copyOf(used);
     }
 
     /** Shown, its top left corner {@code x} across the screen and {@code y} down. To be called on JavaFX's thread. */
     public void shown(final double x, final double y) {
+        // its controls made here, on JavaFX's thread, as JavaFX has them made
+        final MadeOfChoice made = new MadeOfChoice(used, first.madeOf());
         final Map<Group, CheckBox> showing = new EnumMap<>(Group.class);
         final Map<Group, ComboBox<String>> kinds = new EnumMap<>(Group.class);
         final Map<Group, ColorPicker> colours = new EnumMap<>(Group.class);

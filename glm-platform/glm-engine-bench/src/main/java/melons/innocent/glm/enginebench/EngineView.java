@@ -71,6 +71,7 @@ final class EngineView implements AutoCloseable {
     private Part root;
     private Firing firing;
     private Vec3 block;
+    private Shaped flame;
 
     /** On {@code card}, its layouts as {@code laid} says. */
     EngineView(final Card card, final Laid laid) {
@@ -102,6 +103,10 @@ final class EngineView implements AutoCloseable {
                 .map(assembled::at).orElse(new Vec3(0, 0, 0));
         parts.values().forEach(Shaped::close);
         parts.clear();
+        if (flame != null) {
+            flame.close();
+        }
+        this.flame = new Shaped(card, laid, engine.flame());
         this.inside = engine;
         this.built = assembled;
         assembled.placed().keySet().forEach(p -> parts.put(p, new Shaped(card, laid, p.shape().form())));
@@ -138,7 +143,7 @@ final class EngineView implements AutoCloseable {
     private void parts(final Pass pass, final Camera camera, final double turned, final EngineRun.Block block,
                        final MadeOf madeOf, final Vec3 lift, final boolean seenThrough) {
         for (final PartAt p : built.placed().keySet()) {
-            final boolean isBlock = p.part().equals(root);
+            final boolean isBlock = p.part().equals(root) || inside.head(p.part()) || inside.cover(p.part());
             if (isBlock && block == EngineRun.Block.HIDDEN) {
                 continue;
             }
@@ -150,7 +155,10 @@ final class EngineView implements AutoCloseable {
         }
     }
 
-    /** Each charge burning, from its piston's crown into the head, as bright as it is so soon after it fired. */
+    /**
+     * Each charge burning, from its piston's crown up its bore and filling its head's chamber, as bright as it is so
+     * soon after it fired.
+     */
     private void burning(final Pass pass, final Camera camera, final double turned, final Vec3 lift) {
         final Mat4 standing = new Mat4(lift.plus(block));
         for (final int n : firing.order()) {
@@ -159,6 +167,8 @@ final class EngineView implements AutoCloseable {
                 final double bright = Math.pow(1 - since / BURNS, 2);
                 burning.drawn(pass, charge, standing.times(inside.chamber(firing.bank(n), firing.k(n), turned)),
                         camera, 1, FLAME.times(bright));
+                burning.drawn(pass, flame, standing.times(inside.frame(firing.bank(n), firing.k(n))), camera, 1,
+                        FLAME.times(bright));
             }
         }
     }
@@ -166,6 +176,9 @@ final class EngineView implements AutoCloseable {
     @Override
     public void close() {
         charge.close();
+        if (flame != null) {
+            flame.close();
+        }
         burning.close();
         parts.values().forEach(Shaped::close);
         parts.clear();

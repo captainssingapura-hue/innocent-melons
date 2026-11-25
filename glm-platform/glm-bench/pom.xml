@@ -45,13 +45,21 @@
                 <artifactId>maven-source-plugin</artifactId>
             </plugin>
             <plugin>
-                <!-- mvn -pl glm-platform/glm-bench exec:java opens the bench -->
+                <!-- mvn -pl glm-platform/glm-bench exec:java opens the bench; exec:java@walk walks round it -->
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.6.3</version>
                 <configuration>
                     <mainClass>melons.innocent.glm.bench.GlmBench</mainClass>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>walk</id>
+                        <configuration>
+                            <mainClass>melons.innocent.glm.bench.GlmWalk</mainClass>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

@@ -13,6 +13,7 @@ public enum Group {
     BRAKES("Brake discs"),
     CALIPERS("Brake calipers"),
     ENGINE("Engine"),
+    COVERS("Engine covers"),
     STEERING("Steering"),
     WHEELS("Wheels"),
     TYRES("Tyres");

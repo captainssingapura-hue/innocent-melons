@@ -15,7 +15,7 @@ import javax.sound.sampled.SourceDataLine;
  * its throttle and its load, a little at a time, on a thread of its own; a new engine started afresh. Where there are
  * no speakers, or it is asked to keep quiet, it makes its sound all the same and plays none.
  */
-final class EngineSound implements AutoCloseable {
+public final class EngineSound implements AutoCloseable {
 
     /** Samples made at a time, about 12 ms; how many blocks the line holds ahead. */
     private static final int BLOCK = 512;
@@ -33,7 +33,7 @@ final class EngineSound implements AutoCloseable {
     private final Thread thread;
 
     /** Playing {@code engine}, unless {@code quiet}. */
-    EngineSound(final Engine engine, final boolean quiet) {
+    public EngineSound(final Engine engine, final boolean quiet) {
         this.engine = engine;
         SourceDataLine opened = null;
         String name = "none: kept quiet";
@@ -57,29 +57,29 @@ final class EngineSound implements AutoCloseable {
     }
 
     /** What it plays on. */
-    String device() {
+    public String device() {
         return device;
     }
 
     /** Which engine; a new one starts afresh. */
-    void engine(final Engine playing) {
+    public void engine(final Engine playing) {
         this.engine = playing;
     }
 
     /** What the engine is doing: its revs, its throttle and its load. */
-    void set(final double revs, final double open, final double working) {
+    public void set(final double revs, final double open, final double working) {
         this.rpm = revs;
         this.throttle = open;
         this.load = working;
     }
 
     /** How loud, nought to one. */
-    void volume(final double loud) {
+    public void volume(final double loud) {
         this.volume = loud;
     }
 
     /** How much boost its turbocharger makes, as it plays. */
-    double boost() {
+    public double boost() {
         return boost;
     }
 

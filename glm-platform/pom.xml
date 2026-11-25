@@ -31,10 +31,10 @@
     <modules>
         <!-- Parts, their points, how they are joined, and the platform put together from them. No card, no window. -->
         <module>glm-core</module>
-        <!-- The platform's parameters and its parts, the rear axle first. No card, no window. -->
-        <module>glm-model</module>
         <!-- The GLM engines: blocks cast from one modular design, inline fours and fives, V6, V8 and V12. No card. -->
         <module>glm-engine</module>
+        <!-- The platform's parameters and its parts, the rear axle first, the engine in its bay. No card, no window. -->
+        <module>glm-model</module>
         <!-- Driving: the driver's keys, the drivetrain they drive, its cruise control, its instruments. -->
         <module>glm-drive</module>
         <!-- The GLM bench: the platform on the card, its groups shown and finished as chosen. -->
@@ -43,6 +43,8 @@
         <module>glm-part-lab</module>
         <!-- The GLM engine bench: an engine running on the card, its crank, rods and pistons turning, heard as it runs. -->
         <module>glm-engine-bench</module>
+        <!-- The GLM car test driven on a test track, up a ramp and along a viaduct, by the avatar engine's own. -->
+        <module>glm-test-drive</module>
     </modules>
 
     <dependencyManagement>

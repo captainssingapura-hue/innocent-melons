@@ -24,6 +24,10 @@
             <artifactId>glm-core</artifactId>
         </dependency>
         <dependency>
+            <groupId>melons.innocent.glm</groupId>
+            <artifactId>glm-engine</artifactId>
+        </dependency>
+        <dependency>
             <groupId>melons.innocent.vehiclelab</groupId>
             <artifactId>vl-frame</artifactId>
         </dependency>

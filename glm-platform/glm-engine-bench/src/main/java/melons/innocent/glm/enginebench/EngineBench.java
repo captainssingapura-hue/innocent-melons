@@ -49,7 +49,8 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * <p>For a run with nobody at it, played quietly: {@code -Dengine.pick=} the engine's place in the range from nought;
  * {@code -Dengine.throttle=} holds its throttle open so far, nought to one; {@code -Dengine.turned=} the crank's angle
- * to begin at; {@code -Dengine.actual=true} shows it at its actual speed; {@code -Dbench.yaw=}, {@code -Dbench.pitch=},
+ * to begin at; {@code -Dengine.actual=true} shows it at its actual speed; {@code -Dengine.covered=true} covers it;
+ * {@code -Dengine.block=} GLASS, FINISHED or HIDDEN; {@code -Dbench.yaw=}, {@code -Dbench.pitch=},
  * {@code -Dbench.distance=} in metres; {@code -Dbench.settle=} so many thousandths of a second
  * ends it; {@code -Dbench.snapshot.card=} a file the card's picture is saved to as it ends.
  */
@@ -114,8 +115,9 @@ public final class EngineBench {
     private EngineRun first() {
         final EngineRun plain = new EngineRun();
         return new EngineRun(Integer.getInteger("engine.pick", plain.engine()),
-                Boolean.getBoolean("engine.actual") ? 1 : plain.slow(), plain.turbo(), plain.volume(), plain.block(),
-                plain.made());
+                Boolean.getBoolean("engine.actual") ? 1 : plain.slow(), plain.turbo(), plain.volume(),
+                EngineRun.Block.valueOf(System.getProperty("engine.block", plain.block().name())), plain.made(),
+                Boolean.getBoolean("engine.covered"));
     }
 
     /** Frame after frame, until a window is closed, the time asked for is up or the validation layer speaks. */
@@ -168,27 +170,31 @@ public final class EngineBench {
 
     /**
      * The engine {@code now} asks for, fitted: another engine shown afresh, voiced and put in a new car, stopped; the
-     * same one turbocharged or made otherwise voiced afresh, the car going on as it was.
+     * same one covered or uncovered shown afresh, the car going on; turbocharged or made otherwise, voiced afresh, the
+     * car going on as it was.
      */
     private void fit(final EngineRun now, final EngineView view, final EngineSound sound) {
-        if (fitted != null && now.engine() == fitted.engine() && now.turbo() == fitted.turbo()
-                && now.made() == fitted.made()) {
-            return;
-        }
-        final Engine voice = voice(now);
-        sound.engine(voice);
-        if (fitted == null || now.engine() != fitted.engine()) {
+        final boolean other = fitted == null || now.engine() != fitted.engine();
+        if (other || now.covered() != fitted.covered()) {
             engine = range.get(now.engine());
             firing = new Firing(engine);
             final EngineInternals inside = new EngineInternals(engine);
-            final var whole = inside.platform();
+            final var whole = inside.platform(now.covered());
             view.showing(inside, firing, new Assembly(whole).assembled(), whole.root());
-            final Vec3 middle = LIFT.plus(new Vec3(0, engine.deck() / 2, engine.length() / 2));
-            orbit = new Orbit(middle, said("bench.yaw", 35), said("bench.pitch", 20),
-                    METRE * said("bench.distance", 1.6));
-            driven = new Drivetrain(CARS.get(now.engine()).with(voice));
-        } else {
-            driven.fitted(voice);
+            if (other) {
+                final Vec3 middle = LIFT.plus(new Vec3(0, engine.deck() / 2, engine.length() / 2));
+                orbit = new Orbit(middle, said("bench.yaw", 35), said("bench.pitch", 20),
+                        METRE * said("bench.distance", 1.6));
+            }
+        }
+        if (other || now.turbo() != fitted.turbo() || now.made() != fitted.made()) {
+            final Engine voice = voice(now);
+            sound.engine(voice);
+            if (other) {
+                driven = new Drivetrain(CARS.get(now.engine()).with(voice));
+            } else {
+                driven.fitted(voice);
+            }
         }
         fitted = now;
     }

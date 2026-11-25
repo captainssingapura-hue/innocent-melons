@@ -20,7 +20,7 @@ import java.util.Map;
  * of all that turns, the crank, rods and pistons are taken as some two fifths, the rest the flywheel and all the
  * engine drives, so in titanium it revs up some fifth quicker than in steel.
  */
-final class EngineVoices {
+public final class EngineVoices {
 
     /** How much of all that turns is the crank, rods and pistons. */
     private static final double TURNING = 0.4;
@@ -34,7 +34,7 @@ final class EngineVoices {
             "V12", new Tone(650, 6800, 7200, 4600, new double[] {130, 360, 980}, 3.5, 3.2, 1.3, 420, 0.9));
 
     /** {@code figures}' voice, what turns in it made of {@code made}, turbocharged if {@code turbo}. */
-    Engine voiced(final EngineFigures figures, final Material made, final boolean turbo) {
+    public Engine voiced(final EngineFigures figures, final Material made, final boolean turbo) {
         final Tone tone = TONES.getOrDefault(figures.name(), TONES.get("V6"));
         final Firing firing = new Firing(figures);
         final List<Integer> order = firing.order();

@@ -51,8 +51,9 @@ class EngineBlockTest {
     void theRangePutTogetherOnItsStands() {
         final Assembled shown = new Assembly(new EngineShow().platform()).assembled();
         assertEquals(List.of(), shown.problems(1e-6));
-        assertEquals(1 + 5 + 5 + 3 * (4 + 5 + 6 + 8 + 12), shown.placed().size(),
-                "the stands, five blocks, five cranks, and a rod, a piston and a pin in every cylinder");
+        assertEquals(1 + 5 + 5 + 3 * (1 + 1 + 2 + 2 + 2) + 11 * (4 + 5 + 6 + 8 + 12), shown.placed().size(),
+                "the stands, five blocks, five cranks, a head and two camshafts on every bank, and a rod, a piston, a"
+                        + " pin, four valves and four springs in every cylinder");
     }
 
     @Test
