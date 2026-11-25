@@ -36,6 +36,20 @@ public record Spot(double across, double up, double along) {
         return Math.sqrt(across * across + up * up + along * along);
     }
 
+    /** How much of this lies along {@code other}, times how long {@code other} is. */
+    public double dot(final Spot other) {
+        return across * other.across + up * other.up + along * other.along;
+    }
+
+    /** The same way as this, one long. This must be going some way. */
+    public Spot unit() {
+        final double length = length();
+        if (!(length > 0)) {
+            throw new IllegalArgumentException("going no way at all, so no way to keep");
+        }
+        return times(1 / length);
+    }
+
     /** What stands square to both this and {@code other}, as long as the two of them span. */
     public Spot cross(final Spot other) {
         return new Spot(up * other.along - along * other.up, along * other.across - across * other.along,

@@ -22,6 +22,10 @@
         <module>core-motion</module>
         <!-- How well an observer could see a thing: its sharpness, a number that changes smoothly. -->
         <module>core-visibility</module>
+        <!-- The world at rest: what stands on what, and the check of its forces. -->
+        <module>core-rest</module>
+        <!-- The loose body: the simulator of what nothing drives, which falls, topples and comes to rest. -->
+        <module>core-loose</module>
     </modules>
 
     <properties>
