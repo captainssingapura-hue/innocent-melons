@@ -102,6 +102,12 @@ stays or slides.
 
 Ground whose height changes from place to place: a hillside, a country's terrain.
 
+## Shell
+
+A sheet that curves smoothly, with edges and an underside, and may pass over itself: a spiral ramp's deck, a vaulted
+or domed roof, a banked bend of road. Its height and the way it faces change from spot to spot without a break, so
+what goes over it meets no facets.
+
 ## Mesh
 
 Any fixed shape at all, given by its faces: a sculpture, a building too odd for an outline.

@@ -26,6 +26,12 @@
             <artifactId>core-motion</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- sheets that curve: what a curved provider answers from -->
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-sheet</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <!-- the world at rest: its things are what provide surfaces -->
         <dependency>
             <groupId>melons.innocent.core</groupId>

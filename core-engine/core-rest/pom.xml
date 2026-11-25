@@ -26,6 +26,12 @@
             <artifactId>core-motion</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- sheets that curve: what a shell is the shape of -->
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-sheet</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <!-- what exists in physics: the kinds of shape the shapes here are typed to -->
         <dependency>
             <groupId>melons.innocent.physics</groupId>

@@ -25,8 +25,8 @@ class ExistencesTest {
         assertEquals(List.of(), new Existences().problems());
         assertEquals(List.of("shapes", "movers", "surfaces", "conditions"),
                 new Existences().trees().stream().map(Taxonomy::name).toList());
-        assertEquals(16, shapes.leaves().size());
-        assertEquals(23, shapes.nodes().size());
+        assertEquals(17, shapes.leaves().size());
+        assertEquals(24, shapes.nodes().size());
         assertEquals("Half of a ball or of an ellipsoid: the half melon a melon house is, a bowl turned over.",
                 shapes.meaning(new Shapes.Dome()));
     }
@@ -81,7 +81,8 @@ class ExistencesTest {
                 shapes.under(new Shapes.Faceted()));
         assertEquals(List.of(new Shapes.Drum(), new Shapes.Cone(), new Shapes.Capsule(), new Shapes.Ring()),
                 shapes.under(new Shapes.Turned()));
-        assertEquals(List.of(new Shapes.Level(), new Shapes.Slope(), new Shapes.Land(), new Shapes.Mesh()),
+        assertEquals(List.of(new Shapes.Level(), new Shapes.Slope(), new Shapes.Land(), new Shapes.Shell(),
+                new Shapes.Mesh()),
                 shapes.under(new Shapes.Fixed()));
         assertEquals("ellipsoid", new Shapes.Ellipsoid().name());
     }

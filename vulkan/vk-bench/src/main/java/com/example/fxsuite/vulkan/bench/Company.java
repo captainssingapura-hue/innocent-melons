@@ -9,6 +9,7 @@ import com.example.fxsuite.avatar.sim.Obstacles;
 import com.example.fxsuite.vulkan.bench.subject.Bot;
 import com.example.fxsuite.vulkan.bench.subject.Courier;
 import com.example.fxsuite.vulkan.bench.subject.Tone;
+import com.example.fxsuite.vulkan.bench.subject.Trodden;
 import com.example.fxsuite.vulkan.device.Pass;
 import com.example.fxsuite.vulkan.render.Overlay;
 import com.example.fxsuite.vulkan.space.Vec3;
@@ -39,6 +40,9 @@ public record Company(Run lead, Bot bot, Optional<Companion> companion) implemen
     /** A companion: its run, and the bot it is drawn as. */
     public record Companion(Run run, Bot bot) {
     }
+
+    /** How wide a foot's tread is taken to be when the ground under it is asked for, in centimetres. */
+    private static final double TREAD = 5;
 
     /** A lead alone, drawn as the man bot. */
     public Company(final Run lead) {
@@ -148,7 +152,21 @@ public record Company(Run lead, Bot bot, Optional<Companion> companion) implemen
     private List<Courier.Placed> own(final double blend) {
         final Avatar shown = lead.shown(blend);
         return bot.placed(shown.body(), shown.body().thrust(),
-                Gait.of(shown, lead.following().yaw(), lead.following().lookUp()), lead.otherLeg());
+                Gait.of(shown, lead.following().yaw(), lead.following().lookUp()), lead.otherLeg(),
+                trodden(lead, shown.body()));
+    }
+
+    /**
+     * The ground under the feet of a figure of {@code run} whose body is {@code body}: what the engine itself would
+     * stand a foot on at each spot, of what is in the run's way, against where it has the body stand. Nothing where
+     * that is more than a step and a little from the body's own ground, as past an edge.
+     */
+    private Trodden trodden(final Run run, final Body body) {
+        return (x, z) -> {
+            final double higher = run.inTheWay().footing(x, z, TREAD, body.height() + Body.STEP).height()
+                    - body.height();
+            return Math.abs(higher) <= Body.STEP + TREAD ? higher : 0;
+        };
     }
 
     @Override
@@ -204,7 +222,7 @@ public record Company(Run lead, Bot bot, Optional<Companion> companion) implemen
             final Avatar shown = other.run().shown(blend);
             return other.bot().placed(shown.body(), shown.body().thrust(),
                     Gait.of(shown, other.run().following().yaw(), other.run().following().lookUp()),
-                    other.run().otherLeg());
+                    other.run().otherLeg(), trodden(other.run(), shown.body()));
         }).orElse(List.of());
     }
 }

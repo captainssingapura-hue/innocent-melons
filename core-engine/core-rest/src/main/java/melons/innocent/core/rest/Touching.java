@@ -33,17 +33,18 @@ public record Touching(double slack, double skin, double steep) {
             case Ellipsoid round -> new RoundTouch(slack, skin).grounded(round, placed, ground);
             case Box box -> cornered(box, placed, ground);
             case Slab slab -> cornered(slab.box(), placed, ground);
+            case Shell shell -> List.of();
         };
     }
 
     /**
      * Where a thing of {@code shape} placed so is touched by {@code other}, called {@code on}, standing as said:
      * from below, for a thing with corners; wherever it meets it, for a round one. Nothing rests on a round thing
-     * yet, so none touches it.
+     * yet, so none touches it; and nothing meets a shell yet, which only whoever asks what is under a spot finds.
      */
     public List<Touch> held(final ShapeImpl<?> shape, final Placed placed, final String on,
                             final ShapeImpl<?> other, final Placed stands) {
-        if (other instanceof Ellipsoid
+        if (other instanceof Ellipsoid || other instanceof Shell || shape instanceof Shell
                 || placed.at().minus(stands.at()).length() > shape.reaches() + other.reaches() + slack) {
             return List.of();
         }
@@ -51,6 +52,7 @@ public record Touching(double slack, double skin, double steep) {
             case Ellipsoid round -> new RoundTouch(slack, skin).met(round, placed, on, boxed(other), stands);
             case Box box -> cornered(box, placed, on, boxed(other), stands);
             case Slab slab -> cornered(slab.box(), placed, on, boxed(other), stands);
+            case Shell shell -> List.of();
         };
     }
 
@@ -58,6 +60,7 @@ public record Touching(double slack, double skin, double steep) {
     public boolean overlapping(final ShapeImpl<?> shape, final Placed placed, final ShapeImpl<?> other,
                                final Placed stands) {
         return !(shape instanceof Ellipsoid) && !(other instanceof Ellipsoid)
+                && !(shape instanceof Shell) && !(other instanceof Shell)
                 && overlapping(boxed(shape), placed, boxed(other), stands);
     }
 
@@ -67,6 +70,7 @@ public record Touching(double slack, double skin, double steep) {
             case Box box -> box;
             case Slab slab -> slab.box();
             case Ellipsoid round -> throw new IllegalArgumentException("a round thing has no corners");
+            case Shell shell -> throw new IllegalArgumentException("a shell has no corners");
         };
     }
 
