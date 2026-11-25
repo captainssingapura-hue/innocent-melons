@@ -28,7 +28,7 @@ public record Shapes() {
     public Taxonomy tree() {
         return new Taxonomy("shapes", new Shape(), List.of(new Box(), new Plate(), new Prism(), new Lump(),
                 new Ball(), new Ellipsoid(), new Drum(), new Cone(), new Capsule(), new Ring(), new Dome(),
-                new Joined(), new Level(), new Slope(), new Land(), new Mesh()),
+                new Joined(), new Level(), new Slope(), new Land(), new Shell(), new Mesh()),
                 Meanings.INSTANCE.beside(Shapes.class));
     }
 
@@ -74,5 +74,6 @@ public record Shapes() {
     public record Level() implements Leaf<Fixed> { public Fixed parent() { return new Fixed(); } }
     public record Slope() implements Leaf<Fixed> { public Fixed parent() { return new Fixed(); } }
     public record Land() implements Leaf<Fixed> { public Fixed parent() { return new Fixed(); } }
+    public record Shell() implements Leaf<Fixed> { public Fixed parent() { return new Fixed(); } }
     public record Mesh() implements Leaf<Fixed> { public Fixed parent() { return new Fixed(); } }
 }

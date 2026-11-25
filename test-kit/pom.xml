@@ -31,6 +31,8 @@
         <module>tk-ground</module>
         <!-- Loose bodies on the test ground: things that fall, topple and come to rest, to be walked round. -->
         <module>tk-loose</module>
+        <!-- curved surfaces: a spiral ramp, a vault and a dome walked over -->
+        <module>tk-curved</module>
     </modules>
 
     <dependencyManagement>
@@ -67,6 +69,21 @@
             <dependency>
                 <groupId>melons.innocent.core</groupId>
                 <artifactId>core-interaction</artifactId>
+                <version>${core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.core</groupId>
+                <artifactId>core-sheet</artifactId>
+                <version>${core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.core</groupId>
+                <artifactId>core-rest</artifactId>
+                <version>${core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.core</groupId>
+                <artifactId>core-surface</artifactId>
                 <version>${core.version}</version>
             </dependency>
             <dependency>

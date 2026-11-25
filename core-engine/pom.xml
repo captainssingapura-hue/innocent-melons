@@ -23,6 +23,8 @@
         <module>core-motion</module>
         <!-- How well an observer could see a thing: its sharpness, a number that changes smoothly. -->
         <module>core-visibility</module>
+        <!-- A sheet that curves: its height and its rise over any spot, worked out and never faceted. -->
+        <module>core-sheet</module>
         <!-- The world at rest: what stands on what, and the check of its forces. -->
         <module>core-rest</module>
         <!-- The loose body: the simulator of what nothing drives, which falls, topples and comes to rest. -->
@@ -31,6 +33,8 @@
         <module>core-interaction</module>
         <!-- What moves only as it is made to: a thing on a hinge, a door's leaf first. -->
         <module>core-mechanism</module>
+        <!-- What a mover is on: the question it asks of a surface, and the answer its provider gives. -->
+        <module>core-surface</module>
     </modules>
 
     <properties>

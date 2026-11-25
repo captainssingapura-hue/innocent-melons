@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.testkit</groupId>
+        <artifactId>test-kit</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>tk-curved</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        Curved surfaces on the test ground: a spiral ramp, a vault and a dome, each a shell of the core engine's world
+        at rest, drawn from the one sheet it is asked by, walked over by the engine's avatar, with what is under
+        whoever walks and how the surface differs between the two feet said in the walk's window.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-drawing</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-bench</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite.texture</groupId>
+            <artifactId>tx-materials</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.testkit</groupId>
+            <artifactId>tk-ground</artifactId>
+        </dependency>
+        <!-- sheets that curve, the world at rest they stand in, and what a mover is on -->
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-sheet</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-rest</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-surface</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <!-- mvn -pl tk-ground exec:java opens the loose bodies on a test ground -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.6.3</version>
+                <configuration>
+                    <mainClass>melons.innocent.testkit.curved.CurvedWalk</mainClass>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- LWJGL counting the native memory it is asked for, as in the renderer's own tests -->
+                    <argLine>-Dorg.lwjgl.util.DebugAllocator=true --enable-native-access=ALL-UNNAMED</argLine>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -27,11 +27,17 @@ public record Bot(Build build, double tall, Finish finish) {
 
     /** How tall it is drawn at its own size, to the top of its head's stud. */
     private static final double OWN = 188;
-    /** Where a sole is, in the shin's own frame: how far down, and its heel and toe, behind and ahead of the ankle. */
-    private static final double SOLE = Joints.SHIN + 9;
+    /** Where a sole is, in the foot's own frame: how far under the ankle, and its heel and toe, behind and ahead. */
+    private static final double SOLE = 9;
     private static final double HEEL = -7;
     private static final double TOE = 19;
     private static final double FLAME = 55;
+    /** How far clear of the ground a foot is when its own ground no longer counts: it is swinging, not standing. */
+    private static final double SWUNG = 8;
+
+    /** Its joints as it stands, and how far the whole of it is lowered to bring its lower sole to its ground. */
+    private record Stood(Joints joints, double planted) {
+    }
 
     /** A man, 1.88 m, finished in metal. */
     public Bot() {
@@ -58,7 +64,8 @@ public record Bot(Build build, double tall, Finish finish) {
             all.add(new Courier.Piece(shin, Tone.SHELL, 11.5 * legs, 20, 12.5 * legs, 0, 13, -1));
             all.add(new Courier.Piece(shin, Tone.SHELL, 8.5 * legs, 17, 9 * legs, 0, 31.5, -0.5));
             all.add(new Courier.Piece(shin, Tone.JOINT, 7.5 * legs, 6, 8 * legs, 0, 42, 0));
-            all.add(new Courier.Piece(shin, Tone.SHELL, 10 * legs, 7, TOE - HEEL, 0, SOLE - 3.5, (TOE + HEEL) / 2));
+            all.add(new Courier.Piece(shin == Limb.LEFT_SHIN ? Limb.LEFT_FOOT : Limb.RIGHT_FOOT, Tone.SHELL,
+                    10 * legs, 7, TOE - HEEL, 0, SOLE - 3.5, (TOE + HEEL) / 2));
         }
         final double arms = build.arms();
         for (final Limb arm : List.of(Limb.LEFT_ARM, Limb.RIGHT_ARM)) {
@@ -113,14 +120,26 @@ public record Bot(Build build, double tall, Finish finish) {
      */
     public List<Courier.Placed> placed(final Body body, final double thrust, final Pose pose,
                                        final boolean otherLeg) {
+        return placed(body, thrust, pose, otherLeg, (x, z) -> 0);
+    }
+
+    /**
+     * The same, standing on ground that may be higher under one foot than the other, as {@code trodden} says: each
+     * foot that bears on the ground is on its own ground, the leg on the higher ground folded at hip and knee, and
+     * the whole of it as low as the lower foot needs. A foot swinging clear of the ground goes as it would on the
+     * level. In the air it is as it would be anyway.
+     */
+    public List<Courier.Placed> placed(final Body body, final double thrust, final Pose pose,
+                                       final boolean otherLeg, final Trodden trodden) {
         final boolean changed = otherLeg && !body.grounded() && !body.flying();
         final Knees knees = new Knees(body);
-        final Joints joints = new Joints(pose, changed ? knees.changed() : knees, build, changed);
-        final double planted = body.grounded() && !body.flying() ? lowest(joints) : 0;
-        final Mat4 stood = new Mat4(new Vec3(body.position().x(), body.position().y(), body.position().z()))
+        final Joints level = new Joints(pose, changed ? knees.changed() : knees, build, changed);
+        final Mat4 stands = new Mat4(new Vec3(body.position().x(), body.position().y(), body.position().z()))
                 .times(new Turned(new Vec3(0, 1, 0), body.yaw()).matrix())
-                .times(new Sized(tall / OWN).matrix())
-                .times(new Mat4(new Vec3(0, -planted, 0)));
+                .times(new Sized(tall / OWN).matrix());
+        final Stood afoot = body.grounded() && !body.flying() ? stood(level, stands, trodden) : new Stood(level, 0);
+        final Joints joints = afoot.joints();
+        final Mat4 stood = stands.times(new Mat4(new Vec3(0, -afoot.planted(), 0)));
         final List<Courier.Placed> all = new ArrayList<>();
         for (final Courier.Piece piece : pieces()) {
             all.add(new Courier.Placed(finish.of(piece.limb(), piece.tone()), there(stood, joints, piece),
@@ -150,15 +169,39 @@ public record Bot(Build build, double tall, Finish finish) {
     }
 
     /**
-     * How far below the ground the lower of its soles stands, holding the pose {@code joints} gives it: less than
-     * nothing where both are above it, as a stride lifts them. The figure is lowered by as much, which plants it.
+     * It on its feet: holding the pose {@code level} gives it, each foot asked what ground is under it where it
+     * stands as {@code stands} says. A foot bears on its ground the less the further it swings clear; the foot on
+     * the higher ground is raised by the difference; and the whole is lowered until the lower of its soles, each
+     * against its own ground, is on it. On level ground it is as it always was.
      */
-    private double lowest(final Joints joints) {
+    private Stood stood(final Joints level, final Mat4 stands, final Trodden trodden) {
+        final List<Limb> feet = List.of(Limb.LEFT_FOOT, Limb.RIGHT_FOOT);
+        final double planted = Math.max(lowest(level, feet.get(0)), lowest(level, feet.get(1)));
+        final double[] ground = new double[2];
+        for (int foot = 0; foot < 2; foot++) {
+            final Mat4 sole = stands.times(level.of(feet.get(foot)))
+                    .times(new Mat4(new Vec3(0, SOLE, (HEEL + TOE) / 2)));
+            final double bears = Math.max(0, 1 - (planted - lowest(level, feet.get(foot))) / SWUNG);
+            ground[foot] = bears * trodden.under(sole.at(0, 3), sole.at(2, 3)) / (tall / OWN);
+        }
+        final double lower = Math.min(ground[0], ground[1]);
+        final Uneven uneven = new Uneven(ground[0] - lower, ground[1] - lower);
+        if (uneven.level()) {
+            return new Stood(level, planted + lower);
+        }
+        final Joints joints = level.on(uneven);
+        return new Stood(joints, Math.max(lowest(joints, feet.get(0)) + ground[0],
+                lowest(joints, feet.get(1)) + ground[1]));
+    }
+
+    /**
+     * How far below the figure's own ground the sole of {@code foot} comes, holding the pose {@code joints} gives
+     * it: less than nothing where it is above it, as a stride lifts it.
+     */
+    private double lowest(final Joints joints, final Limb foot) {
         double lowest = Double.NEGATIVE_INFINITY;
-        for (final Limb shin : List.of(Limb.LEFT_SHIN, Limb.RIGHT_SHIN)) {
-            for (final double along : new double[] {HEEL, TOE}) {
-                lowest = Math.max(lowest, joints.of(shin).times(new Mat4(new Vec3(0, SOLE, along))).at(1, 3));
-            }
+        for (final double along : new double[] {HEEL, TOE}) {
+            lowest = Math.max(lowest, joints.of(foot).times(new Mat4(new Vec3(0, SOLE, along))).at(1, 3));
         }
         return lowest;
     }
