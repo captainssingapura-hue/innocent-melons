@@ -29,10 +29,11 @@ class GlmPlatformTest {
     @Test
     void bothAxlesPutTogetherEveryPieceMetWhereItWasMadeTo() {
         assertEquals(List.of(), built.problems(1e-6));
-        assertEquals(50 + 1 + 1 + 2 * 3, built.placed().size(), "the rear axle; the front underbody and beam once,"
-                + " and each side the front subframe's node, strut and hook");
-        assertEquals(16 + 3, built.gaps().size(), "the rear axle's, a front node's weld to the beam and both"
-                + " front hooks' bolts");
+        assertEquals(50 + 1 + 1 + 1 + 2 * (3 + 15), built.placed().size(), "the rear axle; the front underbody, beam and"
+                + " steering gear once, and each side the front subframe's node, strut and hook and fifteen parts more");
+        assertEquals(16 + 3 + 1 + 2 * 5, built.gaps().size(), "the rear axle's, a front node's weld to the beam, both"
+                + " front hooks' bolts, the steering gear's left mount, and each side four links and the air spring"
+                + " met again");
         assertEquals(new Vec3(0, 0, 0), built.at(part("front underbody", Side.MIDDLE)), "made where it stands");
     }
 

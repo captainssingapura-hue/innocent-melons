@@ -14,15 +14,16 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A rear wheel and its tyre, as big as the car's figures say: the rim's barrel, as wide as the tyre, round the hub; its
- * centre bolted to the hub's flange, and {@link #SPOKES} spokes, cast with it, out from its cap on its face to the
- * rim's edge; and the tyre seated on the rim, wider than it is deep, its outside on the ground under the axle.
+ * A wheel and its tyre, front or rear, as big as the car's figures say: the rim's barrel, as wide as the tyre, round
+ * the hub; its centre bolted to the hub's flange, and {@link #SPOKES} spokes, cast with it, out from its cap on its
+ * face to the rim's edge; and the tyre seated on the rim, wider than it is deep, its outside on the ground under the
+ * axle.
  *
  * @param proportions the car's figures
- * @param points      the rear axle's points
+ * @param points      the corner's points
  * @param shapes      what it is shaped with
  */
-record RearWheel(Proportions proportions, RearPoints points, Shapes shapes) {
+record Wheel(Proportions proportions, WheelEnd points, Shapes shapes) {
 
     /** What its parts are made of, and whether they are bare. */
     private static final Making WHEEL_MADE = new Making(new Made(Material.ALUMINIUM, false));
@@ -52,7 +53,7 @@ record RearWheel(Proportions proportions, RearPoints points, Shapes shapes) {
             final Vec3 out = new Vec3(0, Math.sin(turn), Math.cos(turn));
             forms.add(shapes.capsule(face.plus(out.times(CAP - 1)), face.plus(out.times(reach)), SPOKE));
         }
-        return WHEEL_MADE.part("wheel", Group.WHEELS, true, named, shapes.joined(forms));
+        return WHEEL_MADE.part(points.called() + "wheel", Group.WHEELS, true, named, shapes.joined(forms));
     }
 
     /** The tyre, seated on the rim. */
@@ -60,7 +61,7 @@ record RearWheel(Proportions proportions, RearPoints points, Shapes shapes) {
         final Map<String, Vec3> named = new LinkedHashMap<>();
         named.put("rim", points.wheel());
         final double out = proportions.wall() / 2;
-        return TYRE_MADE.part("tyre", Group.TYRES, true, named, shapes.ring(points.wheel(),
+        return TYRE_MADE.part(points.called() + "tyre", Group.TYRES, true, named, shapes.ring(points.wheel(),
                 proportions.rimRadius() + out, proportions.width() * 0.1 / 2, out));
     }
 }

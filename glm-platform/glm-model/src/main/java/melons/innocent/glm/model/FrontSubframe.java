@@ -14,11 +14,12 @@ import java.util.Map;
 
 /**
  * The front subframe, after the current large SUV's: aluminium, cast and pushed through a die, laid out as a U. A
- * main node each side, cast, about on the axle's line, bushed to the body behind it and carrying the lower links'
- * ears, the engine's mount and the steering gear; between the nodes, low and behind, the cross member, extruded; from
+ * main node each side, cast, about on the axle's line, bolted to the body behind it and carrying the control arm's
+ * ear, the engine's mount and the steering gear; between the nodes, low and behind, the cross member, extruded; from
  * each node's top, the strut tube, bent forward and up to the front mount, cast, bolted to the side of the body's
- * front rail. Each piece a part of its own, welded to the next; the bushes to come, as joints. The strut tubes are
- * coated black, what they are made of not seen: aluminium, a guess.
+ * front rail, the guide link's bush bolted in it. Each piece a part of its own, welded to the next; bolted rigid to
+ * the body, as the workshop manual has it. The strut tubes are coated black, what they are made of not seen:
+ * aluminium, a guess.
  */
 final class FrontSubframe {
 
@@ -39,8 +40,8 @@ final class FrontSubframe {
         onNode.put("back mount", points.mountBack());
         onNode.put("cross member", points.crossMember());
         onNode.put("strut tube", points.strutFoot());
-        onNode.put("lower front link", points.lowerFrontInner());
-        onNode.put("lower rear link", points.lowerRearInner());
+        onNode.put("control arm", points.controlArmInner());
+        onNode.put("steering gear", points.steeringMount());
         this.node = CAST.part("front node", Group.SUBFRAMES, true, onNode, pieces.node());
         final Map<String, Vec3> onCross = new LinkedHashMap<>();
         onCross.put("node, right", points.crossMember());
@@ -54,14 +55,25 @@ final class FrontSubframe {
         final Map<String, Vec3> onMount = new LinkedHashMap<>();
         onMount.put("body", points.mountFront());
         onMount.put("strut tube", points.strutHead());
+        onMount.put("guide link", points.guideInner());
         this.mount = CAST.part("front hook", Group.SUBFRAMES, true, onMount, pieces.frontMount());
+    }
+
+    /** A main node: where the control arm and the steering gear are fixed to it. */
+    Part node() {
+        return node;
+    }
+
+    /** A front mount: where the guide link's bush is bolted. */
+    Part hook() {
+        return mount;
     }
 
     /** How its pieces are joined, to each other and to {@code body}, in the order they are walked. */
     List<Connection> joined(final Part body) {
         return List.of(
                 new Connection("front subframe mount, back", body, "subframe mount, back, right", node, "back mount",
-                        Joining.BUSHED),
+                        Joining.BOLTED),
                 new Connection("front beam", node, "cross member", cross, "node, right", Joining.WELDED),
                 new Connection("strut tube, foot", node, "strut tube", strut, "foot", Joining.WELDED),
                 new Connection("strut tube, head", strut, "head", mount, "strut tube", Joining.WELDED),

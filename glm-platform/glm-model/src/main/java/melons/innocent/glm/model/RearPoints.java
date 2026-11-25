@@ -2,6 +2,9 @@ package melons.innocent.glm.model;
 
 import com.example.fxsuite.vulkan.space.Vec3;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 /**
  * The points the rear axle is made to, on its right, in the platform's frame: across as x from its middle, up as y
  * from the ground, along as z from under the front axle, ahead. The back wheel's middle, over the ground by its tyre,
@@ -16,7 +19,7 @@ import com.example.fxsuite.vulkan.space.Vec3;
  *
  * @param proportions the car's figures
  */
-record RearPoints(Proportions proportions) {
+record RearPoints(Proportions proportions) implements WheelEnd {
 
     /** How high the springs' tops are over the wheel's middle. */
     private static final double MOUNTS = 21;
@@ -35,8 +38,26 @@ record RearPoints(Proportions proportions) {
         return at(proportions.halfTrack() - in, up, along);
     }
 
+    @Override
+    public String called() {
+        return "";
+    }
+
+    /** Where each link meets the carrier: the upper links, the spring's link, the lower front link, the toe link. */
+    @Override
+    public Map<String, Vec3> carried() {
+        final Map<String, Vec3> named = new LinkedHashMap<>();
+        named.put("upper front", upperFrontOuter());
+        named.put("upper rear", upperRearOuter());
+        named.put("spring link", springOuter());
+        named.put("lower front", lowerFrontOuter());
+        named.put("toe link", toeOuter());
+        return named;
+    }
+
     /** The back wheel's middle. */
-    Vec3 wheel() {
+    @Override
+    public Vec3 wheel() {
         return out(0, 0, 0);
     }
 
@@ -108,20 +129,24 @@ record RearPoints(Proportions proportions) {
     }
 
     /** Where the hub turns on the carrier; where the brake's disc sits on the hub; where the wheel is bolted to it. */
-    Vec3 hub() {
+    @Override
+    public Vec3 hub() {
         return out(6, 0, 0);
     }
 
-    Vec3 disc() {
+    @Override
+    public Vec3 disc() {
         return out(3.5, 0, 0);
     }
 
-    Vec3 hubFace() {
+    @Override
+    public Vec3 hubFace() {
         return out(1, 0, 0);
     }
 
     /** Where the caliper is bolted to the carrier, behind the axle. */
-    Vec3 caliper() {
+    @Override
+    public Vec3 caliper() {
         return out(7, 4, -13);
     }
 

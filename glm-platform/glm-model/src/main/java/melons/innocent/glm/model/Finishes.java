@@ -46,17 +46,18 @@ public record Finishes(Map<Group, Coat> coats, Map<Material, Coat> bare) {
 
     /** As such parts come. */
     public Finishes() {
-        this(Map.of(
-                Group.UNDERBODY, new Coat(Coat.Kind.GLOSS_PAINT, "#3b3f44"),
-                Group.SUBFRAMES, new Coat(Coat.Kind.GLOSS_PAINT, "#1e2023"),
-                Group.LINKS, new Coat(Coat.Kind.GLOSS_PAINT, "#1e2023"),
-                Group.CARRIERS, new Coat(Coat.Kind.GLOSS_PAINT, "#1e2023"),
-                Group.SPRINGS, new Coat(Coat.Kind.RUBBER, "#2a2a2c"),
-                Group.DAMPERS, new Coat(Coat.Kind.GUN_METAL),
-                Group.BRAKES, new Coat(Coat.Kind.STEEL),
-                Group.CALIPERS, new Coat(Coat.Kind.GLOSS_PAINT, "#b3261e"),
-                Group.WHEELS, new Coat(Coat.Kind.GUN_METAL),
-                Group.TYRES, new Coat(Coat.Kind.RUBBER, "#1b1d20")));
+        this(Map.ofEntries(
+                Map.entry(Group.UNDERBODY, new Coat(Coat.Kind.GLOSS_PAINT, "#3b3f44")),
+                Map.entry(Group.SUBFRAMES, new Coat(Coat.Kind.GLOSS_PAINT, "#1e2023")),
+                Map.entry(Group.LINKS, new Coat(Coat.Kind.GLOSS_PAINT, "#1e2023")),
+                Map.entry(Group.CARRIERS, new Coat(Coat.Kind.GLOSS_PAINT, "#1e2023")),
+                Map.entry(Group.SPRINGS, new Coat(Coat.Kind.RUBBER, "#2a2a2c")),
+                Map.entry(Group.DAMPERS, new Coat(Coat.Kind.GUN_METAL)),
+                Map.entry(Group.BRAKES, new Coat(Coat.Kind.STEEL)),
+                Map.entry(Group.CALIPERS, new Coat(Coat.Kind.GLOSS_PAINT, "#b3261e")),
+                Map.entry(Group.STEERING, new Coat(Coat.Kind.GLOSS_PAINT, "#1e2023")),
+                Map.entry(Group.WHEELS, new Coat(Coat.Kind.GUN_METAL)),
+                Map.entry(Group.TYRES, new Coat(Coat.Kind.RUBBER, "#1b1d20"))));
     }
 
     /** What {@code group}'s coated parts are coated in. */

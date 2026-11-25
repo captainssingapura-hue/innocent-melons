@@ -40,10 +40,10 @@ public record RearAxle(Proportions proportions) {
         final Part spring = links.spring();
         final List<Part> others = List.of(links.upperFront(), links.upperRear(), links.lowerFront(), links.toe());
         final List<String> at = List.of("upper front", "upper rear", "lower front", "toe link");
-        final RearCorner corner = new RearCorner(points, shapes);
+        final Corner corner = new Corner(points, shapes);
         final Part carrier = corner.carrier();
         final Part hub = corner.hub();
-        final RearWheel wheel = new RearWheel(proportions, points, shapes);
+        final Wheel wheel = new Wheel(proportions, points, shapes);
         final Part rim = wheel.wheel();
         final RearSprings springs = new RearSprings(points, shapes);
         final Part air = springs.spring();

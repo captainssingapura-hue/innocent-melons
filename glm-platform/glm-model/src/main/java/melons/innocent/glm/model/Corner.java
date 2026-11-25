@@ -14,15 +14,15 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A rear corner's wheel end, inside the wheel: the wheel's carrier, cast, tall, inboard of the hub, a boss where each
- * link meets it and the caliper's mount behind; the hub, turning in the carrier on its bearing, its
- * flange for the wheel outboard; the brake's disc on the hub's flange, inside the rim; and the caliper, bolted to the
+ * A corner's wheel end, front or rear, inside the wheel: the wheel's carrier, cast, tall, inboard of the hub, a boss
+ * where each link meets it and the caliper's mount behind; the hub, turning in the carrier on its bearing, its flange
+ * for the wheel outboard; the brake's disc on the hub's flange, inside the rim; and the caliper, bolted to the
  * carrier, astride the disc behind the axle.
  *
- * @param points the rear axle's points
+ * @param points the corner's points
  * @param shapes what it is shaped with
  */
-record RearCorner(RearPoints points, Shapes shapes) {
+record Corner(WheelEnd points, Shapes shapes) {
 
     /** What its parts are made of, and whether they are bare. */
     private static final Making CARRIER_MADE = new Making(new Made(Material.ALUMINIUM, true));
@@ -48,11 +48,7 @@ record RearCorner(RearPoints points, Shapes shapes) {
     Part carrier() {
         final Map<String, Vec3> named = new LinkedHashMap<>();
         named.put("hub", points.hub());
-        named.put("upper front", points.upperFrontOuter());
-        named.put("upper rear", points.upperRearOuter());
-        named.put("spring link", points.springOuter());
-        named.put("lower front", points.lowerFrontOuter());
-        named.put("toe link", points.toeOuter());
+        named.putAll(points.carried());
         named.put("caliper", points.caliper());
         final Vec3 wheel = points.wheel();
         final Vec3 middle = new Vec3(points.hub().x() - CARRIER_WIDE / 2, wheel.y() + (CARRIER_OVER - CARRIER_UNDER)
@@ -61,7 +57,7 @@ record RearCorner(RearPoints points, Shapes shapes) {
         forms.add(shapes.body(middle, CARRIER_WIDE, CARRIER_OVER + CARRIER_UNDER, CARRIER_LONG));
         named.values().stream().skip(1).forEach(p -> forms.add(shapes.capsule(p, middle.plus(p.minus(middle)
                 .times(0.6)), BOSS)));
-        return CARRIER_MADE.part("wheel carrier", Group.CARRIERS, true, named, shapes.joined(forms));
+        return CARRIER_MADE.part(points.called() + "wheel carrier", Group.CARRIERS, true, named, shapes.joined(forms));
     }
 
     /** The hub, from the carrier out to its flange. */
@@ -70,7 +66,8 @@ record RearCorner(RearPoints points, Shapes shapes) {
         named.put("carrier", points.hub());
         named.put("disc", points.disc());
         named.put("wheel", points.hubFace());
-        return HUB_MADE.part("hub", Group.CARRIERS, true, named, shapes.drum(points.hub(), points.hubFace(), HUB));
+        return HUB_MADE.part(points.called() + "hub", Group.CARRIERS, true, named,
+                shapes.drum(points.hub(), points.hubFace(), HUB));
     }
 
     /** The brake's disc, on the hub's flange. */
@@ -78,7 +75,7 @@ record RearCorner(RearPoints points, Shapes shapes) {
         final Map<String, Vec3> named = new LinkedHashMap<>();
         named.put("hub", points.disc());
         final Vec3 across = new Vec3(DISC_THICK / 2, 0, 0);
-        return DISC_MADE.part("brake disc", Group.BRAKES, true, named,
+        return DISC_MADE.part(points.called() + "brake disc", Group.BRAKES, true, named,
                 shapes.drum(points.disc().minus(across), points.disc().plus(across), DISC));
     }
 
@@ -88,7 +85,7 @@ record RearCorner(RearPoints points, Shapes shapes) {
         named.put("carrier", points.caliper());
         final Vec3 wheel = points.wheel();
         final Vec3 middle = new Vec3(points.disc().x(), wheel.y() + CALIPER_TALL / 3, wheel.z() - DISC + 1);
-        return CALIPER_MADE.part("brake caliper", Group.CALIPERS, true, named, shapes.joined(List.of(
+        return CALIPER_MADE.part(points.called() + "brake caliper", Group.CALIPERS, true, named, shapes.joined(List.of(
                 shapes.box(middle, CALIPER_WIDE, CALIPER_TALL, CALIPER_LONG),
                 shapes.capsule(points.caliper(), middle, BOSS))));
     }
