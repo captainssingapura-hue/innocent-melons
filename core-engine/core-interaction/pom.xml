@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.core</groupId>
+        <artifactId>core-engine</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>core-interaction</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        What can be done with a thing, and how it is chosen: the actions there are, each offered to one who is near
+        a thing or holds it; a binding of actions to a kind of thing, kept apart from the tree the kind is in, a
+        kind with nothing bound to it taking what is bound to the kind over it, and a binding adding to what is
+        inherited or replacing it; which thing is at hand; and what is bound, unless a world says otherwise, to the
+        kinds of the tree of things.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-motion</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- the taxonomies' core: a kind of thing is a node of some tree -->
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>fxsuite-taxonomy-core</artifactId>
+            <version>${taxonomy.version}</version>
+        </dependency>
+        <!-- the tree of things, to whose kinds the usual actions are bound -->
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>fxsuite-existence</artifactId>
+            <version>${taxonomy.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -2,6 +2,7 @@ package melons.innocent.testkit.loose;
 
 import com.example.fxsuite.avatar.sim.Block;
 import com.example.fxsuite.avatar.sim.Obstacles;
+import com.example.fxsuite.texture.materials.Materials;
 import com.example.fxsuite.texture.materials.Shades;
 import com.example.fxsuite.vulkan.bench.Dial;
 import com.example.fxsuite.vulkan.bench.Place;
@@ -16,6 +17,8 @@ import com.example.fxsuite.vulkan.shade.Look;
 import com.example.fxsuite.vulkan.space.Mat4;
 import com.example.fxsuite.vulkan.space.Vec3;
 import com.example.fxsuite.vulkan.view.Camera;
+import melons.innocent.core.interaction.Action;
+import melons.innocent.core.interaction.Relation;
 import melons.innocent.core.motion.Spot;
 import melons.innocent.core.motion.Turn;
 import melons.innocent.core.rest.Box;
@@ -44,6 +47,9 @@ import java.util.TreeMap;
  * third sets the wagon going, as fast as its slider says, or stops it. The window says how many things are at rest
  * and in motion and how many the check has looked at, which stands still while
  * nothing happens.
+ *
+ * <p>What the walker holds is drawn before their hands, and over what is at hand a small light hangs. A fourth list
+ * asks for anything that can be done with what is held or at hand, by its name ({@link Handling}).
  */
 public final class LoosePlace implements Place {
 
@@ -51,7 +57,16 @@ public final class LoosePlace implements Place {
     /** How many points go round a round thing's mesh. */
     private static final int ROUND = 48;
 
+    /** How big the light over what is at hand is, and how far over the thing it hangs. */
+    private static final double LIGHT = 7;
+    private static final double OVER = 14;
+
+    private final Card card;
+    private final Laid laid;
     private final Trial trial;
+    private final Handling handling;
+    private Optional<Looked> light = Optional.empty();
+    private Optional<Shaped> lamp = Optional.empty();
     private final Map<Stuff, Looked> looks = new EnumMap<>(Stuff.class);
     private final Map<String, Shaped> shapes = new TreeMap<>();
     /** The things that can be taken away, in the order the trial describes them. */
@@ -72,15 +87,29 @@ public final class LoosePlace implements Place {
             Double.parseDouble(System.getProperty("loose.wagon", "36")));
     /** How steep the ramp is made when the trial is next begun again. */
     private final Dial slope;
+    /** The window's list of what can be done, with what is held or at hand. */
+    private final Dial doing = new Dial("Do, with what is held or at hand", java.util.Arrays.stream(Action.values())
+            .map(action -> action.offered(Relation.NEAR).map(near -> action.offered(Relation.HELD)
+                    .filter(held -> !held.equals(near)).map(held -> near + " / " + held).orElse(near))
+                    .orElseGet(() -> action.offered(Relation.HELD).orElse(action.id()))).toList());
     /** How many askings of each list have been done. */
+    private long did;
     private long took;
     private long threw;
     private long drove;
     private long told;
 
-    /** The {@code trial}'s things on {@code card}, their layouts as {@code laid} says. */
+    /** The {@code trial}'s things on {@code card}, their layouts as {@code laid} says, handled by nobody. */
     public LoosePlace(final Card card, final Laid laid, final Trial trial) {
+        this(card, laid, trial, new Handling(trial));
+    }
+
+    /** The {@code trial}'s things on {@code card}, and what {@code handling} holds and has at hand. */
+    public LoosePlace(final Card card, final Laid laid, final Trial trial, final Handling handling) {
+        this.card = card;
+        this.laid = laid;
         this.trial = trial;
+        this.handling = handling;
         this.names = trial.names();
         final List<String> choices = new ArrayList<>(names);
         choices.add(AGAIN);
@@ -92,14 +121,24 @@ public final class LoosePlace implements Place {
             for (final Stuff stuff : Stuff.values()) {
                 looks.put(stuff, new Looked(card, new Look(laid, shades.of(stuff.material()))));
             }
-            for (final String name : trial.world().things()) {
-                shapes.put(name, new Shaped(card, laid, meshed(trial.world().thing(name).shape())));
-            }
+            light = Optional.of(new Looked(card, new Look(laid, shades.of(new Materials.LitPaper()))));
+            lamp = Optional.of(new Shaped(card, laid,
+                    new com.example.fxsuite.vulkan.form.Ellipsoid(LIGHT, LIGHT, LIGHT).formed(16, 8)));
+            shaped();
         } catch (final RuntimeException refused) {
             close();
             throw refused;
         }
         this.told = trial.changes();
+    }
+
+    /** Every thing now in the world that has no shape on the card yet, given one: the slices of a melon cut. */
+    private void shaped() {
+        for (final String name : trial.world().things()) {
+            if (!shapes.containsKey(name)) {
+                shapes.put(name, new Shaped(card, laid, meshed(trial.world().thing(name).shape())));
+            }
+        }
     }
 
     /** A thing's shape as a mesh: a box or a slab its six faces, a round thing round. */
@@ -114,7 +153,7 @@ public final class LoosePlace implements Place {
 
     @Override
     public List<Dial> dials() {
-        return List.of(taken, slope, thrown, joules, upward, round, wagon, speed);
+        return List.of(doing, taken, slope, thrown, joules, upward, round, wagon, speed);
     }
 
     /**
@@ -123,6 +162,12 @@ public final class LoosePlace implements Place {
      */
     @Override
     public void readied(final Camera camera) {
+        shaped();
+        handling.throwing(joules.value(), upward.value());
+        if (doing.asks() != did) {
+            did = doing.asks();
+            handling.asked(Action.values()[doing.step()]);
+        }
         if (taken.asks() != took) {
             took = taken.asks();
             if (taken.step() >= names.size()) {
@@ -171,7 +216,9 @@ public final class LoosePlace implements Place {
         final World world = trial.world();
         return String.format(Locale.ENGLISH, "Loose bodies: %d at rest, %d in motion; %d checked since it began",
                 world.things().size() - world.moving(), world.moving(), world.checks())
-                + trial.flown().map(flown -> System.lineSeparator() + flown.said()).orElse("");
+                + System.lineSeparator() + handling.said()
+                + trial.flown().map(flown -> System.lineSeparator() + flown.said()).orElse("")
+                + trial.struck().map(struck -> System.lineSeparator() + struck).orElse("");
     }
 
     @Override
@@ -179,9 +226,19 @@ public final class LoosePlace implements Place {
         final World world = trial.world();
         final Map<String, Stuff> made = trial.made();
         for (final String name : world.things()) {
-            looks.get(made.get(name)).drawn(pass, shapes.get(name), stands(world.placed(name).orElseThrow()),
-                    camera, 1);
+            if (shapes.containsKey(name)) {
+                looks.get(made.get(name)).drawn(pass, shapes.get(name),
+                        stands(world.placed(name).orElseThrow()), camera, 1, made.get(name).tint());
+            }
         }
+        // what is held, before the hands; and a light over what is at hand
+        handling.held().filter(held -> shapes.containsKey(held.name())).ifPresent(held ->
+                looks.get(held.stuff()).drawn(pass, shapes.get(held.name()),
+                        stands(handling.holding().orElseThrow()), camera, 1, held.stuff().tint()));
+        handling.atHand().flatMap(world::placed).ifPresent(placed -> light.orElseThrow().drawn(pass,
+                lamp.orElseThrow(), new Mat4(new Vec3(placed.at().across(), placed.at().up()
+                        + world.thing(handling.atHand().orElseThrow()).shape().reaches() + OVER,
+                        placed.at().along())), camera, 1, new Vec3(1, 0.72, 0.2)));
     }
 
     /** Where a thing placed so stands on the card: turned as it is, and moved to where its middle is. */
@@ -201,5 +258,9 @@ public final class LoosePlace implements Place {
         shapes.clear();
         looks.values().forEach(Looked::close);
         looks.clear();
+        lamp.ifPresent(Shaped::close);
+        lamp = Optional.empty();
+        light.ifPresent(Looked::close);
+        light = Optional.empty();
     }
 }

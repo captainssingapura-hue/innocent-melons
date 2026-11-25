@@ -40,6 +40,15 @@
             <groupId>melons.innocent.core</groupId>
             <artifactId>core-loose</artifactId>
         </dependency>
+        <!-- what can be done with a thing, and the tree of things each thing of the trial is a kind of -->
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-interaction</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>fxsuite-existence</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

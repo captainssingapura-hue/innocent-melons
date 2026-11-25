@@ -12,6 +12,7 @@ import com.example.fxsuite.vulkan.space.Vec3;
 import com.example.fxsuite.vulkan.view.Camera;
 import com.example.fxsuite.vulkan.view.Orbit;
 import com.example.fxsuite.vulkan.worked.Daylight;
+import com.example.fxsuite.vulkan.bench.play.Step;
 import melons.innocent.core.motion.Spot;
 import melons.innocent.core.rest.Ground;
 import melons.innocent.testkit.BaseMap;
@@ -59,9 +60,9 @@ class LoosePlaceOnTheCardTest {
                 .with((card, laying) -> new LoosePlace(card, laying, trial));
         try (Card card = new Card(); Canvas canvas = card.canvas(WIDTH, HEIGHT);
              Place place = kit.placing().apply(card, laid)) {
-            final Dial choice = place.dials().getFirst();
+            final Dial choice = place.dials().get(1);
             assertEquals("Take away", choice.name());
-            assertEquals(20, choice.steps().size(), "each of the nineteen things, and everything back");
+            assertEquals(23, choice.steps().size(), "each of the twenty-two things, and everything back");
             assertTrue(choice.asking(), "a list that asks: the same thing can be chosen twice running");
             ticked(place, trial, 240);
             assertEquals(0, trial.world().moving(), "as it stands, all is at rest once the crate has fallen");
@@ -92,7 +93,7 @@ class LoosePlaceOnTheCardTest {
             ticked(place, trial, 240);
             assertEquals(Set.of(GROUND), trial.world().under("the middle crate"), "the two above it have come down");
             assertEquals(Set.of("the middle crate"), trial.world().under("the highest crate"));
-            assertEquals(15, trial.world().things().size(), "three pillars and a crate gone");
+            assertEquals(18, trial.world().things().size(), "three pillars and a crate gone");
             choice.chosen(choice.steps().indexOf("the chock"));
             ticked(place, trial, 150);
             assertTrue(trial.world().moved("the melon").velocity().length() > 80, "the chock gone, the melon rolls");
@@ -104,11 +105,11 @@ class LoosePlaceOnTheCardTest {
             pictured(canvas, place, "loose-all-down");
             choice.chosen(choice.steps().size() - 1);
             ticked(place, trial, 1);
-            assertEquals(19, trial.world().things().size(), "begun again, every thing is back");
+            assertEquals(22, trial.world().things().size(), "begun again, every thing is back");
             assertTrue(place.said().contains("Loose bodies"));
-            final Dial throwing = place.dials().get(2);
+            final Dial throwing = place.dials().get(3);
             assertEquals("Throw", throwing.name());
-            assertEquals(17, throwing.steps().size(), "every thing but the ramp and the wagon");
+            assertEquals(20, throwing.steps().size(), "every thing but the ramp and the wagon");
             ticked(place, trial, 120);
             throwing.chosen(throwing.steps().indexOf("the ball"));
             ticked(place, trial, 60);
@@ -118,7 +119,7 @@ class LoosePlaceOnTheCardTest {
             throwing.chosen(throwing.steps().indexOf("the ball"));
             ticked(place, trial, 2);
             assertTrue(trial.world().moved("the ball").velocity().up() > 300, "and thrown again from where it is");
-            final Dial driving = place.dials().get(6);
+            final Dial driving = place.dials().get(7);
             assertEquals("The wagon", driving.name());
             final int stood = place.inTheWay().blocks().size();
             driving.chosen(0);
@@ -132,6 +133,42 @@ class LoosePlaceOnTheCardTest {
             assertEquals(Set.of("the wagon"), trial.world().under("the wagon's crate"), "stopped, the crate stays");
             assertTrue(trial.world().under("the wagon's melon").contains("the wagon"), "so does its chocked melon");
             assertEquals(Set.of(GROUND), trial.world().under("the wagon's ball"), "and its ball has rolled off");
+            assertEquals(List.of(), card.heard(), "the validation layer has nothing to say");
+        }
+    }
+
+    @Test
+    void whatIsAtHandIsLitWhatIsHeldIsDrawnBeforeTheHandsAndAMelonCutLiesInSlices() throws IOException {
+        Files.createDirectories(Path.of("target", "card"));
+        final Trial trial = new Trial(-1, 12);
+        final Handling handling = new Handling(trial);
+        final Camera near = new Orbit(new Vec3(-90, 60, 300), 18, 16, 420).camera(48, 10);
+        final Step none = new Step();
+        final Step taking = new Step(Set.of(), List.of("T"), 0, 0, false, 0, 0, false);
+        try (Card card = new Card(); Canvas canvas = card.canvas(WIDTH, HEIGHT);
+             Place place = new LoosePlace(card, laid, trial, handling)) {
+            assertEquals("Do, with what is held or at hand", place.dials().getFirst().name());
+            assertEquals(List.of("Carry / Put down", "Cut", "Crush", "Throw", "Eat", "Open or shut"),
+                    place.dials().getFirst().steps());
+            ticked(place, trial, 60);
+            handling.stepped(none, new Spot(-90, 160, 220), 0);
+            assertTrue(place.said().contains("At hand: the near melon, a watermelon: Carry, Cut, Crush"), place.said());
+            pictured(canvas, place, near, "loose-at-hand");
+            handling.stepped(taking, new Spot(-90, 160, 220), 0);
+            ticked(place, trial, 2);
+            assertTrue(place.said().contains("In hand: the near melon"), place.said());
+            pictured(canvas, place, near, "loose-held");
+            handling.stepped(taking, new Spot(-90, 160, 220), 0);
+            ticked(place, trial, 240);
+            handling.stepped(none, new Spot(-90, 160, 220), 0);
+            place.dials().getFirst().chosen(1);
+            place.readied(camera);
+            handling.stepped(none, new Spot(-90, 160, 220), 0);
+            ticked(place, trial, 240);
+            assertTrue(trial.world().things().contains("slice 1 of the near melon"), place.said());
+            handling.stepped(none, new Spot(-90, 160, 220), 0);
+            assertTrue(place.said().contains(", a melon slice: Carry, Eat"), place.said());
+            pictured(canvas, place, near, "loose-slices");
             assertEquals(List.of(), card.heard(), "the validation layer has nothing to say");
         }
     }

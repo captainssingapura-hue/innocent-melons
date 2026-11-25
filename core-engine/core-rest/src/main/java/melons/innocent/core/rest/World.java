@@ -25,11 +25,14 @@ import java.util.stream.Collectors;
  * rest in its frame and carried with it ({@link Carrying}). What leaves a driven thing, let go or thrown, keeps the
  * way it was being carried: so a thing thrown sideways from a train goes on along the train's way as it flies.
  *
- * <p>A tick, in order: what is destroyed is taken away, what is driven otherwise is set going so, and what is thrown
- * is set going; the check runs over what all that touched, supporters before what they hold; the driven things go
- * on, and what rides them with them; the things in motion are stepped; and those that have settled go to rest. What
- * happened is given back. It is kept as it is ticked, and from the same beginning and the same things asked of it at
- * the same ticks it is the same world every time.
+ * <p>A thing may be taken up out of the world, into someone's hands, and stood in it again later, where it is put
+ * down or as it is thrown: meanwhile it is nowhere in it, and holds nothing up.
+ *
+ * <p>A tick, in order: what is destroyed or taken up is taken away, what is driven otherwise is set going so, and
+ * what is thrown is set going; the check runs over what all that touched, supporters before what they hold; the
+ * driven things go on, and what rides them with them; the things in motion are stepped; and those that have settled
+ * go to rest. What happened is given back. It is kept as it is ticked, and from the same beginning and the same
+ * things asked of it at the same ticks it is the same world every time.
  *
  * <p>For now every thing is looked at when one is asked what touches it, and things described as run into each
  * other are only said so, once, and left as they are.
@@ -103,7 +106,8 @@ public final class World {
     public List<Happened> ticked(final Asked asked, final double seconds) {
         final List<Happened> happened = new ArrayList<>();
         dirty.addAll(carrying.ridden(supports, resting));
-        new TreeSet<>(asked.destroyed()).forEach(gone -> destroyed(gone, happened));
+        new TreeSet<>(asked.destroyed()).forEach(gone -> gone(gone, happened, new Happened.Destroyed(gone)));
+        new TreeSet<>(asked.taken()).forEach(gone -> gone(gone, happened, new Happened.Taken(gone)));
         if (!looked) {
             overlapping(happened);
             looked = true;
@@ -124,7 +128,8 @@ public final class World {
         return happened;
     }
 
-    private void destroyed(final String gone, final List<Happened> happened) {
+    /** A thing out of the world, destroyed or taken up: what rode it let go, what stood on it to be checked. */
+    private void gone(final String gone, final List<Happened> happened, final Happened how) {
         if (!things.containsKey(gone)) {
             throw new IllegalArgumentException("nothing is called " + gone);
         }
@@ -136,7 +141,7 @@ public final class World {
         moving.remove(gone);
         dirty.remove(gone);
         carrying.left(gone);
-        happened.add(new Happened.Destroyed(gone));
+        happened.add(how);
     }
 
     /** A driven thing set going otherwise: what rode it let go first, keeping the way it was being carried. */

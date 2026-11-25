@@ -65,6 +65,16 @@
                 <version>${core.version}</version>
             </dependency>
             <dependency>
+                <groupId>melons.innocent.core</groupId>
+                <artifactId>core-interaction</artifactId>
+                <version>${core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example.fxsuite</groupId>
+                <artifactId>fxsuite-existence</artifactId>
+                <version>${core.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>melons.innocent.testkit</groupId>
                 <artifactId>tk-ground</artifactId>
                 <version>${project.version}</version>

@@ -84,7 +84,7 @@ class TrialTest {
     void aThingThrownIsFollowedAndComesDownWhereTheReckoningSays() {
         final Trial trial = new Trial(-1, 12);
         ticked(trial, 240);
-        assertEquals(17, trial.movable().size(), "every thing but the ramp and the wagon can be thrown");
+        assertEquals(20, trial.movable().size(), "every thing but the ramp and the wagon can be thrown");
         assertTrue(trial.flown().isEmpty());
         final Throw thrown = new Throw(3_000, 180, 45);
         trial.thrown("the crate in the air", thrown);
@@ -143,10 +143,10 @@ class TrialTest {
         ticked(trial, 240);
         assertFalse(trial.world().things().contains("the beam's left pillar"), "and the last, two seconds after");
         trial.again(20);
-        assertEquals(19, trial.world().things().size());
+        assertEquals(22, trial.world().things().size());
         assertEquals(20, trial.slope(), 0);
         assertEquals(150, trial.world().placed("the crate in the air").orElseThrow().at().up(), 0);
-        assertEquals(19, trial.made().size());
+        assertEquals(22, trial.made().size());
         assertTrue(trial.made().values().stream().allMatch(stuff -> stuff.dense() > 0 && stuff.material() != null));
     }
 }

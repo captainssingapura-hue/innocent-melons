@@ -1,64 +1,48 @@
 package melons.innocent.testkit.loose;
 
-import melons.innocent.core.loose.Loose;
+import com.example.fxsuite.existence.Things;
+import com.example.fxsuite.taxonomy.Node;
 import melons.innocent.core.motion.Spot;
-import melons.innocent.core.motion.Turn;
 import melons.innocent.core.rest.Asked;
-import melons.innocent.core.rest.Box;
-import melons.innocent.core.rest.Ellipsoid;
-import melons.innocent.core.rest.Ground;
 import melons.innocent.core.rest.Happened;
 import melons.innocent.core.rest.Moved;
 import melons.innocent.core.rest.Placed;
 import melons.innocent.core.rest.Rigid;
-import melons.innocent.core.rest.ShapeImpl;
-import melons.innocent.core.rest.Slab;
 import melons.innocent.core.rest.Throw;
 import melons.innocent.core.rest.World;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 
 /**
- * The trial of the world at rest and the loose body, set out to be walked round: four scenes side by side, twelve
- * metres ahead of where a walk begins. On the left a crate described a metre in the air; then a stack of three
- * crates on a pillar; then a steel beam lying across two pillars; and on the right a ramp sloping down toward the
- * walk's beginning, with a watermelon and a ball held near its top by a chock, and a crate lying on it beside them.
- * It is ticked with the walk, a tick a step. Any thing of it is taken away when that is asked, by its name: the
- * chock, and the melon and the ball roll down and out across the ground. Its supports go of themselves so many
- * seconds in where the run says, the stack's pillar and the beam's right-hand one first and the beam's left-hand one
- * as long after; and it can be begun again as it was described, its ramp at another slope. Any thing of it but
- * the ramp and the wagon can be thrown, with so much energy, a way round and a way up, and the last throw is
- * followed: how high it rose and where it came down ({@link Flown}).
+ * The trial of the world at rest and the loose body, set out to be walked round ({@link Scenes}): a crate in the
+ * air, a stack on a pillar, a beam on two pillars, a ramp with a watermelon and a ball chocked on it, a wagon on a
+ * track, and by the walk's beginning two watermelons and an apple. It is ticked with the walk, a tick a step. Any
+ * thing of it is taken away when that is asked, by its name. Its supports go of themselves so many seconds in where
+ * the run says, the stack's pillar and the beam's right-hand one first and the beam's left-hand one as long after;
+ * and it can be begun again as it was described, its ramp at another slope. Any thing of it but the ramp and the
+ * wagon can be thrown, with so much energy, a way round and a way up, and the last throw is followed: how high it
+ * rose and where it came down ({@link Flown}). The wagon is set going and stopped.
  *
- * <p>Nearer, six metres ahead, a flat wagon stands on a track across the walk's way with a ball, a watermelon and a
- * crate on it, the watermelon chocked before and behind. Set going, it carries them; what is thrown from it keeps
- * its way; and since it stops and sets off at once, the ball, which nothing chocks, rolls off it.
+ * <p>A thing may be taken up out of it into someone's hands ({@link Lifted}) and put back, where it is put down or
+ * as it is thrown. A melon is cut into slices, which stand where it lay ({@link Slices}). And what is thrown is
+ * followed for the blow it strikes where it comes down ({@link Blows}): a thing broken is gone, a melon broken is
+ * in slices.
  */
 public final class Trial {
 
     private static final double TICK = 1.0 / 120;
-    private static final double AHEAD = 1_200;
-    /** How far across the ramp's middle is, and how long the ramp is. */
-    private static final double RAMP = 1_600;
-    private static final double LONG = 500;
     /** What goes at the first asking, unless the run says, and at the second, of what is still there. */
     private static final String FIRST = "the stack's pillar, the beam's right pillar";
     private static final String SECOND = "the beam's left pillar";
-    /** The one thing of it that never moves, and the one that is driven. */
-    private static final String FIXED = "the ramp";
-    private static final String WAGON = "the wagon";
-    /** How far ahead the wagon's track lies, where along it the wagon begins, and how far along it stops of itself. */
-    private static final double TRACK = 600;
-    private static final double BEGINS = -2_000;
+    /** How far along its track the wagon stops of itself. */
     private static final double FAR = 30_000;
 
-    /** What each thing is made of, by its name, in the order they are described. */
-    private final Map<String, Stuff> made = new LinkedHashMap<>();
+    /** What each thing is, by its name, in the order they are described. */
+    private final Listed listed = new Listed();
     private final long after;
     /** The names of what goes at the first asking: as the run says by {@code -Dloose.first=}, a comma between. */
     private final String first = System.getProperty("loose.first", FIRST);
@@ -69,13 +53,18 @@ public final class Trial {
     /** How many times its supports have been taken away since it began. */
     private int taken;
     private int asked;
-    /** The things asked by name to be taken away at the next tick. */
+    /** The things asked by name to be taken away at the next tick, to be taken up, and to be cut. */
     private final List<String> named = new ArrayList<>();
+    private final List<String> lifted = new ArrayList<>();
+    private final List<String> cutting = new ArrayList<>();
     /** How many times what is at rest in it has changed: a thing let go, come to rest, or gone. */
     private long changes;
+    /** How many times it has been begun. */
+    private long begun;
     /** What is to be thrown at the next tick, each with the motion it is given; and the last throw, followed. */
     private final Map<String, Moved> flung = new TreeMap<>();
     private Optional<Flown> flown = Optional.empty();
+    private final Blows blows = new Blows();
     /** How the wagon is to be driven from the next tick, where that has been asked. */
     private Optional<Moved> drive = Optional.empty();
 
@@ -96,59 +85,7 @@ public final class Trial {
     public Trial(final double after, final double slope) {
         this.after = after < 0 ? -1 : Math.max(1, Math.round(after / TICK));
         this.slope = slope;
-        this.world = described();
-    }
-
-    /** The four scenes as they are described, nothing yet checked. */
-    private World described() {
-        made.clear();
-        final World described = new World(new Ground(), new Loose());
-        stood(described, "the crate in the air", Stuff.TIMBER, new Box(100, 100, 100), new Spot(-700, 150, AHEAD));
-        stood(described, "the stack's pillar", Stuff.CONCRETE, new Box(40, 100, 40), new Spot(0, 50, AHEAD));
-        stood(described, "the lowest crate", Stuff.TIMBER, new Box(60, 60, 60), new Spot(0, 130, AHEAD));
-        stood(described, "the middle crate", Stuff.TIMBER, new Box(60, 60, 60), new Spot(0, 190, AHEAD));
-        stood(described, "the highest crate", Stuff.TIMBER, new Box(60, 60, 60), new Spot(0, 250, AHEAD));
-        stood(described, "the beam's left pillar", Stuff.CONCRETE, new Box(40, 100, 40), new Spot(520, 50, AHEAD));
-        stood(described, "the beam's right pillar", Stuff.CONCRETE, new Box(40, 100, 40), new Spot(880, 50, AHEAD));
-        stood(described, "the beam", Stuff.STEEL, new Box(400, 20, 40), new Spot(700, 110, AHEAD));
-        // the ramp: its top's lower edge on the ground, twelve metres ahead, and on it what is to roll
-        sloped(described, FIXED, Stuff.CONCRETE, new Slab(300, 20, LONG), 0, -10, 0);
-        sloped(described, "the chock", Stuff.TIMBER, new Box(280, 34, 10), 0, 17, 150);
-        sloped(described, "the melon", Stuff.RIND, new Ellipsoid(36, 28, 26), -80, 14, 168);
-        sloped(described, "the ball", Stuff.RUBBER, new Ellipsoid(30), 0, 15, 170);
-        sloped(described, "the crate on the ramp", Stuff.TIMBER, new Box(50, 50, 50), 95, 25, 190);
-        // the wagon: on a track across the walk's way, six metres ahead, standing until it is set going
-        made.put(WAGON, Stuff.CONCRETE);
-        described.driven(new Rigid(WAGON, new Box(1_200, 100, 300), Stuff.CONCRETE.dense()),
-                new Placed(new Spot(BEGINS, 50, TRACK)), new Moved());
-        stood(described, "the wagon's ball", Stuff.RUBBER, new Ellipsoid(30), new Spot(BEGINS - 300, 115, TRACK));
-        stood(described, "the wagon's melon", Stuff.RIND, new Ellipsoid(26, 28, 36), new Spot(BEGINS, 114, TRACK));
-        // chocked before and behind, so it rides when the wagon sets off or stops at once; the ball is not
-        final Box chock = new Box(10, 34, 60);
-        stood(described, "the wagon's rear chock", Stuff.TIMBER, chock, new Spot(BEGINS - 18, 117, TRACK));
-        stood(described, "the wagon's front chock", Stuff.TIMBER, chock, new Spot(BEGINS + 18, 117, TRACK));
-        stood(described, "the wagon's crate", Stuff.TIMBER, new Box(60, 60, 60), new Spot(BEGINS + 300, 130, TRACK));
-        return described;
-    }
-
-    private void stood(final World described, final String name, final Stuff stuff, final ShapeImpl<?> shape,
-                       final Spot at) {
-        made.put(name, stuff);
-        described.stood(new Rigid(name, shape, stuff.dense()), new Placed(at));
-    }
-
-    /**
-     * A thing lying on the ramp, turned as the ramp is: its middle so far {@code across} the ramp from the ramp's
-     * middle, so far {@code over} the ramp's top, and so far {@code upSlope} from the middle of its length.
-     */
-    private void sloped(final World described, final String name, final Stuff stuff, final ShapeImpl<?> shape,
-                        final double across, final double over, final double upSlope) {
-        final double tilt = Math.toRadians(slope);
-        final Turn tilted = tilt == 0 ? new Turn() : new Turn(new Spot(1, 0, 0), -tilt);
-        final Spot top = new Spot(RAMP, LONG / 2 * Math.sin(tilt), AHEAD + LONG / 2 * Math.cos(tilt));
-        made.put(name, stuff);
-        described.stood(new Rigid(name, shape, stuff.dense()),
-                new Placed(top.plus(tilted.turned(new Spot(across, over, upSlope))), tilted));
+        this.world = new Scenes(listed, slope).described();
     }
 
     /** A tick: what is asked to go, or due to go of itself, is destroyed, and the world is a step on. */
@@ -170,23 +107,51 @@ public final class Trial {
         going.addAll(named);
         named.clear();
         going.removeIf(name -> !world.things().contains(name));
-        flung.keySet().removeIf(name -> !world.things().contains(name) || going.contains(name));
+        final List<Slices.Slice> slices = cut(going);
+        lifted.removeIf(name -> !world.things().contains(name) || going.contains(name));
+        flung.keySet().removeIf(name -> !world.things().contains(name) || going.contains(name)
+                || lifted.contains(name));
+        blows.before(world);
+        final List<Happened> happened = world.ticked(new Asked(going, lifted, flung, driving(going)), TICK);
+        lifted.clear();
+        slices.forEach(slice -> put(slice.rigid(), slice.placed(), Stuff.FLESH, new Things.MelonSlice()));
+        flung.keySet().forEach(blows::thrown);
+        flung.clear();
+        flown.ifPresent(last -> last.followed(world, happened));
+        // what a blow has broken goes at the next tick: a melon into slices, anything else altogether
+        for (final String broken : blows.after(world, happened, listed)) {
+            (listed.kind(broken).lineage().contains(new Things.Melon()) ? cutting : named).add(broken);
+        }
+        changes += happened.stream().filter(one -> !(one instanceof Happened.Landed)).count();
+        return happened;
+    }
+
+    /** The slices of what is to be cut and is still there, each melon cut added to what is {@code going}. */
+    private List<Slices.Slice> cut(final List<String> going) {
+        final List<Slices.Slice> slices = new ArrayList<>();
+        for (final String name : cutting) {
+            if (world.things().contains(name) && !going.contains(name)) {
+                slices.addAll(new Slices().of(world.thing(name), world.placed(name).orElseThrow()));
+                going.add(name);
+            }
+        }
+        cutting.clear();
+        return slices;
+    }
+
+    /** How the wagon is driven otherwise this tick, where that is asked or it has gone far out along its track. */
+    private Map<String, Moved> driving(final List<String> going) {
         if (ticks == 1 && !System.getProperty("loose.wagon", "").isBlank()) {
             driven(Double.parseDouble(System.getProperty("loose.wagon")));
         }
-        // the wagon stops of itself once it is far out along its track
-        if (world.things().contains(WAGON) && world.moved(WAGON).velocity().length() > 0
-                && world.placed(WAGON).orElseThrow().at().across() > FAR) {
+        if (world.things().contains(Scenes.WAGON) && world.moved(Scenes.WAGON).velocity().length() > 0
+                && world.placed(Scenes.WAGON).orElseThrow().at().across() > FAR) {
             driven(0);
         }
-        final Map<String, Moved> driving = drive.isPresent() && world.things().contains(WAGON)
-                && !going.contains(WAGON) ? Map.of(WAGON, drive.get()) : Map.of();
+        final Map<String, Moved> driving = drive.isPresent() && world.things().contains(Scenes.WAGON)
+                && !going.contains(Scenes.WAGON) ? Map.of(Scenes.WAGON, drive.get()) : Map.of();
         drive = Optional.empty();
-        final List<Happened> happened = world.ticked(new Asked(going, flung, driving), TICK);
-        flung.clear();
-        flown.ifPresent(last -> last.followed(world, happened));
-        changes += happened.stream().filter(one -> !(one instanceof Happened.Landed)).count();
-        return happened;
+        return driving;
     }
 
     /** Its next supports are to be taken away at the next tick. */
@@ -199,17 +164,46 @@ public final class Trial {
         named.add(name);
     }
 
+    /** The thing called {@code name} is to be cut into slices at the next tick, if it is still there. */
+    public void cut(final String name) {
+        cutting.add(name);
+    }
+
+    /** The thing called {@code name}, which is there, taken up out of the world at the next tick: as it is held. */
+    public Lifted lifted(final String name) {
+        lifted.add(name);
+        return new Lifted(world.thing(name), listed.stuff(name), listed.kind(name),
+                world.placed(name).orElseThrow().turned());
+    }
+
+    /** A thing taken up, put back into the world placed so: at rest there until the next tick's check. */
+    public void put(final Lifted held, final Placed placed) {
+        put(held.rigid(), placed, held.stuff(), held.kind());
+    }
+
+    private void put(final Rigid rigid, final Placed placed, final Stuff stuff, final Node kind) {
+        listed.is(rigid.name(), kind, stuff);
+        world.stood(rigid, placed);
+        changes++;
+    }
+
     /**
      * The thing called {@code name} is to be thrown at the next tick as {@code thrown} says, if it is still there;
      * and that throw is the one followed from now on.
      */
     public void thrown(final String name, final Throw thrown) {
+        thrown(name, thrown, new Spot(0, 0, 0));
+    }
+
+    /** The same, by someone going as {@code carried} says, which the thing keeps on top of the throw. */
+    public void thrown(final String name, final Throw thrown, final Spot carried) {
         if (!world.things().contains(name)) {
             return;
         }
-        flung.put(name, thrown.of(world.thing(name)));
-        flown = Optional.of(new Flown(name, world.placed(name).orElseThrow().at(), thrown.speed(world.thing(name)),
-                thrown.upward(), thrown.round(), world.moved(name).velocity()));
+        final Rigid rigid = world.thing(name);
+        flung.put(name, new Moved(thrown.of(rigid).velocity().plus(carried), new Spot(0, 0, 0)));
+        flown = Optional.of(new Flown(name, world.placed(name).orElseThrow().at(), thrown.speed(rigid),
+                thrown.upward(), thrown.round(), world.moved(name).velocity().plus(carried)));
     }
 
     /** The wagon is to go so many kilometres an hour along its track from the next tick: none, and it stops. */
@@ -222,23 +216,34 @@ public final class Trial {
         return flown;
     }
 
+    /** What came of the last blow a thing thrown struck, in words: nothing, where none has. */
+    public Optional<String> struck() {
+        return blows.said();
+    }
+
     /** The names of the things it describes that can be thrown: all but what never moves and what is driven. */
     public List<String> movable() {
-        return made.keySet().stream().filter(name -> !FIXED.equals(name) && !WAGON.equals(name)).toList();
+        return listed.names().stream().filter(name -> !Scenes.FIXED.equals(name) && !Scenes.WAGON.equals(name)
+                && !listed.kind(name).equals(new Things.MelonSlice())).toList();
     }
 
     /** Begun again, as it was described, its ramp sloping so many {@code degrees}. */
     public void again(final double degrees) {
         slope = degrees;
-        world = described();
+        listed.clear();
+        world = new Scenes(listed, slope).described();
         ticks = 0;
         taken = 0;
         asked = 0;
         named.clear();
+        lifted.clear();
+        cutting.clear();
         flung.clear();
+        blows.clear();
         flown = Optional.empty();
         drive = Optional.empty();
         changes++;
+        begun++;
     }
 
     /** The world it is trying. */
@@ -251,18 +256,28 @@ public final class Trial {
         return slope;
     }
 
-    /** The names of the things it describes, in the order they are described: those destroyed since too. */
+    /** The names of the things it describes, in the order they are described: those gone since, and made since. */
     public List<String> names() {
-        return List.copyOf(made.keySet());
+        return listed.names();
     }
 
-    /** What each thing it describes is made of, by name: those destroyed since too. */
+    /** What each thing it describes is made of, by name: those gone since too. */
     public Map<String, Stuff> made() {
-        return Map.copyOf(made);
+        return listed.made();
+    }
+
+    /** Which kind of thing the one called {@code name} is. */
+    public Node kind(final String name) {
+        return listed.kind(name);
     }
 
     /** How many times what is at rest in it has changed since it was made. */
     public long changes() {
         return changes;
+    }
+
+    /** How many times it has been begun again. */
+    public long begun() {
+        return begun;
     }
 }

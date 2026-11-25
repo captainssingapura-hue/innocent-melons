@@ -27,6 +27,8 @@
         <module>core-rest</module>
         <!-- The loose body: the simulator of what nothing drives, which falls, topples and comes to rest. -->
         <module>core-loose</module>
+        <!-- What can be done with a thing: actions, their binding to kinds of thing, and what is at hand. -->
+        <module>core-interaction</module>
     </modules>
 
     <properties>
@@ -34,6 +36,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- the physics aggregator, whose concepts the engine's code is typed to: the one place its version is said -->
         <physics.version>0.1.0-SNAPSHOT</physics.version>
+        <!-- the taxonomies, of whose trees a kind of thing is a node -->
+        <taxonomy.version>0.1.0-SNAPSHOT</taxonomy.version>
     </properties>
 
     <dependencyManagement>

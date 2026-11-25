@@ -15,6 +15,10 @@ public sealed interface Happened {
     record Destroyed(String thing) implements Happened {
     }
 
+    /** A thing was taken up out of the world, into someone's hands: it holds nothing up until it is stood again. */
+    record Taken(String thing) implements Happened {
+    }
+
     /** A driven thing was set going otherwise: what rode it is let go, keeping the way it was going. */
     record Driven(String thing) implements Happened {
     }
