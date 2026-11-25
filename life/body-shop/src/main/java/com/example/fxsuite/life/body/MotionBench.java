@@ -337,8 +337,8 @@ public final class MotionBench extends Application {
     /**
      * {@code skin} with the clay head made from the reference head {@code -Dhead.reference} names, if it does, joined
      * on at its neck in place of its own head ({@link com.example.fxsuite.life.body.head.NeckJoin}): where the skull
-     * fitted under it sets it, at its own size; else as big as the skin's head. As it is, if it names none or it cannot
-     * be read.
+     * fitted under it sets it, made a man's size along each way as it was fitted; else as big as the skin's head. As it
+     * is, if it names none or it cannot be read.
      */
     private com.example.fxsuite.life.body.flesh.Flesh clay(final com.example.fxsuite.life.body.flesh.Flesh skin) {
         final String path = System.getProperty("head.reference");
@@ -346,7 +346,8 @@ public final class MotionBench extends Application {
             return skin;
         }
         try {
-            final Mesher.Mesh head = ClayHead.INSTANCE.of(java.nio.file.Path.of(path));
+            final Mesher.Mesh head = ClayHead.INSTANCE.of(java.nio.file.Path.of(path),
+                    com.example.fxsuite.life.body.bone.skull.SkullForm.INSTANCE.headSize().orElse(new V3(1, 1, 1)));
             final V3 at = com.example.fxsuite.life.body.bone.skull.SkullForm.INSTANCE.headAt().orElse(V3.ZERO);
             final double k = com.example.fxsuite.life.body.bone.skull.SkullForm.INSTANCE.headAt().isPresent() ? 1
                     : ClayHead.INSTANCE.scale(head, skin);

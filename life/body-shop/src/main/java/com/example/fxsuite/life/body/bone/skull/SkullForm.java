@@ -42,6 +42,11 @@ public enum SkullForm {
         }
     }
 
+    /** How many times as big along each way the clay head the skull is fitted under is made; none, if none. */
+    public Optional<V3> headSize() {
+        return under.map(SkullUnder.Fit::size);
+    }
+
     /** Where the clay head the skull is fitted under is set on it, moved from where its frame has it; none, if none. */
     public Optional<V3> headAt() {
         return under.map(SkullUnder.Fit::headAt);

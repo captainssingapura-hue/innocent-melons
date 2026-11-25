@@ -26,9 +26,12 @@ public record ClayHead() implements StatelessFunctionalObject {
     private static final double BLANK_CELL = 0.25;
     private static final double CELL = 0.2;
 
-    /** The head of the reference at {@code reference}, in its head's frame, cm. */
-    public Mesher.Mesh of(final Path reference) throws IOException {
-        return Mesher.of(field(ReferenceReading.INSTANCE.of(reference), EnumSet.allOf(Piece.class)), CELL);
+    /**
+     * The head of the reference at {@code reference}, in its head's frame, cm, made {@code size} times as big along
+     * each way ({@link HeadSize}).
+     */
+    public Mesher.Mesh of(final Path reference, final V3 size) throws IOException {
+        return Mesher.of(field(ReferenceReading.INSTANCE.of(reference).scaled(size), EnumSet.allOf(Piece.class)), CELL);
     }
 
     /** The head of the reference {@code r} with the pieces {@code on}, each as the reference has it, as a field. */

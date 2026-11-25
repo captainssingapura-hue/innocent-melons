@@ -30,6 +30,14 @@ public record Proportions(double stature, double build, double legs, double arms
      */
     public static final Proportions PAPERS = new Proportions(170, 1, 0.53, DRAWN.arms, DRAWN.shoulders, DRAWN.hips);
 
+    /**
+     * The body the body shop builds: a male model, 188 cm, the middle of the heights the runway asks of men; long in
+     * the leg as the drawn figure is, its arms, its shoulders and its hips its shares too, and its build, till a
+     * model's are measured.
+     */
+    public static final Proportions MODEL = new Proportions(188, 1, DRAWN.legs, DRAWN.arms, DRAWN.shoulders,
+            DRAWN.hips);
+
     public Proportions {
         check(stature >= 100 && stature <= 230, "from 1 m to 2.3 m tall");
         check(build >= 0.7 && build <= 1.6, "built from 0.7 to 1.6 times as broad as the papers' figure");

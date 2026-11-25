@@ -21,7 +21,7 @@ import java.util.Locale;
 import java.util.function.Consumer;
 
 /**
- * The body the bench draws, made away from the screen, a long while: a body of the papers' proportions as it is
+ * The body the bench draws, made away from the screen, a long while: a male model's body (Proportions.MODEL) as it is
  * bound; its bones; its muscles, the deep ones too if asked; its skin, with the clay head joined on at its neck if a
  * reference head is named.
  *
@@ -44,7 +44,7 @@ public final class BodyMaker {
 
     /** The body made, each step said to {@code told} as it is begun. */
     public Made made(final Consumer<String> told) {
-        final Proportions p = Proportions.PAPERS;
+        final Proportions p = Proportions.MODEL;
         final Rig bound = new Rig(p, BoundPose.INSTANCE.pose(), false);
         told.accept("its bones");
         final Detail fine = new Detail(Double.parseDouble(System.getProperty("body.bones", "0.4")));
@@ -59,8 +59,8 @@ public final class BodyMaker {
 
     /**
      * {@code skin} with the clay head made from the reference head {@code -Dhead.reference} names joined on at its
-     * neck, where the skull fitted under it sets it, at its own size, else as big as the skin's head; as it is, if it
-     * names none or it cannot be read.
+     * neck, where the skull fitted under it sets it, made a man's size along each way as it was fitted, else as big as
+     * the skin's head; as it is, if it names none or it cannot be read.
      */
     private Flesh clayed(final Flesh skin, final Consumer<String> told) {
         final String path = System.getProperty("head.reference");
@@ -69,10 +69,12 @@ public final class BodyMaker {
         }
         try {
             told.accept("the clay head");
-            final Mesher.Mesh head = ClayHead.INSTANCE.of(Path.of(path));
+            final V3 size = SkullForm.INSTANCE.headSize().orElse(new V3(1, 1, 1));
+            final Mesher.Mesh head = ClayHead.INSTANCE.of(Path.of(path), size);
             final V3 at = SkullForm.INSTANCE.headAt().orElse(V3.ZERO);
             final double k = SkullForm.INSTANCE.headAt().isPresent() ? 1 : ClayHead.INSTANCE.scale(head, skin);
-            told.accept(String.format(Locale.ROOT, "the clay head joined on, %.3f times as big", k));
+            told.accept(String.format(Locale.ROOT, "the clay head joined on, %.3f, %.3f, %.3f times as big across, up "
+                    + "and ahead", size.x() * k, size.y() * k, size.z() * k));
             return NeckJoin.INSTANCE.joined(skin, head, at, k);
         } catch (final IOException e) {
             told.accept("the clay head not made: " + e.getMessage());

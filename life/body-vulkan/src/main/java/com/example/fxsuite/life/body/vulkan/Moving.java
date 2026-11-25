@@ -8,14 +8,14 @@ import com.example.fxsuite.life.body.Walker;
 /**
  * The body bench's body moving, on the card's thread: going round its stride as fast as asked, or stopped at a point
  * of it, as a {@link Motion} says; where its bones are held now, how high its soles are off the ground, and where in
- * its stride it has got to. The motion bench's walker, its body of the papers' proportions.
+ * its stride it has got to. The motion bench's walker, its body the male model's, as the bench's is.
  */
 public final class Moving {
 
     /** How far its soles stand clear of the ground, cm, as on the motion bench. */
     private static final double SOLE = 0.5;
 
-    private final Walker walker = new Walker(Proportions.PAPERS);
+    private final Walker walker = new Walker(Proportions.MODEL);
     private Move move = walker.move();
     private double lift;
 
