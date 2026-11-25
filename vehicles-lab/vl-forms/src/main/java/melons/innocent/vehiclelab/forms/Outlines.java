@@ -5,8 +5,8 @@ import java.util.List;
 
 /**
  * Outlines a pressing is drawn with, each round to the left, every round one {@code round} points round: a round hole;
- * a slot, two half rounds joined straight, round where it is no longer than wide; and a tab, as a bracket's cheek is,
- * wide at its foot and rounded round the hole at its tip.
+ * a slot, two half rounds joined straight, round where it is no longer than wide; an I-beam's section; and a tab,
+ * as a bracket's cheek is, wide at its foot and rounded round the hole at its tip.
  *
  * @param round how many points a whole round is drawn in
  */
@@ -40,6 +40,20 @@ public record Outlines(int round) {
             spots.add(new Spot(middle.u() - reach + r * Math.cos(a), middle.v() + r * Math.sin(a)));
         }
         return spots;
+    }
+
+    /**
+     * An I-beam's section about its middle, as a forged link's is: {@code wide} across its flanges, {@code high} over
+     * them, its web {@code web} thick and its flanges {@code flange} thick.
+     */
+    public List<Spot> ibeam(final double wide, final double high, final double web, final double flange) {
+        final double w = wide / 2;
+        final double h = high / 2;
+        final double t = web / 2;
+        return List.of(new Spot(-w, -h), new Spot(w, -h), new Spot(w, -h + flange), new Spot(t, -h + flange),
+                new Spot(t, h - flange), new Spot(w, h - flange), new Spot(w, h), new Spot(-w, h),
+                new Spot(-w, h - flange), new Spot(-t, h - flange), new Spot(-t, -h + flange),
+                new Spot(-w, -h + flange));
     }
 
     /**

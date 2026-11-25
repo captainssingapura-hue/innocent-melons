@@ -12,7 +12,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * What pressed and hydroformed parts are made with: an outline with holes cut into triangles that cover it and not
  * its holes; a plate as thick as its sheet; a tube swept through its points, as wide and high as its sections; a
- * course through its points; a sleeve with its bore clear; and a clevis's holes on its bolt.
+ * course through its points; a sleeve with its bore clear; a clevis's holes on its bolt; and an I-beam swept as wide
+ * and high as its section, and a ball joint's stud reaching its end.
  */
 class PressingsTest {
 
@@ -69,6 +70,18 @@ class PressingsTest {
                 .mapToDouble(p -> Math.hypot(p.x() - pivot.x(), p.y() - pivot.y())).min().orElseThrow();
         assertEquals(0.75, nearest, 1e-9, "the bolt's hole clear in each cheek");
         assertEquals(2.5 + 0.4, clevis.points().stream().mapToDouble(Vec3::z).max().orElseThrow(), 1e-9);
+    }
+
+    @Test
+    void anIBeamSweptAsWideAndHighAsItsSectionAndABallJointsStudToItsEnd() {
+        final Course course = new Course(List.of(new Vec3(0, 0, 0), new Vec3(10, 0, 0), new Vec3(20, 0, 0)), 4);
+        final List<Spot> section = outlines.ibeam(2.6, 3.2, 0.8, 0.7);
+        final Mesh beam = new Profiled(course, List.of(section, section, section)).mesh();
+        assertEquals(1.6, beam.points().stream().mapToDouble(Vec3::y).max().orElseThrow(), 1e-9);
+        assertEquals(1.3, beam.points().stream().mapToDouble(Vec3::z).max().orElseThrow(), 1e-9);
+        assertTrue(beam.points().stream().anyMatch(p -> Math.abs(p.z() - 0.4) < 1e-9), "its web");
+        final BallJoint joint = new BallJoint(new Vec3(0, 0, 0), new Vec3(0, 1, 0), 1.4, 7, 16);
+        assertEquals(7, joint.mesh().points().stream().mapToDouble(Vec3::y).max().orElseThrow(), 1e-9);
     }
 
     private double covered(final List<Spot> spots, final List<Integer> triangles) {
