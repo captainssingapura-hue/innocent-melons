@@ -5,9 +5,9 @@ import melons.innocent.glm.model.MadeOf;
 
 /**
  * What the lab shows, as its window said it last: which part is looked at, and whether alone or put together with
- * the rest; the rest, put together, as glass, finished, hidden, or all hidden but the part's own group; and whether
- * the grid, the ground and the part's points are shown, and how finely the grid is ruled; and what the parts are
- * made of.
+ * the rest; the rest, put together, as glass, finished, finished but the underbody, hidden, or all hidden but the
+ * part's own group; whether the grid, the ground and the part's points are shown, and how finely the grid is ruled;
+ * and what the parts are made of.
  *
  * @param part    the part looked at
  * @param level   alone, or put together
@@ -42,6 +42,7 @@ public record LabShow(PartAt part, Level level, Others others, boolean grid, boo
     public enum Others {
         GHOST("The rest as glass"),
         FINISHED("The rest finished"),
+        CHASSIS("The rest finished, the underbody hidden"),
         GROUP("Its group finished, the rest hidden"),
         HIDDEN("The rest hidden");
 

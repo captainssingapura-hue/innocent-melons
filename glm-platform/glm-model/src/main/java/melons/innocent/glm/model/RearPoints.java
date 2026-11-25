@@ -6,9 +6,11 @@ import com.example.fxsuite.vulkan.space.Vec3;
  * The points the rear axle is made to, on its right, in the platform's frame: across as x from its middle, up as y
  * from the ground, along as z from under the front axle, ahead. The back wheel's middle, over the ground by its tyre,
  * out by half the track, back by the wheelbase. Its five links each from the subframe, inboard, out to the wheel's
- * carrier: two upper links, ahead of the axle and behind it; a lower link carrying the spring, about under it; a lower
- * link ahead; and the toe link, behind, which keeps the wheel straight. The damper from the carrier, behind the axle,
- * up to its mount; the subframe's mounts to the body, ahead of the axle low and behind it high. Where a car's figures
+ * carrier, placed as the current large SUV's workshop manual draws them: high, the upper front link, the upper rear
+ * link and the toe link, all three from the subframe's front, high, where its tube cross member's arms rise; low, the
+ * lower front link, ahead of the axle, and the lower rear link behind it, which carries the spring and the damper's
+ * foot and meets the carrier on a ball joint. The damper from the lower rear link up to its mount; the subframe's
+ * mounts to the body, ahead of the axle high and behind it low. Every figure an estimate. Where a car's figures
  * change, the points on the wheel's carrier move with the wheel; those on the subframe and the body are the
  * platform's own.
  *
@@ -18,6 +20,10 @@ record RearPoints(Proportions proportions) {
 
     /** How high the springs' tops are over the wheel's middle. */
     private static final double MOUNTS = 21;
+    /** Where the damper's foot is on the spring's link: how far out along it, how far over it and behind it. */
+    private static final double DAMPER_ON = 0.72;
+    private static final double DAMPER_OVER = 3;
+    private static final double DAMPER_BEHIND = 4.5;
 
     /** The point {@code x} across, {@code up} over the wheel's middle, and {@code along} ahead of the back axle. */
     Vec3 at(final double x, final double up, final double along) {
@@ -36,29 +42,29 @@ record RearPoints(Proportions proportions) {
 
     /** Where the upper front link meets the carrier, and the subframe. */
     Vec3 upperFrontOuter() {
-        return out(12, 20, 5);
+        return out(12, 20, 7);
     }
 
     Vec3 upperFrontInner() {
-        return at(33, 8, -12);
+        return at(32, 14, 21);
     }
 
     /** Where the upper rear link meets the carrier, and the subframe. */
     Vec3 upperRearOuter() {
-        return out(12, 20, -6);
+        return out(12, 21, -7);
     }
 
     Vec3 upperRearInner() {
-        return at(38, 19, -27);
+        return at(39, 16, 24);
     }
 
     /** Where the spring's link meets the carrier, and the subframe. */
     Vec3 springOuter() {
-        return out(9, -14, -2);
+        return out(8, -13, -5);
     }
 
     Vec3 springInner() {
-        return at(32, -12, -2);
+        return at(31, -15, -10);
     }
 
     /** Where the spring sits on its link: three fifths of the way out. */
@@ -74,29 +80,31 @@ record RearPoints(Proportions proportions) {
 
     /** Where the lower front link meets the carrier, and the subframe. */
     Vec3 lowerFrontOuter() {
-        return out(9, -12, 8);
+        return out(9, -12, 7);
     }
 
     Vec3 lowerFrontInner() {
-        return at(35, -14.5, 23);
+        return at(30, -12, 5);
     }
 
     /** Where the toe link meets the carrier, and the subframe. */
     Vec3 toeOuter() {
-        return out(10, -4, -14);
+        return out(10, 5, -10);
     }
 
     Vec3 toeInner() {
-        return at(33, 1, -22);
+        return at(34, 9, 14);
     }
 
-    /** Where the damper meets the carrier, and the body. */
+    /** Where the damper's foot is, on the spring's link behind its seat, and its top on the body. */
     Vec3 damperFoot() {
-        return out(12, -8, -11);
+        final Vec3 on = springInner().plus(springOuter().minus(springInner()).times(DAMPER_ON));
+        return on.plus(new Vec3(0, DAMPER_OVER, -DAMPER_BEHIND));
     }
 
     Vec3 damperTop() {
-        return out(18, 28, -9);
+        final Vec3 foot = damperFoot();
+        return new Vec3(foot.x() + 1, proportions.tyre() + 28, foot.z() - 2);
     }
 
     /** Where the hub turns on the carrier; where the brake's disc sits on the hub; where the wheel is bolted to it. */
@@ -118,14 +126,14 @@ record RearPoints(Proportions proportions) {
     }
 
     /**
-     * The subframe's mounts to the body: ahead of the axle, low, at the ends of its side members' goosenecks; behind
-     * it, high, at the ends of its back cross member's arms, where the body's rails rise over the axle.
+     * The subframe's mounts to the body: ahead of the axle, high, at the ends of its tube cross member's arms, the
+     * body's rails high over it; behind it, low, at the ends of its side members' goosenecks.
      */
     Vec3 mountFront() {
-        return at(45, -4, 31);
+        return at(46, 18, 32);
     }
 
     Vec3 mountBack() {
-        return at(46, 18, -32);
+        return at(45, -4, -31);
     }
 }

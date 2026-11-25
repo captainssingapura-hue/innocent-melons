@@ -19,7 +19,7 @@ import java.util.List;
  * upright and its flanges top and bottom, bowed as the link must bow to clear what is round it, running between its
  * eyes; each eye a bored boss its bush is pressed into, its bore along the link's bolt, level and square to the link.
  * And the spring's link, the stoutest: a tray forged flat with its rims turned up, the spring's cup and holes in its
- * floor, an eye inboard and a fork outboard.
+ * floor, the damper's fork on it, an eye inboard and outboard the boss its ball joint is pressed into.
  *
  * @param round how many points a whole round is drawn in
  */
@@ -64,10 +64,12 @@ record LinkForms(int round) {
     }
 
     /**
-     * The spring's link, from its eye at {@code inner} to its fork at {@code outer}, the spring's cup at {@code seat}:
-     * a tray {@code wide} at its widest, its eye as {@code eye} says.
+     * The spring's link, from its eye at {@code inner} to the boss its ball joint is pressed into at {@code outer}, the
+     * spring's cup at {@code seat} and the damper's fork at {@code damper}: a tray {@code wide} at its widest, its eye
+     * as {@code eye} says.
      */
-    Mesh springLink(final Vec3 inner, final Vec3 outer, final Vec3 seat, final Eye eye, final double wide) {
+    Mesh springLink(final Vec3 inner, final Vec3 outer, final Vec3 seat, final Vec3 damper, final Eye eye,
+                    final double wide) {
         final Vec3 along = outer.minus(inner).unit();
         final Vec3 bolt = bolt(inner, outer);
         final Vec3 up = along.cross(bolt).unit();
@@ -75,8 +77,8 @@ record LinkForms(int round) {
         final double s = seat.minus(inner).dot(along);
         final double half = wide / 2;
         final List<Spot> outline = List.of(new Spot(eye.outer() - 0.6, -eye.length() / 2),
-                new Spot(0.3 * length, -half * 0.85), new Spot(s, -half), new Spot(length - 6, -3.2),
-                new Spot(length - 4, -3.2), new Spot(length - 4, 3.2), new Spot(length - 6, 3.2),
+                new Spot(0.3 * length, -half * 0.85), new Spot(s, -half), new Spot(length - 5, -3.2),
+                new Spot(length - 1.5, -3.2), new Spot(length - 1.5, 3.2), new Spot(length - 5, 3.2),
                 new Spot(s, half), new Spot(0.3 * length, half * 0.85), new Spot(eye.outer() - 0.6, eye.length() / 2));
         final Outlines outlines = new Outlines(round);
         final List<List<Spot>> holes = List.of(outlines.circle(new Spot(s, 0), 2.2),
@@ -91,7 +93,8 @@ record LinkForms(int round) {
         }
         made.add(new Sleeve(inner, bolt, eye.length(), eye.outer(), eye.bore(), round).mesh());
         made.add(new Sleeve(seat.plus(up.times(0.8)), up, 1.6, 7, 6.2, round).mesh());
-        made.add(new Clevis(outer, outer.minus(along.times(5)), bolt, 4.6, 1.0, 2.6, 0.8, 5.5, round).mesh());
+        made.add(new Sleeve(outer, up, 3.2, 2.8, 1.6, round).mesh());
+        made.add(new Clevis(damper, damper.minus(up.times(3)), along, 4.2, 1.0, 2.6, 0.75, 5, round).mesh());
         return new Shapes(round).joined(made);
     }
 

@@ -15,7 +15,7 @@ import java.util.Map;
 
 /**
  * A rear corner's wheel end, inside the wheel: the wheel's carrier, cast, tall, inboard of the hub, a boss where each
- * link and the damper meet it and the caliper's mount behind; the hub, turning in the carrier on its bearing, its
+ * link meets it and the caliper's mount behind; the hub, turning in the carrier on its bearing, its
  * flange for the wheel outboard; the brake's disc on the hub's flange, inside the rim; and the caliper, bolted to the
  * carrier, astride the disc behind the axle.
  *
@@ -53,7 +53,6 @@ record RearCorner(RearPoints points, Shapes shapes) {
         named.put("spring link", points.springOuter());
         named.put("lower front", points.lowerFrontOuter());
         named.put("toe link", points.toeOuter());
-        named.put("damper", points.damperFoot());
         named.put("caliper", points.caliper());
         final Vec3 wheel = points.wheel();
         final Vec3 middle = new Vec3(points.hub().x() - CARRIER_WIDE / 2, wheel.y() + (CARRIER_OVER - CARRIER_UNDER)

@@ -16,7 +16,7 @@ import java.util.List;
 
 /**
  * The rear subframe's pieces as each is made before they are welded together, each where it stands on the platform:
- * its two hydroformed tubes, the back cross member and a side member; its pressed cross member ahead, a web with its
+ * its two hydroformed tubes, the tube cross member and a side member; its pressed cross member behind, a web with its
  * edges turned down and its holes punched; the sleeves its bushes are pressed into; and the clevises the links are
  * bolted into, pressed from sheet.
  *
@@ -35,26 +35,26 @@ record SubframePieces(SubframeLines lines) {
     private static final double BOLT = 0.75;
     private static final double CLEVIS_WIDE = 6.5;
 
-    /** The back cross member, across behind the axle, its arms sweeping up and back to the back mounts. */
-    Mesh backCrossMember() {
-        return new Swept(lines.backCourse(), lines.backSections(), SubframeLines.ROUND).mesh();
+    /** The tube cross member, across ahead of the axle, its arms sweeping up and forward to the front mounts. */
+    Mesh tubeCrossMember() {
+        return new Swept(lines.tubeCourse(), lines.tubeSections(), SubframeLines.ROUND).mesh();
     }
 
-    /** A side member, from the back cross member down and forward, round its gooseneck to the front mount. */
+    /** A side member, from the tube cross member down and back, round its gooseneck to the back mount. */
     Mesh sideMember() {
         return new Swept(lines.sideCourse(), lines.sideSections(), SubframeLines.ROUND).mesh();
     }
 
     /**
-     * The pressed cross member ahead: its web, the differential's front mounts and lightening holes punched in it,
+     * The pressed cross member behind: its web, the differential's rear mounts and lightening holes punched in it,
      * and its edges ahead and behind turned down.
      */
-    Mesh frontCrossMember() {
+    Mesh pressedCrossMember() {
         final Outlines outlines = new Outlines(SubframeLines.ROUND);
-        final Spot diff = lines.diffFront();
+        final Spot diff = lines.diffPlate();
         final Spot light = lines.lightening();
-        final List<List<Spot>> holes = List.of(outlines.circle(diff, diffFront().outer()),
-                outlines.circle(new Spot(-diff.u(), diff.v()), diffFront().outer()), outlines.circle(light, 2),
+        final List<List<Spot>> holes = List.of(outlines.circle(diff, diffPlate().outer()),
+                outlines.circle(new Spot(-diff.u(), diff.v()), diffPlate().outer()), outlines.circle(light, 2),
                 outlines.circle(new Spot(-light.u(), light.v()), 2), outlines.slot(lines.slot(), 9, 3.2));
         final Vec3 middle = lines.webMiddle();
         final List<Mesh> made = new ArrayList<>();
@@ -74,14 +74,14 @@ record SubframePieces(SubframeLines lines) {
         return new Sleeve(at, new Vec3(0, 1, 0), MOUNT_LONG, MOUNT_OUT, MOUNT_IN, SubframeLines.ROUND);
     }
 
-    /** The differential's front mount's sleeve, on the right, through the web. */
-    Sleeve diffFront() {
-        return new Sleeve(lines.diffFrontAt(), new Vec3(0, 1, 0), 6, 3, 2.2, SubframeLines.ROUND);
+    /** The differential's rear mount's sleeve, on the right, through the web. */
+    Sleeve diffPlate() {
+        return new Sleeve(lines.diffPlateAt(), new Vec3(0, 1, 0), 6, 3, 2.2, SubframeLines.ROUND);
     }
 
-    /** The differential's back mount's sleeve, through the back cross member's middle. */
-    Sleeve diffBack() {
-        return new Sleeve(lines.diffBack(), new Vec3(0, 1, 0), 9, 3.2, 2.4, SubframeLines.ROUND);
+    /** The differential's front mount's sleeve, through the tube cross member's middle. */
+    Sleeve diffTube() {
+        return new Sleeve(lines.diffTube(), new Vec3(0, 1, 0), 9, 3.2, 2.4, SubframeLines.ROUND);
     }
 
     /**

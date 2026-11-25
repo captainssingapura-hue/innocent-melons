@@ -12,11 +12,11 @@ import java.util.List;
 /**
  * The GLM platform's rear axle, a five-link axle, made to a car's figures and joined part to part from the underbody
  * out: the subframe, welded from its pieces, bushed to the underbody at its four mounts; on each side, the spring's
- * link bushed to its clevis on the subframe and the wheel's carrier on its outer end; the other four links bushed to
- * theirs, three bushed at the carrier too and the toe link clamped on a ball joint's stud in it; the hub turning in
+ * link bushed to its clevis on the subframe and the wheel's carrier on the ball joint pressed into its outer end; the
+ * other four links bushed to theirs and to the carrier; the hub turning in
  * the carrier, the disc bolted to the hub and the caliper to the carrier; the wheel bolted to the hub and the tyre
- * seated on it; the air spring on its seat on the spring's link up to the underbody; and the damper from the carrier
- * up to the underbody. Said as on the right, the left its mirror.
+ * seated on it; the air spring on its seat on the spring's link up to the underbody; and the damper from the spring's
+ * link up to the underbody. Said as on the right, the left its mirror.
  *
  * @param proportions the car's figures
  */
@@ -51,19 +51,15 @@ public record RearAxle(Proportions proportions) {
         final List<Connection> joined = new ArrayList<>(subframe.joined(body));
         joined.add(new Connection("spring link, inner", subframe.clevis("spring link"), "pivot", spring, "inner",
                 Joining.BUSHED));
-        joined.add(new Connection("spring link, outer", spring, "outer", carrier, "spring link", Joining.BUSHED));
+        final Part springBall = links.springBallJoint();
+        joined.add(new Connection("spring link, ball joint", spring, "outer", springBall, "ball", Joining.SEATED));
+        joined.add(new Connection("spring link, outer", springBall, "ball", carrier, "spring link",
+                Joining.BALL_JOINT));
         for (int k = 0; k < others.size(); k++) {
             final Part link = others.get(k);
             joined.add(new Connection(link.name() + ", inner", subframe.clevis(link.name()), "pivot", link, "inner",
                     Joining.BUSHED));
-            if (link.has("clamp")) {
-                final Part ball = links.toeBallJoint();
-                joined.add(new Connection(link.name() + ", clamp", link, "clamp", ball, "stud", Joining.BOLTED));
-                joined.add(new Connection(link.name() + ", outer", ball, "ball", carrier, at.get(k),
-                        Joining.BALL_JOINT));
-            } else {
-                joined.add(new Connection(link.name() + ", outer", link, "outer", carrier, at.get(k), Joining.BUSHED));
-            }
+            joined.add(new Connection(link.name() + ", outer", link, "outer", carrier, at.get(k), Joining.BUSHED));
         }
         joined.add(new Connection("hub bearing", carrier, "hub", hub, "carrier", Joining.HINGE));
         joined.add(new Connection("brake disc", hub, "disc", corner.disc(), "hub", Joining.BOLTED));
@@ -72,7 +68,7 @@ public record RearAxle(Proportions proportions) {
         joined.add(new Connection("tyre", rim, "tyre", wheel.tyre(), "rim", Joining.SEATED));
         joined.add(new Connection("air spring, seat", spring, "spring seat", air, "seat", Joining.BOLTED));
         joined.add(new Connection("air spring, top", body, "spring top, right", air, "top", Joining.BOLTED));
-        joined.add(new Connection("damper, foot", carrier, "damper", damper, "foot", Joining.BUSHED));
+        joined.add(new Connection("damper, foot", spring, "damper", damper, "foot", Joining.BUSHED));
         joined.add(new Connection("damper, top", body, "damper top, right", damper, "top", Joining.BUSHED));
         return new Platform("the GLM platform's rear axle", body, joined);
     }

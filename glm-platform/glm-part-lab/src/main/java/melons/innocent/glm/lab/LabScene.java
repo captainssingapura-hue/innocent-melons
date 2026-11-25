@@ -2,6 +2,7 @@ package melons.innocent.glm.lab;
 
 import com.example.fxsuite.vulkan.space.Vec3;
 import melons.innocent.glm.core.Assembled;
+import melons.innocent.glm.core.Group;
 import melons.innocent.glm.core.PartAt;
 import melons.innocent.glm.core.Point;
 import melons.innocent.glm.model.Finishes;
@@ -66,6 +67,7 @@ public record LabScene(Assembled built, LabShow show, Finishes finishes) {
             } else if (show.others() == LabShow.Others.GHOST) {
                 all.add(new Placement(part, at, new Coat(Coat.Kind.GLASS)));
             } else if (show.others() == LabShow.Others.FINISHED
+                    || show.others() == LabShow.Others.CHASSIS && part.part().group() != Group.UNDERBODY
                     || show.others() == LabShow.Others.GROUP && part.part().group() == looked.part().group()) {
                 all.add(new Placement(part, at, finishes.of(part.part(), show.madeOf())));
             }

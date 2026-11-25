@@ -29,18 +29,18 @@ record SubframeLines(RearPoints points) {
     /** How high the pressed cross member's web lies over the wheel's middle. */
     private static final double WEB = -9;
 
-    /** The back cross member's line, from its left mount round across to its right. */
-    Course backCourse() {
-        final List<Vec3> right = List.of(at(18, 8, -22), at(29, 8.8, -23), at(36, 12.5, -26.5),
-                ended(at(36, 12.5, -26.5), points.mountBack()));
+    /** The tube cross member's line, ahead of the axle, from its left front mount round across to its right. */
+    Course tubeCourse() {
+        final List<Vec3> right = List.of(at(18, 8, 22), at(29, 8.8, 23), at(36, 12.5, 26.5),
+                ended(at(36, 12.5, 26.5), points.mountFront()));
         final List<Vec3> through = new ArrayList<>(right.reversed().stream().map(this::mirrored).toList());
-        through.add(at(0, 8, -22));
+        through.add(at(0, 8, 22));
         through.addAll(right);
         return new Course(through, STEPS);
     }
 
-    /** The back cross member's sections, at each point of its line: flatter at its ends, where it meets the eyes. */
-    List<Section> backSections() {
+    /** The tube cross member's sections, at each point of its line: flatter at its ends, where it meets the eyes. */
+    List<Section> tubeSections() {
         final List<Section> right = List.of(new Section(7, 7, 2.2), new Section(7, 7, 2.2), new Section(6.5, 6, 2.4),
                 new Section(6, 5.5, 2.6));
         final List<Section> all = new ArrayList<>(right.reversed());
@@ -49,10 +49,13 @@ record SubframeLines(RearPoints points) {
         return all;
     }
 
-    /** A side member's line: from inside the back cross member, down and forward, and out round its gooseneck. */
+    /**
+     * A side member's line: from inside the tube cross member, down and back, and out round its gooseneck to its back
+     * mount.
+     */
     Course sideCourse() {
-        return new Course(List.of(sideStart(), at(31.5, 3, -14), at(32, -4, -4), at(32, -8, 6), at(32.5, -9.5, 16),
-                at(34.5, -9.4, 23.5), at(38.5, -7, 27.8), ended(at(38.5, -7, 27.8), points.mountFront())), STEPS);
+        return new Course(List.of(sideStart(), at(31.5, 3, 14), at(32, -4, 4), at(32, -8, -6), at(32.5, -9.5, -16),
+                at(34.5, -9.4, -23.5), at(38.5, -7, -27.8), ended(at(38.5, -7, -27.8), points.mountBack())), STEPS);
     }
 
     /** Its sections: round down its length, pressed flatter round the gooseneck to its eye. */
@@ -61,9 +64,9 @@ record SubframeLines(RearPoints points) {
                 new Section(6.2, 6, 2.3), new Section(6, 5.8, 2.4), new Section(6, 5.5, 2.6));
     }
 
-    /** Where a side member starts, inside the back cross member. */
+    /** Where a side member starts, inside the tube cross member. */
     Vec3 sideStart() {
-        return at(31, 8.8, -22.8);
+        return at(31, 8.8, 22.8);
     }
 
     /** How far round a tube is, about. */
@@ -78,28 +81,28 @@ record SubframeLines(RearPoints points) {
 
     /** Where a side member meets the pressed cross member, at its end. */
     Vec3 webEnd() {
-        return at(32.5, WEB, 20);
+        return at(32.5, WEB, -20);
     }
 
     /** The pressed cross member's web, drawn from above, across and along, from the web's middle. */
     List<Spot> webOutline() {
-        return List.of(new Spot(-33, 11.5), new Spot(-26, 12.5), new Spot(-18, 15), new Spot(18, 15),
-                new Spot(26, 12.5), new Spot(33, 11.5), new Spot(33, 27.5), new Spot(26, 27), new Spot(18, 25.5),
-                new Spot(-18, 25.5), new Spot(-26, 27), new Spot(-33, 27.5));
+        return List.of(new Spot(-33, -11.5), new Spot(-26, -12.5), new Spot(-18, -15), new Spot(18, -15),
+                new Spot(26, -12.5), new Spot(33, -11.5), new Spot(33, -27.5), new Spot(26, -27), new Spot(18, -25.5),
+                new Spot(-18, -25.5), new Spot(-26, -27), new Spot(-33, -27.5));
     }
 
-    /** Where the differential's front mounts are punched through the web, drawn as its outline is. */
-    Spot diffFront() {
-        return new Spot(12, 20.2);
+    /** Where the differential's rear mounts are punched through the web, drawn as its outline is. */
+    Spot diffPlate() {
+        return new Spot(12, -20.2);
     }
 
     /** The lightening holes punched in the web, right and left of its slot. */
     Spot lightening() {
-        return new Spot(22.5, 20);
+        return new Spot(22.5, -20);
     }
 
     Spot slot() {
-        return new Spot(0, 20.2);
+        return new Spot(0, -20.2);
     }
 
     /** How deep the web's flanges are turned down at its edges. */
@@ -107,14 +110,14 @@ record SubframeLines(RearPoints points) {
         return 3;
     }
 
-    /** Where the differential's back mount stands, through the back cross member's middle. */
-    Vec3 diffBack() {
-        return at(0, 8, -22);
+    /** Where the differential's front mount stands, through the tube cross member's middle. */
+    Vec3 diffTube() {
+        return at(0, 8, 22);
     }
 
-    /** Where the differential's front mount stands on the right, through the web. */
-    Vec3 diffFrontAt() {
-        return at(diffFront().u(), WEB, diffFront().v());
+    /** Where the differential's rear mount stands on the right, through the web. */
+    Vec3 diffPlateAt() {
+        return at(diffPlate().u(), WEB, diffPlate().v());
     }
 
     /** Where a clevis's foot is, on {@code course}, for its link's pivot at {@code pivot}. */

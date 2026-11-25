@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * shown round it and what the parts are made of.
  *
  * <p>For a run with nobody at it: {@code -Dlab.part=} the start of a part's name, as the window lists it ("Links:
- * right toe"); {@code -Dlab.level=assembly}; {@code -Dlab.others=} ghost, finished, group or hidden; {@code
+ * right toe"); {@code -Dlab.level=assembly}; {@code -Dlab.others=} ghost, finished, chassis, group or hidden; {@code
  * -Dlab.instead=aluminium:titanium}; {@code -Dlab.fine=true}; {@code -Dlab.grid=false}; {@code -Dlab.ground=false};
  * {@code -Dbench.yaw=}, {@code -Dbench.pitch=}; the light's options as on every bench; {@code -Dbench.settle=} so
  * many thousandths of a second ends it; {@code -Dbench.snapshot.card=} a file the card's picture is saved to as it
@@ -144,7 +144,8 @@ public final class PartLab {
                 view.ruled(scene);
                 if (was == null || !now.part().equals(was.part()) || now.level() != was.level()) {
                     orbit = new Orbit(scene.middle(), orbit == null ? said("bench.yaw", 35) : orbit.yaw(),
-                            orbit == null ? said("bench.pitch", 20) : orbit.pitch(), scene.size() * BACK);
+                            orbit == null ? said("bench.pitch", 20) : orbit.pitch(),
+                            said("bench.distance", scene.size() * BACK / METRE) * METRE);
                 }
                 was = now;
             }
