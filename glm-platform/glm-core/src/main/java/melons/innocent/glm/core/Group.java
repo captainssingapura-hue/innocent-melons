@@ -4,7 +4,7 @@ package melons.innocent.glm.core;
  * Which group of the platform a part belongs to: shown or hidden together, finished alike.
  */
 public enum Group {
-    UNDERBODY("Underbody"),
+    UNDERBODY("Body"),
     SUBFRAMES("Subframes"),
     LINKS("Suspension links"),
     CARRIERS("Wheel carriers and hubs"),

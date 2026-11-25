@@ -29,12 +29,15 @@ class GlmPlatformTest {
     @Test
     void bothAxlesPutTogetherEveryPieceMetWhereItWasMadeTo() {
         assertEquals(List.of(), built.problems(1e-6));
-        assertEquals(52 + 1 + 1 + 1 + 2 * (3 + 16), built.placed().size(), "the rear axle; the front underbody, beam and"
+        assertEquals(52 + 1 + 1 + 2 * (3 + 16), built.placed().size(), "the body and the rear axle; the front beam and"
                 + " steering gear once, and each side the front subframe's node, strut and hook and sixteen parts more");
         assertEquals(16 + 3 + 1 + 2 * 5, built.gaps().size(), "the rear axle's, a front node's weld to the beam, both"
                 + " front hooks' bolts, the steering gear's left mount, and each side four links and the air spring"
                 + " met again");
-        assertEquals(new Vec3(0, 0, 0), built.at(part("front underbody", Side.MIDDLE)), "made where it stands");
+        final PartAt body = part("cast body", Side.MIDDLE);
+        assertEquals(new Vec3(0, 0, 0), built.at(body), "the root, where it was made");
+        assertEquals(Material.TITANIUM, body.part().made().material());
+        assertTrue(body.part().made().bare(), "cast titanium, bare");
     }
 
     @Test
@@ -65,6 +68,14 @@ class GlmPlatformTest {
         assertEquals(Material.ALUMINIUM, titanium.with(Material.ALUMINIUM, Material.ALUMINIUM)
                 .of(Material.ALUMINIUM), "back as designed");
         assertThrows(IllegalArgumentException.class, () -> new MadeOf().with(Material.RUBBER, Material.STEEL));
+    }
+
+    @Test
+    void anotherBodyOnTheSamePlatformAndFiguresOutOfRangeRefused() {
+        final BodyFigures estate = new BodyFigures(95, 115, 150, 190, 0.22, 0.6);
+        final Assembled other = new Assembly(new GlmPlatform(new Proportions(), estate).platform()).assembled();
+        assertEquals(List.of(), other.problems(1e-6));
+        assertThrows(IllegalArgumentException.class, () -> new BodyFigures(100, 106, 260, 196, 0.2, 0.58));
     }
 
     private PartAt part(final String name, final Side side) {

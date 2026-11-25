@@ -48,8 +48,8 @@ record FrontBody(FrontPoints points) {
         named.put("rest of the underbody", join());
         for (final int side : List.of(1, -1)) {
             final String s = side > 0 ? ", right" : ", left";
-            named.put("subframe mount, front" + s, mirrored(points.mountFront(), side));
-            named.put("subframe mount, back" + s, mirrored(points.mountBack(), side));
+            named.put("front subframe mount, front" + s, mirrored(points.mountFront(), side));
+            named.put("front subframe mount, back" + s, mirrored(points.mountBack(), side));
             named.put("upper front link" + s, mirrored(points.upperFrontInner(), side));
             named.put("upper rear link" + s, mirrored(points.upperRearInner(), side));
             named.put("strut top" + s, mirrored(points.strutTop(), side));

@@ -30,11 +30,16 @@ public record RearAxle(Proportions proportions) {
         this(new Proportions());
     }
 
-    /** It, as a platform to be put together. */
+    /** It, as a platform to be put together, the underbody's rear its root. */
     public Platform platform() {
+        final Part body = new RearBody(new RearPoints(proportions), new Shapes(ROUND)).part();
+        return new Platform("the GLM platform's rear axle", body, joined(body));
+    }
+
+    /** How its parts are joined to {@code body}, in the order they are walked. */
+    List<Connection> joined(final Part body) {
         final RearPoints points = new RearPoints(proportions);
         final Shapes shapes = new Shapes(ROUND);
-        final Part body = new RearBody(points, shapes).part();
         final RearSubframe subframe = new RearSubframe(points);
         final RearLinks links = new RearLinks(points, shapes);
         final Part spring = links.spring();
@@ -71,6 +76,6 @@ public record RearAxle(Proportions proportions) {
         joined.add(new Connection("air spring, top", body, "spring top, right", air, "top", Joining.BOLTED));
         joined.add(new Connection("damper, foot", spring, "damper", damper, "foot", Joining.BUSHED));
         joined.add(new Connection("damper, top", body, "damper top, right", damper, "top", Joining.BUSHED));
-        return new Platform("the GLM platform's rear axle", body, joined);
+        return joined;
     }
 }

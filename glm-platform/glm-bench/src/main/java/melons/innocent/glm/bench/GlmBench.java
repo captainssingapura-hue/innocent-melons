@@ -20,6 +20,7 @@ import javafx.application.Platform;
 import melons.innocent.glm.core.Assembled;
 import melons.innocent.glm.core.Assembly;
 import melons.innocent.glm.model.Proportions;
+import melons.innocent.glm.model.BodyFigures;
 import melons.innocent.glm.model.GlmPlatform;
 
 import javax.imageio.ImageIO;
@@ -65,7 +66,7 @@ public final class GlmBench {
     private final Bus bus = new Bus();
     private final AtomicReference<OnShow> shown = new AtomicReference<>(new OnShow());
     private final Proportions proportions = new Proportions();
-    private final Assembled built = new Assembly(new GlmPlatform(proportions).platform()).assembled();
+    private final Assembled built = new Assembly(new GlmPlatform(proportions, new BodyFigures()).platform()).assembled();
     private final Vec3 middle = new Vec3(0, proportions.tyre(), proportions.back() / 2);
     private Orbit orbit = new Orbit(middle, said("bench.yaw", 35), said("bench.pitch", 18),
             METRE * said("bench.distance", 6));

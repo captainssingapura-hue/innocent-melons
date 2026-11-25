@@ -72,12 +72,12 @@ final class FrontSubframe {
     /** How its pieces are joined, to each other and to {@code body}, in the order they are walked. */
     List<Connection> joined(final Part body) {
         return List.of(
-                new Connection("front subframe mount, back", body, "subframe mount, back, right", node, "back mount",
-                        Joining.BOLTED),
+                new Connection("front subframe mount, back", body, "front subframe mount, back, right", node,
+                        "back mount", Joining.BOLTED),
                 new Connection("front beam", node, "cross member", cross, "node, right", Joining.WELDED),
                 new Connection("strut tube, foot", node, "strut tube", strut, "foot", Joining.WELDED),
                 new Connection("strut tube, head", strut, "head", mount, "strut tube", Joining.WELDED),
-                new Connection("front subframe mount, front", body, "subframe mount, front, right", mount, "body",
-                        Joining.BOLTED));
+                new Connection("front subframe mount, front", body, "front subframe mount, front, right", mount,
+                        "body", Joining.BOLTED));
     }
 }
