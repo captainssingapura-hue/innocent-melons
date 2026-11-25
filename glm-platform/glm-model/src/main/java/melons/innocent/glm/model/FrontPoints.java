@@ -52,6 +52,22 @@ record FrontPoints(Proportions proportions) implements WheelEnd {
         return named;
     }
 
+    /** Every link meets the front carrier on a ball pin: the upper links' studs down into it, the others' up. */
+    @Override
+    public Map<String, Vec3> axes() {
+        final Map<String, Vec3> axes = new LinkedHashMap<>();
+        for (final String name : carried().keySet()) {
+            axes.put(name, new Vec3(0, name.startsWith("upper") ? -1 : 1, 0));
+        }
+        return axes;
+    }
+
+    /** The front carrier is forged, as its maker says. */
+    @Override
+    public boolean forged() {
+        return true;
+    }
+
     @Override
     public Vec3 wheel() {
         return out(0, 0, 0);

@@ -86,6 +86,8 @@ public record FrontAxle(Proportions proportions) {
         joined.add(new Connection("tie rod, inner", gear, "rack end, right", tie, "inner", Joining.BALL_JOINT));
         joined.add(new Connection("tie rod, outer", tie, "outer", carrier, "tie rod", Joining.BALL_JOINT));
         joined.add(new Connection("front hub bearing", carrier, "hub", hub, "carrier", Joining.HINGE));
+        joined.add(new Connection("front brake shield", carrier, "hub", corner.shield(), "carrier",
+                Joining.BOLTED));
         joined.add(new Connection("front brake disc", hub, "disc", corner.disc(), "hub", Joining.BOLTED));
         joined.add(new Connection("front brake caliper", carrier, "caliper", corner.caliper(), "carrier",
                 Joining.BOLTED));

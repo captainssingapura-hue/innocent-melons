@@ -6,7 +6,10 @@ import melons.innocent.glm.core.Group;
 import melons.innocent.glm.core.Made;
 import melons.innocent.glm.core.Material;
 import melons.innocent.glm.core.Part;
+import melons.innocent.vehiclelab.forms.Plate;
+import melons.innocent.vehiclelab.forms.Section;
 import melons.innocent.vehiclelab.forms.Shapes;
+import melons.innocent.vehiclelab.forms.Spot;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -30,12 +33,16 @@ record Corner(WheelEnd points, Shapes shapes) {
     private static final Making DISC_MADE = new Making(new Made(Material.IRON, true));
     private static final Making CALIPER_MADE = new Making(new Made(Material.ALUMINIUM, false));
 
-    /** The carrier: how wide, how far it reaches over and under the wheel's middle, how long; its bosses. */
-    private static final double CARRIER_WIDE = 7;
-    private static final double CARRIER_OVER = 24;
-    private static final double CARRIER_UNDER = 20;
-    private static final double CARRIER_LONG = 16;
+    /** The carrier's arms, forged slim or cast stouter; its caliper's boss; how many points round. */
+    private static final Section FORGED_ARM = new Section(3.4, 4.2, 2.6);
+    private static final Section CAST_ARM = new Section(4.2, 4.8, 3);
     private static final double BOSS = 2.6;
+    private static final int ROUND = 24;
+    /** The brake's shield, pressed steel: how far out past the disc and in round the ring, its gap at the caliper. */
+    private static final Making SHIELD_MADE = new Making(new Made(Material.STEEL, false));
+    private static final double SHIELD_PAST = 1.5;
+    private static final double SHIELD_IN = 8;
+    private static final double SHIELD_GAP = 40;
     /** The hub, how round; the disc, how round and how thick; the caliper, how big. */
     private static final double HUB = 7.5;
     private static final double DISC = 17.5;
@@ -50,14 +57,9 @@ record Corner(WheelEnd points, Shapes shapes) {
         named.put("hub", points.hub());
         named.putAll(points.carried());
         named.put("caliper", points.caliper());
-        final Vec3 wheel = points.wheel();
-        final Vec3 middle = new Vec3(points.hub().x() - CARRIER_WIDE / 2, wheel.y() + (CARRIER_OVER - CARRIER_UNDER)
-                / 2, wheel.z());
-        final List<Mesh> forms = new ArrayList<>();
-        forms.add(shapes.body(middle, CARRIER_WIDE, CARRIER_OVER + CARRIER_UNDER, CARRIER_LONG));
-        named.values().stream().skip(1).forEach(p -> forms.add(shapes.capsule(p, middle.plus(p.minus(middle)
-                .times(0.6)), BOSS)));
-        return CARRIER_MADE.part(points.called() + "wheel carrier", Group.CARRIERS, true, named, shapes.joined(forms));
+        final Section arm = points.forged() ? FORGED_ARM : CAST_ARM;
+        return CARRIER_MADE.part(points.called() + "wheel carrier", Group.CARRIERS, true, named,
+                new CarrierForm(points, arm, ROUND).mesh());
     }
 
     /** The hub, from the carrier out to its flange. */
@@ -77,6 +79,31 @@ record Corner(WheelEnd points, Shapes shapes) {
         final Vec3 across = new Vec3(DISC_THICK / 2, 0, 0);
         return DISC_MADE.part(points.called() + "brake disc", Group.BRAKES, true, named,
                 shapes.drum(points.disc().minus(across), points.disc().plus(across), DISC));
+    }
+
+    /**
+     * The brake's shield, pressed steel, between the carrier and the disc: a ring of sheet from round the carrier's
+     * ring out past the disc, open where the caliper sits.
+     */
+    Part shield() {
+        final Map<String, Vec3> named = new LinkedHashMap<>();
+        named.put("carrier", points.hub());
+        final Vec3 at = points.disc().minus(new Vec3(DISC_THICK + 0.6, 0, 0));
+        final Vec3 off = points.caliper().minus(points.wheel());
+        final double gap = Math.toDegrees(Math.atan2(off.y(), off.z()));
+        final List<Spot> outline = new ArrayList<>();
+        final int steps = 36;
+        for (int k = 0; k <= steps; k++) {
+            final double a = Math.toRadians(gap + SHIELD_GAP + (360 - 2 * SHIELD_GAP) * k / steps);
+            outline.add(new Spot((DISC + SHIELD_PAST) * Math.cos(a), (DISC + SHIELD_PAST) * Math.sin(a)));
+        }
+        for (int k = steps; k >= 0; k--) {
+            final double a = Math.toRadians(gap + SHIELD_GAP + (360 - 2 * SHIELD_GAP) * k / steps);
+            outline.add(new Spot(SHIELD_IN * Math.cos(a), SHIELD_IN * Math.sin(a)));
+        }
+        return SHIELD_MADE.part(points.called() + "brake shield", Group.BRAKES, true, named,
+                new Plate(outline, List.of(), new Vec3(at.x(), points.wheel().y(), points.wheel().z()),
+                        new Vec3(0, 0, 1), new Vec3(0, 1, 0), 0.15).mesh());
     }
 
     /** The caliper, astride the disc behind the axle. */

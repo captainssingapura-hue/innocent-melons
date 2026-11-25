@@ -57,6 +57,28 @@ record RearPoints(Proportions proportions) implements WheelEnd {
 
     /** The back wheel's middle. */
     @Override
+    public Map<String, Vec3> axes() {
+        final Map<String, Vec3> axes = new LinkedHashMap<>();
+        axes.put("upper front", bolt(upperFrontInner(), upperFrontOuter()));
+        axes.put("upper rear", bolt(upperRearInner(), upperRearOuter()));
+        axes.put("spring link", new Vec3(0, 1, 0));
+        axes.put("lower front", bolt(lowerFrontInner(), lowerFrontOuter()));
+        axes.put("toe link", bolt(toeInner(), toeOuter()));
+        return axes;
+    }
+
+    /** The rear carrier is cast. */
+    @Override
+    public boolean forged() {
+        return false;
+    }
+
+    /** A bushed link's bolt: level, square to the link. */
+    private Vec3 bolt(final Vec3 inner, final Vec3 outer) {
+        return new Vec3(0, 1, 0).cross(outer.minus(inner)).unit();
+    }
+
+    @Override
     public Vec3 wheel() {
         return out(0, 0, 0);
     }

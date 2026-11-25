@@ -31,4 +31,13 @@ interface WheelEnd {
 
     /** Where each link meets the carrier, by the name the carrier calls it. */
     Map<String, Vec3> carried();
+
+    /**
+     * The way each link's joint at the carrier points, by the same names: up or down, a ball pin's stud drawn into a
+     * boss; level, a bush's bolt through a fork.
+     */
+    Map<String, Vec3> axes();
+
+    /** Whether the carrier is forged, slim; or cast, stouter. */
+    boolean forged();
 }

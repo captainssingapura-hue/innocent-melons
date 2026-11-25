@@ -62,6 +62,7 @@ public record RearAxle(Proportions proportions) {
             joined.add(new Connection(link.name() + ", outer", link, "outer", carrier, at.get(k), Joining.BUSHED));
         }
         joined.add(new Connection("hub bearing", carrier, "hub", hub, "carrier", Joining.HINGE));
+        joined.add(new Connection("brake shield", carrier, "hub", corner.shield(), "carrier", Joining.BOLTED));
         joined.add(new Connection("brake disc", hub, "disc", corner.disc(), "hub", Joining.BOLTED));
         joined.add(new Connection("brake caliper", carrier, "caliper", corner.caliper(), "carrier", Joining.BOLTED));
         joined.add(new Connection("wheel", hub, "wheel", rim, "hub", Joining.BOLTED));
