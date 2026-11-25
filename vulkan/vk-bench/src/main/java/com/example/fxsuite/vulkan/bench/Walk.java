@@ -8,6 +8,7 @@ import com.example.fxsuite.vulkan.bench.play.Played;
 import com.example.fxsuite.vulkan.bench.play.Replayed;
 import com.example.fxsuite.vulkan.bench.play.Scripted;
 import com.example.fxsuite.vulkan.bench.play.Source;
+import com.example.fxsuite.vulkan.bench.play.Step;
 import com.example.fxsuite.vulkan.bench.subject.Courier;
 import com.example.fxsuite.vulkan.device.Canvas;
 import com.example.fxsuite.vulkan.device.Card;
@@ -36,6 +37,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
@@ -231,7 +233,12 @@ public final class Walk {
             // what a click means is told to the next step with the keys pressed, so a kept run plays it again
             final List<String> pressed = new ArrayList<>(driven.pressed());
             window.clicks().forEach(click -> pressed.addAll(roaming.clicked(click, window.width(), window.height())));
-            played.told(driven.held(), pressed, taken ? mouse.across() * SENSITIVITY : 0,
+            // the mouse's button held, while the mouse is the walk's, is told as a key held: the trigger
+            final Set<String> held = driven.held();
+            if (taken && window.pressing()) {
+                held.add(new Step().trigger());
+            }
+            played.told(held, pressed, taken ? mouse.across() * SENSITIVITY : 0,
                     taken ? -mouse.down() * SENSITIVITY : 0, mouse.scrolled());
             final long now = System.nanoTime();
             final double blend = roaming.stepped((now - last) / BILLION);

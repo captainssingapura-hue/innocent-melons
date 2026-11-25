@@ -39,6 +39,11 @@ public record Offers(List<Action> actions, Relation relation) {
         return offered().stream().findFirst();
     }
 
+    /** What is offered besides the one done by the plain asking, each barred as {@code barred} says: a menu's. */
+    public List<Offer> others(final Function<Action, Optional<String>> barred) {
+        return offered(barred).stream().filter(offer -> !offer.primary()).toList();
+    }
+
     /** Whether {@code action} is among what is offered. */
     public boolean offers(final Action action) {
         return actions.contains(action) && action.offered(relation).isPresent();

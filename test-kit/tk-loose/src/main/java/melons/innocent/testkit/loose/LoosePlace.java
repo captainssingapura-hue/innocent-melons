@@ -48,8 +48,10 @@ import java.util.TreeMap;
  * and in motion and how many the check has looked at, which stands still while
  * nothing happens.
  *
- * <p>What the walker holds is drawn before their hands, and over what is at hand a small light hangs. A fourth list
- * asks for anything that can be done with what is held or at hand, by its name ({@link Handling}).
+ * <p>What the walker holds is drawn before their hands, held up where it is readied to be thrown, and over what is
+ * at hand a small light hangs. While a throw is wound up, a row of lights shows the way the thing would fly if it
+ * were let go now. A fourth list asks for anything that can be done with what is held or at hand, by its name
+ * ({@link Handling}); and what is thrown from the hands has, at full power, the energy the throwing slider says.
  */
 public final class LoosePlace implements Place {
 
@@ -163,7 +165,7 @@ public final class LoosePlace implements Place {
     @Override
     public void readied(final Camera camera) {
         shaped();
-        handling.throwing(joules.value(), upward.value());
+        handling.full(joules.value());
         if (doing.asks() != did) {
             did = doing.asks();
             handling.asked(Action.values()[doing.step()]);
@@ -235,6 +237,9 @@ public final class LoosePlace implements Place {
         handling.held().filter(held -> shapes.containsKey(held.name())).ifPresent(held ->
                 looks.get(held.stuff()).drawn(pass, shapes.get(held.name()),
                         stands(handling.holding().orElseThrow()), camera, 1, held.stuff().tint()));
+        // the way what is being wound up would fly, a light each twentieth of a second
+        handling.curve().forEach(spot -> light.orElseThrow().drawn(pass, lamp.orElseThrow(),
+                new Mat4(new Vec3(spot.across(), spot.up(), spot.along())), camera, 1, new Vec3(1, 0.95, 0.8)));
         handling.atHand().flatMap(world::placed).ifPresent(placed -> light.orElseThrow().drawn(pass,
                 lamp.orElseThrow(), new Mat4(new Vec3(placed.at().across(), placed.at().up()
                         + world.thing(handling.atHand().orElseThrow()).shape().reaches() + OVER,

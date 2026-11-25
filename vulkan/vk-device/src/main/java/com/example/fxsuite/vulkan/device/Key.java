@@ -27,8 +27,8 @@ public enum Key {
     RIGHT(GLFW_KEY_RIGHT, GLFW_KEY_RIGHT),
     /** Time faster or as it is; and three presets. */
     T(GLFW_KEY_T, GLFW_KEY_T),
-    /** What is held is thrown. */
-    X(GLFW_KEY_X, GLFW_KEY_X),
+    /** More that can be done with what is held or at hand: a list to choose from. */
+    G(GLFW_KEY_G, GLFW_KEY_G),
     ONE(GLFW_KEY_1, GLFW_KEY_1),
     TWO(GLFW_KEY_2, GLFW_KEY_2),
     THREE(GLFW_KEY_3, GLFW_KEY_3),

@@ -104,6 +104,11 @@ public final class Window implements Target, AutoCloseable {
         glfwSetInputMode(glass.raw(), GLFW_CURSOR, taken ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
     }
 
+    /** Whether the mouse's first button is held down now, over this window. */
+    public boolean pressing() {
+        return glfwGetMouseButton(glass.raw(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+    }
+
     /** Whether {@code key} is held down now, with this window the one being typed in. */
     public boolean held(final Key key) {
         return glfwGetKey(glass.raw(), key.one()) == GLFW_PRESS || glfwGetKey(glass.raw(), key.other()) == GLFW_PRESS;

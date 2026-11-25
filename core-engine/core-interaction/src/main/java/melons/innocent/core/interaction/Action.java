@@ -5,7 +5,8 @@ import java.util.Optional;
 /**
  * The actions there are: what can be done with a thing, each with a name that never changes, by which a use of it is
  * told and kept, and with what it is called to one near the thing and to one holding it; not offered, where it is
- * called nothing. Carrying is one action seen two ways: near, a thing is taken up; held, it is put down.
+ * called nothing. Carrying is one action seen two ways: near, a thing is taken up; held, it is put down. An action
+ * either does its work at once or leads into a state that lasts ({@link Mode}), as throwing does.
  *
  * <p>Which of them can be done with a kind of thing is not said here, nor by the kind: it is bound to the kind apart
  * ({@link Bindings}).
@@ -18,7 +19,7 @@ public enum Action {
     CUT("cut", "Cut", ""),
     /** Crushed: broken where it lies or in the hands, and gone. */
     CRUSH("crush", "Crush", "Crush"),
-    /** Thrown from the hands, the way one faces. */
+    /** Thrown from the hands: it leads into throwing, where power is gathered before the thing is let go. */
     THROW("throw", "", "Throw"),
     /** Eaten, and gone. */
     EAT("eat", "Eat", "Eat"),
@@ -38,6 +39,14 @@ public enum Action {
     /** Its name, which never changes: what a use of it is told and kept by. */
     public String id() {
         return id;
+    }
+
+    /**
+     * The state it leads into, where it does not do its work at once: the thing and its holder are in that state
+     * from then on, with the controls that state has, until it is left. Nothing, of an action done at once.
+     */
+    public Optional<Mode> leads() {
+        return this == THROW ? Optional.of(Mode.THROWING) : Optional.empty();
     }
 
     /** What it is called to one who stands so to the thing; nothing, where it is not offered to them. */
