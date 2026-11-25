@@ -54,7 +54,7 @@ class SantanaShellTest {
         final Set<String> shell = built.placed().keySet().stream()
                 .filter(p -> p.part().group() == Group.BODYWORK || p.part().group() == Group.UNDERBODY)
                 .filter(p -> !p.part().name().endsWith("door") && !p.part().name().endsWith("wing")
-                        && !p.part().name().endsWith("lid"))
+                        && !p.part().name().endsWith("lid") && !p.part().name().equals("bonnet"))
                 .map(PartAt::said).collect(Collectors.toSet());
         assertEquals(Set.of("underbody", "right body side", "left body side", "bulkhead", "tail panel",
                 "roof header, front", "roof header, rear"), shell);

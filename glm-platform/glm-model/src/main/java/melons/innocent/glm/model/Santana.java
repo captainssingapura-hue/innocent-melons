@@ -12,8 +12,8 @@ import java.util.List;
  * to the platform's least track, on the platform's chassis; its body built as the original's was, a pressed steel
  * shell, its root its underbody, every chassis mount on it: the body sides welded along it, the bulkhead and the tail
  * panel across it, and the roof's two headers across between the body sides, a cage for the roof's glass; and its
- * four doors hung in it, its front wings bolted on and its boot lid hinged; and its glass, the roof dark
- * ({@link SantanaGlazing}).
+ * four doors hung in it, its front wings and bumpers bolted on, its bonnet and boot lid hinged; and its glass, the
+ * roof dark ({@link SantanaGlazing}).
  */
 public record Santana() implements Bodywork {
 
@@ -64,6 +64,13 @@ public record Santana() implements Bodywork {
                 new Connection("rear door", side, "rear door, hinge", rearDoor, "hinge", Joining.HINGE),
                 new Connection("front wing", root, "front wing, right", wing, "shell", Joining.BOLTED),
                 new Connection("boot lid", root, "boot lid", new BootLid(LINES).part(), "hinge", Joining.HINGE)));
+        joined.add(new Connection("bonnet", bulkhead, "bonnet", new Bonnet(LINES).part(), "hinge", Joining.HINGE));
+        for (final Bumper bumper : List.of(new SantanaBumpers(LINES).front(), new SantanaBumpers(LINES).rear())) {
+            final Part bar = bumper.part();
+            joined.add(new Connection(bumper.name(), root, bumper.name(), bar, "shell", Joining.BOLTED));
+            joined.add(new Connection(bumper.name() + " strip", bar, "shell", bumper.strip(), "bumper",
+                    Joining.SEATED));
+        }
         joined.addAll(glazing.screens(front, rear));
         joined.addAll(glazing.windows(side, frontShape, frontDoor, rearShape, rearDoor));
         return joined;

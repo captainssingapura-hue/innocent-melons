@@ -18,7 +18,8 @@ import java.util.Map;
  * members spot-welded into one, as the original's is, sealed and coated underneath; its floor ({@link ShellFloor}),
  * its front ({@link ShellFront}) and its rear ({@link ShellRear}). Its points, both sides: every mount the chassis is
  * fixed to it by, where the platform puts them, so the axles and the engine bolt up to it as they would to the cast
- * body; where the body sides, the bulkhead and the tail panel are welded to it; and where the front wings bolt on.
+ * body; where the body sides, the bulkhead and the tail panel are welded to it; and where the front wings and the
+ * bumpers bolt on.
  *
  * @param lines where the shell runs
  */
@@ -52,6 +53,9 @@ record SantanaShell(ShellLines lines) {
         named.put("bulkhead", new Vec3(0, lines.floor(), lines.bulkhead()));
         named.put("tail panel", new Vec3(0, lines.boot(), lines.tail()));
         named.put("boot lid", new BootLid(lines.lines()).hinge());
+        final SantanaBumpers bumpers = new SantanaBumpers(lines.lines());
+        named.put("front bumper", bumpers.front().mount());
+        named.put("rear bumper", bumpers.rear().mount());
         final Sheets sheets = new Sheets(SKIN);
         final List<Mesh> made = new ArrayList<>(new ShellFloor(lines, sheets, body.frontRail()).meshes());
         made.addAll(new ShellFront(lines, body, sheets).meshes());

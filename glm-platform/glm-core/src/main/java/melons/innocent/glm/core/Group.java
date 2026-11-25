@@ -17,6 +17,7 @@ public enum Group {
     BODYWORK("Body panels"),
     GLASS("Windows"),
     ROOF("Glass roof"),
+    TRIM("Bumpers and trim"),
     STEERING("Steering"),
     WHEELS("Wheels"),
     TYRES("Tyres");

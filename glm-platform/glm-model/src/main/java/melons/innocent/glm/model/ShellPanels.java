@@ -16,10 +16,10 @@ import java.util.Map;
 
 /**
  * The shell's panels welded to its underbody and its body sides, each a part of its own, pressed steel, painted: the
- * bulkhead between the engine and the cabin, up to the scuttle under the windscreen, notched over the tunnel; the
- * tail panel across the tail, from the boot's floor up to the boot lid's edge, cut for the tail lamps each side of the
- * number plate; and the roof's two headers across between the body sides' roof rails, over the windscreen and over
- * the rear window, closing the shell into a cage the roof's glass will lie on.
+ * bulkhead between the engine and the cabin, up to the scuttle under the windscreen, notched over the tunnel, the
+ * bonnet hinged to it; the tail panel across the tail, from the boot's floor up to the boot lid's edge, cut for the
+ * tail lamps each side of the number plate; and the roof's two headers across between the body sides' roof rails,
+ * over the windscreen and over the rear window, closing the shell into a cage the roof's glass will lie on.
  *
  * @param lines where the shell runs
  */
@@ -52,7 +52,10 @@ record ShellPanels(ShellLines lines) {
         outline.addAll(List.of(new Spot(-foot, floor), new Spot(-t, floor), new Spot(-t, lines.tunnelY()),
                 new Spot(t, lines.tunnelY())));
         final double across = lines.half(z, top) - INSIDE;
-        return PRESSED.part("bulkhead", Group.BODYWORK, false, Map.of("underbody", new Vec3(0, floor, z)),
+        final Map<String, Vec3> points = new LinkedHashMap<>();
+        points.put("underbody", new Vec3(0, floor, z));
+        points.put("bonnet", new Bonnet(lines.lines()).hinge());
+        return PRESSED.part("bulkhead", Group.BODYWORK, false, points,
                 new Shapes(16).joined(List.of(SHEETS.across(z, outline, List.of()),
                         SHEETS.level(top, -across, z, across, z + SCUTTLE))));
     }
