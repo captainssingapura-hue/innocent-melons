@@ -1,42 +1,42 @@
 package com.example.fxsuite.life.body.head;
 
 import com.example.fxsuite.life.body.Field;
-import com.example.fxsuite.life.body.Reshaped;
-import com.example.fxsuite.life.body.Rot;
 import com.example.fxsuite.life.body.V3;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * A head sized to a man's skull: a round head, its eye where the skull's orbit sets it; made as big as it is asked, it
- * is asked nothing more; made a fifth taller, it is made shorter by as much, its breadth and length left as they were.
+ * A head sized to a man's skull region by region: an egg of a head, longer down than up, its eye where the skull's
+ * orbit sets it; made as it is asked, it is asked nothing more; its vault made a quarter higher, only its vault is
+ * made lower again, by as much.
  */
 class HeadSizeTest {
 
-    private final Field.Shape round = Field.Ellipsoid.of(new V3(0, 6.5, 0.5), new V3(10, 0, 0), new V3(0, 10, 0),
+    private final Field.Shape egg = Field.Ellipsoid.of(new V3(0, 4, 0.5), new V3(9, 0, 0), new V3(0, 13, 0),
             new V3(0, 0, 10));
-    private final V3 eye = SkullUnder.INSTANCE.at(V3.ZERO);
-    private final V3 size = HeadSize.INSTANCE.of(round, eye);
+    private final V3 eye = SkullUnder.INSTANCE.eyeOnSkull();
+    private final HeadWarp sized = HeadSize.INSTANCE.of(egg, eye);
 
     @Test
-    void aHeadMadeAsBigAsItIsAskedIsAskedNothingMore() {
-        final V3 again = HeadSize.INSTANCE.of(stretched(size), eye.times(size));
-        assertEquals(1, again.x(), 0.01);
-        assertEquals(1, again.y(), 0.01);
-        assertEquals(1, again.z(), 0.01);
+    void aHeadMadeAsItIsAskedIsAskedNothingMore() {
+        final HeadWarp.Scales again = HeadSize.INSTANCE.of(HeadSize.INSTANCE.made(egg, sized), sized.apply(eye))
+                .scales();
+        assertEquals(1, again.vault(), 0.015);
+        assertEquals(1, again.face(), 0.015);
+        assertEquals(1, again.ahead(), 0.015);
+        assertEquals(1, again.cheek(), 0.015);
     }
 
     @Test
-    void aHeadTallerIsMadeShorterByAsMuchAndNoNarrower() {
-        final V3 taller = new V3(1, 1.2, 1);
-        final V3 k = HeadSize.INSTANCE.of(stretched(taller), eye.times(taller));
-        assertEquals(size.y() / 1.2, k.y(), 0.02 * size.y());
-        assertEquals(size.x(), k.x(), 0.02 * size.x());
-        assertEquals(size.z(), k.z(), 0.02 * size.z());
-    }
-
-    private Field.Shape stretched(final V3 k) {
-        return new Reshaped(round, V3.ZERO, V3.ZERO, Rot.NONE, k, 0);
+    void aHigherVaultIsMadeLowerByAsMuchAndNothingElse() {
+        final HeadWarp higher = new HeadWarp(eye, sized.levels(), new HeadWarp.Scales(1.25, 1, 1, 1));
+        final HeadWarp.Scales k = HeadSize.INSTANCE.of(HeadSize.INSTANCE.made(egg, higher), higher.apply(eye))
+                .scales();
+        final HeadWarp.Scales s = sized.scales();
+        assertEquals(s.vault() / 1.25, k.vault(), 0.02 * s.vault());
+        assertEquals(s.face(), k.face(), 0.02 * s.face());
+        assertEquals(s.ahead(), k.ahead(), 0.02 * s.ahead());
+        assertEquals(s.cheek(), k.cheek(), 0.02 * s.cheek());
     }
 }

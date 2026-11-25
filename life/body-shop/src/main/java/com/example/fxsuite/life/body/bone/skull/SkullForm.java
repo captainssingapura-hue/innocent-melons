@@ -3,6 +3,7 @@ package com.example.fxsuite.life.body.bone.skull;
 import com.example.fxsuite.life.body.Field;
 import com.example.fxsuite.life.body.V3;
 import com.example.fxsuite.life.body.bone.Bend;
+import com.example.fxsuite.life.body.head.HeadWarp;
 import com.example.fxsuite.life.body.head.SkullUnder;
 
 import java.io.IOException;
@@ -42,9 +43,9 @@ public enum SkullForm {
         }
     }
 
-    /** How many times as big along each way the clay head the skull is fitted under is made; none, if none. */
-    public Optional<V3> headSize() {
-        return under.map(SkullUnder.Fit::size);
+    /** How the clay head the skull is fitted under is made a man's size, region by region; none, if none. */
+    public Optional<HeadWarp> headWarp() {
+        return under.map(SkullUnder.Fit::warp);
     }
 
     /** Where the clay head the skull is fitted under is set on it, moved from where its frame has it; none, if none. */

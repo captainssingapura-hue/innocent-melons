@@ -25,11 +25,6 @@ public record V3(double x, double y, double z) implements Scalar {
         return new V3(x * k, y * k, z * k);
     }
 
-    /** Each way so many times as far as {@code k} says: its x {@code k}'s x times, and so on. */
-    public V3 times(final V3 k) {
-        return new V3(x * k.x, y * k.y, z * k.z);
-    }
-
     public double dot(final V3 o) {
         return x * o.x + y * o.y + z * o.z;
     }

@@ -11,6 +11,7 @@ import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.EnumSet;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -27,11 +28,12 @@ public record ClayHead() implements StatelessFunctionalObject {
     private static final double CELL = 0.2;
 
     /**
-     * The head of the reference at {@code reference}, in its head's frame, cm, made {@code size} times as big along
-     * each way ({@link HeadSize}).
+     * The head of the reference at {@code reference}, in its head's frame, cm, made a man's size region by region as
+     * {@code sized} makes it ({@link HeadSize}), if it is to be.
      */
-    public Mesher.Mesh of(final Path reference, final V3 size) throws IOException {
-        return Mesher.of(field(ReferenceReading.INSTANCE.of(reference).scaled(size), EnumSet.allOf(Piece.class)), CELL);
+    public Mesher.Mesh of(final Path reference, final Optional<HeadWarp> sized) throws IOException {
+        final ReferenceHead r = ReferenceReading.INSTANCE.of(reference);
+        return Mesher.of(field(sized.map(r::warped).orElse(r), EnumSet.allOf(Piece.class)), CELL);
     }
 
     /** The head of the reference {@code r} with the pieces {@code on}, each as the reference has it, as a field. */

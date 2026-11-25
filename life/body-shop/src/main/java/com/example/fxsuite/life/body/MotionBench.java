@@ -347,7 +347,7 @@ public final class MotionBench extends Application {
         }
         try {
             final Mesher.Mesh head = ClayHead.INSTANCE.of(java.nio.file.Path.of(path),
-                    com.example.fxsuite.life.body.bone.skull.SkullForm.INSTANCE.headSize().orElse(new V3(1, 1, 1)));
+                    com.example.fxsuite.life.body.bone.skull.SkullForm.INSTANCE.headWarp());
             final V3 at = com.example.fxsuite.life.body.bone.skull.SkullForm.INSTANCE.headAt().orElse(V3.ZERO);
             final double k = com.example.fxsuite.life.body.bone.skull.SkullForm.INSTANCE.headAt().isPresent() ? 1
                     : ClayHead.INSTANCE.scale(head, skin);

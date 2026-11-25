@@ -69,12 +69,13 @@ public final class BodyMaker {
         }
         try {
             told.accept("the clay head");
-            final V3 size = SkullForm.INSTANCE.headSize().orElse(new V3(1, 1, 1));
-            final Mesher.Mesh head = ClayHead.INSTANCE.of(Path.of(path), size);
+            final Mesher.Mesh head = ClayHead.INSTANCE.of(Path.of(path), SkullForm.INSTANCE.headWarp());
             final V3 at = SkullForm.INSTANCE.headAt().orElse(V3.ZERO);
             final double k = SkullForm.INSTANCE.headAt().isPresent() ? 1 : ClayHead.INSTANCE.scale(head, skin);
-            told.accept(String.format(Locale.ROOT, "the clay head joined on, %.3f, %.3f, %.3f times as big across, up "
-                    + "and ahead", size.x() * k, size.y() * k, size.z() * k));
+            told.accept("the clay head joined on, " + SkullForm.INSTANCE.headWarp().map(w -> String.format(Locale.ROOT,
+                    "its vault %.3f, its face %.3f as high, %.3f as long, %.3f as broad at the cheekbones",
+                    w.scales().vault(), w.scales().face(), w.scales().ahead(), w.scales().cheek()))
+                    .orElse(String.format(Locale.ROOT, "%.3f times as big", k)));
             return NeckJoin.INSTANCE.joined(skin, head, at, k);
         } catch (final IOException e) {
             told.accept("the clay head not made: " + e.getMessage());
