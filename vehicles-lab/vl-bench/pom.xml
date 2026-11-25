@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.vehiclelab</groupId>
+        <artifactId>vehicles-lab</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>vl-bench</artifactId>
+
+    <description>
+        The vehicles bench: a vehicle on level ground looked at on the card from any side, in whatever light is set;
+        a JavaFX window beside it to choose each of its finishes and the colour of its paint, and to turn its bars.
+        mvn -pl vehicles-lab/vl-bench exec:java
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>melons.innocent.vehiclelab</groupId>
+            <artifactId>vl-drawn</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-bench</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <!-- mvn -pl vehicles-lab/vl-bench exec:java opens the bench -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.6.3</version>
+                <configuration>
+                    <mainClass>melons.innocent.vehiclelab.bench.VehiclesBench</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
