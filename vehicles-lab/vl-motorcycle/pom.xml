@@ -25,6 +25,10 @@
             <artifactId>vl-frame</artifactId>
         </dependency>
         <dependency>
+            <groupId>melons.innocent.vehiclelab</groupId>
+            <artifactId>vl-forms</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.example.fxsuite.vulkan</groupId>
             <artifactId>vk-drawing</artifactId>
         </dependency>

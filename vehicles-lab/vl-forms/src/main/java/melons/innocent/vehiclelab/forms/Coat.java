@@ -1,4 +1,4 @@
-package melons.innocent.vehiclelab.motorcycle;
+package melons.innocent.vehiclelab.forms;
 
 /**
  * What a finish is: a {@link Kind} of surface, and the colour it is where the kind takes one, as paint does, said as

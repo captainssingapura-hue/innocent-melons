@@ -1,5 +1,7 @@
 package melons.innocent.vehiclelab.frame;
 
+import com.example.fxsuite.vulkan.space.Vec3;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,6 +45,11 @@ public final class Framing {
     /** The same, welded. */
     public Framing pair(final String named, final double across, final double along, final double up) {
         return pair(named, across, along, up, Frame.Kind.WELD);
+    }
+
+    /** The same, its right one at {@code at} as the card has points: across as x, up as y, along as z. */
+    public Framing pair(final String named, final Vec3 at) {
+        return pair(named, at.x(), at.z(), at.y());
     }
 
     /** A rod from the node named {@code from} to the one named {@code to}, of {@code made}, or null for its tube. */

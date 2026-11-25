@@ -1,34 +1,27 @@
 package melons.innocent.vehiclelab.drawn;
 
-import com.example.fxsuite.texture.materials.Material;
-import com.example.fxsuite.texture.materials.Materials;
-import com.example.fxsuite.texture.materials.Shades;
 import com.example.fxsuite.vulkan.device.Card;
 import com.example.fxsuite.vulkan.device.Pass;
-import com.example.fxsuite.vulkan.render.Looked;
 import com.example.fxsuite.vulkan.render.Shaped;
 import com.example.fxsuite.vulkan.shade.Laid;
-import com.example.fxsuite.vulkan.shade.Look;
 import com.example.fxsuite.vulkan.space.Mat4;
 import com.example.fxsuite.vulkan.space.Turned;
 import com.example.fxsuite.vulkan.space.Vec3;
 import com.example.fxsuite.vulkan.view.Camera;
+import melons.innocent.vehiclelab.forms.Coat;
 import melons.innocent.vehiclelab.motorcycle.Boxer;
-import melons.innocent.vehiclelab.motorcycle.Coat;
 import melons.innocent.vehiclelab.motorcycle.Livery;
 import melons.innocent.vehiclelab.motorcycle.Part;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
 
 /**
- * The boxer on the card: each of its parts sent once, and a look for every kind of finish there is, so whatever its
- * owner chooses is drawn at once, with nothing sent again. Each part is drawn in the material lab's material for the
- * kind of finish its slot is in, painted the colour chosen where the kind takes one; standing where the bike stands,
- * the forks and the front wheel turned about the head tube as steered, and each wheel turned about its axle as it has
- * rolled. What is seen through is drawn apart, after everything else. Closed, it is gone from the card.
+ * The boxer on the card: each of its parts sent once, and every kind of finish there is ({@link Coats}), so whatever
+ * its owner chooses is drawn at once, with nothing sent again. Each part is drawn in the finish its slot is in;
+ * standing where the bike stands, the forks and the front wheel turned about the head tube as steered, and each wheel
+ * turned about its axle as it has rolled. What is seen through is drawn apart, after everything else. Closed, it is
+ * gone from the card.
  */
 public final class BoxerDrawn implements AutoCloseable {
 
@@ -37,16 +30,13 @@ public final class BoxerDrawn implements AutoCloseable {
     }
 
     private final Boxer boxer = new Boxer();
-    private final Map<Coat.Kind, Looked> looks = new EnumMap<>(Coat.Kind.class);
+    private final Coats coats;
     private final List<Drawn> drawn = new ArrayList<>();
 
     /** The boxer, on {@code card}, its layouts as {@code laid} says. */
     public BoxerDrawn(final Card card, final Laid laid) {
         try {
-            final Shades shades = new Shades();
-            for (final Coat.Kind kind : Coat.Kind.values()) {
-                looks.put(kind, new Looked(card, new Look(laid, shades.of(material(kind)))));
-            }
+            this.coats = new Coats(card, laid);
             for (final Part part : boxer.parts()) {
                 drawn.add(new Drawn(part, new Shaped(card, laid, part.form())));
             }
@@ -54,23 +44,6 @@ public final class BoxerDrawn implements AutoCloseable {
             close();
             throw refused;
         }
-    }
-
-    /** What the lab has for a finish of {@code kind}. */
-    private Material material(final Coat.Kind kind) {
-        return switch (kind) {
-            case GLOSS_PAINT -> new Materials.GlossPaint();
-            case METALLIC_PAINT -> new Materials.MetallicPaint();
-            case ENAMEL -> new Materials.Enamel();
-            case TITANIUM -> new Materials.Titanium();
-            case GUN_METAL -> new Materials.Gunmetal();
-            case STEEL -> new Materials.Steel();
-            case BRONZE -> new Materials.Bronze();
-            case GOLD -> new Materials.Gold();
-            case RUBBER -> new Materials.Rubber();
-            case GLASS -> new Materials.Glass();
-            case LAMP -> new Materials.LitPaper();
-        };
     }
 
     /**
@@ -93,11 +66,8 @@ public final class BoxerDrawn implements AutoCloseable {
                        final Livery livery, final boolean seenThrough) {
         for (final Drawn part : drawn) {
             final Coat coat = livery.coat(part.part().slot());
-            final Looked look = looks.get(coat.kind());
-            if (look.seenThrough() == seenThrough) {
-                final double[] rgb = coat.rgb();
-                look.drawn(pass, part.form(), standing(part.part().moves(), placed, steer, roll), camera, 1,
-                        new Vec3(rgb[0], rgb[1], rgb[2]));
+            if (coats.seenThrough(coat) == seenThrough) {
+                coats.drawn(pass, part.form(), standing(part.part().moves(), placed, steer, roll), camera, coat);
             }
         }
     }
@@ -117,8 +87,9 @@ public final class BoxerDrawn implements AutoCloseable {
     @Override
     public void close() {
         drawn.forEach(d -> d.form().close());
-        looks.values().forEach(Looked::close);
+        if (coats != null) {
+            coats.close();
+        }
         drawn.clear();
-        looks.clear();
     }
 }

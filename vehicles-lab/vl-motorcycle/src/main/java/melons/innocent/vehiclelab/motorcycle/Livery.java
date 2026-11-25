@@ -1,5 +1,7 @@
 package melons.innocent.vehiclelab.motorcycle;
 
+import melons.innocent.vehiclelab.forms.Coat;
+
 import java.util.EnumMap;
 import java.util.Map;
 

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.glm</groupId>
+        <artifactId>glm-platform</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>glm-bench</artifactId>
+
+    <description>
+        The GLM bench: the platform put together and drawn on the card, looked at from any side in whatever light is
+        set; a JavaFX window beside it to show or hide each group of its parts and choose what each is finished in.
+        mvn -pl glm-platform/glm-bench exec:java
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>melons.innocent.glm</groupId>
+            <artifactId>glm-model</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.vehiclelab</groupId>
+            <artifactId>vl-drawn</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-bench</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <!-- mvn -pl glm-platform/glm-bench exec:java opens the bench -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.6.3</version>
+                <configuration>
+                    <mainClass>melons.innocent.glm.bench.GlmBench</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
