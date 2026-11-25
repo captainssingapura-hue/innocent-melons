@@ -19,9 +19,9 @@ public record EngineRun(int engine, double slow, boolean turbo, double volume, B
 
     /** How the block is shown: as glass, so what turns inside is seen; finished; or not at all. */
     public enum Block {
-        GLASS("The block as glass"),
-        FINISHED("The block finished"),
-        HIDDEN("The block hidden");
+        GLASS("The block and heads as glass"),
+        FINISHED("The block and heads finished"),
+        HIDDEN("The block and heads hidden");
 
         private final String title;
 

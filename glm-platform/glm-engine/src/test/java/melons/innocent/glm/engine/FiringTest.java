@@ -71,11 +71,13 @@ class FiringTest {
         for (int k = 0; k < e.perBank(); k++) {
             final Mat4 at = inside.chamber(1, k, firing.top(1, k));
             final Vec3 high = moved(at, new Vec3(0, 1, 0)).minus(moved(at, new Vec3(0, 0, 0)));
-            assertEquals(1.0, high.length(), 1e-9);
+            assertEquals(0, high.length(), 1e-9, "its crown flush with the deck");
             final Mat4 down = inside.chamber(1, k, firing.top(1, k) + 180);
-            assertEquals(e.stroke() + 1.0, moved(down, new Vec3(0, 1, 0)).minus(moved(down, new Vec3(0, 0, 0))).length(),
+            assertEquals(e.stroke(), moved(down, new Vec3(0, 1, 0)).minus(moved(down, new Vec3(0, 0, 0))).length(),
                     1e-9);
         }
+        final double roof = inside.flame().points().stream().mapToDouble(Vec3::y).max().orElseThrow();
+        assertEquals(new HeadFigures(e).ridge(), roof, 1e-9, "the head's chamber up to its ridge");
     }
 
     private Vec3 moved(final Mat4 m, final Vec3 p) {
