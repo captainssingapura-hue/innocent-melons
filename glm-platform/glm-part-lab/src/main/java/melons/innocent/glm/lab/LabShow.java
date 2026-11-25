@@ -4,8 +4,8 @@ import melons.innocent.glm.core.PartAt;
 
 /**
  * What the lab shows, as its window said it last: which part is looked at, and whether alone or put together with
- * the rest; the rest, put together, as glass, finished or hidden; and whether the grid, the ground and the part's
- * points are shown, and how finely the grid is ruled.
+ * the rest; the rest, put together, as glass, finished, hidden, or all hidden but the part's own group; and whether
+ * the grid, the ground and the part's points are shown, and how finely the grid is ruled.
  *
  * @param part    the part looked at
  * @param level   alone, or put together
@@ -39,6 +39,7 @@ public record LabShow(PartAt part, Level level, Others others, boolean grid, boo
     public enum Others {
         GHOST("The rest as glass"),
         FINISHED("The rest finished"),
+        GROUP("Its group finished, the rest hidden"),
         HIDDEN("The rest hidden");
 
         private final String title;

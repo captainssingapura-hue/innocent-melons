@@ -32,9 +32,10 @@ class RearAxleTest {
         assertEquals(List.of(), platform.problems());
         final Assembled built = new Assembly(platform).assembled();
         assertEquals(List.of(), built.problems(1e-6));
-        assertEquals(2 + 2 * 13, built.placed().size(), "the underbody and subframe once, thirteen parts each side");
-        assertEquals(3 + 2 * (4 + 2), built.gaps().size(), "met again: three mounts, and each side four links and"
-                + " the spring's and the damper's tops");
+        assertEquals(4 + 2 * 22, built.placed().size(), "the underbody, two cross members and a sleeve once, and"
+                + " each side the subframe's nine pieces and thirteen parts");
+        assertEquals(4 + 2 * (4 + 2), built.gaps().size(), "met again: a back mount's weld, a side member's"
+                + " weld, both front mounts, and each side four links and the spring's and the damper's tops");
     }
 
     @Test

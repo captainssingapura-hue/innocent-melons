@@ -11,11 +11,12 @@ import java.util.List;
 
 /**
  * The GLM platform's rear axle, a five-link axle, made to a car's figures and joined part to part from the underbody
- * out: the subframe bushed to the underbody at its four mounts; on each side, the spring's link bushed to the subframe
- * and the wheel's carrier on its outer end; the other four links bushed to the subframe and each on its ball joint at
- * the carrier; the hub turning in the carrier, the disc bolted to the hub and the caliper to the carrier; the wheel
- * bolted to the hub and the tyre seated on it; the air spring on its seat on the spring's link up to the underbody;
- * and the damper from the carrier up to the underbody. Said as on the right, the left its mirror.
+ * out: the subframe, welded from its pieces, bushed to the underbody at its four mounts; on each side, the spring's
+ * link bushed to its clevis on the subframe and the wheel's carrier on its outer end; the other four links bushed to
+ * theirs and each on its ball joint at the carrier; the hub turning in the carrier, the disc bolted to the hub and
+ * the caliper to the carrier; the wheel bolted to the hub and the tyre seated on it; the air spring on its seat on
+ * the spring's link up to the underbody; and the damper from the carrier up to the underbody. Said as on the right,
+ * the left its mirror.
  *
  * @param proportions the car's figures
  */
@@ -34,7 +35,7 @@ public record RearAxle(Proportions proportions) {
         final RearPoints points = new RearPoints(proportions);
         final Shapes shapes = new Shapes(ROUND);
         final Part body = new RearBody(points, shapes).part();
-        final Part subframe = new RearSubframe(points).part();
+        final RearSubframe subframe = new RearSubframe(points);
         final RearLinks links = new RearLinks(points, shapes);
         final Part spring = links.spring();
         final List<Part> others = List.of(links.upperFront(), links.upperRear(), links.lowerFront(), links.toe());
@@ -47,19 +48,13 @@ public record RearAxle(Proportions proportions) {
         final RearSprings springs = new RearSprings(points, shapes);
         final Part air = springs.spring();
         final Part damper = springs.damper();
-        final List<Connection> joined = new ArrayList<>();
-        for (final String side : List.of("right", "left")) {
-            for (final String end : List.of("front", "back")) {
-                joined.add(new Connection("subframe mount, " + end + ", " + side, body, "subframe mount, " + end + ", "
-                        + side, subframe, "body mount, " + end + ", " + side, Joining.BUSHED));
-            }
-        }
-        joined.add(new Connection("spring link, inner", subframe, "spring link, right", spring, "inner",
+        final List<Connection> joined = new ArrayList<>(subframe.joined(body));
+        joined.add(new Connection("spring link, inner", subframe.clevis("spring link"), "pivot", spring, "inner",
                 Joining.BUSHED));
         joined.add(new Connection("spring link, outer", spring, "outer", carrier, "spring link", Joining.BUSHED));
         for (int k = 0; k < others.size(); k++) {
             final Part link = others.get(k);
-            joined.add(new Connection(link.name() + ", inner", subframe, link.name() + ", right", link, "inner",
+            joined.add(new Connection(link.name() + ", inner", subframe.clevis(link.name()), "pivot", link, "inner",
                     Joining.BUSHED));
             joined.add(new Connection(link.name() + ", outer", link, "outer", carrier, at.get(k), Joining.BALL_JOINT));
         }

@@ -8,7 +8,7 @@ import com.example.fxsuite.vulkan.space.Vec3;
  * out by half the track, back by the wheelbase. Its five links each from the subframe, inboard, out to the wheel's
  * carrier: two upper links, ahead of the axle and behind it; a lower link carrying the spring, about under it; a lower
  * link ahead; and the toe link, behind, which keeps the wheel straight. The damper from the carrier, behind the axle,
- * up to its mount; the subframe's mounts to the body, ahead of the axle and behind, on the rails. Where a car's figures
+ * up to its mount; the subframe's mounts to the body, ahead of the axle low and behind it high. Where a car's figures
  * change, the points on the wheel's carrier move with the wheel; those on the subframe and the body are the
  * platform's own.
  *
@@ -16,11 +16,11 @@ import com.example.fxsuite.vulkan.space.Vec3;
  */
 record RearPoints(Proportions proportions) {
 
-    /** How high the subframe's mounts are over the wheel's middle. */
+    /** How high the springs' tops are over the wheel's middle. */
     private static final double MOUNTS = 21;
 
     /** The point {@code x} across, {@code up} over the wheel's middle, and {@code along} ahead of the back axle. */
-    private Vec3 at(final double x, final double up, final double along) {
+    Vec3 at(final double x, final double up, final double along) {
         return new Vec3(x, proportions.tyre() + up, proportions.back() + along);
     }
 
@@ -40,7 +40,7 @@ record RearPoints(Proportions proportions) {
     }
 
     Vec3 upperFrontInner() {
-        return at(36, 18, 16);
+        return at(33, 8, -12);
     }
 
     /** Where the upper rear link meets the carrier, and the subframe. */
@@ -49,7 +49,7 @@ record RearPoints(Proportions proportions) {
     }
 
     Vec3 upperRearInner() {
-        return at(36, 18, -18);
+        return at(38, 19, -27);
     }
 
     /** Where the spring's link meets the carrier, and the subframe. */
@@ -58,7 +58,7 @@ record RearPoints(Proportions proportions) {
     }
 
     Vec3 springInner() {
-        return at(28, -16, -4);
+        return at(32, -12, -2);
     }
 
     /** Where the spring sits on its link: three fifths of the way out. */
@@ -78,7 +78,7 @@ record RearPoints(Proportions proportions) {
     }
 
     Vec3 lowerFrontInner() {
-        return at(26, -14, 24);
+        return at(35, -14.5, 23);
     }
 
     /** Where the toe link meets the carrier, and the subframe. */
@@ -87,7 +87,7 @@ record RearPoints(Proportions proportions) {
     }
 
     Vec3 toeInner() {
-        return at(30, -6, -20);
+        return at(33, 1, -22);
     }
 
     /** Where the damper meets the carrier, and the body. */
@@ -117,21 +117,15 @@ record RearPoints(Proportions proportions) {
         return out(7, 4, -13);
     }
 
-    /** The subframe's mounts to the body, ahead of the axle and behind. */
+    /**
+     * The subframe's mounts to the body: ahead of the axle, low, at the ends of its side members' goosenecks; behind
+     * it, high, at the ends of its back cross member's arms, where the body's rails rise over the axle.
+     */
     Vec3 mountFront() {
-        return at(46, MOUNTS, 32);
+        return at(45, -4, 31);
     }
 
     Vec3 mountBack() {
-        return at(46, MOUNTS, -34);
-    }
-
-    /** The subframe's lower rail, ahead and behind. */
-    Vec3 railFront() {
-        return at(32, -14, 26);
-    }
-
-    Vec3 railBack() {
-        return at(32, -14, -24);
+        return at(46, 18, -32);
     }
 }

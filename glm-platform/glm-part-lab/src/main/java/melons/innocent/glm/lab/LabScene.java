@@ -65,7 +65,8 @@ public record LabScene(Assembled built, LabShow show, Finishes finishes) {
                 all.add(new Placement(part, at, own));
             } else if (show.others() == LabShow.Others.GHOST) {
                 all.add(new Placement(part, at, new Coat(Coat.Kind.GLASS)));
-            } else if (show.others() == LabShow.Others.FINISHED) {
+            } else if (show.others() == LabShow.Others.FINISHED
+                    || show.others() == LabShow.Others.GROUP && part.part().group() == looked.part().group()) {
                 all.add(new Placement(part, at, finishes.of(part.part().group())));
             }
         });

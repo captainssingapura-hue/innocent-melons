@@ -37,8 +37,9 @@ import java.util.concurrent.atomic.AtomicReference;
  * a JavaFX window beside it ({@link LabConsole}) to choose the part, how it is looked at, and what is shown round it.
  *
  * <p>For a run with nobody at it: {@code -Dlab.part=} the start of a part's name, as the window lists it ("Links:
- * right toe"); {@code -Dlab.level=assembly}; {@code -Dlab.fine=true}; {@code -Dlab.grid=false}; {@code
- * -Dlab.ground=false}; {@code -Dbench.yaw=}, {@code -Dbench.pitch=}; the light's options as on every bench; {@code
+ * right toe"); {@code -Dlab.level=assembly}; {@code -Dlab.others=} ghost, finished, group or hidden; {@code
+ * -Dlab.fine=true}; {@code -Dlab.grid=false}; {@code -Dlab.ground=false}; {@code -Dbench.yaw=}, {@code
+ * -Dbench.pitch=}; the light's options as on every bench; {@code
  * -Dbench.settle=} so many thousandths of a second ends it; {@code -Dbench.snapshot.card=} a file the card's picture
  * is saved to as it ends.
  */
@@ -98,9 +99,14 @@ public final class PartLab {
         final PartAt part = parts.stream().filter(p -> (p.part().group().title() + ": " + p.said())
                 .toLowerCase(Locale.ROOT).startsWith(named)).findFirst().orElse(parts.getFirst());
         return new LabShow(part, "assembly".equals(System.getProperty("lab.level")) ? LabShow.Level.ASSEMBLY
-                : LabShow.Level.PART, LabShow.Others.GHOST, !"false".equals(System.getProperty("lab.grid")),
+                : LabShow.Level.PART, others(), !"false".equals(System.getProperty("lab.grid")),
                 !"false".equals(System.getProperty("lab.ground")), true,
                 Boolean.getBoolean("lab.fine") ? Spacing.FINE : Spacing.NORMAL);
+    }
+
+    /** How the rest are shown to begin with, as the run says: as glass if it says nothing. */
+    private LabShow.Others others() {
+        return LabShow.Others.valueOf(System.getProperty("lab.others", "ghost").toUpperCase(Locale.ROOT));
     }
 
     /** Frame after frame, until a window is closed, the time asked for is up or the validation layer speaks. */
