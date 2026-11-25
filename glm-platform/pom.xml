@@ -43,6 +43,8 @@
         <module>glm-part-lab</module>
         <!-- The GLM engine bench: an engine running on the card, its crank, rods and pistons turning, heard as it runs. -->
         <module>glm-engine-bench</module>
+        <!-- The GLM car test driven on a test track, up a ramp and along a viaduct, by the avatar engine's own. -->
+        <module>glm-test-drive</module>
     </modules>
 
     <dependencyManagement>

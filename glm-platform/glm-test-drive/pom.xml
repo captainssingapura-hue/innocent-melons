@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.glm</groupId>
+        <artifactId>glm-platform</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>glm-test-drive</artifactId>
+
+    <description>
+        The GLM car test driven: the bare vehicle, its engine in its bay, driven from the keyboard by the avatar
+        engine's own land vehicle, its test engine, on a test track on the test kit, up a ramp, along a viaduct and down
+        a spiral; followed by a chase camera, its speed over the picture.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>melons.innocent.glm</groupId>
+            <artifactId>glm-bench</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.testkit</groupId>
+            <artifactId>tk-ground</artifactId>
+            <version>${lab.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>building-walk</artifactId>
+            <version>${lab.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>building-bench</artifactId>
+            <version>${lab.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>road-bridges</artifactId>
+            <version>${lab.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-flight</artifactId>
+            <version>${vulkan.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <!-- mvn -pl glm-platform/glm-test-drive exec:java drives the car on the test track -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.6.3</version>
+                <configuration>
+                    <mainClass>melons.innocent.glm.testdrive.GlmTestDrive</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

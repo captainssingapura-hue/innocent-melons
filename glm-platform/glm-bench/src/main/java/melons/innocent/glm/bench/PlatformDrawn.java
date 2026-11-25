@@ -51,20 +51,31 @@ public final class PlatformDrawn implements AutoCloseable {
 
     /** What of it is not seen through, as {@code shown} says, drawn by {@code pass} as {@code camera} sees it. */
     public void drawn(final Pass pass, final Camera camera, final OnShow shown) {
-        drawn(pass, camera, shown, false);
+        drawn(pass, camera, shown, new Mat4(), false);
     }
 
     /** What of it is seen through, drawn the same way: after everything else. */
     public void seenThrough(final Pass pass, final Camera camera, final OnShow shown) {
-        drawn(pass, camera, shown, true);
+        drawn(pass, camera, shown, new Mat4(), true);
     }
 
-    private void drawn(final Pass pass, final Camera camera, final OnShow shown, final boolean seenThrough) {
+    /** What of it is not seen through, the whole of it carried by {@code by}: turned and moved as it drives, say. */
+    public void drawn(final Pass pass, final Camera camera, final OnShow shown, final Mat4 by) {
+        drawn(pass, camera, shown, by, false);
+    }
+
+    /** What of it is seen through, the whole of it carried by {@code by}. */
+    public void seenThrough(final Pass pass, final Camera camera, final OnShow shown, final Mat4 by) {
+        drawn(pass, camera, shown, by, true);
+    }
+
+    private void drawn(final Pass pass, final Camera camera, final OnShow shown, final Mat4 by,
+                       final boolean seenThrough) {
         for (final Drawn part : drawn) {
             if (!shown.hidden().contains(part.part().part().group())) {
                 final Coat coat = shown.coat(part.part().part());
                 if (coats.seenThrough(coat) == seenThrough) {
-                    coats.drawn(pass, part.form(), part.at(), camera, coat);
+                    coats.drawn(pass, part.form(), by.times(part.at()), camera, coat);
                 }
             }
         }
