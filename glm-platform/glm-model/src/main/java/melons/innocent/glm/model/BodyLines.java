@@ -131,7 +131,7 @@ record BodyLines(Proportions proportions, BodyFigures figures, FrontPoints front
     }
 
     /** A front rail: from the nose over the subframe's front mount, falling over its back mount into the floor. */
-    private List<Vec3> frontRail() {
+    List<Vec3> frontRail() {
         final double x = front.mountFront().x() + 1.4 + RAIL.wide() / 2;
         final double high = front.mountFront().y() + 1;
         final double low = front.mountBack().y() + 9.5;
@@ -141,7 +141,7 @@ record BodyLines(Proportions proportions, BodyFigures figures, FrontPoints front
     }
 
     /** A rear rail: from the floor up over the subframe's front mount, down over its back mount, to the tail. */
-    private List<Vec3> rearRail() {
+    List<Vec3> rearRail() {
         final Vec3 ahead = rear.mountFront();
         final Vec3 behind = rear.mountBack();
         final double over = 4 + RAIL.high() / 2;

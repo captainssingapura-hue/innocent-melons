@@ -14,6 +14,7 @@ public enum Group {
     CALIPERS("Brake calipers"),
     ENGINE("Engine"),
     COVERS("Engine covers"),
+    BODYWORK("Body panels"),
     STEERING("Steering"),
     WHEELS("Wheels"),
     TYRES("Tyres");
