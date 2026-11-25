@@ -38,6 +38,11 @@
             <groupId>com.example.fxsuite.vulkan</groupId>
             <artifactId>vk-bench</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

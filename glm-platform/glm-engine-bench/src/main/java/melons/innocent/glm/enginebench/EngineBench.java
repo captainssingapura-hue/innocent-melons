@@ -2,7 +2,6 @@ package melons.innocent.glm.enginebench;
 
 import com.example.fxsuite.avatar.bench.kit.Bus;
 import com.example.fxsuite.avatar.sound.Engine;
-import com.example.fxsuite.avatar.sound.Turbo;
 import com.example.fxsuite.avatar.sound.Vehicle;
 import com.example.fxsuite.vulkan.bench.Asked;
 import com.example.fxsuite.vulkan.bench.Skies;
@@ -28,6 +27,7 @@ import melons.innocent.glm.drive.Drivetrain;
 import melons.innocent.glm.engine.EngineFigures;
 import melons.innocent.glm.engine.EngineInternals;
 import melons.innocent.glm.engine.EngineRange;
+import melons.innocent.glm.engine.Firing;
 import melons.innocent.glm.model.MadeOf;
 
 import javax.imageio.ImageIO;
@@ -39,8 +39,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * The GLM engine bench: one engine of the range running, seen and heard. On the card, its crank turns in its block,
- * its rods swinging and its pistons sliding, slowed as much as asked so the eye can follow; on the speakers, the same
- * engine at its true revs, its sound made as it runs by the engines' own voice, turbocharged if asked. It drives a car
+ * its rods swinging and its pistons sliding, each charge seen burning as its cylinder fires, slowed as much as asked
+ * so the eye can follow; on the speakers, the same engine at its true revs, in its own voice ({@link EngineVoices}),
+ * firing in the order its crank and cam make it, turbocharged if asked. It drives a car
  * as that engine would ({@link Drivetrain}), driven at the card's window by its keys ({@link DriverKeys}): pulling
  * away, changing gear by itself or at the driver's word, held at a speed by its cruise control; its revs, gear and
  * speed drawn over the picture. Two windows, as every bench has: the card's, where the keys drive and the mouse moves
@@ -63,9 +64,8 @@ public final class EngineBench {
     private static final double BILLION = 1e9;
     private static final double MILLION = 1e6;
     private static final double METRE = 100;
-    /** How high the crank stands over the floor; the keys the engines' voices go by, in the range's order. */
+    /** How high the crank stands over the floor. */
     private static final Vec3 LIFT = new Vec3(0, 45, 0);
-    private static final List<String> VOICES = List.of("I4", "I5", "V6", "V8", "V12");
     /** The car each engine of the range drives, in the range's order, its own engine put in. */
     private static final List<Vehicle> CARS = List.of(Vehicle.HATCHBACK, Vehicle.RALLY, Vehicle.SALOON,
             Vehicle.MUSCLE, Vehicle.SUPERCAR);
@@ -78,8 +78,12 @@ public final class EngineBench {
     private final AtomicReference<EngineRun> run = new AtomicReference<>();
     private final DriverKeys keys = new DriverKeys();
     private final String held = System.getProperty("engine.throttle");
+    private final EngineVoices voices = new EngineVoices();
     private Orbit orbit;
     private Drivetrain driven;
+    private EngineRun fitted;
+    private EngineFigures engine;
+    private Firing firing;
     private double turned = said("engine.turned", 0);
 
     public static void main(final String[] args) throws IOException {
@@ -121,28 +125,10 @@ public final class EngineBench {
         final long began = System.nanoTime();
         long last = began;
         int frames = 0;
-        int showing = -1;
-        boolean turbo = false;
-        EngineFigures engine = null;
         while (window.open() && !asked.stopped()) {
             desk.heard();
             final EngineRun now = run.get();
-            if (now.engine() != showing || now.turbo() != turbo) {
-                engine = range.get(now.engine());
-                if (now.engine() != showing) {
-                    final EngineInternals inside = new EngineInternals(engine);
-                    final var whole = inside.platform();
-                    view.showing(inside, new Assembly(whole).assembled(), whole.root());
-                    final Vec3 middle = LIFT.plus(new Vec3(0, engine.deck() / 2, engine.length() / 2));
-                    orbit = new Orbit(middle, said("bench.yaw", 35), said("bench.pitch", 20),
-                            METRE * said("bench.distance", 1.6));
-                }
-                showing = now.engine();
-                turbo = now.turbo();
-                final Engine voice = voice(now);
-                sound.engine(voice);
-                driven = new Drivetrain(CARS.get(now.engine()).with(voice));
-            }
+            fit(now, view, sound);
             orbit = moved(window.mouse());
             final long time = System.nanoTime();
             final double seconds = (time - last) / BILLION;
@@ -154,12 +140,7 @@ public final class EngineBench {
             skies.stepped(seconds);
             frame(window, view, now);
             if (++frames % EVENED == 0) {
-                bus.publish(new Bus.Figures(String.format(Locale.ENGLISH, "%s, %.0f cc, in the %s%n%.0f rpm, firing"
-                        + " %.0f a second%nGear %s, %s, %.0f km/h%nBoost %.2f bar%n%s%nPlays on %s", engine.name(),
-                        engine.displacement(), driven.vehicle().name().toLowerCase(Locale.ENGLISH), driven.rpm(),
-                        driven.rpm() / 120 * engine.cylinders(), driven.gear(), driven.automatic() ? "automatic"
-                        : "manual", driven.kmh(), sound.boost(), now.slow() >= 1 ? "Shown at its actual speed"
-                        : String.format(Locale.ENGLISH, "Shown %.0f times slower", 1 / now.slow()), sound.device())));
+                bus.publish(new Bus.Figures(figures(now, sound)));
                 console.sky(skies.said());
             }
             final List<String> heard = card.heard();
@@ -185,10 +166,47 @@ public final class EngineBench {
                 orbit.camera(48, 1), skies.lit(), asked.shadowed(), asked.shadowing(), driven);
     }
 
-    /** The voice the engine {@code now} picks is heard in, turbocharged if asked and it can be. */
+    /**
+     * The engine {@code now} asks for, fitted: another engine shown afresh, voiced and put in a new car, stopped; the
+     * same one turbocharged or made otherwise voiced afresh, the car going on as it was.
+     */
+    private void fit(final EngineRun now, final EngineView view, final EngineSound sound) {
+        if (fitted != null && now.engine() == fitted.engine() && now.turbo() == fitted.turbo()
+                && now.made() == fitted.made()) {
+            return;
+        }
+        final Engine voice = voice(now);
+        sound.engine(voice);
+        if (fitted == null || now.engine() != fitted.engine()) {
+            engine = range.get(now.engine());
+            firing = new Firing(engine);
+            final EngineInternals inside = new EngineInternals(engine);
+            final var whole = inside.platform();
+            view.showing(inside, firing, new Assembly(whole).assembled(), whole.root());
+            final Vec3 middle = LIFT.plus(new Vec3(0, engine.deck() / 2, engine.length() / 2));
+            orbit = new Orbit(middle, said("bench.yaw", 35), said("bench.pitch", 20),
+                    METRE * said("bench.distance", 1.6));
+            driven = new Drivetrain(CARS.get(now.engine()).with(voice));
+        } else {
+            driven.fitted(voice);
+        }
+        fitted = now;
+    }
+
+    /** What the bench says back of the engine as it runs {@code now}, heard on {@code sound}. */
+    private String figures(final EngineRun now, final EngineSound sound) {
+        return String.format(Locale.ENGLISH, "%s, %.0f cc, in the %s%nFires %s%n%.0f rpm, firing %.0f a second%n"
+                        + "Gear %s, %s, %.0f km/h%nBoost %.2f bar%n%s%nPlays on %s", engine.name(),
+                engine.displacement(), driven.vehicle().name().toLowerCase(Locale.ENGLISH), firing.written(),
+                driven.rpm(), driven.rpm() / 120 * engine.cylinders(), driven.gear(),
+                driven.automatic() ? "automatic" : "manual", driven.kmh(), sound.boost(), now.slow() >= 1
+                        ? "Shown at its actual speed" : String.format(Locale.ENGLISH, "Shown %.0f times slower",
+                        1 / now.slow()), sound.device());
+    }
+
+    /** The engine {@code now} picks, in its own voice, what turns in it made as asked, turbocharged if asked. */
     private Engine voice(final EngineRun now) {
-        final Engine plain = Engine.called(VOICES.get(now.engine()), Engine.V8);
-        return now.turbo() && plain.chargeable() ? plain.with(Turbo.STANDARD) : plain;
+        return voices.voiced(range.get(now.engine()), now.made(), now.turbo());
     }
 
     /** The way of looking, moved as the mouse moved. */

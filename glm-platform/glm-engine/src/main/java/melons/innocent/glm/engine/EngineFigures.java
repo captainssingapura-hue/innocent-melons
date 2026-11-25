@@ -67,8 +67,11 @@ public record EngineFigures(String name, int banks, double vee, int perBank, dou
         return margin() + k * spacing + bank * offset;
     }
 
-    /** How far bank {@code bank} leans from upright, in degrees: in line, not at all; in a V, half the V each way. */
+    /**
+     * How far bank {@code bank} leans from upright, toward +x, in degrees: in line, not at all; in a V, half the V each
+     * way, the first bank to the right seen from behind, as its makers number them, where +x is to the left.
+     */
     public double lean(final int bank) {
-        return banks == 1 ? 0 : (bank == 0 ? vee / 2 : -vee / 2);
+        return banks == 1 ? 0 : (bank == 0 ? -vee / 2 : vee / 2);
     }
 }

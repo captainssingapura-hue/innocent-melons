@@ -70,7 +70,7 @@ class EngineBlockTest {
             }
         }
         final CrankFigures v6 = new CrankFigures(range.v6());
-        assertEquals(30, v6.angle(1, 0) - v6.angle(0, 0), 1e-9, "the V6's pins split");
+        assertEquals(30, v6.angle(0, 0) - v6.angle(1, 0), 1e-9, "the V6's pins split, the first bank's leading");
         final CrankFigures v8 = new CrankFigures(range.v8());
         assertEquals(v8.angle(0, 1), v8.angle(1, 1), 1e-9, "the V8's banks sharing a pin");
         final Cylinder top = new Cylinder(range.l4(), 0, 0);

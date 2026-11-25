@@ -27,7 +27,7 @@ public final class Drivetrain {
     private static final double GATHER = 0.02;
     private static final double GATHERED = 20;
 
-    private final Vehicle vehicle;
+    private Vehicle vehicle;
     private Driving driving;
     private boolean neutral;
     private boolean auto = true;
@@ -42,6 +42,11 @@ public final class Drivetrain {
         this.vehicle = vehicle;
         this.driving = Driving.stopped(vehicle);
         this.revs = Revs.idling(vehicle.engine());
+    }
+
+    /** {@code engine} fitted in its place, as it goes: its speed, gear and revs kept. */
+    public void fitted(final Engine engine) {
+        vehicle = vehicle.with(engine);
     }
 
     /** {@code seconds} on, driven as {@code driver} drives. */

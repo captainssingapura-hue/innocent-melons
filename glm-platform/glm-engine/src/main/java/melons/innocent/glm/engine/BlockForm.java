@@ -36,9 +36,11 @@ record BlockForm(EngineFigures figures) {
     /** How far the skirt reaches under the crank; how far the valley stands over the crank's swing. */
     private static final double SKIRT = 7;
     private static final double SWING = 7.5;
-    /** How far round a main bearing's bore is; how far down a bank's outer wall runs straight. */
+    /** How far round a main bearing's bore is; how far down a bank's outer wall runs straight, at most. */
     private static final double MAIN = 3.4;
     private static final double OUTER = 0.35;
+    /** How far the crankcase's walls stand clear of all that turns on the crank. */
+    private static final double CLEAR = 0.6;
 
     /** How wide a bank is, from its cylinders' axis out to its wall. */
     double half() {
@@ -58,22 +60,41 @@ record BlockForm(EngineFigures figures) {
         return figures.lean(bank) < 0 ? n.times(-1) : n;
     }
 
-    /** How far across the skirt reaches each side. */
+    /** How far the crankcase's walls stand from the crank's axis, at the least: clear of all that turns on it. */
+    double clear() {
+        return new CrankFigures(figures).swing() + CLEAR;
+    }
+
+    /**
+     * Where bank {@code bank}'s outer wall stops running straight down from its deck and the crankcase steps out to
+     * the skirt: low, but no nearer the crank's axis than {@link #clear()}.
+     */
+    Vec3 shoulder(final int bank) {
+        final double h = Math.max(figures.deck() * OUTER, Math.sqrt(Math.max(0, clear() * clear() - half() * half()))
+                + 0.3);
+        return up(bank).times(h).plus(out(bank).times(half()));
+    }
+
+    /** How far across the skirt reaches each side: as far as the shoulders, and clear of all that turns. */
     double skirt() {
-        double widest = figures.stroke() / 2 + 5;
+        double widest = Math.max(figures.stroke() / 2 + 5, clear());
         for (int b = 0; b < figures.banks(); b++) {
-            widest = Math.max(widest, Math.abs(up(b).times(figures.deck() * OUTER).plus(out(b).times(half())).x()));
+            widest = Math.max(widest, Math.abs(shoulder(b).x()));
         }
         return widest;
     }
 
-    /** The section, drawn across and up, round to the left, starting along the open bottom. */
+    /**
+     * The section, drawn across and up, round to the left, starting along the open bottom: up the skirt each side,
+     * across to the shoulder where it is further in, up its bank's outer wall to the deck; in a V, down its inner wall
+     * to the valley's floor.
+     */
     List<Spot> section() {
         final double s = skirt();
         final List<Spot> right = new ArrayList<>();
         final List<Spot> left = new ArrayList<>();
         if (figures.banks() == 1) {
-            right.add(spot(up(0).times(figures.deck() * OUTER).plus(out(0).times(half()))));
+            right.addAll(flank(0, s));
             right.add(spot(up(0).times(figures.deck()).plus(out(0).times(half()))));
             final List<Spot> all = new ArrayList<>(List.of(new Spot(-s, -SKIRT), new Spot(s, -SKIRT)));
             all.addAll(right);
@@ -81,9 +102,9 @@ record BlockForm(EngineFigures figures) {
             return all;
         }
         for (final int b : List.of(0, 1)) {
-            final List<Spot> side = b == 0 ? right : left;
+            final List<Spot> side = figures.lean(b) > 0 ? right : left;
             final Vec3 deck = up(b).times(figures.deck());
-            side.add(spot(up(b).times(figures.deck() * OUTER).plus(out(b).times(half()))));
+            side.addAll(flank(b, s));
             side.add(spot(deck.plus(out(b).times(half()))));
             final Vec3 inner = deck.minus(out(b).times(half()));
             side.add(spot(inner));
@@ -187,6 +208,17 @@ record BlockForm(EngineFigures figures) {
         final double deep = figures.stroke() + figures.crown() + 3;
         final Vec3 middle = up(bank).times(figures.deck() - deep / 2).plus(ALONG.times(figures.along(bank, k)));
         return new Sleeve(middle, up(bank), deep, figures.bore() / 2 + liner(), figures.bore() / 2, ROUND).mesh();
+    }
+
+    /**
+     * Bank {@code bank}'s side of the crankcase, from the skirt {@code s} across up to its shoulder: straight up the
+     * skirt to the shoulder's height and across to it, where the shoulder is further in; the shoulder.
+     */
+    private List<Spot> flank(final int bank, final double s) {
+        final Spot shoulder = spot(shoulder(bank));
+        final double side = Math.signum(shoulder.u());
+        return Math.abs(shoulder.u()) < s - 1e-6 ? List.of(new Spot(side * s, shoulder.v()), shoulder)
+                : List.of(shoulder);
     }
 
     private Spot spot(final Vec3 p) {

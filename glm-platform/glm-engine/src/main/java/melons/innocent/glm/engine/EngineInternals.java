@@ -24,6 +24,8 @@ import java.util.Map;
 public final class EngineInternals {
 
     private static final Vec3 AXIS = new Vec3(0, 0, 1);
+    /** How high the head's combustion chamber is over the deck, in centimetres: an estimate. */
+    private static final double HEAD = 1.0;
 
     private final EngineFigures figures;
     private final Part crank;
@@ -100,5 +102,22 @@ public final class EngineInternals {
             return new Mat4(slid.smallEnd(turned).minus(slid.smallEnd()));
         }
         return new Mat4();
+    }
+
+    /**
+     * Where bank {@code bank}'s cylinder {@code k} burns, the crank turned {@code turned} degrees on from rest, in the
+     * block's frame: from its piston's crown up its bore to the deck, and on into the head's chamber, where the head
+     * will be; as what carries a drum a unit round and a unit high, from nought straight up, there.
+     */
+    public Mat4 chamber(final int bank, final int k, final double turned) {
+        final Cylinder cylinder = new Cylinder(figures, bank, k);
+        final Vec3 up = cylinder.up();
+        final Vec3 side = up.cross(AXIS);
+        final Vec3 crown = cylinder.smallEnd(turned).plus(up.times(figures.crown()));
+        final double high = cylinder.deck().minus(crown).dot(up) + HEAD;
+        final double round = figures.bore() / 2 - 0.05;
+        return new Mat4(new double[] {side.x() * round, up.x() * high, 0, crown.x(),
+            side.y() * round, up.y() * high, 0, crown.y(), side.z() * round, up.z() * high, round, crown.z(),
+            0, 0, 0, 1});
     }
 }

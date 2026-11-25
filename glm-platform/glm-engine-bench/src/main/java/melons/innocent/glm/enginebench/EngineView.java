@@ -5,13 +5,18 @@ import com.example.fxsuite.vulkan.device.Card;
 import com.example.fxsuite.vulkan.device.Pass;
 import com.example.fxsuite.vulkan.device.Target;
 import com.example.fxsuite.vulkan.render.Framed;
+import com.example.fxsuite.vulkan.render.Looked;
 import com.example.fxsuite.vulkan.render.Overlay;
 import com.example.fxsuite.vulkan.render.Shaded;
 import com.example.fxsuite.vulkan.render.Shadowing;
 import com.example.fxsuite.vulkan.render.Shaped;
 import com.example.fxsuite.vulkan.shade.Laid;
+import com.example.fxsuite.vulkan.shade.Look;
 import com.example.fxsuite.vulkan.space.Mat4;
 import com.example.fxsuite.vulkan.space.Vec3;
+import com.example.fxsuite.vulkan.term.Colour;
+import com.example.fxsuite.vulkan.term.Surface;
+import com.example.fxsuite.vulkan.term.Tint;
 import com.example.fxsuite.vulkan.view.Beam;
 import com.example.fxsuite.vulkan.view.Camera;
 import com.example.fxsuite.vulkan.worked.Daylight;
@@ -21,10 +26,12 @@ import melons.innocent.glm.core.PartAt;
 import melons.innocent.glm.drive.Drivetrain;
 import melons.innocent.glm.drive.Instruments;
 import melons.innocent.glm.engine.EngineInternals;
+import melons.innocent.glm.engine.Firing;
 import melons.innocent.glm.model.Finishes;
 import melons.innocent.glm.model.MadeOf;
 import melons.innocent.vehiclelab.drawn.Coats;
 import melons.innocent.vehiclelab.forms.Coat;
+import melons.innocent.vehiclelab.forms.Shapes;
 
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -33,7 +40,8 @@ import java.util.function.Consumer;
 
 /**
  * The engine bench's view, on the card: the engine on show, its block as glass, finished or hidden, and every part
- * inside drawn where it has moved to for the crank's angle, standing on the ground, casting its shadows; over it all,
+ * inside drawn where it has moved to for the crank's angle, standing on the ground, casting its shadows; in each bore,
+ * over its piston, the charge burning as it fires, bright at first and dying down as the piston goes down; over it all,
  * the instruments of the car it drives. A new engine is sent to the card afresh, the old one gone. Closed, all of it
  * is gone.
  */
@@ -43,6 +51,9 @@ final class EngineView implements AutoCloseable {
     private static final int PIXELS = 4096;
     private static final double SHADED = 120;
     private static final Coat GLASS = new Coat(Coat.Kind.GLASS);
+    /** How far the crank turns while a charge burns, in degrees; and the colour it burns, at its brightest. */
+    private static final double BURNS = 100;
+    private static final Vec3 FLAME = new Vec3(0.95, 0.42, 0.06);
 
     private final Card card;
     private final Laid laid;
@@ -51,11 +62,15 @@ final class EngineView implements AutoCloseable {
     private final Shaded shadows;
     private final Overlay overlay;
     private final Instruments instruments = new Instruments();
+    private final Looked burning;
+    private final Shaped charge;
     private final Finishes finishes = new Finishes();
     private final Map<PartAt, Shaped> parts = new IdentityHashMap<>();
     private Assembled built;
     private EngineInternals inside;
     private Part root;
+    private Firing firing;
+    private Vec3 block;
 
     /** On {@code card}, its layouts as {@code laid} says. */
     EngineView(final Card card, final Laid laid) {
@@ -65,6 +80,10 @@ final class EngineView implements AutoCloseable {
         this.cast = new Cast(card, laid);
         this.shadows = new Shaded(card, laid, PIXELS);
         this.overlay = new Overlay(card, laid);
+        // light of the colour each charge is drawn in, as an instrument's is; a drum a unit round and high, up
+        this.burning = new Looked(card, new Look(laid, new Surface(new Colour("#000000"), List.of(),
+                new Colour("#000000"), 1).glowing(new Tint().colour())));
+        this.charge = new Shaped(card, laid, new Shapes(24).drum(new Vec3(0, 0, 0), new Vec3(0, 1, 0), 1));
     }
 
     /** The ways its shadows can be found. */
@@ -72,9 +91,15 @@ final class EngineView implements AutoCloseable {
         return shadows.offered();
     }
 
-    /** {@code engine}, put together as {@code assembled} on its block {@code on}, sent afresh, the last gone. */
-    void showing(final EngineInternals engine, final Assembled assembled, final Part on) {
+    /**
+     * {@code engine}, firing as {@code fires}, put together as {@code assembled} on its block {@code on}, sent
+     * afresh, the last gone.
+     */
+    void showing(final EngineInternals engine, final Firing fires, final Assembled assembled, final Part on) {
         this.root = on;
+        this.firing = fires;
+        this.block = assembled.placed().keySet().stream().filter(p -> p.part().equals(on)).findFirst()
+                .map(assembled::at).orElse(new Vec3(0, 0, 0));
         parts.values().forEach(Shaped::close);
         parts.clear();
         this.inside = engine;
@@ -97,6 +122,7 @@ final class EngineView implements AutoCloseable {
         final Consumer<Pass> all = pass -> {
             cast.ground(pass, camera);
             solid.accept(pass);
+            burning(pass, camera, turned, lift);
             parts(pass, camera, turned, block, madeOf, lift, true);
             instruments.drawn(pass, overlay.over(camera, aspect), driven);
         };
@@ -124,8 +150,23 @@ final class EngineView implements AutoCloseable {
         }
     }
 
+    /** Each charge burning, from its piston's crown into the head, as bright as it is so soon after it fired. */
+    private void burning(final Pass pass, final Camera camera, final double turned, final Vec3 lift) {
+        final Mat4 standing = new Mat4(lift.plus(block));
+        for (final int n : firing.order()) {
+            final double since = firing.since(firing.bank(n), firing.k(n), turned);
+            if (since < BURNS) {
+                final double bright = Math.pow(1 - since / BURNS, 2);
+                burning.drawn(pass, charge, standing.times(inside.chamber(firing.bank(n), firing.k(n), turned)),
+                        camera, 1, FLAME.times(bright));
+            }
+        }
+    }
+
     @Override
     public void close() {
+        charge.close();
+        burning.close();
         parts.values().forEach(Shaped::close);
         parts.clear();
         overlay.close();
