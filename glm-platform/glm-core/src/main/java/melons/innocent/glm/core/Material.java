@@ -5,7 +5,8 @@ package melons.innocent.glm.core;
  * and how hard it may be pulled before it gives for good. The figures a handbook gives for each as a car's chassis
  * uses it: high-strength steel, hydroformed or pressed; grey cast iron, as a brake's disc is; aluminium, cast or
  * pushed through a die and heat treated; titanium, as its common alloy (Ti-6Al-4V); rubber, as a bush is or a tyre;
- * and plastic, glass-filled polyamide moulded, as an engine's covers and its coils' are.
+ * plastic, glass-filled polyamide moulded, as an engine's covers and its coils' are; and glass, toughened or
+ * laminated, as a car's windows are.
  */
 public enum Material {
     STEEL("High-strength steel", true, 7_850, 210, 420),
@@ -13,7 +14,8 @@ public enum Material {
     ALUMINIUM("Aluminium", true, 2_700, 70, 220),
     TITANIUM("Titanium", true, 4_430, 114, 880),
     RUBBER("Rubber", false, 1_100, 0.005, 15),
-    PLASTIC("Plastic", false, 1_350, 9, 150);
+    PLASTIC("Plastic", false, 1_350, 9, 150),
+    GLASS("Glass", false, 2_500, 70, 45);
 
     private final String title;
     private final boolean metal;

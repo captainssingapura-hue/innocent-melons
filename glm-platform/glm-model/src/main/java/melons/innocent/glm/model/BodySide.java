@@ -40,6 +40,7 @@ record BodySide(SantanaLines lines, Vec3 anchor, ShellPanels headers) {
         points.put("rear door, hinge", on(lines.rearDoor().getFirst()));
         points.put("header, front", headers.end(lines.frontHeader()));
         points.put("header, rear", headers.end(lines.rearHeader()));
+        points.put("quarter light", on(lines.quarterLight().getFirst()));
         final List<List<Spot>> cut = List.of(lines.frontDoor(), lines.rearDoor(), lines.quarterLight());
         return PRESSED.part("body side", Group.BODYWORK, true, points, new Pressing(lines.side(), cut, this::on,
                 new Vec3(1, 0, 0), SHEET, SHEET, FLANGE, ALONG, UP).mesh());

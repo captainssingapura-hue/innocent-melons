@@ -15,6 +15,8 @@ public enum Group {
     ENGINE("Engine"),
     COVERS("Engine covers"),
     BODYWORK("Body panels"),
+    GLASS("Windows"),
+    ROOF("Glass roof"),
     STEERING("Steering"),
     WHEELS("Wheels"),
     TYRES("Tyres");

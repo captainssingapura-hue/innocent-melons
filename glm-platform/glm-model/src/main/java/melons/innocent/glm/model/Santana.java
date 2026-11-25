@@ -4,6 +4,7 @@ import melons.innocent.glm.core.Connection;
 import melons.innocent.glm.core.Joining;
 import melons.innocent.glm.core.Part;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -11,7 +12,8 @@ import java.util.List;
  * to the platform's least track, on the platform's chassis; its body built as the original's was, a pressed steel
  * shell, its root its underbody, every chassis mount on it: the body sides welded along it, the bulkhead and the tail
  * panel across it, and the roof's two headers across between the body sides, a cage for the roof's glass; and its
- * four doors hung in it and its front wings bolted on.
+ * four doors hung in it, its front wings bolted on and its boot lid hinged; and its glass, the roof dark
+ * ({@link SantanaGlazing}).
  */
 public record Santana() implements Bodywork {
 
@@ -45,10 +47,13 @@ public record Santana() implements Bodywork {
         final Part tail = panels.tailPanel();
         final Part front = panels.header("roof header, front", LINES.frontHeader());
         final Part rear = panels.header("roof header, rear", LINES.rearHeader());
-        final Part frontDoor = new Door("front door", LINES, LINES.frontDoor(), LINES.frontDivider()).part();
-        final Part rearDoor = new Door("rear door", LINES, LINES.rearDoor(), LINES.rearDivider()).part();
+        final Door frontShape = new Door("front door", LINES, LINES.frontDoor(), LINES.frontDivider());
+        final Door rearShape = new Door("rear door", LINES, LINES.rearDoor(), LINES.rearDivider());
+        final Part frontDoor = frontShape.part();
+        final Part rearDoor = rearShape.part();
         final Part wing = new FrontWing(LINES).part();
-        return List.of(
+        final SantanaGlazing glazing = new SantanaGlazing(LINES, panels);
+        final List<Connection> joined = new ArrayList<>(List.of(
                 new Connection("body side", root, "body side, right", side, "body", Joining.WELDED),
                 new Connection("bulkhead", root, "bulkhead", bulkhead, "underbody", Joining.WELDED),
                 new Connection("tail panel", root, "tail panel", tail, "underbody", Joining.WELDED),
@@ -57,6 +62,10 @@ public record Santana() implements Bodywork {
                 new Connection("roof header, rear", side, "header, rear", rear, "body side, right", Joining.WELDED),
                 new Connection("front door", side, "front door, hinge", frontDoor, "hinge", Joining.HINGE),
                 new Connection("rear door", side, "rear door, hinge", rearDoor, "hinge", Joining.HINGE),
-                new Connection("front wing", root, "front wing, right", wing, "shell", Joining.BOLTED));
+                new Connection("front wing", root, "front wing, right", wing, "shell", Joining.BOLTED),
+                new Connection("boot lid", root, "boot lid", new BootLid(LINES).part(), "hinge", Joining.HINGE)));
+        joined.addAll(glazing.screens(front, rear));
+        joined.addAll(glazing.windows(side, frontShape, frontDoor, rearShape, rearDoor));
+        return joined;
     }
 }

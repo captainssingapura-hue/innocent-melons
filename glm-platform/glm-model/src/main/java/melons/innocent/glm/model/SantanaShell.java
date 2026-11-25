@@ -51,6 +51,7 @@ record SantanaShell(ShellLines lines) {
         }
         named.put("bulkhead", new Vec3(0, lines.floor(), lines.bulkhead()));
         named.put("tail panel", new Vec3(0, lines.boot(), lines.tail()));
+        named.put("boot lid", new BootLid(lines.lines()).hinge());
         final Sheets sheets = new Sheets(SKIN);
         final List<Mesh> made = new ArrayList<>(new ShellFloor(lines, sheets, body.frontRail()).meshes());
         made.addAll(new ShellFront(lines, body, sheets).meshes());

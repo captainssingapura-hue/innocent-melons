@@ -76,8 +76,15 @@ record ShellPanels(ShellLines lines) {
         final Map<String, Vec3> points = new LinkedHashMap<>();
         points.put("body side, right", end);
         points.put("body side, left", new Vec3(-end.x(), end.y(), end.z()));
+        points.put("glass", glass(at));
         return PRESSED.part(name, Group.BODYWORK, false, points, SHEETS.member(List.of(points.get("body side, left"),
                 new Vec3(0, end.y() + CROWN, end.z()), end), HEADER));
+    }
+
+    /** Where the glass is bonded to a header at {@code at}, along and up: at its middle. */
+    Vec3 glass(final Spot at) {
+        final Vec3 end = end(at);
+        return new Vec3(0, end.y(), end.z());
     }
 
     /** Where a header at {@code at}, along and up, meets the right body side, just inside its face. */

@@ -42,16 +42,24 @@ record Door(String name, SantanaLines lines, List<Spot> opening, double divider)
     /** It, its points where they are on the platform. */
     Part part() {
         final Map<String, Vec3> points = new LinkedHashMap<>();
-        points.put("hinge", on(opening.getFirst()));
+        points.put("hinge", hinge());
         return PRESSED.part(name, Group.BODYWORK, true, points, new Shapes(16).joined(List.of(skin(), inner())));
+    }
+
+    /** Its window's openings, ahead of its divider and behind it, along and up. */
+    List<List<Spot>> panes() {
+        final Loop glass = new Loop(opening).inset(GAP + FRAME).up(lines.belt(), true);
+        return List.of(glass.along(divider + BAR / 2, true).spots(), glass.along(divider - BAR / 2, false).spots());
+    }
+
+    /** Where it is hinged, on the right. */
+    Vec3 hinge() {
+        return on(opening.getFirst());
     }
 
     /** Its skin and its window's frame, cut for the glass either side of the divider. */
     private Mesh skin() {
-        final Loop glass = new Loop(opening).inset(GAP + FRAME).up(lines.belt(), true);
-        final List<List<Spot>> panes = List.of(glass.along(divider + BAR / 2, true).spots(),
-                glass.along(divider - BAR / 2, false).spots());
-        return new Pressing(new Loop(opening).inset(GAP).spots(), panes, this::on, new Vec3(1, 0, 0), SHEET, DEEP,
+        return new Pressing(new Loop(opening).inset(GAP).spots(), panes(), this::on, new Vec3(1, 0, 0), SHEET, DEEP,
                 FLANGE, ALONG, UP).mesh();
     }
 

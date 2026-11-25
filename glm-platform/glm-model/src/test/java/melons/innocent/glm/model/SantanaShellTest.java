@@ -52,7 +52,8 @@ class SantanaShellTest {
         final Assembled built = new Assembly(car.platform(null).platform()).assembled();
         final Set<String> shell = built.placed().keySet().stream()
                 .filter(p -> p.part().group() == Group.BODYWORK || p.part().group() == Group.UNDERBODY)
-                .filter(p -> !p.part().name().endsWith("door") && !p.part().name().endsWith("wing"))
+                .filter(p -> !p.part().name().endsWith("door") && !p.part().name().endsWith("wing")
+                        && !p.part().name().endsWith("lid"))
                 .map(PartAt::said).collect(Collectors.toSet());
         assertEquals(Set.of("underbody", "right body side", "left body side", "bulkhead", "tail panel",
                 "roof header, front", "roof header, rear"), shell);

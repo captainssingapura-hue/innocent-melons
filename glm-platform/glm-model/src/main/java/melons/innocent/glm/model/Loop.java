@@ -62,6 +62,19 @@ record Loop(List<Spot> spots) {
         return cut(at, true, ahead);
     }
 
+    /** How high its top is at {@code at} along: the highest of its sides crossing there; or none, nought. */
+    double top(final double at) {
+        double high = 0;
+        for (int k = 0; k < spots.size(); k++) {
+            final Spot a = spots.get(k);
+            final Spot b = spots.get((k + 1) % spots.size());
+            if ((a.u() - at) * (b.u() - at) <= 0 && a.u() != b.u()) {
+                high = Math.max(high, a.v() + (at - a.u()) / (b.u() - a.u()) * (b.v() - a.v()));
+            }
+        }
+        return high;
+    }
+
     /** How large it is, positive if it runs round to the left. */
     double area() {
         double twice = 0;
