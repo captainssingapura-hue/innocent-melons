@@ -40,9 +40,12 @@ public record Afoot(String at, double ceiling) implements Roamer {
 
     @Override
     public Roaming roaming(final Source source, final Optional<Keeping> keeping, final Skies skies) {
-        return new Company(new Run(source, keeping, Optional.of(skies),
+        final Company company = new Company(new Run(source, keeping, Optional.of(skies),
                 new Start(at).body()).under(ceiling * METRE),
                 new Bot(new Said(System.getProperty("bench.bot", "man")).build()), companion());
+        // the view from its own eyes is steadied unless the run says not: a film has no window to say it in
+        company.steadied(!"false".equals(System.getProperty("bench.steady", "true")));
+        return company;
     }
 
     @Override
@@ -52,6 +55,8 @@ public record Afoot(String at, double ceiling) implements Roamer {
                 "  F: fly, or land; flying, Space climbs and Ctrl sinks",
                 "  Shift with the up or down arrow: a higher or lower gear,", "    five from 20 to 150 km an hour",
                 "  Q, E: swing the view round; C: back behind",
+                "  V: the view from its own eyes, or from behind again;",
+                "    steadied unless the box above is cleared",
                 "  scroll: nearer or further");
     }
 

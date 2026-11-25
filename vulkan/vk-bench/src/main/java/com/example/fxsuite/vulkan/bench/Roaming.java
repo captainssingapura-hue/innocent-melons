@@ -50,6 +50,10 @@ public interface Roaming {
         return 0;
     }
 
+    /** The lead's own view steadied, or left to move as its head does: nothing, to one with no such view. */
+    default void steadied(final boolean steady) {
+    }
+
     /** The camera as the one moving it would have it: following the lead. */
     Camera camera(double blend);
 
@@ -58,6 +62,14 @@ public interface Roaming {
 
     /** Every figure's parts, as they are drawn. */
     List<Courier.Placed> figures(double blend);
+
+    /**
+     * Every figure's parts as whoever's view the picture is sees them: all of them, unless the view is from within
+     * one of the figures, which then does not see its own head. Shadows are cast by the figures whole.
+     */
+    default List<Courier.Placed> seen(final double blend) {
+        return figures(blend);
+    }
 
     /** How the lead is moving, as the core engine detects it from the run's steps: not known, of most. */
     default Optional<Motion> motion() {
