@@ -46,23 +46,16 @@ public sealed interface MuscleForm permits MuscleForm.Strap, MuscleForm.Spread {
 
         /**
          * Its sections, as a strap's are counted: across its origin and across its insertion, each as wide as its
-         * line is long end to end, lying at the point along it nearest its middle.
+         * line is long end to end, lying at its middle point, by their count: each point is given as its own bone is
+         * drawn, the skull's in the head's frame, so none is to be measured against another's.
          */
         public List<Section> sections() {
             return List.of(across(origin), across(insertion));
         }
 
         private Section across(final List<Anchor> line) {
-            final V3 first = line.getFirst().at();
-            final V3 last = line.getLast().at();
-            final V3 middle = first.plus(last).times(0.5);
-            Anchor nearest = line.getFirst();
-            for (final Anchor a : line) {
-                if (a.at().minus(middle).length() < nearest.at().minus(middle).length()) {
-                    nearest = a;
-                }
-            }
-            return new Section(nearest, last.minus(first).length(), deep, facing);
+            return new Section(line.get(line.size() / 2), line.getLast().at().minus(line.getFirst().at()).length(),
+                    deep, facing);
         }
     }
 }

@@ -2,18 +2,22 @@ package com.example.fxsuite.life.body.muscle;
 
 import com.example.fxsuite.life.body.BoundPose;
 import com.example.fxsuite.life.body.Mesher;
+import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Proportions;
 import com.example.fxsuite.life.body.Rig;
 import com.example.fxsuite.life.body.V3;
+import com.example.fxsuite.life.body.muscle.trunk.TrapeziusUpper;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * A sheet spread from a line to a line ({@link MuscleForm.Spread}): it reaches either end of the line it arises from
- * and of the line it ends on, on either side; the trapezius's lower part from its highest spine to its lowest.
+ * and of the line it ends on, on either side; the trapezius's lower part from its highest spine to its lowest; the
+ * trapezius's upper part following the neck where it arises.
  */
 class SpreadTest {
 
@@ -34,6 +38,13 @@ class SpreadTest {
                 }
             }
         }
+    }
+
+
+    @Test
+    void theTrapeziussUpperPartFollowsTheNeckWhereItArises() {
+        final Section origin = TrapeziusUpper.INSTANCE.sections().getFirst();
+        assertEquals(Part.NECK, origin.at().part(false), "its origin's half follows the neck, not the head");
     }
 
     private double nearest(final Mesher.Mesh mesh, final V3 p) {

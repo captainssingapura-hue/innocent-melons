@@ -89,15 +89,7 @@ public final class BodyBench {
         bus.subscribe(BodyShown.class, shown::set, Bus.HERE);
         bus.subscribe(Motion.class, motion::set, Bus.HERE);
         final BodyConsole console = new BodyConsole(bus, asked, shown.get(), motion.get());
-        final Thread making = new Thread(() -> {
-            final long began = System.nanoTime();
-            final BodyMaker.Made body = new BodyMaker().made(step -> {
-                System.out.println("making " + step);
-                bus.publish(new Bus.Working(true, step));
-            });
-            System.out.printf(Locale.ROOT, "the body made in %.1f s%n", (System.nanoTime() - began) / BILLION);
-            made.set(body);
-        }, "the body");
+        final Thread making = new Thread(this::make, "the body");
         making.setDaemon(true);
         making.start();
         try (Desk desk = new Desk();
@@ -120,6 +112,25 @@ public final class BodyBench {
                 posing.close();
             }
             Platform.exit();
+        }
+    }
+
+    /**
+     * The body made, away from the screen, each step told as it begins; if it cannot be, why, told at once, not kept
+     * until the bench ends, and the console no longer working.
+     */
+    private void make() {
+        final long began = System.nanoTime();
+        try {
+            final BodyMaker.Made body = new BodyMaker().made(step -> {
+                System.out.println("making " + step);
+                bus.publish(new Bus.Working(true, step));
+            });
+            System.out.printf(Locale.ROOT, "the body made in %.1f s%n", (System.nanoTime() - began) / BILLION);
+            made.set(body);
+        } catch (final RuntimeException failed) {
+            failed.printStackTrace();
+            bus.publish(new Bus.Working(false, "the body not made: " + failed.getMessage()));
         }
     }
 
