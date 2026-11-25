@@ -29,6 +29,8 @@
         <module>core-loose</module>
         <!-- What can be done with a thing: actions, their binding to kinds of thing, and what is at hand. -->
         <module>core-interaction</module>
+        <!-- What moves only as it is made to: a thing on a hinge, a door's leaf first. -->
+        <module>core-mechanism</module>
     </modules>
 
     <properties>
