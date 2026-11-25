@@ -1,5 +1,6 @@
 package melons.innocent.terrain.bench;
 
+import com.example.fxsuite.vulkan.bench.Arranged;
 import melons.innocent.terrain.drawn.TiledLand;
 import melons.innocent.terrain.drawn.Painting;
 import melons.innocent.terrain.drawn.ByMaterials;
@@ -57,6 +58,9 @@ public final class BandBench {
     private static final int LEFT = 40;
     private static final int TOP = 40;
     private static final int BESIDE = 380;
+
+    /** How its two windows are arranged over the screens: as they always were, until it runs. */
+    private Arranged arranged = new Arranged(false, LEFT, TOP, BESIDE);
     private static final int EVENED = 30;
     private static final int MAP = 300;
     private static final double MILLION = 1e6;
@@ -109,8 +113,10 @@ public final class BandBench {
              Window window = card.window("Band terrain bench, drawn on " + card.name(), WIDTH, HEIGHT)) {
             final BandControls controls = new BandControls(wanted, about, painting.legend(),
                     new MapPicture(features.ground(), painting, MAP), first, altitudes);
-            Platform.startup(() -> controls.shown(LEFT, TOP));
-            window.shown(LEFT + BESIDE, TOP);
+            // a run nobody attends keeps the windows where they have always been, and as big
+            arranged = new Arranged(Long.getLong("bench.settle", -1) < 0, LEFT, TOP, BESIDE);
+            Platform.startup(() -> controls.shown(arranged));
+            arranged.shown(window, desk);
             try (TiledLand land = new TiledLand(card, laid, painting, tiling,
                     level -> new Averaged(features.ground(), tiling.spacing(level)), 1, MB * (long) said("bench.held",
                     1_536), MB * (long) said("bench.card", 512))) {
@@ -144,6 +150,7 @@ public final class BandBench {
         final Tally tally = new Tally();
         while (window.open() && !wanted.stopped()) {
             desk.heard();
+            arranged.heard(window, desk);
             final Flight before = flight;
             final long at = System.nanoTime();
             flight = moved(window.mouse(), tally.filled() ? turning * (at - previous) / 1e9 : 0);

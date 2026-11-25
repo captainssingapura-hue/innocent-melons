@@ -1,5 +1,6 @@
 package melons.innocent.terrain.bench;
 
+import com.example.fxsuite.vulkan.bench.Arranged;
 import melons.innocent.terrain.drawn.TiledLand;
 import melons.innocent.terrain.drawn.Painting;
 import melons.innocent.terrain.drawn.ByMaterials;
@@ -53,6 +54,9 @@ public final class RouteBench {
     private static final int LEFT = 40;
     private static final int TOP = 40;
     private static final int BESIDE = 380;
+
+    /** How its two windows are arranged over the screens: as they always were, until it runs. */
+    private Arranged arranged = new Arranged(false, LEFT, TOP, BESIDE);
     private static final int EVENED = 30;
     private static final int TOLD = 5;
     private static final int MAP = 300;
@@ -111,8 +115,10 @@ public final class RouteBench {
              TiledLand land = new TiledLand(card, laid, painting, choice.tiling(), seen, 1)) {
             final RouteControls controls = new RouteControls(steering, new RouteMap(new MapPicture(
                     features.ground(), painting, MAP), seen), 120 * METRE);
-            Platform.startup(() -> controls.shown(LEFT, TOP));
-            window.shown(LEFT + BESIDE, TOP);
+            // a run nobody attends keeps the windows where they have always been, and as big
+            arranged = new Arranged(Long.getLong("bench.settle", -1) < 0, LEFT, TOP, BESIDE);
+            Platform.startup(() -> controls.shown(arranged));
+            arranged.shown(window, desk);
             drawn(desk, card, window, land, controls);
             final String snapshot = System.getProperty("bench.snapshot", "");
             if (!snapshot.isEmpty()) {
@@ -136,6 +142,7 @@ public final class RouteBench {
         int frames = 0;
         while (window.open() && !steering.stopped()) {
             desk.heard();
+            arranged.heard(window, desk);
             final long now = System.nanoTime();
             moved(window.mouse(), (now - before) / BILLION);
             before = now;

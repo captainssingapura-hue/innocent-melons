@@ -112,6 +112,8 @@ public final class Walk {
     private boolean beside;
     /** The layouts of every look: asking rays, once the card is open, where the card answers them. */
     private Laid laid = new Laid();
+    /** How the run's two windows are arranged over the screens: as they always were, until a run opens them. */
+    private Arranged arranged = new Arranged(false, LEFT, TOP, BESIDE);
     /** The bench's day, for where its sun stands: where the sliders begin unless the run is told otherwise. */
     private final Light noon = new Daylight().light();
     /** What the JavaFX window asks: shadows or none, and where the sun stands; to begin with, as the run is told. */
@@ -199,8 +201,10 @@ public final class Walk {
              Hearing hearing = Hearing.open(roaming.ends() || settle >= 0)) {
             final Guide guide = new Guide(asked, card.name(), roamer.keys(), place.dials());
             asked.offered(shadows.offered());
-            try (Shown shown = new Shown(guide, beside, LEFT, TOP)) {
-                window.shown(LEFT + BESIDE, TOP);
+            // a run nobody attends keeps the windows where they have always been, and as big
+            arranged = new Arranged(!roaming.ends() && settle < 0, LEFT, TOP, BESIDE);
+            try (Shown shown = new Shown(guide, beside, arranged)) {
+                arranged.shown(window, desk);
                 final Staged staged = new Staged(place, cast, shadows, overlay);
                 drawn(desk, card, window, staged, guide, hearing, roaming);
                 final String snapshot = System.getProperty("bench.snapshot", "");
@@ -225,6 +229,7 @@ public final class Walk {
         while (window.open() && !asked.stopped() && !roaming.over()) {
             desk.heard();
             driven.heard(window);
+            arranged.heard(window, desk);
             if (!roaming.pointing() && (driven.taken(Key.ESCAPE) || frames == 0 && !roaming.ends() && settle < 0)) {
                 taken = !taken;
                 window.taken(taken);

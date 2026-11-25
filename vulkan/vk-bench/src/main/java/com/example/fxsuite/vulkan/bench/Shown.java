@@ -13,6 +13,17 @@ public final class Shown implements AutoCloseable {
     private final boolean beside;
 
     /** {@code guide} shown with its top left corner {@code x} across the screen and {@code y} down. */
+    /** {@code guide} shown where {@code arranged} puts a console, beside a JavaFX already running or not. */
+    public Shown(final Guide guide, final boolean beside, final Arranged arranged) {
+        this.guide = guide;
+        this.beside = beside;
+        if (beside) {
+            Platform.runLater(() -> guide.shown(arranged));
+        } else {
+            Platform.startup(() -> guide.shown(arranged));
+        }
+    }
+
     public Shown(final Guide guide, final boolean beside, final double x, final double y) {
         this.guide = guide;
         this.beside = beside;

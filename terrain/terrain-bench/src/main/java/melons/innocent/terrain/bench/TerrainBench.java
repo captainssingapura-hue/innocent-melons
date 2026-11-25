@@ -1,5 +1,6 @@
 package melons.innocent.terrain.bench;
 
+import com.example.fxsuite.vulkan.bench.Arranged;
 import melons.innocent.terrain.drawn.Painting;
 import melons.innocent.terrain.drawn.ByMaterials;
 import melons.innocent.terrain.drawn.ByFeatures;
@@ -65,6 +66,9 @@ public final class TerrainBench {
     private static final int TOP = 80;
     /** How far right of the controls' left edge the card's window stands, so the two are side by side. */
     private static final int BESIDE = 360;
+
+    /** How its two windows are arranged over the screens: as they always were, until it runs. */
+    private Arranged arranged = new Arranged(false, LEFT, TOP, BESIDE);
     private static final int EVENED = 30;
     private static final double MILLION = 1e6;
     private static final double BILLION = 1e9;
@@ -133,12 +137,14 @@ public final class TerrainBench {
              Card card = new Card(desk);
              Window window = card.window("Terrain bench, drawn on " + card.name(), WIDTH, HEIGHT)) {
             final Controls controls = new Controls(wanted, about, painting.legend());
-            Platform.startup(() -> controls.shown(LEFT, TOP));
+            // a run nobody attends keeps the windows where they have always been, and as big
+            arranged = new Arranged(Long.getLong("bench.settle", -1) < 0, LEFT, TOP, BESIDE);
+            Platform.startup(() -> controls.shown(arranged));
             final Colouring colouring = new Colouring(new Grid(ground, METRE * said("bench.every", 10)), painting);
             land = new LandDrawn(card, laid, painting, colouring.grid(), up, colouring.latest());
             colouring.start();
             controls.seen(flight, on());
-            window.shown(LEFT + BESIDE, TOP);
+            arranged.shown(window, desk);
             try {
                 drawn(desk, card, window, colouring, controls);
                 snapshot(card, window);
@@ -174,6 +180,7 @@ public final class TerrainBench {
         int frames = 0;
         while (window.open() && !wanted.stopped()) {
             desk.heard();
+            arranged.heard(window, desk);
             final Colouring.Coloured coloured = colouring.latest();
             if (coloured.laid() != land.laid()) {
                 land.close();
