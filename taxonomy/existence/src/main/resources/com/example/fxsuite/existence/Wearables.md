@@ -54,3 +54,19 @@ Armour round the neck, between the cuirass and the helmet.
 ## Gauntlet
 
 Armour over a hand, with a cuff over the wrist.
+
+## Couter
+
+Armour over an elbow, a cup round its point and sides, open in its crook so that it bends.
+
+## Cuisse
+
+Armour over a thigh, its front and sides, from below the hip to above the knee, open behind.
+
+## Poleyn
+
+Armour over a knee, a cap over its front and sides, open behind so that it bends.
+
+## Sabaton
+
+Armour over a foot, its top and sides from the ankle to the toes, open under its sole.

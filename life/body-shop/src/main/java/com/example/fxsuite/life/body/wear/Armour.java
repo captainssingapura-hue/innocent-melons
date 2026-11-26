@@ -19,7 +19,8 @@ import java.util.Optional;
  * foot of the ribs, moving with the chest; over each shoulder a pauldron, standing off the cuirass's top, moving with
  * the upper arm; round each forearm a vambrace; round each shin a greave; below the cuirass a fauld round the belly,
  * with the abdomen; a gorget round the neck under the helmet's rim, with the neck; over each hand a gauntlet, with the
- * hand. Each said in its part's own frame as the papers' figure has it, so that it fits a body of any size.
+ * hand; and over the elbows, the thighs, the knees and the feet, {@link Guards}. Each said in its part's own frame
+ * as the papers' figure has it, so that it fits a body of any size.
  */
 public record Armour() implements StatelessFunctionalObject {
 
@@ -44,9 +45,13 @@ public record Armour() implements StatelessFunctionalObject {
     /** How big the cubes the skin is looked in by are, cm: small, the hands' skin being made finely. */
     private static final double LOOK = 0.6;
 
-    /** Its pieces, shaped over {@code skin} as the body {@code bind} holds it. */
-    public List<Plate> of(final Beneath skin, final Rig bind) {
+    /**
+     * Its pieces, shaped over {@code skin} as the body {@code bind} holds it, and over what is worn under them,
+     * {@code under}, cloth over the skin: standing off whichever is further out.
+     */
+    public List<Plate> of(final Beneath skin, final List<Beneath> under, final Rig bind) {
         final Nearness near = new Nearness(skin, LOOK);
+        final List<Nearness> over = under.stream().map(u -> new Nearness(u, LOOK)).toList();
         final List<Plating.Cut> cuts = new ArrayList<>(List.of(cuirass(bind.frame(Part.CHEST)),
                 fauld(bind.frame(Part.ABDOMEN)), gorget(bind.frame(Part.NECK))));
         for (final Part hand : List.of(Part.RIGHT_HAND, Part.LEFT_HAND)) {
@@ -63,7 +68,8 @@ public record Armour() implements StatelessFunctionalObject {
             cuts.add(band(new Wearables.Greave(), shin, bind.frame(shin), GREAVE_OFF, -6, -35,
                     new double[] {-8, -37, -11, 9, -4, 8}));
         }
-        return cuts.stream().map(c -> Plating.INSTANCE.of(near, c)).toList();
+        cuts.addAll(Guards.INSTANCE.of(bind));
+        return cuts.stream().map(c -> Plating.INSTANCE.of(near, over, c)).toList();
     }
 
     /**
@@ -84,7 +90,7 @@ public record Armour() implements StatelessFunctionalObject {
                     Field.Op.CARVE, 0.6));
         }
         return new Plating.Cut(new Wearables.Cuirass(), Part.CHEST, CUIRASS_OFF, THICK, COARSE, CELL,
-                box(f, new double[] {-24, 2, -18, 24, 30, 15}), edges, Optional.empty());
+                Bounds.INSTANCE.box(f, new double[] {-24, 2, -18, 24, 30, 15}), edges, Optional.empty());
     }
 
     /**
@@ -102,7 +108,7 @@ public record Armour() implements StatelessFunctionalObject {
                 new Field.Element("foot", Field.Plane.of(f.place(new V3(0, -9, 0)), f.way(new V3(0, -1, 0))),
                         Field.Op.CLIP, 0.4));
         return new Plating.Cut(new Wearables.Pauldron(), arm, PAULDRON_OFF, THICK, FINE, CELL,
-                box(f, new double[] {-8, -12, -10, 13, 13, 10}), edges, Optional.empty());
+                Bounds.INSTANCE.box(f, new double[] {-8, -12, -10, 13, 13, 10}), edges, Optional.empty());
     }
 
     /**
@@ -111,8 +117,8 @@ public record Armour() implements StatelessFunctionalObject {
      */
     private Plating.Cut band(final Leaf<?> kind, final Part part, final Rig.Frame f, final double off,
                              final double top, final double foot, final double[] b) {
-        return new Plating.Cut(kind, part, off, THICK, FINE, CELL, box(f, b), between(f, top, foot),
-                Optional.of(new Plating.Core(f.at(), f.way(V3.Y), part)));
+        return new Plating.Cut(kind, part, off, THICK, FINE, CELL, Bounds.INSTANCE.box(f, b),
+                Bounds.INSTANCE.between(f, top, foot), Optional.of(new Plating.Core(f.at(), f.way(V3.Y), part)));
     }
 
     /**
@@ -121,7 +127,8 @@ public record Armour() implements StatelessFunctionalObject {
      */
     private Plating.Cut fauld(final Rig.Frame f) {
         return new Plating.Cut(new Wearables.Fauld(), Part.ABDOMEN, FAULD_OFF, THICK, COARSE, CELL,
-                box(f, new double[] {-21, -4, -17, 21, 18, 17}), between(f, 16, -2), Optional.empty());
+                Bounds.INSTANCE.box(f, new double[] {-21, -4, -17, 21, 18, 17}), Bounds.INSTANCE.between(f, 16, -2),
+                Optional.empty());
     }
 
     /**
@@ -135,8 +142,8 @@ public record Armour() implements StatelessFunctionalObject {
                 new Field.Element("foot", Field.Plane.of(f.place(new V3(0, -1.5, 0)), f.way(new V3(0, -1, 0))),
                         Field.Op.CLIP, 0));
         return new Plating.Cut(new Wearables.Gorget(), Part.NECK, GORGET_OFF, THICK, FINE, CELL,
-                box(f, new double[] {-12, -4, -13, 12, 10, 10}), edges, Optional.of(new Plating.Core(f.at(),
-                f.way(V3.Y), Part.NECK)));
+                Bounds.INSTANCE.box(f, new double[] {-12, -4, -13, 12, 10, 10}), edges,
+                Optional.of(new Plating.Core(f.at(), f.way(V3.Y), Part.NECK)));
     }
 
     /**
@@ -145,16 +152,8 @@ public record Armour() implements StatelessFunctionalObject {
      */
     private Plating.Cut gauntlet(final Part hand, final Rig.Frame f) {
         return new Plating.Cut(new Wearables.Gauntlet(), hand, GAUNTLET_OFF, GAUNTLET_THICK, HAND, HAND,
-                box(f, new double[] {-5, -21, -4, 8, 5, 8}), List.of(new Field.Element("cuff",
+                Bounds.INSTANCE.box(f, new double[] {-5, -21, -4, 8, 5, 8}), List.of(new Field.Element("cuff",
                 Field.Plane.of(f.place(new V3(0, 3, 0)), f.way(V3.Y)), Field.Op.CLIP, 0)), Optional.empty());
-    }
-
-    /** What cuts a piece in {@code f} to between {@code top} and {@code foot} along it. */
-    private List<Field.Element> between(final Rig.Frame f, final double top, final double foot) {
-        return List.of(
-                new Field.Element("top", Field.Plane.of(f.place(new V3(0, top, 0)), f.way(V3.Y)), Field.Op.CLIP, 0),
-                new Field.Element("foot", Field.Plane.of(f.place(new V3(0, foot, 0)), f.way(new V3(0, -1, 0))),
-                        Field.Op.CLIP, 0));
     }
 
     /**
@@ -165,19 +164,5 @@ public record Armour() implements StatelessFunctionalObject {
                              final V3 across, final double ratio) {
         final V3 at = f.place(c);
         return Field.Squash.of(Field.Cylinder.of(at, f.way(axis), r, half, 0), at, f.way(across), ratio);
-    }
-
-    /** The box round {@code b}'s corners, a box in {@code f}'s frame, in the body's. */
-    private double[] box(final Rig.Frame f, final double[] b) {
-        final double[] out = {1e9, 1e9, 1e9, -1e9, -1e9, -1e9};
-        for (int i = 0; i < 8; i++) {
-            final V3 p = f.place(new V3(b[(i & 1) * 3], b[1 + (i >> 1 & 1) * 3], b[2 + (i >> 2 & 1) * 3]));
-            final double[] v = {p.x(), p.y(), p.z()};
-            for (int a = 0; a < 3; a++) {
-                out[a] = Math.min(out[a], v[a]);
-                out[a + 3] = Math.max(out[a + 3], v[a]);
-            }
-        }
-        return out;
     }
 }

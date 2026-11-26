@@ -15,7 +15,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * A plate shaped over a trunk: standing off its faces as far as told, as thick as told; nowhere further off it than
- * that, nothing of it astray in the space round it; ending where its edges cut it.
+ * that, nothing of it astray in the space round it; ending where its edges cut it. Over cloth worn further out than
+ * that, standing off the cloth, nothing of it between the cloth and the trunk.
  */
 class PlatingTest {
 
@@ -23,6 +24,8 @@ class PlatingTest {
     private static final double THICK = 0.4;
     /** How near the grid finds a flat face, cm. */
     private static final double NEAR = 0.06;
+    /** How far out from the trunk's middle the cloth worn over one of its faces lies, cm: 2 off its face. */
+    private static final double CLOTH = 7;
 
     @Test
     void aPlateStandsOffTheTrunkAsToldAndNowhereElse() {
@@ -32,7 +35,7 @@ class PlatingTest {
                 new Field.Element("foot", Field.Plane.of(new V3(0, -6, 0), new V3(0, -1, 0)), Field.Op.CLIP, 0));
         final Plating.Cut cut = new Plating.Cut(new Wearables.Cuirass(), Part.CHEST, OFF, THICK, 0.25, 0.2,
                 new double[] {-12, -8, -12, 12, 8, 12}, edges, Optional.empty());
-        final float[] at = Plating.INSTANCE.of(new Nearness(trunk), cut).mesh().points();
+        final float[] at = Plating.INSTANCE.of(new Nearness(trunk), List.of(), cut).mesh().points();
         assertTrue(at.length > 0, "a plate");
         int faces = 0;
         for (int i = 0; i < at.length; i += 3) {
@@ -48,6 +51,38 @@ class PlatingTest {
             }
         }
         assertTrue(faces > 0, "over the trunk's faces");
+    }
+
+    @Test
+    void aPlateStandsOffClothWornFurtherOutAndNothingOfItLiesUnderTheCloth() {
+        final Beneath trunk = box(new V3(-5, -15, -5), new V3(5, 15, 5), Part.CHEST);
+        final Beneath cloth = sheet(CLOTH, Part.CHEST);
+        final Plating.Cut cut = new Plating.Cut(new Wearables.Cuirass(), Part.CHEST, OFF, THICK, 0.25, 0.2,
+                new double[] {-12, -8, -12, 12, 8, 12}, List.of(
+                new Field.Element("top", Field.Plane.of(new V3(0, 6, 0), V3.Y), Field.Op.CLIP, 0),
+                new Field.Element("foot", Field.Plane.of(new V3(0, -6, 0), new V3(0, -1, 0)), Field.Op.CLIP, 0)),
+                Optional.empty());
+        final float[] at = Plating.INSTANCE.of(new Nearness(trunk), List.of(new Nearness(cloth)), cut).mesh()
+                .points();
+        int over = 0;
+        for (int i = 0; i < at.length; i += 3) {
+            if (at[i] > 0 && Math.abs(at[i + 2]) < 3) {
+                assertTrue(at[i] > CLOTH + OFF - THICK - NEAR, "none of it under the cloth: " + at[i]);
+                assertTrue(at[i] < CLOTH + OFF + NEAR, "as far off the cloth as told: " + at[i]);
+                over++;
+            }
+        }
+        assertTrue(over > 0, "over the cloth");
+    }
+
+    /** A sheet across {@code x}, wider than the trunk, facing out along x, following {@code part}. */
+    private Beneath sheet(final double x, final Part part) {
+        final float[] points = {(float) x, -20, -9, (float) x, 20, -9, (float) x, 20, 9, (float) x, -20, 9};
+        final Part[] main = {part, part, part, part};
+        final float[] alone = new float[Part.values().length];
+        alone[part.ordinal()] = 1;
+        final Weights w = new Weights(alone);
+        return new Beneath(points, new int[] {0, 1, 2, 0, 2, 3}, main, new Weights[] {w, w, w, w});
     }
 
     /** A box from {@code lo} to {@code hi}, its faces outward, following {@code part}. */
