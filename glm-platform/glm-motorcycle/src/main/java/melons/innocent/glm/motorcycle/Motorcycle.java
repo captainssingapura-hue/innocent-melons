@@ -1,0 +1,138 @@
+package melons.innocent.glm.motorcycle;
+
+import melons.innocent.glm.core.Connection;
+import melons.innocent.glm.core.Joining;
+import melons.innocent.glm.core.Part;
+import melons.innocent.glm.core.Platform;
+import melons.innocent.glm.engine.EngineFigures;
+import melons.innocent.glm.engine.EngineInternals;
+import melons.innocent.glm.engine.EngineRange;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * A motorcycle round its V twin, put together from the crankcase out as the engine carries its loads: the engine,
+ * covered, and its belt drive; the trellis frame bolted to the front head and the steering head welded in it; the
+ * yokes turning in the steering head and the fork's legs clamped in them, the front axle, wheel, tyre, brake disc and
+ * caliper on them; the mid-structure bolted to the crankcase behind the gearbox, the subframe on it and the swingarm
+ * pivoting in it; the back axle, wheel, tyre, brake disc and caliper on the swingarm, and a shock either side from it
+ * up to the subframe ({@link BikeFigures}).
+ *
+ * @param twin the engine's figures
+ */
+public record Motorcycle(EngineFigures twin) {
+
+    /** The motorcycle round the range's twin. */
+    public Motorcycle() {
+        this(new EngineRange().v2());
+    }
+
+    /** Its figures. */
+    public BikeFigures figures() {
+        return new BikeFigures(twin);
+    }
+
+    /** It, its crankcase its root. */
+    public Platform platform() {
+        final Platform engine = new EngineInternals(twin).platform(true);
+        final Part crankcase = engine.root();
+        final List<Connection> joined = new ArrayList<>(engine.connections());
+        final Mounts mounts = new Mounts(figures(), carried(joined, "head, bank 2"), carried(joined, "head, bank 1"),
+                crankcase, carried(joined, "timing cover"));
+        final Frames frames = new Frames(figures(), mounts);
+        final List<Connection> front = front(mounts, frames);
+        final List<Connection> back = back(crankcase, frames);
+        joined.addAll(front);
+        joined.addAll(back);
+        joined.addAll(again(mounts, front, back, carried(joined, "rear pulley")));
+        return new Platform("the motorcycle", crankcase, joined);
+    }
+
+    /** The front: the trellis on the front head, the steering head, yokes, legs and the front wheel on them. */
+    private List<Connection> front(final Mounts mounts, final Frames frames) {
+        final FrontEnd end = new FrontEnd(figures());
+        final BikeWheels wheels = new BikeWheels(figures());
+        final Part trellis = frames.trellis();
+        final Part head = end.head();
+        final Part low = end.yoke(false);
+        final Part high = end.yoke(true);
+        final Part left = end.leg(-1);
+        final Part right = end.leg(1);
+        final Part axle = wheels.axle(true, BikeFigures.LEGS);
+        final Part wheel = wheels.wheel(true);
+        return List.of(
+                new Connection("trellis on the front head", mounts.front(), "top", trellis, "front head",
+                        Joining.BOLTED),
+                new Connection("steering head in the trellis", trellis, "steering head", head, "middle",
+                        Joining.WELDED),
+                new Connection("bottom yoke in the steering head", head, "bottom", low, "head", Joining.HINGE),
+                new Connection("top yoke on the steering head", head, "top", high, "head", Joining.HINGE),
+                new Connection("left fork leg in the yokes", low, "leg, left", left, "yoke", Joining.BOLTED),
+                new Connection("right fork leg in the yokes", low, "leg, right", right, "yoke", Joining.BOLTED),
+                new Connection("front axle in the fork", left, "axle", axle, "left", Joining.BOLTED),
+                new Connection("front wheel on its axle", axle, "hub", wheel, "hub", Joining.HINGE),
+                new Connection("front tyre on its rim", wheel, "hub", wheels.tyre(true), "rim", Joining.SEATED),
+                new Connection("front brake disc on its wheel", wheel, "hub", wheels.disc(true), "hub",
+                        Joining.BOLTED),
+                new Connection("front caliper on the fork", left, "axle", wheels.caliper(true), "mount",
+                        Joining.BOLTED));
+    }
+
+    /** The back: the mid-structure on the crankcase, the subframe, the swingarm, its shocks and the back wheel. */
+    private List<Connection> back(final Part crankcase, final Frames frames) {
+        final RearEnd end = new RearEnd(figures(), frames);
+        final BikeWheels wheels = new BikeWheels(figures());
+        final Part mid = frames.midStructure();
+        final Part swingarm = end.swingarm();
+        final Part axle = wheels.axle(false, 2 * Frames.ARMS);
+        final Part wheel = wheels.wheel(false);
+        return List.of(
+                new Connection("mid-structure on the crankcase", crankcase, "mount, right", mid, "crankcase",
+                        Joining.BOLTED),
+                new Connection("subframe on the mid-structure", mid, "subframe", frames.subframe(), "front",
+                        Joining.BOLTED),
+                new Connection("swingarm on its pivot", mid, "pivot", swingarm, "pivot", Joining.HINGE),
+                new Connection("left shock on the swingarm", swingarm, "shock, left", end.shock(-1), "lug",
+                        Joining.BUSHED),
+                new Connection("right shock on the swingarm", swingarm, "shock, right", end.shock(1), "lug",
+                        Joining.BUSHED),
+                new Connection("rear axle in the swingarm", swingarm, "axle", axle, "hub", Joining.BOLTED),
+                new Connection("rear wheel on its axle", axle, "hub", wheel, "hub", Joining.HINGE),
+                new Connection("rear tyre on its rim", wheel, "hub", wheels.tyre(false), "rim", Joining.SEATED),
+                new Connection("rear brake disc on its wheel", wheel, "hub", wheels.disc(false), "hub",
+                        Joining.BOLTED),
+                new Connection("rear caliper on the swingarm", swingarm, "axle", wheels.caliper(false), "mount",
+                        Joining.BOLTED));
+    }
+
+    /**
+     * Where its parts meet again, by a second way from the crankcase: the trellis on the mid-structure behind the
+     * back head, the mid-structure on the back head, the front axle through the fork's right leg, each shock's top on
+     * the subframe, and the rear pulley on the back axle.
+     */
+    private List<Connection> again(final Mounts mounts, final List<Connection> front, final List<Connection> back,
+                                   final Part pulley) {
+        final Part trellis = carried(front, "trellis frame");
+        final Part mid = carried(back, "mid-structure");
+        final Part subframe = carried(back, "subframe");
+        final Part axle = carried(back, "rear axle");
+        return List.of(
+                new Connection("trellis on the mid-structure", mid, "trellis", trellis, "rear node", Joining.BOLTED),
+                new Connection("mid-structure on the back head", mounts.rear(), "top", mid, "back head",
+                        Joining.BOLTED),
+                new Connection("front axle in the right fork leg", carried(front, "fork leg, right"), "axle",
+                        carried(front, "front axle"), "right", Joining.BOLTED),
+                new Connection("left shock on the subframe", subframe, "shock, left", carried(back, "shock, left"),
+                        "subframe", Joining.BUSHED),
+                new Connection("right shock on the subframe", subframe, "shock, right", carried(back, "shock, right"),
+                        "subframe", Joining.BUSHED),
+                new Connection("rear pulley on its axle", axle, "pulley", pulley, "axle", Joining.BOLTED));
+    }
+
+    /** The part {@code joined} carries whose name ends {@code called}. */
+    private Part carried(final List<Connection> joined, final String called) {
+        return joined.stream().map(Connection::carried).filter(p -> p.name().endsWith(called)).findFirst()
+                .orElseThrow();
+    }
+}

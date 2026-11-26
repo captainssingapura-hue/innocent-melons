@@ -52,6 +52,7 @@ public record Finishes(Map<Group, Coat> coats, Map<Material, Coat> bare) {
     public Finishes() {
         this(Map.ofEntries(
                 Map.entry(Group.UNDERBODY, new Coat(Coat.Kind.GLOSS_PAINT, "#3b3f44")),
+                Map.entry(Group.FRAME, new Coat(Coat.Kind.GLOSS_PAINT, "#141518")),
                 Map.entry(Group.SUBFRAMES, new Coat(Coat.Kind.GLOSS_PAINT, "#1e2023")),
                 Map.entry(Group.LINKS, new Coat(Coat.Kind.GLOSS_PAINT, "#1e2023")),
                 Map.entry(Group.CARRIERS, new Coat(Coat.Kind.GLOSS_PAINT, "#1e2023")),

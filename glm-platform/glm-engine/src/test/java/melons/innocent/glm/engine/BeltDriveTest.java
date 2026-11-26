@@ -16,8 +16,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * The twin's final drive: its belt as long as its 178 teeth, round the output pulley of 34 and the rear pulley of 80,
- * the back axle behind the countershaft as far as that puts it and as high as its tyre is round; on the bike's right,
- * at the crankcase's back end, the clutch and the cam chains at its front end, the bike's left. As the bike rolls
+ * the back axle behind the countershaft as far as that puts it, some 66 cm, and as high as its tyre is round; on the
+ * bike's right, at the crankcase's back end, the clutch and the cam chains at its front end, the bike's left. As the bike rolls
  * forward, toward +x, the rear pulley turns with the wheel, the output pulley 80 to 34 times as fast the same way, and
  * the belt runs with them, a tooth a pitch on where the next was; and the belt and its pulleys clear of everything in
  * the engine, covered, but each other and the countershaft's bearing.
@@ -33,7 +33,7 @@ class BeltDriveTest {
         final Spot shaft = belt.countershaft();
         final Spot axle = belt.axle();
         final double apart = Math.hypot(axle.u() - shaft.u(), axle.v() - shaft.v());
-        assertTrue(apart > 80 && apart < 88, "some 84 cm behind the countershaft, not " + apart);
+        assertTrue(apart > 62 && apart < 70, "some 66 cm behind the countershaft, a swingarm's length, not " + apart);
         assertTrue(axle.u() < shaft.u(), "behind it, toward -x");
         assertEquals(BeltFigures.REAR / (double) BeltFigures.FRONT, belt.rear() / belt.front(), 0.005);
         assertTrue(belt.plane() > v2.length(), "on the bike's right, past the crankcase's back end");

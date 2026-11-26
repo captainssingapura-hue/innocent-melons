@@ -11,14 +11,14 @@ import java.util.List;
  *
  * @param spots the spots it is drawn round
  */
-record Hull(List<Spot> spots) {
+public record Hull(List<Spot> spots) {
 
-    Hull {
+    public Hull {
         spots = List.copyOf(spots);
     }
 
     /** It. */
-    List<Spot> outline() {
+    public List<Spot> outline() {
         final List<Spot> sorted = new ArrayList<>(spots);
         sorted.sort((a, b) -> a.u() != b.u() ? Double.compare(a.u(), b.u()) : Double.compare(a.v(), b.v()));
         final List<Spot> lower = half(sorted);

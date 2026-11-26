@@ -7,7 +7,8 @@ import java.util.List;
 /**
  * How a twin's final drive runs, on the bike's right, at the crankcase's back end, in the block's frame: after the
  * reference bike's, a toothed belt of 178 teeth, 24 mm wide, from the output pulley of 34 teeth on the countershaft
- * back round the rear pulley of 80 on the back wheel; at 14 mm pitch, as this maker's back belts are, an estimate.
+ * back round the rear pulley of 80 on the back wheel; at 11 mm pitch, an estimate, which puts the back wheel a
+ * swingarm's length behind the gearbox and leaves the front wheel room before the engine at the bike's wheelbase.
  * The back wheel as far behind the countershaft as the belt's length puts it, as high as its tyre is round, 150/80
  * on 16 inches; the crank as high over the ground as the bike is likely to carry it, until its frame says, an
  * estimate. As the back wheel rolls the belt runs with it, the rear pulley turning with the wheel and the output
@@ -15,41 +16,41 @@ import java.util.List;
  *
  * @param figures the engine's figures
  */
-record BeltFigures(EngineFigures figures) {
+public record BeltFigures(EngineFigures figures) {
 
     /** How far one tooth is from the next; how many the belt has, and each pulley; how wide the belt is. */
-    static final double PITCH = 1.4;
-    static final int TEETH = 178;
-    static final int FRONT = 34;
-    static final int REAR = 80;
-    static final double WIDE = 2.4;
+    public static final double PITCH = 1.1;
+    public static final int TEETH = 178;
+    public static final int FRONT = 34;
+    public static final int REAR = 80;
+    public static final double WIDE = 2.4;
     /** How far round the back tyre is, 150/80 on 16 inches; how high the crank stands over the ground. */
-    static final double TYRE = (16 * 2.54 + 2 * 0.8 * 15) / 2;
-    private static final double CRANK = 28;
+    public static final double TYRE = (16 * 2.54 + 2 * 0.8 * 15) / 2;
+    public static final double CRANK = 28;
     /** How far out its plane is past the crankcase's back end. */
     private static final double OUT = 2;
 
     /** Where its plane is, along the crank. */
-    double plane() {
+    public double plane() {
         return figures.length() + OUT;
     }
 
     /** How far round the output pulley is to the belt's line, and the rear pulley. */
-    double front() {
+    public double front() {
         return round(FRONT);
     }
 
-    double rear() {
+    public double rear() {
         return round(REAR);
     }
 
     /** Where the countershaft is, across the crank. */
-    Spot countershaft() {
+    public Spot countershaft() {
         return new GearboxFigures(figures).countershaft();
     }
 
     /** Where the back axle is, across the crank: behind the countershaft, as far as the belt's length puts it. */
-    Spot axle() {
+    public Spot axle() {
         final Spot from = countershaft();
         final double up = TYRE - CRANK - from.v();
         double near = rear() + front();
@@ -72,7 +73,7 @@ record BeltFigures(EngineFigures figures) {
     }
 
     /** How far the back wheel has turned, in radians, the bike having rolled {@code rolled}; forward, toward +x. */
-    double wheel(final double rolled) {
+    public double wheel(final double rolled) {
         return rolled / TYRE;
     }
 

@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * A twin's final drive's parts, as its figures say ({@link BeltFigures}): the output pulley, steel, on the
  * countershaft's end out of the crankcase, flanged either side of the belt; the belt, its teeth all alike, each a
- * span of its back with a tooth on its inside, as many as it has; and the rear pulley, steel, on its hub and the back
+ * span of its back with a tooth on its inside, as many as it has; and the rear pulley, steel, on its hub on the back
  * axle, where the back wheel will be. The belt is drawn as its teeth, each where it has run to as the bike rolls.
  *
  * @param figures the engine's figures
@@ -56,7 +56,6 @@ record BeltParts(EngineFigures figures) {
         final Shapes shapes = new Shapes(ROUND);
         final List<Mesh> made = new ArrayList<>(flanged(BeltFigures.REAR, belt.rear(), at));
         made.add(shapes.drum(at.minus(ALONG.times(5)), at.minus(ALONG.times(1.4)), 5));
-        made.add(shapes.drum(at.minus(ALONG.times(14)), at.plus(ALONG.times(2.5)), 1.2));
         return new Part(figures.name() + " rear pulley", Group.ENGINE, false, List.of(new Point("axle", at)),
                 shapes.joined(made), new Made(Material.STEEL, true)).as(new MotorcycleParts.RearPulley());
     }
