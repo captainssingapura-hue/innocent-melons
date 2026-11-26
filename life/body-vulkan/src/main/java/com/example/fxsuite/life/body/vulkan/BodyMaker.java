@@ -10,6 +10,7 @@ import com.example.fxsuite.life.body.bone.skull.SkullForm;
 import com.example.fxsuite.life.body.fat.SheetBed;
 import com.example.fxsuite.life.body.flesh.Flesh;
 import com.example.fxsuite.life.body.head.ClayHead;
+import com.example.fxsuite.life.body.head.FaceOpening;
 import com.example.fxsuite.life.body.head.NeckJoin;
 import com.example.fxsuite.life.body.muscle.MuscleBody;
 import com.example.fxsuite.life.body.skin.Skins;
@@ -22,8 +23,8 @@ import java.util.function.Consumer;
 
 /**
  * The body the bench draws, made away from the screen, a long while: a male model's body (Proportions.MODEL) as it is
- * bound; its bones; its muscles, the deep ones too if asked; its skin, with the clay head joined on at its neck if a
- * reference head is named.
+ * bound; its bones; its muscles, the deep ones too if asked; its skin, open where the face is to go
+ * ({@link FaceOpening}), or with the clay head joined on at its neck if a reference head is named.
  *
  * <p>{@code -Dbody.deep} its deep muscles too; {@code -Dbody.bones} how fine its bones are, cm (0.4);
  * {@code -Dbody.skin=coarse} its skin as the motion bench draws it moving, a quarter the points, quicker;
@@ -59,13 +60,13 @@ public final class BodyMaker {
 
     /**
      * {@code skin} with the clay head made from the reference head {@code -Dhead.reference} names joined on at its
-     * neck, where the skull fitted under it sets it, made a man's size along each way as it was fitted, else as big as
-     * the skin's head; as it is, if it names none or it cannot be read.
+     * neck, where the skull fitted under it sets it, made a man's size as it was fitted, else as big as the skin's
+     * head; if it names none, the skin open where the face is to go; as it is, if the head cannot be read.
      */
     private Flesh clayed(final Flesh skin, final Consumer<String> told) {
         final String path = System.getProperty("head.reference");
         if (path == null) {
-            return skin;
+            return FaceOpening.INSTANCE.open(skin);
         }
         try {
             told.accept("the clay head");
