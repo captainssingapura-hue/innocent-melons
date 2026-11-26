@@ -5,14 +5,12 @@ import com.example.fxsuite.avatar.bench.kit.Shell;
 import com.example.fxsuite.life.body.BodyGroup;
 import com.example.fxsuite.life.body.Layer;
 import com.example.fxsuite.life.body.Move;
-import com.example.fxsuite.texture.materials.Material;
 import com.example.fxsuite.vulkan.bench.Asked;
 import com.example.fxsuite.vulkan.bench.LightBoard;
 import com.example.fxsuite.vulkan.space.Vec3;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
@@ -22,7 +20,6 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-import javafx.util.StringConverter;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -33,10 +30,9 @@ import java.util.Map;
  * The body bench's JavaFX window, beside the card's, laid out by the engine's bench kit as every bench's is: on its
  * left, the light; in its middle, how the body moves (how it goes, how fast, going or stopped, where in its stride,
  * how slowly), how deep each group of its parts is drawn (its skin, its muscles on its bones, its bones, or not at
- * all), the skin's colour, the helmet (worn or not, what its shell is made of, its colour, its visor's), and what the
- * card says it draws. It draws nothing itself: what is on show and how the body moves go out on the bench's bus
- * ({@link BodyShown}, {@link Motion}); where the going body has got to in its stride comes back on it
- * ({@link Strided}).
+ * all), the skin's colour, what it wears ({@link WardrobePanel}), and what the card says it draws. It draws nothing
+ * itself: what is on show and how the body moves go out on the bench's bus ({@link BodyShown}, {@link Motion});
+ * where the going body has got to in its stride comes back on it ({@link Strided}).
  */
 public final class BodyConsole {
 
@@ -157,44 +153,16 @@ public final class BodyConsole {
             grid.addRow(row++, new Label(g.label()), box);
         }
         final ColorPicker skin = picker(first.skin());
-        final HelmetShown h = first.helmet();
-        final CheckBox worn = new CheckBox("Wearing its helmet");
-        worn.setSelected(h.on());
-        final ChoiceBox<Material> made = new ChoiceBox<>();
-        made.getItems().addAll(h.offered());
-        made.setValue(h.material());
-        made.setConverter(new StringConverter<>() {
-            @Override
-            public String toString(final Material m) {
-                return m == null ? "" : m.title();
-            }
-
-            @Override
-            public Material fromString(final String s) {
-                return null;
-            }
-        });
-        final ColorPicker colour = picker(h.colour());
-        final ColorPicker visor = picker(h.visor());
+        final WardrobePanel wardrobe = new WardrobePanel(first.worn());
         final Runnable changed = () -> {
             final Map<BodyGroup, Layer> layers = new EnumMap<>(BodyGroup.class);
             boxes.forEach((g, box) -> layers.put(g, box.getValue()));
-            bus.publish(new BodyShown(layers, said(skin), new HelmetShown(worn.isSelected(), made.getValue(),
-                    said(colour), said(visor))));
+            bus.publish(new BodyShown(layers, said(skin), wardrobe.shown()));
         };
         boxes.values().forEach(box -> box.valueProperty().addListener((o, was, is) -> changed.run()));
-        made.valueProperty().addListener((o, was, is) -> changed.run());
-        worn.setOnAction(set -> changed.run());
-        for (final ColorPicker p : List.of(skin, colour, visor)) {
-            p.setOnAction(set -> changed.run());
-        }
-        final GridPane helmet = new GridPane();
-        helmet.setHgap(GAP);
-        helmet.setVgap(GAP / 2);
-        helmet.addRow(0, new Label("Made of"), made);
-        helmet.addRow(1, new Label("Its colour, if painted"), colour);
-        helmet.addRow(2, new Label("Its visor's colour"), visor);
-        return new VBox(GAP / 2, grid, new Label("The skin's colour"), skin, worn, helmet);
+        skin.setOnAction(set -> changed.run());
+        wardrobe.listen(changed);
+        return new VBox(GAP / 2, grid, new Label("The skin's colour"), skin, wardrobe.node());
     }
 
     /** A colour picker showing {@code c}. */

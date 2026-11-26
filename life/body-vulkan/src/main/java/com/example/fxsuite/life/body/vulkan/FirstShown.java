@@ -3,17 +3,20 @@ package com.example.fxsuite.life.body.vulkan;
 import com.example.fxsuite.life.body.BodyGroup;
 import com.example.fxsuite.life.body.Layer;
 import com.example.fxsuite.life.body.skin.Skins;
+import com.example.fxsuite.taxonomy.Leaf;
 import com.example.fxsuite.texture.materials.Material;
 import com.example.fxsuite.texture.materials.Materials;
 import com.example.fxsuite.vulkan.space.Vec3;
 
+import java.util.Arrays;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 /**
  * What the body bench has on show to begin with, as the run was told: each group as {@code -Dbody.<group>} says, else
- * as skin; the skin's colour, {@code -Dbody.colour}; the helmet as {@link #helmet} says.
+ * as skin; the skin's colour, {@code -Dbody.colour}; what it wears as {@link #worn} says.
  */
 public record FirstShown() {
 
@@ -29,24 +32,29 @@ public record FirstShown() {
                 }
             }
         }
-        return new BodyShown(layers, colour("body.colour", Skins.COLOUR), helmet());
+        return new BodyShown(layers, colour("body.colour", Skins.COLOUR), worn());
     }
 
     /**
-     * The helmet as it is on show to begin with: worn unless {@code -Dbody.helmet=false}; its shell of what
-     * {@code -Dbody.helmet.material} names (steel); its colour {@code -Dbody.helmet.colour}, its visor's
-     * {@code -Dbody.visor.colour}.
+     * What it wears to begin with: the kinds {@code -Dbody.wear} names, by their names, commas between (every piece
+     * of armour and the tights and briefs; {@code none}, nothing); the armour of what {@code -Dbody.armour.material}
+     * names (steel); its colour {@code -Dbody.armour.colour}, its visor's {@code -Dbody.visor.colour}; the cloth's
+     * {@code -Dbody.cloth.colour}.
      */
-    private HelmetShown helmet() {
-        final HelmetShown plain = new HelmetShown(!"false".equals(System.getProperty("body.helmet")),
-                new Materials.Steel(), colour("body.helmet.colour", "#9aa3ad"), colour("body.visor.colour", "#0d1116"));
-        final String named = System.getProperty("body.helmet.material", "").toLowerCase(Locale.ROOT);
-        for (final Material m : plain.offered()) {
-            if (!named.isEmpty() && m.getClass().getSimpleName().toLowerCase(Locale.ROOT).startsWith(named)) {
-                return new HelmetShown(plain.on(), m, plain.colour(), plain.visor());
+    private WornShown worn() {
+        final WornShown plain = new WornShown(List.of(), new Materials.Steel(), colour("body.armour.colour", "#9aa3ad"),
+                colour("body.visor.colour", "#0d1116"), colour("body.cloth.colour", "#22262e"));
+        final List<String> named = Arrays.stream(System.getProperty("body.wear", "helmet,cuirass,pauldron,vambrace,"
+                + "greave,tights,briefs").toLowerCase(Locale.ROOT).split(",")).map(String::trim).toList();
+        final List<Leaf<?>> on = plain.kinds().stream().filter(k -> named.contains(k.name())).toList();
+        final String made = System.getProperty("body.armour.material", "").toLowerCase(Locale.ROOT);
+        Material m = plain.material();
+        for (final Material offered : plain.offered()) {
+            if (!made.isEmpty() && offered.getClass().getSimpleName().toLowerCase(Locale.ROOT).startsWith(made)) {
+                m = offered;
             }
         }
-        return plain;
+        return new WornShown(on, m, plain.colour(), plain.visor(), plain.cloth());
     }
 
     /** The colour the run was told as {@code name}, as much red, green and blue as it has; else {@code otherwise}. */

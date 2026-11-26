@@ -11,21 +11,23 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * The body's skin and muscles posed away from the screen, a stopped body at a time: each of their points moved as the
- * body is held, by the bones it follows ({@link Flesh#posed}), and cut into the pieces the card draws. Only the last
- * asked is posed: one asked while another is being posed takes its place, and one asked before is let go. Closed, the
- * worker stops.
+ * The body's skin and muscles, and what it wears of cloth, posed away from the screen, a stopped body at a time:
+ * each of their points moved as the body is held, by the bones it follows ({@link Flesh#posed}), and cut into the
+ * pieces the card draws. Only the last asked is posed: one asked while another is being posed takes its place, and
+ * one asked before is let go. Closed, the worker stops.
  */
 public final class Posing implements AutoCloseable {
 
     /**
      * The skin and muscles posed for {@code still}, as pieces to be drawn.
      *
-     * @param still where the body stands, stopped
-     * @param flesh its skin and muscles, posed
-     * @param ms    how long it took, thousandths of a second
+     * @param still   where the body stands, stopped
+     * @param flesh   its skin and muscles, posed
+     * @param clothes what it wears of cloth, posed
+     * @param ms      how long it took, thousandths of a second
      */
-    public record Posed(Motion.Still still, List<BodyPieces.Piece> flesh, long ms) {
+    public record Posed(Motion.Still still, List<BodyPieces.Piece> flesh, List<BodyPieces.Cloth> clothes,
+                        long ms) {
     }
 
     private final BodyMaker.Made body;
@@ -53,7 +55,9 @@ public final class Posing implements AutoCloseable {
             final long began = System.nanoTime();
             final List<BodyPieces.Piece> flesh = new ArrayList<>(pieces.skin(body.skin(), posed(body.skin(), rig)));
             flesh.addAll(pieces.muscles(body.muscles(), posed(body.muscles().flesh(), rig)));
-            done.set(new Posed(still, flesh, (System.nanoTime() - began) / 1_000_000));
+            final List<BodyPieces.Cloth> clothes = body.clothes().stream()
+                    .map(g -> pieces.cloth(g, posed(g.cloth(), rig))).toList();
+            done.set(new Posed(still, flesh, clothes, (System.nanoTime() - began) / 1_000_000));
         });
     }
 

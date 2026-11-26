@@ -1,5 +1,6 @@
 package com.example.fxsuite.life.body.head;
 
+import com.example.fxsuite.life.body.Blur;
 import com.example.fxsuite.life.body.Field;
 import com.example.fxsuite.life.body.Mesher;
 import com.example.fxsuite.life.body.Part;
@@ -88,35 +89,11 @@ public record Helmet() implements StatelessFunctionalObject {
 
     /**
      * {@code shape} with its small shapes smoothed away: found on a grid {@link #SAMPLE} apart, each value then the
-     * average of those round it, {@link #REACH} either way along each axis in turn, {@link #PASSES} times over, which
-     * blurs it near enough as a bell would; its large shape kept.
+     * average of those round it, {@link #REACH} either way along each axis in turn, {@link #PASSES} times over
+     * ({@link Blur}); its large shape kept.
      */
     private Field.Shape smoothed(final Field.Shape shape) {
-        final Field.Sampled g = Field.Sampled.of(shape, SAMPLE);
-        float[] v = g.values();
-        for (int pass = 0; pass < PASSES; pass++) {
-            for (int axis = 0; axis < 3; axis++) {
-                v = along(v, g.n(), axis);
-            }
-        }
-        return new Field.Sampled(g.lo(), g.cell(), g.n(), v, g.box());
-    }
-
-    /** {@code v}, on a grid {@code n} across, each value the average of those {@link #REACH} either side of it on
-     * {@code axis}, those past the grid's edge as its edge's. */
-    private float[] along(final float[] v, final int[] n, final int axis) {
-        final float[] out = new float[v.length];
-        final int step = axis == 0 ? 1 : axis == 1 ? n[0] : n[0] * n[1];
-        for (int at = 0; at < v.length; at++) {
-            final int c = axis == 0 ? at % n[0] : axis == 1 ? at / n[0] % n[1] : at / (n[0] * n[1]);
-            double sum = 0;
-            for (int d = -REACH; d <= REACH; d++) {
-                final int e = Math.clamp(c + d, 0, n[axis] - 1);
-                sum += v[at + (e - c) * step];
-            }
-            out[at] = (float) (sum / (2 * REACH + 1));
-        }
-        return out;
+        return Blur.INSTANCE.smoothed(Field.Sampled.of(shape, SAMPLE), REACH, PASSES);
     }
 
     /** Its shell: its outside, {@code outer}, hollowed, the band across the eyes cut through it, open at the neck. */

@@ -43,7 +43,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * options as the material bench has them ({@code bench.shadows}, {@code bench.shadows.mode}, {@code bench.sun.high},
  * {@code bench.sun.round});
  * {@code -Dbench.settle=} so many thousandths of a second after its skin is first shown ends it; {@code
- * -Dbench.snapshot.card=} a file saves the card's picture then; the helmet as {@link FirstShown} says.</p>
+ * -Dbench.snapshot.card=} a file saves the card's picture then; what it wears as {@link FirstShown} says.</p>
  */
 public final class BodyBench {
 
@@ -190,7 +190,7 @@ public final class BodyBench {
             posing.ask(askedFor, moving.rig());
         }
         posing.taken().ifPresent(p -> {
-            view.fleshed(p.flesh());
+            view.fleshed(p.flesh(), p.clothes());
             onCard = p.still();
             bus.publish(new Bus.Working(false, "posing its skin and muscles"));
             System.out.printf(Locale.ROOT, "skin and muscles posed in %,d ms%n", p.ms());

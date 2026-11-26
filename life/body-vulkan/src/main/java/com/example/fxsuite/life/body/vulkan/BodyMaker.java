@@ -16,9 +16,14 @@ import com.example.fxsuite.life.body.head.Helmet;
 import com.example.fxsuite.life.body.head.NeckJoin;
 import com.example.fxsuite.life.body.muscle.MuscleBody;
 import com.example.fxsuite.life.body.skin.Skins;
+import com.example.fxsuite.life.body.wear.Armour;
+import com.example.fxsuite.life.body.wear.Beneath;
+import com.example.fxsuite.life.body.wear.Garment;
+import com.example.fxsuite.life.body.wear.Tailor;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
@@ -34,18 +39,23 @@ import java.util.function.Consumer;
  */
 public final class BodyMaker {
 
+    /** The colour its tights and its briefs are made, till it is shown wearing them otherwise. */
+    private static final String CLOTH = "#22262e";
+
     /**
      * The body made, as it is bound: its bones, each moving with its part; its skin; its muscles; the body as bound;
-     * the helmet it may wear ({@link Helmet}).
+     * what it may wear, each hard piece moving with its part: the helmet ({@link Helmet}) and the armour
+     * ({@link Armour}); and what it may wear of cloth, bending as it does ({@link Tailor}).
      *
      * @param bones   its bones
      * @param skin    its skin
      * @param muscles its muscles
      * @param bound   the body as it is bound
-     * @param helmet  the helmet, moving with the head
+     * @param worn    what it may wear that is hard
+     * @param clothes what it may wear of cloth
      */
     public record Made(List<BodyPieces.Bone> bones, Flesh skin, MuscleBody.Bound muscles, Rig bound,
-                       BodyPieces.Worn helmet) {
+                       List<BodyPieces.Worn> worn, List<Garment> clothes) {
     }
 
     /** The body made, each step said to {@code told} as it is begun. */
@@ -61,8 +71,14 @@ public final class BodyMaker {
         final Skins skins = new Skins(FatPattern.LEAN);
         final Flesh skin = "coarse".equals(System.getProperty("body.skin")) ? skins.moving(p) : skins.of(p);
         final Flesh worn = clayed(skin, told);
-        told.accept("its helmet");
-        return new Made(bones, worn, muscles, bound, new BodyPieces().worn(bound, Helmet.INSTANCE.made()));
+        told.accept("its helmet and its armour");
+        final List<BodyPieces.Worn> wears = new ArrayList<>(new BodyPieces().worn(bound, Helmet.INSTANCE.made()));
+        final Beneath beneath = skins.beneath(skin);
+        wears.addAll(new BodyPieces().worn(Armour.INSTANCE.of(beneath, bound)));
+        told.accept("its tights and its briefs");
+        final List<Garment> clothes = List.of(Tailor.INSTANCE.tights(beneath, bound, CLOTH),
+                Tailor.INSTANCE.briefs(beneath, bound, CLOTH));
+        return new Made(bones, worn, muscles, bound, wears, clothes);
     }
 
     /**
