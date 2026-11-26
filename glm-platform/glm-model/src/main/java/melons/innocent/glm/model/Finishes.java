@@ -70,6 +70,7 @@ public record Finishes(Map<Group, Coat> coats, Map<Material, Coat> bare) {
                 Map.entry(Group.TAIL_LAMPS, new Coat(Coat.Kind.GLOSS_PAINT, "#9e1218")),
                 Map.entry(Group.SIGNALS, new Coat(Coat.Kind.GLOSS_PAINT, "#d97f1a")),
                 Map.entry(Group.PLATES, new Coat(Coat.Kind.ENAMEL, "#f1f1ec")),
+                Map.entry(Group.BADGES, new Coat(Coat.Kind.GLOSS_PAINT, "#16264a")),
                 Map.entry(Group.WHEELS, new Coat(Coat.Kind.GUN_METAL)),
                 Map.entry(Group.TYRES, new Coat(Coat.Kind.RUBBER, "#1b1d20"))));
     }

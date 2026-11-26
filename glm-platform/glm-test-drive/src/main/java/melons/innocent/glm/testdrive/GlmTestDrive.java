@@ -52,8 +52,9 @@ public final class GlmTestDrive {
         final Track track = "ramp".equalsIgnoreCase(System.getProperty("glm.track", "straight")) ? new RampTrack()
                 : new StraightTrack();
         final DriveViews.View view = DriveViews.View.valueOf(System.getProperty("glm.view", "CHASE_FAR"));
-        track.kit(TITLE).walk(new TestDriving(chassis, built, new OnShow(new Finishes().coats(), hidden(),
-                new MadeOf()), new Wheeling(proportions), engine, quiet(), view, track.start(chassis.ride()))).run();
+        final Finishes finishes = santana ? car.finishes() : new Finishes();
+        track.kit(TITLE).walk(new TestDriving(chassis, built, new OnShow(finishes.coats(), hidden(), new MadeOf()),
+                new Wheeling(proportions), engine, quiet(), view, track.start(chassis.ride()))).run();
     }
 
     /** The engine in its bay, as the run says, the V6 unless; or none. */

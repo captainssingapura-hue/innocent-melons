@@ -18,10 +18,11 @@ import java.util.Map;
 
 /**
  * The retro saloon's front face, between the wings' front edges, from the bumper up to the bonnet's edge, as the
- * maker's photographs show it, no badge: a panel of black plastic across it, bolted to the shell; on it the slim black
- * grille, its slats across, a chrome bar along its top; each side a rectangular headlamp, a chrome reflector behind a
- * glass lens, and outboard of it the white indicator. Across, each a share of the face's half-width, as the near
- * head-on photograph has them; up, as the side photograph has them, scaled and made larger as the car's lines are.
+ * maker's photographs show it: a panel of black plastic across it, bolted to the shell; on it the slim black grille,
+ * its slats across, a chrome bar along its top, the maker's badge on its middle ({@link Badge}); each side a
+ * rectangular headlamp, a chrome reflector behind a glass lens, and outboard of it the white indicator. Across, each a
+ * share of the face's half-width, as the near head-on photograph has them; up, as the side photograph has them,
+ * scaled and made larger as the car's lines are.
  *
  * @param lines the car's lines
  */
@@ -50,6 +51,8 @@ record FrontFace(SantanaLines lines) {
     private static final double SLAT_DEEP = 1.5;
     private static final double LAMP_DEEP = 5;
     private static final double SKIN = 0.3;
+    /** How far round the badge on the grille is. */
+    private static final double BADGE = 5;
 
     /** Its parts, as each is fixed to the shell's {@code root} or to the panel. */
     List<Connection> joined(final Part root) {
@@ -63,7 +66,13 @@ record FrontFace(SantanaLines lines) {
         joined.add(new Connection("headlamp", panel, "headlamp, right", headlamp, "panel", Joining.BOLTED));
         joined.add(new Connection("headlamp lens", headlamp, "panel", lens(), "headlamp", Joining.SEATED));
         joined.add(new Connection("indicator", panel, "indicator, right", signal, "panel", Joining.BOLTED));
+        joined.addAll(new Badge("front badge", badge(), BADGE, 1).joined(panel, "badge"));
         return joined;
+    }
+
+    /** Where the badge is worn: the middle of the grille, on its slats' face. */
+    Vec3 badge() {
+        return new Vec3(0, mm((GRILLE_LOW + GRILLE_HIGH) / 2), face() + SLAT_DEEP);
     }
 
     /** Where the panel is bolted to the shell: the middle of its face. */
@@ -83,6 +92,7 @@ record FrontFace(SantanaLines lines) {
         right.reversed().forEach(s -> outline.add(new Spot(-s.u(), s.v())));
         final Map<String, Vec3> points = new LinkedHashMap<>();
         points.put("shell", mount());
+        points.put("badge", badge());
         for (final String lamp : List.of("headlamp", "indicator")) {
             final Vec3 at = lampMiddle(lamp.equals("headlamp") ? LAMP_IN : LAMP_OUT + 0.01,
                     lamp.equals("headlamp") ? LAMP_OUT : SIGNAL_OUT);

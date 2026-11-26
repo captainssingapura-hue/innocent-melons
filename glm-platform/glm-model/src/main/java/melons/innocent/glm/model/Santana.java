@@ -2,8 +2,10 @@ package melons.innocent.glm.model;
 
 import com.example.fxsuite.vulkan.space.Vec3;
 import melons.innocent.glm.core.Connection;
+import melons.innocent.glm.core.Group;
 import melons.innocent.glm.core.Joining;
 import melons.innocent.glm.core.Part;
+import melons.innocent.vehiclelab.forms.Coat;
 import melons.innocent.vehiclelab.wheels.RimDesign;
 
 import java.util.ArrayList;
@@ -22,6 +24,8 @@ import java.util.List;
 public record Santana() implements Bodywork {
 
     private static final SantanaLines LINES = new SantanaLines();
+    /** How far round the maker's badge on the tail is. */
+    private static final double REAR_BADGE = 4.5;
 
     /** Its figures. */
     public Proportions proportions() {
@@ -31,6 +35,11 @@ public record Santana() implements Bodywork {
     /** Its body's own figures. */
     public BodyFigures figures() {
         return LINES.figures();
+    }
+
+    /** What it is seen in, as it comes: as the platform's parts come, but its rims bright alloy, silver. */
+    public Finishes finishes() {
+        return new Finishes().with(Group.WHEELS, new Coat(Coat.Kind.ALUMINIUM));
     }
 
     /** It on the platform, {@code bay} its engine in its bay, or none, null. */
@@ -92,6 +101,8 @@ public record Santana() implements Bodywork {
         joined.addAll(new ArchLiners(LINES, proportions()).joined(wing, new FrontWing(LINES).anchor(), side,
                 root.point("body side, right").at()));
         final Vec3 lamp = new TailLamps(LINES).middle();
+        joined.addAll(new Badge("rear badge", new TailLamps(LINES).badge(), REAR_BADGE, -1).joined(tail,
+                "badge"));
         joined.addAll(new NumberPlate("rear number plate", new Vec3(0, lamp.y(), lamp.z()), -1).joined(tail,
                 "number plate"));
         joined.addAll(glazing.screens(front, rear));

@@ -40,6 +40,8 @@ record TailLamps(SantanaLines lines) {
     private static final double PROUD = 0.4;
     private static final double LENS_DEEP = 0.8;
     private static final double GAP = 0.4;
+    /** How far under the lamps' middle the badge's middle is, clear of the number plate. */
+    private static final double UNDER_PLATE = 11;
 
     /** Its parts, each housing bolted to {@code panel}, the tail panel, its lenses carried by it. */
     List<Connection> joined(final Part panel) {
@@ -67,6 +69,11 @@ record TailLamps(SantanaLines lines) {
     /** The right lamp's opening in the tail panel, across and up. */
     List<Spot> opening() {
         return new Sheets(0.1).rectangle(IN, low(), out(), high());
+    }
+
+    /** Where the maker's badge is worn: on the tail panel's face, under the number plate. */
+    Vec3 badge() {
+        return new Vec3(0, (low() + high()) / 2 - UNDER_PLATE, z());
     }
 
     /** The middle of the right lamp, on the tail panel's face. */
