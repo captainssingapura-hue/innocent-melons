@@ -15,10 +15,10 @@ import java.util.List;
 /**
  * The rectus abdominis: from the pubic crest, up the front of the belly either side of the linea alba, widening, to the
  * fifth, sixth and seventh ribs' cartilages and the xiphoid, its top as high as the fifth's, under the pectoral. Above
- * the navel crossed by its three tendinous intersections, where it is thin and held down, {@link #HELD} deep, at the
- * navel, a third of the way up to the xiphoid and two thirds, the highest below the costal margin, so that it is full
- * where it meets the pectoral; between them its bellies, {@link #BELLY} deep, as a lean man's show; below the navel
- * smooth.
+ * the navel crossed by two tendinous intersections, where it is thin and held down, {@link #HELD} deep, at the navel
+ * and a third of the way up to the xiphoid; between and above them its bellies, {@link #BELLY} deep, as a lean man's
+ * show; full from there up to where it meets the pectoral, with no third intersection to leave a pit under it; below
+ * the navel smooth.
  */
 public record RectusAbdominis() implements Muscle {
 
