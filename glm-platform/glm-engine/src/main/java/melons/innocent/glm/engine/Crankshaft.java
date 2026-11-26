@@ -20,8 +20,9 @@ import java.util.List;
  * for each throw, half the stroke out, where its rods' big ends turn, one rod's wide in line, two rods' wide where a
  * V's banks share it, two pins side by side where a V6's are split, a pin to each cylinder between two journals in
  * a boxer; webs from each throw's ends to the journals beside
- * it, each with its counterweight swung opposite the pin; the nose at the front for the timing drive, the flange at
- * the rear for the flywheel. Its points: each main journal, and each cylinder's pin under its rod.
+ * it, each with its counterweight swung opposite the pin; the nose at the front, a sprocket on it for each bank's
+ * timing chain ({@link ChainFigures}), the flange at the rear for the flywheel. Its points: each main journal, each
+ * cylinder's pin under its rod, and each sprocket's middle.
  *
  * @param figures the engine's figures
  */
@@ -45,6 +46,7 @@ record Crankshaft(EngineFigures figures) {
             for (int k = 0; k < figures.perBank(); k++) {
                 points.add(new Point("pin " + (b + 1) + "." + (k + 1), crank.pin(b, k)));
             }
+            points.add(new Point("sprocket, bank " + (b + 1), new Vec3(0, 0, new ChainFigures(figures, b).plane())));
         }
         return new Part(figures.name() + " crankshaft", Group.ENGINE, false, points, mesh(crank, mains),
                 new Made(Material.TITANIUM, true))
@@ -66,6 +68,11 @@ record Crankshaft(EngineFigures figures) {
             }
         }
         made.add(shapes.drum(new Vec3(0, 0, -5), new Vec3(0, 0, mains.getFirst()), crank.main() * 0.8));
+        for (int b = 0; b < figures.banks(); b++) {
+            final ChainFigures chain = new ChainFigures(figures, b);
+            made.add(new Sprocket(chain.crankTeeth(), chain.crank(), ChainFigures.WIDE + 0.2)
+                    .mesh(new Vec3(0, 0, chain.plane()), 0));
+        }
         final double end = figures.length();
         made.add(shapes.drum(new Vec3(0, 0, mains.getLast()), new Vec3(0, 0, end + 1.2), crank.main()));
         made.add(shapes.drum(new Vec3(0, 0, end), new Vec3(0, 0, end + 1.2), crank.main() * 1.7));

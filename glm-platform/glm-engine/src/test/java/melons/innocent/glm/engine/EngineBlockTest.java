@@ -77,7 +77,7 @@ class EngineBlockTest {
                 }
             }
         }
-        assertEquals(8, outside.size(), "two barrels, two heads, two cam covers and their coils");
+        assertEquals(9, outside.size(), "two barrels, two heads, two cam covers, their coils and the timing cover");
         assertEquals(List.of(), touched, "each bank's barrel, head, cover and coils clear of the other's");
     }
 
@@ -121,10 +121,10 @@ class EngineBlockTest {
     void theRangePutTogetherOnItsStands() {
         final Assembled shown = new Assembly(new EngineShow().platform()).assembled();
         assertEquals(List.of(), shown.problems(1e-6));
-        assertEquals(1 + 8 + 2 + 8 + 3 * (2 + 1 + 2 + 1 + 2 + 2 + 2 + 2) + 11 * (2 + 4 + 4 + 5 + 6 + 6 + 8 + 12),
-                shown.placed().size(), "the stands, eight blocks, the twin's two barrels, eight cranks, a head and two"
-                        + " camshafts on every bank, and a rod, a piston, a pin, four valves and four springs in every"
-                        + " cylinder");
+        assertEquals(1 + 8 + 2 + 8 + 6 * (2 + 1 + 2 + 1 + 2 + 2 + 2 + 2) + 11 * (2 + 4 + 4 + 5 + 6 + 6 + 8 + 12),
+                shown.placed().size(), "the stands, eight blocks, the twin's two barrels, eight cranks; a head, two"
+                        + " camshafts, a timing chain, its guide and its tensioner on every bank; and a rod, a piston,"
+                        + " a pin, four valves and four springs in every cylinder");
     }
 
     @Test

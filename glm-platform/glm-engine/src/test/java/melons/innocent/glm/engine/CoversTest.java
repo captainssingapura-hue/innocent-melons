@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * The engines covered: each put together with a cover on each head, its coils, the timing cover and the trim cover,
- * a twin its cam covers and coils only, all made where they go; each head cover clear over its cams' lobes at their
+ * a twin all but the trim, all made where they go; each head cover clear over its cams' lobes at their
  * highest and its caps' bolts; the timing cover's face ahead of every camshaft's wheel; and the trim cover over all
  * the rest, its coils and every head cover.
  */
@@ -30,8 +30,7 @@ class CoversTest {
             final Assembled covered = new Assembly(inside.platform(true)).assembled();
             assertEquals(List.of(), covered.problems(1e-6), e.name());
             final int trim = e.boxer() || e.twin() ? 0 : 1;
-            final int timing = e.twin() ? 0 : 1;
-            assertEquals(open.placed().size() + 2 * e.banks() + timing + trim, covered.placed().size(), e.name());
+            assertEquals(open.placed().size() + 2 * e.banks() + 1 + trim, covered.placed().size(), e.name());
             covered.placed().keySet().forEach(p -> assertEquals(0, covered.at(p).length(), 1e-9, p.part().name()));
             final long plastic = covered.placed().keySet().stream().filter(p -> inside.cover(p.part()))
                     .filter(p -> p.part().made().material() == Material.PLASTIC).count();

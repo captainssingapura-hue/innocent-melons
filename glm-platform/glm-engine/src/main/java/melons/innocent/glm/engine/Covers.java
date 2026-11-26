@@ -11,9 +11,9 @@ import java.util.Optional;
 /**
  * What closes an engine in, as it is with the bonnet up: a cover bolted on each head over its camshafts, the coils
  * through it onto the plugs, the timing cover across the front over the chain, and over it all the trim cover, but on
- * a boxer, whose heads lie out either side and have nothing over them to hide. A twin wears its cam covers and coils
- * only: its cam chains, each up its own cylinder's side, are not yet made, nor what closes them in. Made once, its
- * parts kept; joined to the engine only when it is asked to be covered.
+ * a boxer, whose heads lie out either side and have nothing over them to hide. A twin wears its cam covers, its coils
+ * and the timing cover over its cam chains, but no trim. Made once, its parts kept; joined to the engine only when
+ * it is asked to be covered.
  */
 final class Covers {
 
@@ -28,7 +28,7 @@ final class Covers {
             heads.add(new HeadCover(figures, b).part());
             coils.add(new CoilPacks(figures, b).part());
         }
-        this.timing = figures.twin() ? Optional.empty() : Optional.of(new TimingCover(figures).part());
+        this.timing = Optional.of(new TimingCover(figures).part());
         this.trim = figures.boxer() || figures.twin() ? Optional.empty() : Optional.of(new TrimCover(figures).part());
     }
 

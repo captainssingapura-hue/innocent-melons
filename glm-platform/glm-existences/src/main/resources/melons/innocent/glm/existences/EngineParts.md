@@ -207,11 +207,19 @@ What carries the crank's turning to the cams and to what the engine drives.
 
 ## GlmDrives
 
-The modular design's: from the crank to the cams.
+The modular design's: from the crank to the cams, the V2's guides among them.
 
 ## TimingChain
 
 What turns a bank's cams from the crank, at half its speed.
+
+## ChainGuide
+
+What a timing chain runs along on its tight side, keeping it on its line.
+
+## ChainTensioner
+
+What presses on a timing chain's slack side, so it never runs slack however it stretches.
 
 ## V2Drives
 

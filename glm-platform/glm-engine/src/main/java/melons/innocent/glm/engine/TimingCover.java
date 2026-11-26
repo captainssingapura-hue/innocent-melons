@@ -32,7 +32,7 @@ record TimingCover(EngineFigures figures) {
     private static final double FACE = -3;
     private static final double THICK = 0.4;
     /** How far past a camshaft's wheel it reaches, and round the crank's sprocket. */
-    private static final double PAST = 1.2;
+    private static final double PAST = 0.5;
     private static final double SPROCKET = 7;
 
     /** It. */
@@ -44,7 +44,8 @@ record TimingCover(EngineFigures figures) {
         for (int b = 0; b < figures.banks(); b++) {
             for (final boolean inlet : List.of(true, false)) {
                 final Vec3 cam = head.at(b, 0, head.cam(inlet));
-                round.addAll(outlines.circle(new Spot(cam.x(), cam.y()), Camshaft.WHEEL + PAST));
+                round.addAll(outlines.circle(new Spot(cam.x(), cam.y()), new ChainFigures(figures, b).cam()
+                        + Sprocket.TOOTH + PAST));
             }
         }
         final List<Spot> outline = new Hull(round).outline();

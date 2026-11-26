@@ -21,8 +21,8 @@ class ExistencesTest {
     void nothingWrongWithItsTreeEveryNodeWithItsMeaning() {
         assertEquals(List.of(), new Existences().problems());
         assertEquals(List.of("engine parts"), new Existences().trees().stream().map(Taxonomy::name).toList());
-        assertEquals(41, parts.leaves().size());
-        assertEquals(63, parts.nodes().size());
+        assertEquals(43, parts.leaves().size());
+        assertEquals(65, parts.nodes().size());
         assertEquals("What turns one head's cams from the crank, up its own cylinder's side.",
                 parts.meaning(new EngineParts.CamChain()));
     }

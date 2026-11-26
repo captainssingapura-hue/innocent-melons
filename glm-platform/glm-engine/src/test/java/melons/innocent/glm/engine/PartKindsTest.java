@@ -15,10 +15,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Each engine's parts of their kinds: every part of every engine in the range, covered, of a kind in the engine
- * parts' tree and among the GLM's own, but the twin's crankcase, barrels, crank, heads and cam covers, which are the
- * V2's own; its block in line, in a V or flat as its banks are; a crank, and a rod, a piston and a gudgeon pin to
- * each cylinder; a valve and its spring to each valve, two cams to each head and a cover over each, its coils, and
- * but on the twin its timing cover and, but on a boxer, its trim cover.
+ * parts' tree and among the GLM's own, but the twin's crankcase, barrels, crank, heads, cam covers and cam chains,
+ * which are the V2's own; its block in line, in a V or flat as its banks are; a crank, and a rod, a piston and a
+ * gudgeon pin to each cylinder; a valve and its spring to each valve, two cams to each head and a cover over each, a
+ * chain, its guide and its tensioner to each bank, its coils, its timing cover and, but on a boxer or the twin, its
+ * trim cover.
  */
 class PartKindsTest {
 
@@ -31,10 +32,9 @@ class PartKindsTest {
                 assertTrue(part.kind().isPresent(), part.name() + " of no kind");
                 assertTrue(tree.has(part.kind().get()), part.name());
                 final String side = part.kind().get().lineage().get(1).title();
-                final boolean own = e.twin() && (part.is(new EngineParts.Blocks()) || part.is(new EngineParts.Heads())
-                        && !part.is(new EngineParts.Camshaft()) && !part.is(new EngineParts.ValveSpring())
-                        && !part.is(new EngineParts.Valve()) || part.is(new EngineParts.Covers())
-                        || part.is(new EngineParts.SplitPinCrankshaft()));
+                final boolean own = e.twin() && (part.is(new EngineParts.Blocks())
+                        || part.is(new EngineParts.TwinCamHead()) || part.is(new EngineParts.CamCover())
+                        || part.is(new EngineParts.SplitPinCrankshaft()) || part.is(new EngineParts.CamChain()));
                 assertTrue(side.startsWith(own ? "V2" : "Glm"), part.name() + " among the right ones, not " + side);
             }
         }
@@ -68,7 +68,11 @@ class PartKindsTest {
             assertEquals(2 * e.banks(), count(parts, new EngineParts.Camshaft()), e.name());
             assertEquals(glm * e.banks(), count(parts, new EngineParts.HeadCover()), e.name());
             assertEquals(e.banks(), count(parts, new EngineParts.CoilPack()), e.name());
-            assertEquals(glm, count(parts, new EngineParts.TimingCover()), e.name());
+            assertEquals(1, count(parts, new EngineParts.TimingCover()), e.name());
+            assertEquals(glm * e.banks(), count(parts, new EngineParts.TimingChain()), e.name());
+            assertEquals((1 - glm) * e.banks(), count(parts, new EngineParts.CamChain()), e.name());
+            assertEquals(e.banks(), count(parts, new EngineParts.ChainGuide()), e.name());
+            assertEquals(e.banks(), count(parts, new EngineParts.ChainTensioner()), e.name());
             assertEquals(e.boxer() ? 0 : glm, count(parts, new EngineParts.TrimCover()), e.name());
             assertEquals(parts.size(), count(parts, new EngineParts.EnginePart()), e.name() + " every one counted");
         }

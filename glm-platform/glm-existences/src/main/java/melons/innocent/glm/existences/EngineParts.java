@@ -35,7 +35,7 @@ public record EngineParts() {
                 new CamCover(), new ClutchCover(), new AlternatorCover(),
                 new CoilPack(), new SparkPlug(),
                 new Alternator(), new StarterMotor(),
-                new TimingChain(),
+                new TimingChain(), new ChainGuide(), new ChainTensioner(),
                 new CamChain(), new PrimaryDrive(), new WetClutch(), new Gearbox(),
                 new OilSump(), new OilPump(), new WaterPump(),
                 new OilCooler()),
@@ -113,6 +113,10 @@ public record EngineParts() {
     public record Drives() implements L1<EnginePart> { public EnginePart parent() { return new EnginePart(); } }
     public record GlmDrives() implements L2<Drives> { public Drives parent() { return new Drives(); } }
     public record TimingChain() implements Leaf<GlmDrives> { public GlmDrives parent() { return new GlmDrives(); } }
+    public record ChainGuide() implements Leaf<GlmDrives> { public GlmDrives parent() { return new GlmDrives(); } }
+    public record ChainTensioner() implements Leaf<GlmDrives> {
+        public GlmDrives parent() { return new GlmDrives(); }
+    }
     public record V2Drives() implements L2<Drives> { public Drives parent() { return new Drives(); } }
     public record CamChain() implements Leaf<V2Drives> { public V2Drives parent() { return new V2Drives(); } }
     public record PrimaryDrive() implements Leaf<V2Drives> { public V2Drives parent() { return new V2Drives(); } }
