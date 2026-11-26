@@ -8,6 +8,7 @@ import melons.innocent.core.rest.Placed;
 import melons.innocent.core.rest.Rigid;
 import melons.innocent.core.rest.Shell;
 import melons.innocent.core.rest.Simulator;
+import melons.innocent.core.rest.Still;
 import melons.innocent.core.rest.World;
 import melons.innocent.core.sheet.Arched;
 import melons.innocent.core.sheet.Banked;
@@ -19,7 +20,6 @@ import melons.innocent.physics.existences.Shapes;
 import melons.innocent.physics.existences.Surfaces;
 import org.junit.jupiter.api.Test;
 
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -39,7 +39,7 @@ class CurvedTest {
     private static final double CLIMBS = 360;
 
     private final Ground ground = new Ground();
-    private final Simulator still = (rigid, now, around, seconds) -> new Simulator.Stepped(now, Optional.empty());
+    private final Simulator<Still.Nothing> still = new Still();
     private final World world = new World(ground, still)
             .stood(new Rigid("the spiral ramp", new Shell(new Swept(new Round(new Spot(0, 0, 0), RADIUS, 0, 2,
                     CLIMBS), new Banked(200)), 30), 2_400), new Placed(STANDS, new Turn(new Spot(0, 1, 0),

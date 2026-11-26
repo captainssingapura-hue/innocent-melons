@@ -27,6 +27,12 @@
             <artifactId>core-tick</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- the one shape of an engine, which a simulator is -->
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-step</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>melons.innocent.core</groupId>
             <artifactId>core-motion</artifactId>

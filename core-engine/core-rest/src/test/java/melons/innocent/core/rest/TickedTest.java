@@ -1,13 +1,13 @@
 package melons.innocent.core.rest;
 
 import melons.innocent.core.motion.Spot;
+import melons.innocent.core.step.Explained;
 import melons.innocent.core.tick.Tick;
 import melons.innocent.core.tick.Ticker;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -23,15 +23,13 @@ class TickedTest {
 
     @Test
     void aWorldIsTickedAsTheGameEngineStepsUnlessItsTickerSaysOtherwise() {
-        final Simulator still = (rigid, now, around, tick) -> new Simulator.Stepped(now, Optional.empty());
-        assertEquals(new Tick(0, 120), new World(new Ground(), still).tick());
-        assertEquals(new Tick(0, 60), new World(new Ground(), still, new Ticker(60)).tick());
+        assertEquals(new Tick(0, 120), new World(new Ground(), new Still()).tick());
+        assertEquals(new Tick(0, 60), new World(new Ground(), new Still(), new Ticker(60)).tick());
     }
 
     @Test
     void aWorldCountsItsOwnTicksAndStampsWhatHappenedWithTheTickItHappenedIn() {
-        final Simulator still = (rigid, now, around, tick) -> new Simulator.Stepped(now, Optional.empty());
-        final World world = new World(new Ground(), still).stood(crate, inTheAir);
+        final World world = new World(new Ground(), new Still()).stood(crate, inTheAir);
         final Stamped first = world.ticked(new Asked());
         assertEquals(new Tick(0, 120), first.tick(), "the first tick is counted from nothing");
         assertEquals(List.of(new Happened.Unsettled("crate")), first.happened());
@@ -49,9 +47,9 @@ class TickedTest {
     @Test
     void theEngineIsHandedTheWorldsOwnTickAndTheVeryOneBeingTaken() {
         final List<Tick> handed = new ArrayList<>();
-        final Simulator telling = (rigid, now, around, tick) -> {
+        final Simulator<Still.Nothing> telling = (before, tick, events) -> {
             handed.add(tick);
-            return new Simulator.Stepped(now, Optional.empty());
+            return new Explained<>(before, Still.Nothing.NOTHING);
         };
         final World world = new World(new Ground(), telling, new Ticker(60)).stood(crate, inTheAir);
         for (int taken = 0; taken < 3; taken++) {

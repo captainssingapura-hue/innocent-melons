@@ -14,6 +14,7 @@ import melons.innocent.core.rest.Rigid;
 import melons.innocent.core.rest.ShapeImpl;
 import melons.innocent.core.rest.Slab;
 import melons.innocent.core.rest.World;
+import melons.innocent.core.step.Explaining;
 
 /**
  * The trial's scenes as they are described, nothing yet checked. Twelve metres ahead of where a walk begins, side by
@@ -41,7 +42,9 @@ final class Scenes {
 
     private final Listed listed;
     private final double slope;
-    private final World world = new World(new Ground(), new Loose());
+    /** The loose body explains what it works out where the run says {@code -Dloose.explain=true}. */
+    private final World world = new World(new Ground(),
+            new Loose(new Explaining(Boolean.getBoolean("loose.explain"))));
 
     /** The scenes, each thing listed in {@code listed}, the ramp sloping so many degrees. */
     Scenes(final Listed listed, final double slope) {

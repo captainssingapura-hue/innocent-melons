@@ -22,6 +22,22 @@ final class Carrying {
     /** What each thing that rides is carried by, by the rider's name. */
     private final Map<String, String> riding = new TreeMap<>();
 
+    /** What is driven and what rides as a state keeps them, to be worked on for a tick or only asked. */
+    Carrying(final Map<String, Moved> driving, final Map<String, String> riding) {
+        this.driving.putAll(driving);
+        this.riding.putAll(riding);
+    }
+
+    /** How each driven thing is going, as a state keeps it. */
+    Map<String, Moved> driving() {
+        return new TreeMap<>(driving);
+    }
+
+    /** What each thing that rides is carried by, as a state keeps it. */
+    Map<String, String> riding() {
+        return new TreeMap<>(riding);
+    }
+
     /** The thing called {@code name} is driven, going as {@code going} says from now on. */
     void driven(final String name, final Moved going) {
         driving.put(name, going);

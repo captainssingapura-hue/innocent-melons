@@ -1,17 +1,27 @@
 package melons.innocent.core.rest;
 
-import melons.innocent.core.tick.Tick;
+import melons.innocent.core.step.Correcting;
+import melons.innocent.core.step.Engine;
+import melons.innocent.core.step.Explanation;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
- * What steps a thing in motion: one for each way of moving, fitted to the core from outside it. It is told the
- * thing, how it stands and moves now, what it may ask of the world round it, and the tick it is to work out, which
- * is the world's own and says how long it is; it says how the thing stands and moves a tick on, and what it landed
- * on if it landed. It touches nothing else, and told the same it says the same.
+ * What steps a thing in motion: an engine, in the one shape of an engine, for a rigid thing; one for each way of
+ * moving, fitted to the core from outside it. It is handed the thing as it is described, how it stands and moves
+ * now and what is round it ({@link Body}), the tick it is to work out, which is the world's own, and what is asked
+ * of the thing; it gives how the thing stands and moves a tick on, its explanation of what it worked out, and what
+ * it says happened, a landing ({@link Landing}). It touches nothing else, keeps nothing, and handed the same it
+ * gives the same.
+ *
+ * <p>Its first correction ({@link #correctionS1}) is handed the same body and tick, what its stepping gave, and
+ * the collisions the world then found in the thing's path; a simulator that corrects nothing gives its stepping
+ * back.
+ *
+ * @param <E> its explanation of what it worked out
  */
-public interface Simulator {
+public interface Simulator<E extends Explanation<Rigid>>
+        extends Engine<Rigid, Body, E>, Correcting<Rigid, Body, E, Collision> {
 
     /** What a simulator may ask of the world round the thing it steps. */
     interface Around {
@@ -34,29 +44,5 @@ public interface Simulator {
         public Mover(final Placed placed) {
             this(placed, new Moved(), false, 0);
         }
-    }
-
-    /**
-     * A tick's stepping of a thing.
-     *
-     * @param next how it stands and moves a tick on
-     * @param on   what it landed on in the tick, where it landed
-     */
-    record Stepped(Mover next, Optional<String> on) {
-    }
-
-    /** {@code rigid}, standing and moving as {@code now} says, the one {@code tick} on. */
-    Stepped stepped(Rigid rigid, Mover now, Around around, Tick tick);
-
-    /**
-     * The first correction of a tick's stepping: {@code stepped}, which is what {@link #stepped} gave for the very
-     * same thing, tick and world, put right for the {@code collisions} the world then found in the thing's path.
-     * It is told all that the step before it was told, that step's result, and what is new for this step, the
-     * collisions; it says how the thing stands and moves a tick on after all. A simulator that corrects nothing
-     * gives the stepping back as it was.
-     */
-    default Stepped correctionS1(final Rigid rigid, final Mover now, final Around around, final Tick tick,
-                                 final Stepped stepped, final List<Collision> collisions) {
-        return stepped;
     }
 }

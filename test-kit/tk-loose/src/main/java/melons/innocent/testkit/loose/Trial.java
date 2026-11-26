@@ -8,8 +8,10 @@ import melons.innocent.core.rest.Happened;
 import melons.innocent.core.rest.Moved;
 import melons.innocent.core.rest.Placed;
 import melons.innocent.core.rest.Rigid;
+import melons.innocent.core.rest.Stamped;
 import melons.innocent.core.rest.Throw;
 import melons.innocent.core.rest.World;
+import melons.innocent.core.step.Explanation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,6 +67,8 @@ public final class Trial {
     private final Map<String, Moved> flung = new TreeMap<>();
     private Optional<Flown> flown = Optional.empty();
     private final Blows blows = new Blows();
+    /** What the engine worked out for each thing it stepped in the last tick: said only where the run explains. */
+    private Map<String, Explanation<Rigid>> why = Map.of();
     /** How the wagon is to be driven from the next tick, where that has been asked. */
     private Optional<Moved> drive = Optional.empty();
 
@@ -120,8 +124,10 @@ public final class Trial {
         flung.keySet().removeIf(name -> !world.things().contains(name) || going.contains(name)
                 || lifted.contains(name));
         blows.before(world);
-        final List<Happened> happened = world.ticked(new Asked(going, lifted, flung, driving(going),
-                walker.outsiders(world.tick()))).happened();
+        final Stamped stamped = world.ticked(new Asked(going, lifted, flung, driving(going),
+                walker.outsiders(world.tick())));
+        final List<Happened> happened = stamped.happened();
+        why = stamped.why();
         lifted.clear();
         slices.forEach(slice -> put(slice.rigid(), slice.placed(), Stuff.FLESH, new Things.MelonSlice()));
         flung.keySet().forEach(blows::thrown);
@@ -252,6 +258,11 @@ public final class Trial {
         drive = Optional.empty();
         changes++;
         begun++;
+    }
+
+    /** What the engine worked out for each thing in motion in the last tick, by name: see {@link Scenes}. */
+    public Map<String, Explanation<Rigid>> why() {
+        return why;
     }
 
     /** The world it is trying. */

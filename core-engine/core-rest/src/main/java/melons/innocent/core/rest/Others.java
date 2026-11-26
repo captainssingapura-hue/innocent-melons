@@ -21,11 +21,11 @@ import java.util.function.Function;
  * @param resting   where each thing at rest stands
  * @param carried   how a thing at rest is going over the ground, being carried or not
  * @param before    how each thing in motion stood and moved when the tick began
- * @param regular   what each thing in motion's engine has just made of it, uncorrected
+ * @param after     how each thing in motion stands and moves as its engine has just left it, uncorrected
  * @param outsiders what is in the world this tick and is not the world's to step
  */
 record Others(Map<String, Rigid> things, Map<String, Placed> resting, Function<String, Spot> carried,
-              Map<String, Simulator.Mover> before, Map<String, Simulator.Stepped> regular,
+              Map<String, Simulator.Mover> before, Map<String, Simulator.Mover> after,
               Map<String, Outsider> outsiders) {
 
     /** How fast a thing at rest must be come at to be moved by it, in centimetres a second. */
@@ -36,11 +36,11 @@ record Others(Map<String, Rigid> things, Map<String, Placed> resting, Function<S
         final Map<String, Blocker> blockers = new TreeMap<>();
         outsiders.forEach((with, outsider) -> blockers.put(with,
                 new Blocker(outsider.box(), outsider.placed(), outsider.placed(), outsider.going())));
-        final Spot going = regular.get(name).next().moved().velocity();
-        regular.forEach((with, stepped) -> {
+        final Spot going = after.get(name).moved().velocity();
+        after.forEach((with, stepped) -> {
             if (!with.equals(name)) {
                 blockers.put(with, new Blocker(things.get(with).shape(), before.get(with).placed(),
-                        stepped.next().placed(), together(name, going, with, stepped.next().moved().velocity())));
+                        stepped.placed(), together(name, going, with, stepped.moved().velocity())));
             }
         });
         resting.forEach((with, stands) -> {
@@ -69,7 +69,7 @@ record Others(Map<String, Rigid> things, Map<String, Placed> resting, Function<S
         found.forEach((name, collisions) -> collisions.forEach(collision -> {
             final String with = collision.with();
             if (resting.containsKey(with) && things.get(with).shape() instanceof Ellipsoid
-                    && regular.get(name).next().moved().velocity().minus(carried.apply(with))
+                    && after.get(name).moved().velocity().minus(carried.apply(with))
                             .dot(collision.touch().pushes()) < -STRIKES) {
                 struck.putIfAbsent(with, collision);
             }

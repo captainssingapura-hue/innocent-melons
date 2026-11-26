@@ -11,6 +11,7 @@ import melons.innocent.core.rest.Placed;
 import melons.innocent.core.rest.Rigid;
 import melons.innocent.core.rest.Simulator;
 import melons.innocent.core.rest.Slab;
+import melons.innocent.core.rest.Still;
 import melons.innocent.core.rest.World;
 import melons.innocent.physics.existences.Conditions;
 import melons.innocent.physics.existences.Movers;
@@ -18,7 +19,6 @@ import melons.innocent.physics.existences.Shapes;
 import melons.innocent.physics.existences.Surfaces;
 import org.junit.jupiter.api.Test;
 
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -36,7 +36,7 @@ class UnderfootTest {
 
     private final Ground ground = new Ground();
     /** Nothing in this world is let go, so nothing is ever stepped. */
-    private final Simulator still = (rigid, now, around, tick) -> new Simulator.Stepped(now, Optional.empty());
+    private final Simulator<Still.Nothing> still = new Still();
     private final World world = new World(ground, still)
             .stood(new Rigid("the crate", new Box(100, 60, 100), 600), new Placed(new Spot(500, 30, 0)))
             .stood(new Rigid("the melon", new Ellipsoid(36, 28, 26), 960), new Placed(new Spot(900, 14, 0)))
