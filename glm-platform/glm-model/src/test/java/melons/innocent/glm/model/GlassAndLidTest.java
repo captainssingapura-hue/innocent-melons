@@ -40,7 +40,7 @@ class GlassAndLidTest {
                 .collect(Collectors.toSet());
         final Set<String> expected = new HashSet<>(Set.of("windscreen", "rear window", "glass roof"));
         for (final String pane : List.of("front door vent", "front door window", "rear door window", "rear door pane",
-                "quarter light")) {
+                "quarter light", "headlamp lens")) {
             expected.add("right " + pane);
             expected.add("left " + pane);
         }

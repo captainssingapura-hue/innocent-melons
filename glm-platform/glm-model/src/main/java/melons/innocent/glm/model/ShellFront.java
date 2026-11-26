@@ -30,7 +30,7 @@ record ShellFront(ShellLines lines, BodyLines body, Sheets sheets) {
     private static final double ARCH_IN = 52;
     private static final double ARCH_OUT = 84;
     /** Where the radiator's support stands, along; how high its top member; how far out its uprights. */
-    private static final double SUPPORT_Z = 85;
+    private static final double SUPPORT_Z = 78;
     private static final double SUPPORT_TOP = 70;
     private static final double SUPPORT_X = 30;
 

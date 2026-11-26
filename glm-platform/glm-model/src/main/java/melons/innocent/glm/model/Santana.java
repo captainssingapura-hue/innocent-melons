@@ -12,8 +12,8 @@ import java.util.List;
  * to the platform's least track, on the platform's chassis; its body built as the original's was, a pressed steel
  * shell, its root its underbody, every chassis mount on it: the body sides welded along it, the bulkhead and the tail
  * panel across it, and the roof's two headers across between the body sides, a cage for the roof's glass; and its
- * four doors hung in it, its front wings and bumpers bolted on, its bonnet and boot lid hinged; and its glass, the
- * roof dark ({@link SantanaGlazing}).
+ * four doors hung in it, its front wings, bumpers and front face bolted on ({@link FrontFace}), its bonnet and boot
+ * lid hinged; and its glass, the roof dark ({@link SantanaGlazing}).
  */
 public record Santana() implements Bodywork {
 
@@ -71,6 +71,7 @@ public record Santana() implements Bodywork {
             joined.add(new Connection(bumper.name() + " strip", bar, "shell", bumper.strip(), "bumper",
                     Joining.SEATED));
         }
+        joined.addAll(new FrontFace(LINES).joined(root));
         joined.addAll(glazing.screens(front, rear));
         joined.addAll(glazing.windows(side, frontShape, frontDoor, rearShape, rearDoor));
         return joined;

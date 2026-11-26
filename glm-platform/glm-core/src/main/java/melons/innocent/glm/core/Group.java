@@ -18,6 +18,7 @@ public enum Group {
     GLASS("Windows"),
     ROOF("Glass roof"),
     TRIM("Bumpers and trim"),
+    LAMPS("Lamps"),
     STEERING("Steering"),
     WHEELS("Wheels"),
     TYRES("Tyres");
