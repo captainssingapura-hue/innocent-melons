@@ -25,20 +25,14 @@ import java.util.List;
 
 /**
  * A road on the card, and the ground it lies on: the road paved as its section says ({@link Paved}), asphalt with
- * its lines painted on it, made again whenever the road is made on or lets go of its past; the ground the walks' own
- * plain green, a sheet under wherever it is asked for. And, from the same road, the walls nobody sees
- * that keep a traveller to it: one along each side, some way out, and one across it behind.
+ * its lines painted on it, made again whenever what the road has to hand changes; the ground the walks' own plain
+ * green, a sheet under wherever it is asked for. And, from the same road, its pavement near a traveller, to be
+ * stood on: nothing keeps the traveller to it.
  */
 public final class RoadDrawn implements AutoCloseable {
 
-    /** How far from the road's middle each wall beside it runs, and how far behind the furthest reached the one
-     * across it stands; how long a run of wall is, how thick, how high, and how far each way they are put up. */
-    private static final double CONFINED = 3_000;
-    private static final double BACK = 10_000;
-    private static final double RUN = 1_000;
-    private static final double THICK = 200;
-    private static final double HIGH = 2_000_000;
-    private static final double WALLED = 20_000;
+    /** How far each way of a traveller its pavement is put in the way, to be stood on. */
+    private static final double NEAR = 20_000;
     /** The walks' own ground: its colour, how thick the sheet is, and how far it reaches each way. */
     private static final String GRASS = "#8fa66f";
     private static final double DEEP = 100;
@@ -96,35 +90,9 @@ public final class RoadDrawn implements AutoCloseable {
         return paved.section().wide();
     }
 
-    /**
-     * What of the road is in the way of a traveller at {@code along} who has been as far as {@code furthest}: its
-     * pavement, to be stood on; and the walls that keep the traveller to it, a run after a run along each side and
-     * one across behind.
-     */
-    public List<Block> walls(final double along, final double furthest) {
-        final List<Block> walls = new ArrayList<>(paved.stoodOn(along - WALLED, along + WALLED));
-        final double behind = Math.max(road.from(), furthest - BACK);
-        final double from = Math.max(behind, along - WALLED);
-        final double to = Math.min(road.to() - RUN, along + WALLED);
-        for (double at = from; at < to; at += RUN) {
-            for (final double side : new double[] {-1, 1}) {
-                final Vec3 begins = new Vec3(road.across(at) + side * CONFINED, 0, at);
-                final Vec3 ends = new Vec3(road.across(at + RUN) + side * CONFINED, 0, at + RUN);
-                walls.add(run(begins, ends));
-            }
-        }
-        final double across = road.across(behind);
-        walls.add(run(new Vec3(across - CONFINED - RUN, 0, behind), new Vec3(across + CONFINED + RUN, 0, behind)));
-        return walls;
-    }
-
-    /** A run of wall from {@code begins} to {@code ends}. */
-    private Block run(final Vec3 begins, final Vec3 ends) {
-        final Vec3 way = ends.minus(begins).unit();
-        final Vec3 middle = begins.plus(ends).times(0.5);
-        // the engine turns a block as it turns anything about the upright: its own length then runs this way
-        return new Block(middle.x(), middle.z(), ends.minus(begins).length() / 2 + THICK, THICK / 2,
-                Math.toDegrees(Math.atan2(-way.z(), way.x())), 0, HIGH);
+    /** What of the road is in the way of a traveller at {@code along}: its pavement near there, to be stood on. */
+    public List<Block> stoodOn(final double along) {
+        return paved.stoodOn(along - NEAR, along + NEAR);
     }
 
     /** The ground, under where {@code under} says, and the road on it, drawn by {@code pass}. */

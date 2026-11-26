@@ -8,57 +8,64 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A road that goes on without end the way the world's third number grows, straying sideways as it goes
- * ({@link Wandering}), made as it is travelled and forgotten behind: like a life, it can be gone back along only a
- * little. It is a point for each step of its wandering and a smooth curve through them, a monotone cubic, which
- * meets each point, turns nowhere sharply and never swings out past the points it runs between.
+ * A road that goes on without end both ways, straying sideways as it goes ({@link Wandering}), made as it is
+ * travelled: on ahead as the traveller goes on, and on back the other way, straying by chances of its own, as the
+ * traveller goes back past where it began. What is made is kept, so it is the same road when it is come back to. It
+ * is a point for each step of its wandering and a smooth curve through them, a monotone cubic, which meets each
+ * point, turns nowhere sharply and never swings out past the points it runs between.
  *
  * <p>It begins straight, some way behind where the travelling begins, so there is road behind the start. Told how
- * far along it has been reached, it makes itself on ahead of that and lets go of what is far behind. What it says
- * of a place does not change while it has the place: the curve between two points goes by the two either side of
- * them as well, so it answers only where it has those, a point in from each end of what it holds.
+ * far along it has been reached, it has itself to hand as far each way of that as a forest is ever drawn, and no
+ * further: what it says of a place does not change while it has the place, and the curve between two points goes
+ * by the two either side of them as well, so it answers only where it has those, a point in from each end of what
+ * it has to hand.
  */
 public final class Road {
 
-    /**
-     * How far ahead of where it has been reached it is made, which is as far ahead as a forest is ever drawn, and
-     * how far behind that it is kept, in centimetres.
-     */
-    private static final double AHEAD = 124_000;
-    private static final double BEHIND = 30_000;
+    /** How far each way of where it has been reached it is to hand, which is as far as a forest is ever drawn. */
+    private static final double REACH = 124_000;
+    /** How long the straight it begins with is, behind where the travelling begins. */
+    private static final double STRAIGHT = 30_000;
 
-    private final Wandering wandering;
-    private final List<Knot> points = new ArrayList<>();
+    private final Wandering ahead;
+    private final Wandering back;
+    /** Every point made, in order along it. */
+    private final List<Knot> made = new ArrayList<>();
+    private List<Knot> points = List.of();
     private Monotone curve;
 
     /** A road wandering as {@code wandering} does, straight until where nothing is along it. */
     public Road(final Wandering wandering) {
-        this.wandering = wandering;
-        for (double along = -BEHIND - 2 * Wandering.STEP; along <= 0; along += Wandering.STEP) {
-            points.add(new Knot(along, 0));
+        this.ahead = wandering;
+        this.back = wandering.other();
+        for (double along = -STRAIGHT - 2 * Wandering.STEP; along <= 0; along += Wandering.STEP) {
+            made.add(new Knot(along, 0));
         }
         reached(0);
     }
 
     /**
-     * Told it has been reached as far along as {@code along}: made on ahead of that, and what is far behind it let
-     * go. Whether anything of it changed.
+     * Told it has been reached as far along as {@code along}: made on either way as far as it is to be had from
+     * there, and had to hand so far each way and no further. Whether what it has to hand changed.
      */
     public boolean reached(final double along) {
-        boolean changed = curve == null;
-        while (points.getLast().x() < along + AHEAD + Wandering.STEP) {
-            final Knot last = points.getLast();
-            points.add(new Knot(last.x() + Wandering.STEP, last.y() + wandering.stepped()));
-            changed = true;
+        while (made.getLast().x() < along + REACH + 2 * Wandering.STEP) {
+            final Knot last = made.getLast();
+            made.add(new Knot(last.x() + Wandering.STEP, last.y() + ahead.stepped()));
         }
-        while (points.get(1).x() < along - BEHIND - Wandering.STEP) {
-            points.removeFirst();
-            changed = true;
+        while (made.getFirst().x() > along - REACH - 2 * Wandering.STEP) {
+            final Knot first = made.getFirst();
+            made.addFirst(new Knot(first.x() - Wandering.STEP, first.y() + back.stepped()));
         }
-        if (changed) {
-            curve = new Monotone(new Knots(points));
+        final double start = made.getFirst().x();
+        final int from = (int) Math.floor((along - REACH - start) / Wandering.STEP) - 1;
+        final int to = (int) Math.ceil((along + REACH - start) / Wandering.STEP) + 1;
+        if (!points.isEmpty() && points.getFirst().equals(made.get(from)) && points.getLast().equals(made.get(to))) {
+            return false;
         }
-        return changed;
+        points = List.copyOf(made.subList(from, to + 1));
+        curve = new Monotone(new Knots(points));
+        return true;
     }
 
     /** From how far along it answers. */

@@ -34,16 +34,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * A road through a forest without end, on the card. No tree's trunk is in the way on the road or within three
- * metres of its edge, as far along as its trunks are said, and the avatar walking along it stands on its pavement; the avatar, walking off sideways, is stopped some thirty metres from
- * the road, and walking back along it is stopped a hundred metres behind. Followed for half a kilometre, the road is
- * made on ahead and let go behind, the squares it touches are drawn tree by tree, and it is pictured along the way
- * with nothing said by the validation layer: the pictures are written to {@code target/card/road-*.png}, and how
- * long a frame takes is told.
+ * metres of its edge, as far along as its trunks are said, and the avatar walking along it stands on its pavement;
+ * nothing keeps the avatar to it, walking off sideways among the trees or back along it. Followed for half a
+ * kilometre, the road is made on ahead and had to hand no further back than ahead, the squares it touches are
+ * drawn tree by tree, and it is pictured along the way with nothing said by the validation layer: the pictures are
+ * written to {@code target/card/road-*.png}, and how long a frame takes is told.
  */
 class RoadForestTest {
 
     @Test
-    void theRoadIsClearTheAvatarIsKeptToItAndItIsFollowedAndPicturedWithNothingSaid() throws IOException {
+    void theRoadIsClearTheAvatarIsFreeOfItAndItIsFollowedAndPicturedWithNothingSaid() throws IOException {
         final Path folder = Path.of("target", "card");
         Files.createDirectories(folder);
         try (Card card = new Card(); Canvas canvas = card.canvas(1280, 720)) {
@@ -61,9 +61,10 @@ class RoadForestTest {
                         "no trunk on the road or within three metres of its edge");
                 assertTrue(trunks.stream().anyMatch(trunk -> road.off(trunk.x(), trunk.z()) < 1_400),
                         "but trees not far beyond that");
-                final Avatar ahead = walked(0, 4, inTheWay);
-                final double stood = -ahead.body().position().y();
-                assertTrue(ahead.body().position().z() > 1_000 && stood > 4 && stood < 16,
+                // along the straight it begins with, behind the start, which is straight whatever its chances
+                final Avatar onIt = walked(180, 4, inTheWay);
+                final double stood = -onIt.body().position().y();
+                assertTrue(onIt.body().position().z() < -1_000 && stood > 4 && stood < 16,
                         "walking along it, the avatar stands on its pavement: " + stood + " cm up");
                 // its pavement falls from 14.4 cm at its crown to 5 cm at its edge, 3.75 m out: stood on as it lies
                 for (final double[] spot : new double[][] {{0, 14.4}, {200, 9.4}, {-200, 9.4}, {340, 5.9}}) {
@@ -77,9 +78,9 @@ class RoadForestTest {
                 }
                 final Avatar aside = walked(90, 30, inTheWay);
                 final double off = Math.abs(aside.body().position().x() - road.across(aside.body().position().z()));
-                assertTrue(off > 300 && off <= 3_100, "kept within thirty metres of the road: " + off);
+                assertTrue(off > 3_100, "nothing keeps it to the road, off among the trees: " + off);
                 final Avatar back = walked(180, 60, inTheWay);
-                assertTrue(back.body().position().z() > -10_300, "and stopped a hundred metres behind: "
+                assertTrue(back.body().position().z() < -10_300, "nor stops it going back along the road: "
                         + back.body().position().z());
                 final long began = System.nanoTime();
                 int frames = 0;
@@ -98,7 +99,7 @@ class RoadForestTest {
                         (System.nanoTime() - began) / 1e6 / frames, frames, place.said().replace("\n", "; "),
                         card.memory().said());
                 assertTrue(road.has(50_000 + 120_000), "made on ahead of where it was reached");
-                assertFalse(road.has(10_000), "and let go far behind");
+                assertFalse(road.has(50_000 - 130_000), "and to hand no further back than ahead");
                 assertTrue(place.rearranged().isEmpty() && !place.inTheWay().blocks().isEmpty());
             }
             assertEquals(List.of(), card.heard(), "the validation layer has nothing to say");
