@@ -35,6 +35,7 @@ final class Working<E extends Explanation<Rigid>> {
     private static final int SETTLED = 12;
 
     private final Ground ground;
+    private final Gravity gravity;
     private final Simulator<E> loose;
     private final Touching touching;
     private final Reckoning reckoning;
@@ -56,6 +57,7 @@ final class Working<E extends Explanation<Rigid>> {
     /** The tick {@code core} is to work out from {@code before}. */
     Working(final Core<E> core, final State before) {
         this.ground = before.ground();
+        this.gravity = before.gravity();
         this.loose = core.loose();
         this.touching = core.touching();
         this.reckoning = core.reckoning();
@@ -88,8 +90,9 @@ final class Working<E extends Explanation<Rigid>> {
         carrying.carried(resting, tick.seconds());
         moved(asked.outsiders(), tick, happened);
         rested(happened);
-        return new Next(new State(ground, tick.next(), things, resting, moving, supports.on(), supports.holds(),
-                carrying.driving(), carrying.riding(), dirty, looked, checks), new Stamped(tick, happened, why));
+        return new Next(new State(ground, gravity, tick.next(), things, resting, moving, supports.on(),
+                supports.holds(), carrying.driving(), carrying.riding(), dirty, looked, checks),
+                new Stamped(tick, happened, why));
     }
 
 
@@ -105,7 +108,7 @@ final class Working<E extends Explanation<Rigid>> {
         final Map<String, Explained<Rigid, Body, E>> regular = new TreeMap<>();
         for (final String name : lowestFirst(moving.keySet())) {
             handed.put(name, new Body(things.get(name), moving.get(name),
-                    (rigid, placed) -> touches(name, rigid, placed, true)));
+                    (rigid, placed) -> touches(name, rigid, placed, true), gravity));
             regular.put(name, loose.simulated(handed.get(name), taken, List.of()));
             moving.put(name, regular.get(name).state().mover());
         }
@@ -217,7 +220,7 @@ final class Working<E extends Explanation<Rigid>> {
             dirty.remove(name);
             checks++;
             final List<Touch> touches = touches(name, things.get(name), resting.get(name), false);
-            if (reckoning.of(things.get(name), resting.get(name), touches, seconds).held()) {
+            if (reckoning.of(things.get(name), resting.get(name), touches, gravity, seconds).held()) {
                 supports.stands(name, touches.stream().map(Touch::on).collect(Collectors.toSet()));
             } else {
                 letGo(name);

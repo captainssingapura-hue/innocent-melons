@@ -59,7 +59,7 @@ class RoundTest {
         assertEquals(1, touches.size());
         assertEquals(0, touches.getFirst().at().up(), 1e-12);
         assertEquals(0, touches.getFirst().deep(), 1e-12);
-        assertTrue(reckoning.of(fruit, lying, touches, TICK).held());
+        assertTrue(reckoning.of(fruit, lying, touches, new Gravity(), TICK).held());
         assertTrue(touching.grounded(melon, new Placed(new Spot(0, 14.5, 0)), new Ground()).isEmpty(),
                 "half a centimetre up, it touches nothing");
     }
@@ -73,7 +73,7 @@ class RoundTest {
         assertEquals(Math.cos(TILT), touch.pushes().up(), 1e-9, "pushed square to the slope");
         assertEquals(0, touch.deep(), 1e-9);
         assertTrue(touch.at().along() > up.at().along(), "the spot it touches at is up the slope from its middle");
-        final Reckoned reckoned = reckoning.of(fruit, up, touches, TICK);
+        final Reckoned reckoned = reckoning.of(fruit, up, touches, new Gravity(), TICK);
         assertFalse(reckoned.held(), "so its weight turns it down the slope");
         assertTrue(reckoned.spin().cross(up.at().minus(touch.at())).along() < 0);
         // a chock lying on the slope just below it, higher than the melon's middle, its upper face against the melon
@@ -82,7 +82,8 @@ class RoundTest {
         final List<Touch> both = touching.held(melon, up, "chock", chock, chocked);
         assertEquals(1, both.size(), "the chock's face toward it");
         assertTrue(both.getFirst().pushes().along() > 0.9, "which pushes it back up the slope");
-        assertTrue(reckoning.of(fruit, up, List.of(touch, both.getFirst()), TICK).held(), "and so it is held");
+        assertTrue(reckoning.of(fruit, up, List.of(touch, both.getFirst()), new Gravity(), TICK).held(),
+                "and so it is held");
         assertTrue(touching.held(melon, onTheRamp(14, 270), "ramp", slab, ramp).isEmpty(),
                 "past the slab's end there is no face under it");
         assertTrue(touching.held(new Box(50, 50, 50), new Placed(new Spot(0, 39, 0)), "melon", melon,

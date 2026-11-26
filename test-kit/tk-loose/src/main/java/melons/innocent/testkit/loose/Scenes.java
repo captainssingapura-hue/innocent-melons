@@ -7,6 +7,8 @@ import melons.innocent.core.motion.Spot;
 import melons.innocent.core.motion.Turn;
 import melons.innocent.core.rest.Box;
 import melons.innocent.core.rest.Ellipsoid;
+import melons.innocent.core.rest.Globe;
+import melons.innocent.core.rest.Gravity;
 import melons.innocent.core.rest.Ground;
 import melons.innocent.core.rest.Moved;
 import melons.innocent.core.rest.Placed;
@@ -15,6 +17,9 @@ import melons.innocent.core.rest.ShapeImpl;
 import melons.innocent.core.rest.Slab;
 import melons.innocent.core.rest.World;
 import melons.innocent.core.step.Explaining;
+import melons.innocent.core.tick.Ticker;
+
+import java.util.Locale;
 
 /**
  * The trial's scenes as they are described, nothing yet checked. Twelve metres ahead of where a walk begins, side by
@@ -42,9 +47,13 @@ final class Scenes {
 
     private final Listed listed;
     private final double slope;
-    /** The loose body explains what it works out where the run says {@code -Dloose.explain=true}. */
+    /**
+     * On the Earth, or on the globe the run names by {@code -Dloose.globe=} (earth, moon, mars); and the loose
+     * body explains what it works out where the run says {@code -Dloose.explain=true}.
+     */
     private final World world = new World(new Ground(),
-            new Loose(new Explaining(Boolean.getBoolean("loose.explain"))));
+            new Gravity(Globe.valueOf(System.getProperty("loose.globe", "earth").toUpperCase(Locale.ROOT))),
+            new Loose(new Explaining(Boolean.getBoolean("loose.explain"))), new Ticker());
 
     /** The scenes, each thing listed in {@code listed}, the ramp sloping so many degrees. */
     Scenes(final Listed listed, final double slope) {

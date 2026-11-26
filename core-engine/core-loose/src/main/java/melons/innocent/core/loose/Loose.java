@@ -3,6 +3,7 @@ package melons.innocent.core.loose;
 import melons.innocent.core.motion.Spot;
 import melons.innocent.core.rest.Body;
 import melons.innocent.core.rest.Collision;
+import melons.innocent.core.rest.Gravity;
 import melons.innocent.core.rest.Landing;
 import melons.innocent.core.rest.Moved;
 import melons.innocent.core.rest.Reckoning;
@@ -63,13 +64,13 @@ public record Loose(Reckoning reckoning, double slack, Explaining explaining) im
         final double seconds = tick.seconds();
         final int parts = (int) Math.max(1, Math.ceil(now.moved().velocity().length() * seconds / STRIDE));
         if (parts == 1) {
-            return given(before, once(before.rigid(), now, before.around(), seconds));
+            return given(before, once(before.rigid(), now, before.around(), seconds, before.gravity()));
         }
         Mover mover = now;
         Optional<String> on = Optional.empty();
         final List<Why> each = new ArrayList<>();
         for (int part = 0; part < parts; part++) {
-            final Out out = once(before.rigid(), mover, before.around(), seconds / parts);
+            final Out out = once(before.rigid(), mover, before.around(), seconds / parts, before.gravity());
             mover = out.next();
             on = on.isPresent() ? on : out.on();
             if (explaining.on()) {
@@ -92,7 +93,7 @@ public record Loose(Reckoning reckoning, double slack, Explaining explaining) im
         final Out regular = new Out(stepped.state().mover(), stepped.said().stream()
                 .filter(Landing.class::isInstance).map(said -> ((Landing) said).on()).findFirst(), stepped.why());
         final Out corrected = before.rigid().rolls()
-                ? new Rolling(reckoning, slack, new Whys(explaining))
+                ? new Rolling(reckoning, slack, new Whys(explaining), before.gravity())
                         .correctionS1(before.rigid(), before.mover(), regular, collisions, tick.seconds())
                 : cornered(before.mover(), regular, collisions);
         // only touching what it met, or leaving it: nothing to put right
@@ -132,12 +133,13 @@ public record Loose(Reckoning reckoning, double slack, Explaining explaining) im
     }
 
     /** One part of a tick: handed on to rolling or to what has corners, on what stands still or in a frame. */
-    private Out once(final Rigid rigid, final Mover now, final Around around, final double seconds) {
+    private Out once(final Rigid rigid, final Mover now, final Around around, final double seconds,
+                     final Gravity gravity) {
         final Whys whys = new Whys(explaining);
         if (rigid.rolls()) {
-            return new Rolling(reckoning, slack, whys).stepped(rigid, now, around, seconds);
+            return new Rolling(reckoning, slack, whys, gravity).stepped(rigid, now, around, seconds);
         }
-        final Cornered cornered = new Cornered(reckoning, slack, whys);
+        final Cornered cornered = new Cornered(reckoning, slack, whys, gravity);
         final List<Touch> first = around.touches(rigid, now.placed());
         final Spot frame = first.isEmpty() ? new Spot(0, 0, 0) : first.getFirst().going();
         if (frame.length() == 0) {

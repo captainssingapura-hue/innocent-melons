@@ -39,6 +39,8 @@
         <module>core-mechanism</module>
         <!-- What a mover is on: the question it asks of a surface, and the answer its provider gives. -->
         <module>core-surface</module>
+        <!-- The walking engine: a walker on whatever surface is under it, as an engine in the one shape. -->
+        <module>core-walk</module>
     </modules>
 
     <properties>

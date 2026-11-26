@@ -2,6 +2,7 @@ package melons.innocent.core.loose;
 
 import melons.innocent.core.motion.Spot;
 import melons.innocent.core.motion.Turn;
+import melons.innocent.core.rest.Gravity;
 import melons.innocent.core.rest.Moved;
 import melons.innocent.core.rest.Placed;
 import melons.innocent.core.rest.Reckoned;
@@ -28,8 +29,9 @@ import java.util.Optional;
  * @param reckoning the check it steps by
  * @param slack     how far into something it may be and count as only touching it, in centimetres
  * @param whys      its explanations, as the run's switch has them
+ * @param gravity   how hard the world pulls, as the core handed it with the thing
  */
-record Cornered(Reckoning reckoning, double slack, Whys whys) {
+record Cornered(Reckoning reckoning, double slack, Whys whys, Gravity gravity) {
 
     /** How many times a tipping's last tick is halved to find where it lands. */
     private static final int HALVINGS = 24;
@@ -37,12 +39,12 @@ record Cornered(Reckoning reckoning, double slack, Whys whys) {
     /** {@code rigid}, standing and moving as {@code now} says, so many {@code seconds} on: flown, tipped or held. */
     Out stepped(final Rigid rigid, final Simulator.Mover now, final Simulator.Around around, final double seconds) {
         final List<Touch> touches = around.touches(rigid, now.placed());
-        // thrown up off what it stood on, it is in flight though it still touches it
-        if (!touches.isEmpty() && touches.stream().allMatch(touch ->
+        // touched by nothing, or thrown up off what it stood on: in flight, though it may still touch that
+        if (touches.stream().allMatch(touch ->
                 now.moved().velocity().dot(touch.pushes()) > 0)) {
             return fallen(rigid, now, around, seconds);
         }
-        final Reckoned reckoned = reckoning.of(rigid, now.placed(), touches, seconds);
+        final Reckoned reckoned = reckoning.of(rigid, now.placed(), touches, gravity, seconds);
         if (reckoned.held()) {
             // held: stopped where it is, and said to have landed if it was not already down
             return new Out(new Simulator.Mover(now.placed(), new Moved(), true, now.still() + 1),
@@ -57,7 +59,7 @@ record Cornered(Reckoning reckoning, double slack, Whys whys) {
     /** In flight ({@link Flight}): gravity's pull taken, moved by what it then has, and set down where it lands. */
     private Out fallen(final Rigid rigid, final Simulator.Mover now, final Simulator.Around around,
                        final double seconds) {
-        final Flight flight = new Flight(reckoning.gravity());
+        final Flight flight = new Flight(gravity.pull());
         final Moved flying = flight.pulled(now.moved(), seconds);
         final Placed fell = flight.carried(now.placed(), now.moved(), flying, seconds);
         final Optional<Touch> met = deepest(around.touches(rigid, fell));

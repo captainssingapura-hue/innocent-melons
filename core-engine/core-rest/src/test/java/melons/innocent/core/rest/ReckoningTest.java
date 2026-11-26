@@ -32,7 +32,7 @@ class ReckoningTest {
 
     @Test
     void touchedByNothingItFallsByGravitysPullForTheTick() {
-        final Reckoned reckoned = reckoning.of(beam, new Placed(new Spot(0, 500, 0)), List.of(), TICK);
+        final Reckoned reckoned = reckoning.of(beam, new Placed(new Spot(0, 500, 0)), List.of(), new Gravity(), TICK);
         assertFalse(reckoned.held());
         assertEquals(-981 * TICK, reckoned.velocity().up(), 1e-12);
         assertEquals(0, reckoned.velocity().across() + reckoned.velocity().along() + reckoned.spin().length(), 0);
@@ -44,13 +44,13 @@ class ReckoningTest {
         final Placed lying = new Placed(new Spot(0, 10, 0));
         final List<Touch> onTheGround = touching.grounded(girder, lying, new Ground());
         assertEquals(4, onTheGround.size(), "its four lower corners, and not its upper");
-        assertTrue(reckoning.of(beam, lying, onTheGround, TICK).held());
+        assertTrue(reckoning.of(beam, lying, onTheGround, new Gravity(), TICK).held());
         final Box pillar = new Box(40, 100, 40);
         final Placed raised = new Placed(new Spot(0, 110, 0));
         final List<Touch> onOne = touching.held(girder, raised, "pillar", pillar, new Placed(new Spot(15, 50, 0)));
         assertEquals(4, onOne.size(), "the pillar's four upper corners, in the beam's underside");
         assertTrue(onOne.stream().allMatch(touch -> touch.on().equals("pillar") && Math.abs(touch.deep()) < 1e-9));
-        assertTrue(reckoning.of(beam, raised, onOne, TICK).held(), "its middle is over the pillar's top");
+        assertTrue(reckoning.of(beam, raised, onOne, new Gravity(), TICK).held(), "its middle is over the pillar's top");
         assertTrue(touching.held(girder, raised, "pillar", pillar, new Placed(new Spot(0, 49, 0))).isEmpty(),
                 "a pillar a centimetre short of it does not touch it");
     }
@@ -60,7 +60,7 @@ class ReckoningTest {
         final Placed raised = new Placed(new Spot(0, 110, 0));
         final List<Touch> underOneEnd = touching.held(girder, raised, "pillar", new Box(40, 100, 40),
                 new Placed(new Spot(-180, 50, 0)));
-        final Reckoned reckoned = reckoning.of(beam, raised, underOneEnd, TICK);
+        final Reckoned reckoned = reckoning.of(beam, raised, underOneEnd, new Gravity(), TICK);
         assertFalse(reckoned.held());
         final Reckoned.Hinge hinge = reckoned.hinge().orElseThrow();
         assertEquals(-160, hinge.through().across(), 1e-9, "the pillar's edge nearest the beam's middle");

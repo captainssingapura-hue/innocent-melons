@@ -21,6 +21,7 @@ import java.util.TreeSet;
  * <p>Whatever keeps a state between ticks keeps only this; no engine keeps any of it.
  *
  * @param ground  the ground the world is on
+ * @param gravity how hard the world pulls everything in it down
  * @param tick    the tick to be taken next: its count is how many have been taken since the world began
  * @param things  every thing in the world, as it is described, by its name
  * @param resting where each thing at rest stands
@@ -33,8 +34,8 @@ import java.util.TreeSet;
  * @param looked  whether the things have been looked over for any described as run into each other
  * @param checks  how many things the check has looked at since the world began
  */
-public record State(Ground ground, Tick tick, Map<String, Rigid> things, Map<String, Placed> resting,
-                    Map<String, Simulator.Mover> moving, Map<String, Set<String>> on,
+public record State(Ground ground, Gravity gravity, Tick tick, Map<String, Rigid> things,
+                    Map<String, Placed> resting, Map<String, Simulator.Mover> moving, Map<String, Set<String>> on,
                     Map<String, Set<String>> holds, Map<String, Moved> driving, Map<String, String> riding,
                     Set<String> dirty, boolean looked, long checks) {
 
@@ -49,10 +50,15 @@ public record State(Ground ground, Tick tick, Map<String, Rigid> things, Map<Str
         dirty = Collections.unmodifiableSortedSet(new TreeSet<>(dirty));
     }
 
-    /** A world with nothing in it yet, on {@code ground}, its first tick still to be taken. */
+    /** A world on the Earth with nothing in it yet, on {@code ground}, its first tick still to be taken. */
     public State(final Ground ground, final Ticker ticker) {
-        this(ground, ticker.first(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Set.of(),
-                false, 0);
+        this(ground, new Gravity(), ticker);
+    }
+
+    /** The same, pulling as {@code gravity} says. */
+    public State(final Ground ground, final Gravity gravity, final Ticker ticker) {
+        this(ground, gravity, ticker.first(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(),
+                Set.of(), false, 0);
     }
 
     /**
@@ -72,7 +78,8 @@ public record State(Ground ground, Tick tick, Map<String, Rigid> things, Map<Str
         if (!rigid.unmoving()) {
             unchecked.add(rigid.name());
         }
-        return new State(ground, tick, all, stands, moving, on, holds, driving, riding, unchecked, looked, checks);
+        return new State(ground, gravity, tick, all, stands, moving, on, holds, driving, riding, unchecked, looked,
+                checks);
     }
 
     /**
@@ -85,8 +92,8 @@ public record State(Ground ground, Tick tick, Map<String, Rigid> things, Map<Str
         unchecked.remove(rigid.name());
         final Map<String, Moved> driven = new TreeMap<>(driving);
         driven.put(rigid.name(), going);
-        return new State(ground, tick, stood.things, stood.resting, moving, on, holds, driven, riding, unchecked,
-                looked, checks);
+        return new State(ground, gravity, tick, stood.things, stood.resting, moving, on, holds, driven, riding,
+                unchecked, looked, checks);
     }
 
     /** The thing called {@code name}. */

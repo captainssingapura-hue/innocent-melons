@@ -321,6 +321,7 @@ public final class Handling {
     public List<Spot> curve() {
         return mode.isPresent() && held.isPresent() && hands.isPresent() && windup.share() > 0
                 ? new Arc(holding().orElseThrow().at(), aimed(windup.share()).of(held.get().rigid()).velocity()
-                        .plus(walking), hands.get().at().up() + HANDS - FEET).spots() : List.of();
+                        .plus(walking), hands.get().at().up() + HANDS - FEET,
+                        trial.world().gravity().pull()).spots() : List.of();
     }
 }

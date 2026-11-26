@@ -41,7 +41,12 @@ public final class World {
 
     /** The same, ticked by {@code ticker}: how long its every tick is, said this once. */
     public World(final Ground ground, final Simulator<?> loose, final Ticker ticker) {
-        this(new Core<>(loose), new State(ground, ticker));
+        this(ground, new Gravity(), loose, ticker);
+    }
+
+    /** The same, pulling as {@code gravity} says: a world on the Moon, or on Mars. */
+    public World(final Ground ground, final Gravity gravity, final Simulator<?> loose, final Ticker ticker) {
+        this(new Core<>(loose), new State(ground, gravity, ticker));
     }
 
     /** A world that goes by {@code core}, as {@code state} says it is: one begun anew, or one kept and taken up. */
@@ -86,6 +91,11 @@ public final class World {
     /** The core the world goes by. */
     public Core<?> core() {
         return core;
+    }
+
+    /** How hard the world pulls everything in it down. */
+    public Gravity gravity() {
+        return state.gravity();
     }
 
     /** The tick to be taken next: its count is how many the world has taken since it began. */

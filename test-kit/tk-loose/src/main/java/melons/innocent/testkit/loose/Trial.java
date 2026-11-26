@@ -218,7 +218,8 @@ public final class Trial {
         final Rigid rigid = world.thing(name);
         flung.put(name, new Moved(thrown.of(rigid).velocity().plus(carried), new Spot(0, 0, 0)));
         flown = Optional.of(new Flown(name, world.placed(name).orElseThrow().at(), thrown.speed(rigid),
-                thrown.upward(), thrown.round(), world.moved(name).velocity().plus(carried)));
+                thrown.upward(), thrown.round(), world.moved(name).velocity().plus(carried),
+                world.gravity().pull()));
     }
 
     /** The wagon is to go so many kilometres an hour along its track from the next tick: none, and it stops. */
