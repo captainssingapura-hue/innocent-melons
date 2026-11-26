@@ -23,6 +23,7 @@ import melons.innocent.glm.engine.EngineShow;
 import melons.innocent.glm.core.PartAt;
 import melons.innocent.glm.model.Finishes;
 import melons.innocent.glm.model.GlmPlatform;
+import melons.innocent.glm.model.Santana;
 import melons.innocent.glm.model.MadeOf;
 
 import javax.imageio.ImageIO;
@@ -39,11 +40,12 @@ import java.util.concurrent.atomic.AtomicReference;
  * or Shift-drag to move across, scroll to come nearer), turning about what is looked at whenever another part or
  * level is chosen; and a JavaFX window beside it ({@link LabConsole}) to choose the part, how it is looked at, what is
  * shown round it and what the parts are made of. Run with {@code -Dlab.platform=engines}, it shows the engines on
- * their stands instead of the platform.
+ * their stands instead of the platform; with {@code -Dlab.platform=santana}, the retro saloon on it, its body and
+ * badges and all.
  *
  * <p>For a run with nobody at it: {@code -Dlab.part=} the start of a part's name, as the window lists it ("Links:
  * right toe"); {@code -Dlab.level=assembly}; {@code -Dlab.others=} ghost, finished, chassis, group or hidden; {@code
- * -Dlab.instead=aluminium:titanium}; {@code -Dlab.fine=true}; {@code -Dlab.grid=false}; {@code -Dlab.ground=false};
+ * -Dlab.instead=aluminium:titanium}; {@code -Dlab.fine=true}; {@code -Dlab.grid=false}; {@code -Dlab.ground=false}; {@code -Dlab.points=false};
  * {@code -Dbench.yaw=}, {@code -Dbench.pitch=}; the light's options as on every bench; {@code -Dbench.settle=} so
  * many thousandths of a second ends it; {@code -Dbench.snapshot.card=} a file the card's picture is saved to as it
  * ends.
@@ -69,9 +71,12 @@ public final class PartLab {
             new Asked.Sun(said("bench.sun.high", noon.sunHigh()), said("bench.sun.round", noon.sunRound())));
     private final Skies skies = new Skies(asked);
     private final Bus bus = new Bus();
-    private final Assembled built = new Assembly("engines".equals(System.getProperty("lab.platform"))
-            ? new EngineShow().platform() : new GlmPlatform().platform()).assembled();
-    private final Finishes finishes = new Finishes();
+    /** Which platform, as the run was told {@code -Dlab.platform=}: the engines, the retro saloon, or the large SUV. */
+    private final String platform = System.getProperty("lab.platform", "");
+    private final Assembled built = new Assembly("engines".equals(platform) ? new EngineShow().platform()
+            : "santana".equals(platform) ? new Santana().platform(null).platform() : new GlmPlatform().platform())
+            .assembled();
+    private final Finishes finishes = "santana".equals(platform) ? new Santana().finishes() : new Finishes();
     private final AtomicReference<LabShow> shown = new AtomicReference<>();
     private Orbit orbit;
 
@@ -106,7 +111,7 @@ public final class PartLab {
                 .toLowerCase(Locale.ROOT).startsWith(named)).findFirst().orElse(parts.getFirst());
         return new LabShow(part, "assembly".equals(System.getProperty("lab.level")) ? LabShow.Level.ASSEMBLY
                 : LabShow.Level.PART, others(), !"false".equals(System.getProperty("lab.grid")),
-                !"false".equals(System.getProperty("lab.ground")), true,
+                !"false".equals(System.getProperty("lab.ground")), !"false".equals(System.getProperty("lab.points")),
                 Boolean.getBoolean("lab.fine") ? Spacing.FINE : Spacing.NORMAL, madeOf());
     }
 

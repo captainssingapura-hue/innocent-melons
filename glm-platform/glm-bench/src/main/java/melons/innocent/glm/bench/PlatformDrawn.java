@@ -14,6 +14,7 @@ import melons.innocent.vehiclelab.forms.Coat;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 /**
@@ -30,8 +31,9 @@ public final class PlatformDrawn implements AutoCloseable {
     private record Drawn(PartAt part, Shaped form, Mat4 at) {
     }
 
-    /** Every part where it was put. */
+    /** Every part where it was put; every part in its group's finish. */
     private static final Function<PartAt, Mat4> STILL = part -> new Mat4();
+    private static final Function<PartAt, Optional<Coat>> AS_SHOWN = part -> Optional.empty();
 
     private final List<Drawn> drawn = new ArrayList<>();
     private final Coats coats;
@@ -55,12 +57,12 @@ public final class PlatformDrawn implements AutoCloseable {
 
     /** What of it is not seen through, as {@code shown} says, drawn by {@code pass} as {@code camera} sees it. */
     public void drawn(final Pass pass, final Camera camera, final OnShow shown) {
-        drawn(pass, camera, shown, new Mat4(), STILL, false);
+        drawn(pass, camera, shown, new Mat4(), STILL, AS_SHOWN, false);
     }
 
     /** What of it is seen through, drawn the same way: after everything else. */
     public void seenThrough(final Pass pass, final Camera camera, final OnShow shown) {
-        drawn(pass, camera, shown, new Mat4(), STILL, true);
+        drawn(pass, camera, shown, new Mat4(), STILL, AS_SHOWN, true);
     }
 
     /**
@@ -69,20 +71,36 @@ public final class PlatformDrawn implements AutoCloseable {
      */
     public void drawn(final Pass pass, final Camera camera, final OnShow shown, final Mat4 by,
                       final Function<PartAt, Mat4> each) {
-        drawn(pass, camera, shown, by, each, false);
+        drawn(pass, camera, shown, by, each, AS_SHOWN, false);
+    }
+
+    /**
+     * The same, each part in the finish {@code lit} gives it where it gives one, a lamp lit and glowing, say, and in
+     * its group's where it gives none.
+     */
+    public void drawn(final Pass pass, final Camera camera, final OnShow shown, final Mat4 by,
+                      final Function<PartAt, Mat4> each, final Function<PartAt, Optional<Coat>> lit) {
+        drawn(pass, camera, shown, by, each, lit, false);
     }
 
     /** What of it is seen through, drawn the same way. */
     public void seenThrough(final Pass pass, final Camera camera, final OnShow shown, final Mat4 by,
                             final Function<PartAt, Mat4> each) {
-        drawn(pass, camera, shown, by, each, true);
+        drawn(pass, camera, shown, by, each, AS_SHOWN, true);
+    }
+
+    /** What of it is seen through, drawn the same way, each part in the finish {@code lit} gives it, if any. */
+    public void seenThrough(final Pass pass, final Camera camera, final OnShow shown, final Mat4 by,
+                            final Function<PartAt, Mat4> each, final Function<PartAt, Optional<Coat>> lit) {
+        drawn(pass, camera, shown, by, each, lit, true);
     }
 
     private void drawn(final Pass pass, final Camera camera, final OnShow shown, final Mat4 by,
-                       final Function<PartAt, Mat4> each, final boolean seenThrough) {
+                       final Function<PartAt, Mat4> each, final Function<PartAt, Optional<Coat>> lit,
+                       final boolean seenThrough) {
         for (final Drawn part : drawn) {
             if (!shown.hidden().contains(part.part().part().group())) {
-                final Coat coat = shown.coat(part.part().part());
+                final Coat coat = lit.apply(part.part()).orElseGet(() -> shown.coat(part.part().part()));
                 if (coats.seenThrough(coat) == seenThrough) {
                     coats.drawn(pass, part.form(), by.times(each.apply(part.part())).times(part.at()), camera, coat);
                 }

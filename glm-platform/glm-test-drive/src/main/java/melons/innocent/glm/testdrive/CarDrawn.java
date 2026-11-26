@@ -15,16 +15,16 @@ import java.util.Locale;
 
 /**
  * The GLM car on the card as it is test driven: put together as it is made, the bare vehicle and its engine, drawn
- * wherever it is driven to, whole, its front wheels steered and every wheel turning as it rolls ({@link Wheeling});
- * and over the picture its speed, its engine's revs and gear, and the keys that drive it. Closed, it is gone from
- * the card.
+ * wherever it is driven to, whole, its front wheels steered and every wheel turning as it rolls ({@link Wheeling}),
+ * its lamps lit as it is driven ({@link Lamps}); and over the picture its speed, its engine's revs and gear, and the
+ * keys that drive it. Closed, it is gone from the card.
  */
 final class CarDrawn implements AutoCloseable {
 
     private static final Vec3 WHITE = new Vec3(0.92, 0.95, 0.97);
     private static final Vec3 DIM = new Vec3(0.55, 0.62, 0.66);
     private static final String KEYS = "W THROTTLE  S BRAKE  A/D STEER  SPACE HANDBRAKE  SHIFT CAREFUL  C VIEW"
-            + "  V COCKPIT  R BACK";
+            + "  V COCKPIT  R BACK  F LIGHTS  G INDICATE";
     /** How many kilometres an hour a centimetre a second is; how high its figures are written. */
     private static final double KMH = 0.036;
     private static final double LARGE = 0.075;
@@ -49,11 +49,13 @@ final class CarDrawn implements AutoCloseable {
 
     /**
      * Drawn by {@code pass} as {@code camera} sees it, carried by {@code by} to where it is driven, its front wheels
-     * turned {@code steer} degrees to the right and the car rolled {@code rolled} centimetres.
+     * turned {@code steer} degrees to the right and the car rolled {@code rolled} centimetres, its lamps lit as
+     * {@code lamps} has them.
      */
-    void drawn(final Pass pass, final Camera camera, final Mat4 by, final double steer, final double rolled) {
-        drawn.drawn(pass, camera, shown, by, part -> wheeling.moved(part, steer, rolled));
-        drawn.seenThrough(pass, camera, shown, by, part -> wheeling.moved(part, steer, rolled));
+    void drawn(final Pass pass, final Camera camera, final Mat4 by, final double steer, final double rolled,
+               final Lamps lamps) {
+        drawn.drawn(pass, camera, shown, by, part -> wheeling.moved(part, steer, rolled), lamps::lit);
+        drawn.seenThrough(pass, camera, shown, by, part -> wheeling.moved(part, steer, rolled), lamps::lit);
     }
 
     /**
@@ -68,9 +70,13 @@ final class CarDrawn implements AutoCloseable {
         over.text(pass, KEYS, -over.wide(KEYS, SMALL) / 2, 0.92, SMALL, DIM);
     }
 
-    /** Over the picture {@code over}, high on the right: the view it is seen in, and how far it has rolled in metres. */
-    void said(final Pass pass, final Overlay.Over over, final String view, final double rolled) {
-        final String line = String.format(Locale.ROOT, "%s  %6.0f M", view, rolled / 100);
+    /**
+     * Over the picture {@code over}, high on the right: its lamps as {@code lit} says them, the view it is seen in, and
+     * how far it has rolled in metres.
+     */
+    void said(final Pass pass, final Overlay.Over over, final String view, final double rolled, final String lit) {
+        final String line = String.format(Locale.ROOT, "%s%s  %6.0f M", lit.isEmpty() ? "" : lit + "   ", view,
+                rolled / 100);
         over.text(pass, line, over.aspect() - 0.08 - over.wide(line, SMALL), 0.8, SMALL, DIM);
     }
 

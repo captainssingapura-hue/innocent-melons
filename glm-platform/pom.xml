@@ -82,6 +82,11 @@
                 <artifactId>vl-drawn</artifactId>
                 <version>${vehicles.version}</version>
             </dependency>
+            <dependency>
+                <groupId>melons.innocent.vehiclelab</groupId>
+                <artifactId>vl-wheels</artifactId>
+                <version>${vehicles.version}</version>
+            </dependency>
             <!-- its own modules, at its own version -->
             <dependency>
                 <groupId>melons.innocent.glm</groupId>

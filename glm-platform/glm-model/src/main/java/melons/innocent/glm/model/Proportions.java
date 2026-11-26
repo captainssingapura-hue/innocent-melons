@@ -1,5 +1,7 @@
 package melons.innocent.glm.model;
 
+import melons.innocent.vehiclelab.wheels.WheelSize;
+
 /**
  * A car's figures on the platform, as far as its rear axle needs them, in centimetres: how far apart its axles are, how
  * far apart its back wheels are, middle to middle, and its tyres as a tyre's wall says them, how wide in millimetres,
@@ -16,10 +18,6 @@ package melons.innocent.glm.model;
  */
 public record Proportions(double wheelbase, double track, double width, double aspect, double rim) {
 
-    /** A centimetre in inches' terms; a millimetre in centimetres. */
-    private static final double INCH = 2.54;
-    private static final double MILLIMETRE = 0.1;
-
     public Proportions {
         refused(wheelbase, 260, 320, "axles 2.6 m to 3.2 m apart");
         refused(track, 150, 175, "back wheels 1.5 m to 1.75 m apart");
@@ -33,19 +31,24 @@ public record Proportions(double wheelbase, double track, double width, double a
         this(299.4, 167.9, 285, 45, 20);
     }
 
+    /** Its wheels' size, held to the platform's range, as a tyre's sidewall says it. */
+    public WheelSize wheel() {
+        return new WheelSize(width, aspect, rim);
+    }
+
     /** How far its tyres reach from their axle to the ground. */
     public double tyre() {
-        return rimRadius() + wall();
+        return wheel().radius();
     }
 
     /** How far its rims reach from their axle to where the tyre sits. */
     public double rimRadius() {
-        return rim * INCH / 2;
+        return wheel().rimRadius();
     }
 
     /** How tall a tyre's wall is. */
     public double wall() {
-        return width * MILLIMETRE * aspect / 100;
+        return wheel().wall();
     }
 
     /** How far each back wheel's middle is from the car's. */

@@ -27,6 +27,7 @@ import melons.innocent.glm.model.Finishes;
 import melons.innocent.glm.model.GlmPlatform;
 import melons.innocent.glm.model.MadeOf;
 import melons.innocent.glm.model.Proportions;
+import melons.innocent.glm.model.Santana;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -74,11 +75,13 @@ public final class GlmBench {
             new Asked.Sun(said("bench.sun.high", noon.sunHigh()), said("bench.sun.round", noon.sunRound())));
     private final Skies skies = new Skies(asked);
     private final Bus bus = new Bus();
-    private final AtomicReference<OnShow> shown = new AtomicReference<>(new OnShow(new Finishes().coats(), hidden(),
-            new MadeOf()));
-    private final Proportions proportions = new Proportions();
-    private final Assembled built = new Assembly(new GlmPlatform(proportions, new BodyFigures(), bay()).platform())
-            .assembled();
+    /** Which car, as the run was told {@code -Dglm.car=}: the retro saloon if {@code santana}, else the large SUV. */
+    private final boolean santana = "santana".equalsIgnoreCase(System.getProperty("glm.car", ""));
+    private final AtomicReference<OnShow> shown = new AtomicReference<>(new OnShow((santana ? new Santana().finishes()
+            : new Finishes()).coats(), hidden(), new MadeOf()));
+    private final Proportions proportions = santana ? new Santana().proportions() : new Proportions();
+    private final Assembled built = new Assembly((santana ? new Santana().platform(bay())
+            : new GlmPlatform(proportions, new BodyFigures(), bay())).platform()).assembled();
     private final Vec3 middle = new Vec3(0, proportions.tyre(), proportions.back() / 2);
     private Orbit orbit = new Orbit(middle, said("bench.yaw", 35), said("bench.pitch", 18),
             METRE * said("bench.distance", 6));

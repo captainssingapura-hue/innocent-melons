@@ -1,0 +1,112 @@
+package melons.innocent.glm.model;
+
+import com.example.fxsuite.vulkan.space.Vec3;
+import melons.innocent.glm.core.Connection;
+import melons.innocent.glm.core.Group;
+import melons.innocent.glm.core.Joining;
+import melons.innocent.glm.core.Part;
+import melons.innocent.vehiclelab.forms.Coat;
+import melons.innocent.vehiclelab.wheels.RimDesign;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * The retro saloon on the GLM platform: the early-eighties notchback saloon kept as it was drawn, made larger evenly
+ * to the platform's least track, on the platform's chassis; its body built as the original's was, a pressed steel
+ * shell, its root its underbody, every chassis mount on it: the body sides welded along it, the bulkhead and the tail
+ * panel across it, and the roof's two headers across between the body sides, a cage for the roof's glass; and its
+ * four doors hung in it, its front wings, bumpers, front face and tail lamps bolted on ({@link FrontFace},
+ * {@link TailLamps}), its number plates on the front bumper and the tail panel, its bonnet and boot lid hinged,
+ * chrome round its wheels' arches and mud flaps behind them ({@link WheelArches}), liners inside them
+ * ({@link ArchLiners}); and its glass, the roof dark ({@link SantanaGlazing}).
+ */
+public record Santana() implements Bodywork {
+
+    private static final SantanaLines LINES = new SantanaLines();
+    /** How far round the maker's badge on the tail is. */
+    private static final double REAR_BADGE = 4.5;
+
+    /** Its figures. */
+    public Proportions proportions() {
+        return LINES.proportions();
+    }
+
+    /** Its body's own figures. */
+    public BodyFigures figures() {
+        return LINES.figures();
+    }
+
+    /** What it is seen in, as it comes: as the platform's parts come, but its rims bright alloy, silver. */
+    public Finishes finishes() {
+        return new Finishes().with(Group.WHEELS, new Coat(Coat.Kind.ALUMINIUM));
+    }
+
+    /** It on the platform, {@code bay} its engine in its bay, or none, null. */
+    public GlmPlatform platform(final EngineBay bay) {
+        return new GlmPlatform(proportions(), figures(), bay, this);
+    }
+
+    /** The classic alloy rims, eight windows round a large plain cap, as the retro saloons of the eighties wore. */
+    @Override
+    public RimDesign rim() {
+        return RimDesign.CLASSIC;
+    }
+
+    @Override
+    public Part root(final Proportions proportions) {
+        return new SantanaShell(new ShellLines(LINES, proportions)).part();
+    }
+
+    @Override
+    public List<Connection> joined(final Part root) {
+        final ShellPanels panels = new ShellPanels(new ShellLines(LINES, proportions()));
+        final Part side = new BodySide(LINES, root.point("body side, right").at(), panels).part();
+        final Part bulkhead = panels.bulkhead();
+        final Part tail = panels.tailPanel();
+        final Part front = panels.header("roof header, front", LINES.frontHeader());
+        final Part rear = panels.header("roof header, rear", LINES.rearHeader());
+        final Door frontShape = new Door("front door", LINES, LINES.frontDoor(), LINES.frontDivider());
+        final Door rearShape = new Door("rear door", LINES, LINES.rearDoor(), LINES.rearDivider());
+        final Part frontDoor = frontShape.part();
+        final Part rearDoor = rearShape.part();
+        final Part wing = new FrontWing(LINES).part();
+        final Part lid = new BootLid(LINES).part();
+        final SantanaGlazing glazing = new SantanaGlazing(LINES, panels);
+        final List<Connection> joined = new ArrayList<>(List.of(
+                new Connection("body side", root, "body side, right", side, "body", Joining.WELDED),
+                new Connection("bulkhead", root, "bulkhead", bulkhead, "underbody", Joining.WELDED),
+                new Connection("tail panel", root, "tail panel", tail, "underbody", Joining.WELDED),
+                new Connection("roof header, front", side, "header, front", front, "body side, right",
+                        Joining.WELDED),
+                new Connection("roof header, rear", side, "header, rear", rear, "body side, right", Joining.WELDED),
+                new Connection("front door", side, "front door, hinge", frontDoor, "hinge", Joining.HINGE),
+                new Connection("rear door", side, "rear door, hinge", rearDoor, "hinge", Joining.HINGE),
+                new Connection("front wing", root, "front wing, right", wing, "shell", Joining.BOLTED),
+                new Connection("boot lid", root, "boot lid", lid, "hinge", Joining.HINGE)));
+        joined.add(new Connection("bonnet", bulkhead, "bonnet", new Bonnet(LINES).part(), "hinge", Joining.HINGE));
+        for (final Bumper bumper : List.of(new SantanaBumpers(LINES).front(), new SantanaBumpers(LINES).rear())) {
+            final Part bar = bumper.part();
+            joined.add(new Connection(bumper.name(), root, bumper.name(), bar, "shell", Joining.BOLTED));
+            joined.add(new Connection(bumper.name() + " strip", bar, "shell", bumper.strip(), "bumper",
+                    Joining.SEATED));
+            if (bumper.face() > 0) {
+                joined.addAll(new NumberPlate("front number plate", bumper.plate(), 1).joined(bar, "number plate"));
+            }
+        }
+        joined.addAll(new FrontFace(LINES).joined(root));
+        joined.addAll(new TailLamps(LINES).joined(tail));
+        joined.addAll(new WheelArches(LINES).joined(wing, new FrontWing(LINES).anchor(), side,
+                root.point("body side, right").at()));
+        joined.addAll(new ArchLiners(LINES, proportions()).joined(wing, new FrontWing(LINES).anchor(), side,
+                root.point("body side, right").at()));
+        final Vec3 lamp = new TailLamps(LINES).middle();
+        joined.addAll(new Badge("rear badge", new TailLamps(LINES).badge(), REAR_BADGE, -1).joined(tail,
+                "badge"));
+        joined.addAll(new NumberPlate("rear number plate", new Vec3(0, lamp.y(), lamp.z()), -1).joined(tail,
+                "number plate"));
+        joined.addAll(glazing.screens(front, rear));
+        joined.addAll(glazing.windows(side, frontShape, frontDoor, rearShape, rearDoor));
+        return joined;
+    }
+}

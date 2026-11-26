@@ -30,8 +30,8 @@ import java.util.Optional;
  * the handbrake, Shift held to go carefully; over whatever is in its way, up ramps and onto decks, as the engine has
  * its wheels find the ground. The car itself is drawn as it is made, turned and tipped as it goes, its front wheels
  * steered and every wheel turning as it rolls ({@link CarDrawn}); its engine heard at the revs its speed makes
- * ({@link EngineHeard}); its speed, revs and gear over the picture. Seen behind it or from on it, as its views say
- * ({@link DriveViews}).
+ * ({@link EngineHeard}); its lamps lit, F its lights and G its indicators ({@link Lamps}); its speed, revs and gear
+ * over the picture. Seen behind it or from on it, as its views say ({@link DriveViews}).
  */
 final class TestDriven implements Roaming {
 
@@ -46,6 +46,7 @@ final class TestDriven implements Roaming {
     private final CarDrawn car;
     private final EngineHeard engine;
     private final DriveViews views;
+    private final Lamps lamps = new Lamps();
     private Obstacles world = Obstacles.NONE;
     private Lift now;
     private Lift before;
@@ -97,6 +98,7 @@ final class TestDriven implements Roaming {
         rolledBefore = rolled;
         rolled += now.ahead() * Clock.STEP;
         engine.driven(now.ahead(), asked.forward());
+        lamps.told(told, asked.forward(), now.ahead(), Clock.STEP);
         views.told(told);
         chasing = chasing.stepped(told, Clock.STEP);
         step++;
@@ -197,14 +199,14 @@ final class TestDriven implements Roaming {
     public void drawn(final Pass pass, final Camera camera, final double blend) {
         final double steer = before.steer() + (now.steer() - before.steer()) * blend;
         car.drawn(pass, camera, chassis.carried(place(blend), tilt(blend), roll(blend)), steer,
-                rolledBefore + (rolled - rolledBefore) * blend);
+                rolledBefore + (rolled - rolledBefore) * blend, lamps);
     }
 
     @Override
     public void overlaid(final Pass pass, final Overlay.Over over, final double blend) {
         car.overlaid(pass, over, before.ahead() + (now.ahead() - before.ahead()) * blend, engine.rpm(),
                 engine.gear());
-        car.said(pass, over, views.view().title(), rolledBefore + (rolled - rolledBefore) * blend);
+        car.said(pass, over, views.view().title(), rolledBefore + (rolled - rolledBefore) * blend, lamps.said());
     }
 
     @Override

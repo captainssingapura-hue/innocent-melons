@@ -12,6 +12,7 @@ import melons.innocent.glm.model.Finishes;
 import melons.innocent.glm.model.GlmPlatform;
 import melons.innocent.glm.model.MadeOf;
 import melons.innocent.glm.model.Proportions;
+import melons.innocent.glm.model.Santana;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -27,27 +28,33 @@ import java.util.stream.Collectors;
  * ({@link TestDriving}), seen in the views a racing game has, in the walks' windows, with their sky, shadows, kept runs,
  * scripts and films. {@code -Dglm.engine=} the engine in it, L4, L5, V6, V8 or V12, or none, the V6 unless;
  * {@code -Dbench.hidden=} groups not shown, UNDERBODY for the body, say; {@code -Dglm.view=} the view to begin in,
- * CHASE_FAR unless.
+ * CHASE_FAR unless; {@code -Dglm.car=santana} the retro saloon on its own steel shell, the large SUV unless.
  */
 public final class GlmTestDrive {
 
     private static final String TITLE = "The GLM car, test driven";
+    /** How long the retro saloon is, bumper to bumper, made larger as it is. */
+    private static final double SANTANA_LENGTH = 482;
 
     public static void main(final String[] args) throws IOException {
         new GlmTestDrive().run();
     }
 
     private void run() throws IOException {
-        final Proportions proportions = new Proportions();
-        final GlmChassis chassis = new GlmChassis(proportions);
+        final boolean santana = "santana".equalsIgnoreCase(System.getProperty("glm.car", ""));
+        final Santana car = new Santana();
+        final Proportions proportions = santana ? car.proportions() : new Proportions();
+        final GlmChassis chassis = santana ? new GlmChassis(proportions, SANTANA_LENGTH) : new GlmChassis(proportions);
         final Optional<EngineFigures> engine = engine();
-        final Assembled built = new Assembly(new GlmPlatform(proportions, new BodyFigures(),
-                engine.map(e -> new EngineBay(e, true)).orElse(null)).platform()).assembled();
+        final EngineBay bay = engine.map(e -> new EngineBay(e, true)).orElse(null);
+        final Assembled built = new Assembly((santana ? car.platform(bay)
+                : new GlmPlatform(proportions, new BodyFigures(), bay)).platform()).assembled();
         final Track track = "ramp".equalsIgnoreCase(System.getProperty("glm.track", "straight")) ? new RampTrack()
                 : new StraightTrack();
         final DriveViews.View view = DriveViews.View.valueOf(System.getProperty("glm.view", "CHASE_FAR"));
-        track.kit(TITLE).walk(new TestDriving(chassis, built, new OnShow(new Finishes().coats(), hidden(),
-                new MadeOf()), new Wheeling(proportions), engine, quiet(), view, track.start(chassis.ride()))).run();
+        final Finishes finishes = santana ? car.finishes() : new Finishes();
+        track.kit(TITLE).walk(new TestDriving(chassis, built, new OnShow(finishes.coats(), hidden(), new MadeOf()),
+                new Wheeling(proportions), engine, quiet(), view, track.start(chassis.ride()))).run();
     }
 
     /** The engine in its bay, as the run says, the V6 unless; or none. */

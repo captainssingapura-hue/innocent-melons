@@ -5,6 +5,8 @@ import melons.innocent.glm.core.Joining;
 import melons.innocent.glm.core.Part;
 import melons.innocent.glm.core.Platform;
 import melons.innocent.vehiclelab.forms.Shapes;
+import melons.innocent.vehiclelab.wheels.Rim;
+import melons.innocent.vehiclelab.wheels.RimDesign;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,8 +21,9 @@ import java.util.List;
  * link up to the underbody. Said as on the right, the left its mirror.
  *
  * @param proportions the car's figures
+ * @param rim         its wheels' rims' design
  */
-public record RearAxle(Proportions proportions) {
+public record RearAxle(Proportions proportions, RimDesign rim) {
 
     /** How many flat sides its round parts are round in. */
     private static final int ROUND = 24;
@@ -28,6 +31,11 @@ public record RearAxle(Proportions proportions) {
     /** A large SUV's. */
     public RearAxle() {
         this(new Proportions());
+    }
+
+    /** Made to {@code proportions}, on spoked rims. */
+    public RearAxle(final Proportions proportions) {
+        this(proportions, RimDesign.SPOKED);
     }
 
     /** It, as a platform to be put together, the underbody's rear its root. */
@@ -45,10 +53,11 @@ public record RearAxle(Proportions proportions) {
         final Part spring = links.spring();
         final List<Part> others = List.of(links.upperFront(), links.upperRear(), links.lowerFront(), links.toe());
         final List<String> at = List.of("upper front", "upper rear", "lower front", "toe link");
-        final Corner corner = new Corner(points, shapes);
+        final Rim made = rim.rim(shapes);
+        final Corner corner = new Corner(points, shapes, made.inside(proportions.wheel()));
         final Part carrier = corner.carrier();
         final Part hub = corner.hub();
-        final Wheel wheel = new Wheel(proportions, points, shapes);
+        final Wheel wheel = new Wheel(proportions, points, shapes, made);
         final Part rim = wheel.wheel();
         final RearSprings springs = new RearSprings(points, shapes);
         final Part air = springs.spring();
