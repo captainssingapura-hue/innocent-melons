@@ -10,7 +10,8 @@ import java.util.Map;
  * four strokes' two turns. In the order the engines it is after fire, where they are known, in Audi's numbering, the
  * first bank's cylinders, on the right seen from behind, first, front to back, then the second's: the four 1-3-4-2,
  * the five 1-2-4-5-3, the V6 1-4-3-6-2-5, the V8 1-3-7-2-6-5-4-8, as their makers' training says; the V12, after none,
- * 1-7-5-11-3-9-6-12-2-8-4-10, an even order its crank makes. Other figures fire as their crank brings each cylinder
+ * 1-7-5-11-3-9-6-12-2-8-4-10, an even order its crank makes; the flat six 1-6-2-4-3-5, as the group's flat sixes
+ * fire, and the flat four, as its crank brings them, 1-2-3-4. Other figures fire as their crank brings each cylinder
  * up, the lowest numbered first. The first cylinder fires at its top in the first turn, each after it the cycle
  * shared evenly on; refused if its crank does not bring each cylinder to its top then.
  */
@@ -20,13 +21,14 @@ public final class Firing {
     public static final double CYCLE = 720;
     private static final double TURN = 360;
     private static final double CLOSE = 1e-6;
-    /** The orders the engines it is after fire in, by how many banks and how many cylinders to a bank. */
+    /** The orders the engines it is after fire in, by how many banks, how many cylinders to a bank, and the V. */
     private static final Map<List<Integer>, List<Integer>> KNOWN = Map.of(
-            List.of(1, 4), List.of(1, 3, 4, 2),
-            List.of(1, 5), List.of(1, 2, 4, 5, 3),
-            List.of(2, 3), List.of(1, 4, 3, 6, 2, 5),
-            List.of(2, 4), List.of(1, 3, 7, 2, 6, 5, 4, 8),
-            List.of(2, 6), List.of(1, 7, 5, 11, 3, 9, 6, 12, 2, 8, 4, 10));
+            List.of(1, 4, 0), List.of(1, 3, 4, 2),
+            List.of(1, 5, 0), List.of(1, 2, 4, 5, 3),
+            List.of(2, 3, 90), List.of(1, 4, 3, 6, 2, 5),
+            List.of(2, 4, 90), List.of(1, 3, 7, 2, 6, 5, 4, 8),
+            List.of(2, 6, 60), List.of(1, 7, 5, 11, 3, 9, 6, 12, 2, 8, 4, 10),
+            List.of(2, 3, 180), List.of(1, 6, 2, 4, 3, 5));
 
     private final EngineFigures figures;
     private final CrankFigures crank;
@@ -36,7 +38,7 @@ public final class Firing {
     public Firing(final EngineFigures figures) {
         this.figures = figures;
         this.crank = new CrankFigures(figures);
-        final List<Integer> known = KNOWN.get(List.of(figures.banks(), figures.perBank()));
+        final List<Integer> known = KNOWN.get(List.of(figures.banks(), figures.perBank(), (int) figures.vee()));
         this.order = known != null ? known : derived();
         for (final int n : order) {
             if (apart(fires(bank(n), k(n)), top(bank(n), k(n)), TURN) > CLOSE) {

@@ -9,7 +9,8 @@ import com.example.fxsuite.vulkan.space.Vec3;
  * side of a ridge along the bank at the valves' angle, 21 degrees, two inlet valves in one plane and two exhaust in
  * the other, each square to its plane, its seat a little in from the bore; an inlet valve 0.39 of the bore across, an
  * exhaust 0.33; each valve 1.2 bores long, its camshaft over its tip; the spark plug in the ridge's middle. The inlets
- * come in from the bank's outer side, the exhausts go out the other: in a V, into the V, where the turbochargers sit.
+ * come in from the bank's outer side, the exhausts go out the other: in a V, into the V, where the turbochargers
+ * sit; in a boxer, whose outer side is up, the inlets from above and the exhausts out underneath.
  *
  * <p>Laid out in a cylinder's own frame: across, toward the inlet side; up the bore from its deck; and along the bank,
  * from its middle. {@link #at} carries that to the block's frame.

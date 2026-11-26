@@ -2,15 +2,16 @@ package melons.innocent.glm.engine;
 
 /**
  * An engine's figures, the one modular design's, in centimetres: what it is called; how many banks of cylinders it
- * has, one in line or two in a V, and the angle between them; how many cylinders to a bank; each one's bore and its
- * piston's stroke; how far apart the cylinders are along the crank, and how far one bank is set back from the other
- * so their connecting rods sit side by side on the crank's pins; how long a connecting rod is, centre to centre; and
- * how far a piston's pin is under its crown. From these the block is cast: how high its deck stands over the crank,
- * how long it is, and where each cylinder is.
+ * has, one in line or two in a V, and the angle between them, or two lying flat either side of the crank, opposed, a
+ * boxer's, at 180 degrees; how many cylinders to a bank; each one's bore and its piston's stroke; how far apart the
+ * cylinders are along the crank, and how far one bank is set back from the other, so a V's connecting rods sit side
+ * by side on the crank's pins, or a boxer's each on its own pin between the other bank's; how long a connecting rod
+ * is, centre to centre; and how far a piston's pin is under its crown. From these the block is cast: how high its
+ * deck stands over the crank, how long it is, and where each cylinder is.
  *
  * @param name    what it is called
- * @param banks   how many banks: 1 in line, 2 in a V
- * @param vee     the angle between the banks, in degrees; nought in line
+ * @param banks   how many banks: 1 in line, 2 in a V or a boxer
+ * @param vee     the angle between the banks, in degrees; nought in line, 180 in a boxer
  * @param perBank how many cylinders to a bank
  * @param bore    a cylinder's bore
  * @param stroke  a piston's stroke
@@ -26,15 +27,21 @@ public record EngineFigures(String name, int banks, double vee, int perBank, dou
     private static final double END = 2.2;
 
     public EngineFigures {
-        if (banks < 1 || banks > 2 || perBank < 3 || perBank > 6) {
-            throw new IllegalArgumentException(name + ": one or two banks of three to six cylinders");
+        if (banks == 1 && vee != 0 || banks == 2 && (vee < 45 || vee > 120) && vee != 180) {
+            throw new IllegalArgumentException(name + ": in line, a V of 45 to 120 degrees, or a boxer, not " + vee);
         }
-        if (banks == 1 && vee != 0 || banks == 2 && (vee < 45 || vee > 120)) {
-            throw new IllegalArgumentException(name + ": in line, or a V of 45 to 120 degrees, not " + vee);
+        if (banks < 1 || banks > 2 || perBank < (vee == 180 ? 2 : 3) || perBank > (vee == 180 ? 3 : 6)) {
+            throw new IllegalArgumentException(name + ": one or two banks of three to six cylinders, a boxer's two or "
+                    + "three");
         }
         if (bore <= 0 || stroke <= 0 || spacing <= bore + 0.3 || rod <= stroke || crown <= 0 || offset < 0) {
             throw new IllegalArgumentException(name + ": a bore and stroke that fit the spacing and the rod");
         }
+    }
+
+    /** Whether its banks lie flat, opposed either side of the crank, each piston on its own pin: a boxer. */
+    public boolean boxer() {
+        return banks == 2 && vee == 180;
     }
 
     /** How many cylinders, in all. */
@@ -69,7 +76,8 @@ public record EngineFigures(String name, int banks, double vee, int perBank, dou
 
     /**
      * How far bank {@code bank} leans from upright, toward +x, in degrees: in line, not at all; in a V, half the V each
-     * way, the first bank to the right seen from behind, as its makers number them, where +x is to the left.
+     * way, the first bank to the right seen from behind, as its makers number them, where +x is to the left; in a
+     * boxer, lying flat each way.
      */
     public double lean(final int bank) {
         return banks == 1 ? 0 : (bank == 0 ? -vee / 2 : vee / 2);

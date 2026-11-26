@@ -30,6 +30,29 @@ class EngineBlockTest {
         assertEquals(2995, range.v6().displacement(), 1, "a 3.0 litre V6");
         assertEquals(3993, range.v8().displacement(), 1, "a 4.0 litre V8, the V6's cylinder");
         assertEquals(5990, range.v12().displacement(), 1, "a 6.0 litre V12, the same cylinder again");
+        assertEquals(1988, range.b4().displacement(), 1, "a 2.0 litre flat four");
+        assertEquals(2981, range.b6().displacement(), 1, "a 3.0 litre flat six, the same cylinder");
+    }
+
+    @Test
+    void aBoxersBanksFlatEachRodOnItsOwnPinOpposedPistonsInStep() {
+        for (final EngineFigures e : List.of(range.b4(), range.b6())) {
+            final Part block = new CastBlock(e).part();
+            final CrankFigures crank = new CrankFigures(e);
+            final Firing firing = new Firing(e);
+            for (int k = 0; k < e.perBank(); k++) {
+                final Vec3 right = block.point("cylinder 1." + (k + 1)).at();
+                final Vec3 left = block.point("cylinder 2." + (k + 1)).at();
+                assertEquals(0, right.y(), 1e-9, e.name() + " its banks lying flat");
+                assertEquals(-e.deck(), right.x(), 1e-9);
+                assertEquals(e.deck(), left.x(), 1e-9);
+                assertEquals(e.spacing() / 2, left.z() - right.z(), 1e-9, "the second bank half a spacing back");
+                assertEquals(180, crank.angle(1, k) - crank.angle(0, k), 1e-9, "each on its own pin, opposite");
+                assertEquals(firing.top(0, k), firing.top(1, k), 1e-9, "opposed pistons at their tops together");
+            }
+            assertEquals(e.cylinders() + 1, new BlockForm(e).bulkheads().size(),
+                    "a main bearing between each two pins and at each end");
+        }
     }
 
     @Test
@@ -51,9 +74,9 @@ class EngineBlockTest {
     void theRangePutTogetherOnItsStands() {
         final Assembled shown = new Assembly(new EngineShow().platform()).assembled();
         assertEquals(List.of(), shown.problems(1e-6));
-        assertEquals(1 + 5 + 5 + 3 * (1 + 1 + 2 + 2 + 2) + 11 * (4 + 5 + 6 + 8 + 12), shown.placed().size(),
-                "the stands, five blocks, five cranks, a head and two camshafts on every bank, and a rod, a piston, a"
-                        + " pin, four valves and four springs in every cylinder");
+        assertEquals(1 + 7 + 7 + 3 * (1 + 2 + 1 + 2 + 2 + 2 + 2) + 11 * (4 + 4 + 5 + 6 + 6 + 8 + 12),
+                shown.placed().size(), "the stands, seven blocks, seven cranks, a head and two camshafts on every bank,"
+                        + " and a rod, a piston, a pin, four valves and four springs in every cylinder");
     }
 
     @Test
@@ -80,7 +103,7 @@ class EngineBlockTest {
 
     @Test
     void posedAtAnyAngleTheCrankTurnedTheRodsSwungThePistonsSlid() {
-        for (final EngineFigures e : List.of(range.l5(), range.v6(), range.v12())) {
+        for (final EngineFigures e : List.of(range.l5(), range.v6(), range.v12(), range.b4(), range.b6())) {
             final EngineInternals inside = new EngineInternals(e);
             final Assembled built = new Assembly(inside.platform()).assembled();
             assertEquals(List.of(), built.problems(1e-6));

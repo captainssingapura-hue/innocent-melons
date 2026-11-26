@@ -22,7 +22,7 @@ class FiringTest {
     @Test
     void eachOfTheRangeInItsMakersOrderEvenlyEveryCylinderAtItsTop() {
         final List<String> orders = range.all().stream().map(e -> new Firing(e).written()).toList();
-        assertEquals(List.of("1-3-4-2", "1-2-4-5-3", "1-4-3-6-2-5", "1-3-7-2-6-5-4-8",
+        assertEquals(List.of("1-3-4-2", "1-2-3-4", "1-2-4-5-3", "1-4-3-6-2-5", "1-6-2-4-3-5", "1-3-7-2-6-5-4-8",
                 "1-7-5-11-3-9-6-12-2-8-4-10"), orders);
         for (final EngineFigures e : range.all()) {
             final Firing firing = new Firing(e);
