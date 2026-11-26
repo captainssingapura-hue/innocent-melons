@@ -35,8 +35,6 @@ public record Plating() implements StatelessFunctionalObject {
     private static final double SURE = 2;
     /** How many of its steps apart a grid is first found on, coarsely, to know where the surface is not near. */
     private static final int COARSE = 4;
-    /** How far round toward a limb's line its skin may face, a cosine, before it is taken to be folded over. */
-    private static final double BACK = -0.2;
     /** How many steps either side each value is averaged over in smoothing it, and how many times. */
     private static final int REACH = 3;
     private static final int PASSES = 3;
@@ -69,9 +67,13 @@ public record Plating() implements StatelessFunctionalObject {
     public record Core(V3 at, V3 way, Part part) {
     }
 
-    /** {@code cut} shaped over the surface {@code near} finds. */
-    public Plate of(final Nearness near, final Cut cut) {
-        final Field.Sampled d = Blur.INSTANCE.smoothed(distance(near, cut), REACH, PASSES);
+    /**
+     * {@code cut} shaped over the surface {@code near} finds and what is worn over it, each of {@code over} finding
+     * one: standing off whichever is further out, cloth stretched across a hollow of the skin as much as the skin.
+     */
+    public Plate of(final Nearness near, final List<Nearness> over, final Cut cut) {
+        final List<Nearness> reached = over.stream().filter(o -> reaches(o.beneath(), cut)).toList();
+        final Field.Sampled d = Blur.INSTANCE.smoothed(distance(near, reached, cut), REACH, PASSES);
         final List<Field.Element> e = new ArrayList<>(List.of(
                 new Field.Element("outside", swollen(d, cut.off()), Field.Op.ADD, 0),
                 new Field.Element("inside", swollen(d, cut.off() - cut.thick()), Field.Op.CARVE, 0)));
@@ -90,6 +92,26 @@ public record Plating() implements StatelessFunctionalObject {
         return Math.max(LEAST, cut.off() + 2 * spread);
     }
 
+    /**
+     * Whether the box round {@code b} meets {@code cut}'s box, grown by as far as its shape is found ({@link #within}).
+     */
+    private boolean reaches(final Beneath b, final Cut cut) {
+        final double[] box = cut.box();
+        final double w = within(cut);
+        final float[] p = b.points();
+        boolean meets = true;
+        for (int a = 0; a < 3; a++) {
+            double lo = Double.MAX_VALUE;
+            double hi = -Double.MAX_VALUE;
+            for (int i = a; i < p.length; i += 3) {
+                lo = Math.min(lo, p[i]);
+                hi = Math.max(hi, p[i]);
+            }
+            meets &= hi > box[a] - w && lo < box[a + 3] + w;
+        }
+        return meets;
+    }
+
     /** {@code shape} swollen all round by {@code by}. */
     private Field.Shape swollen(final Field.Shape shape, final double by) {
         return new Reshaped(shape, V3.ZERO, V3.ZERO, Rot.NONE, new V3(1, 1, 1), by);
@@ -101,11 +123,13 @@ public record Plating() implements StatelessFunctionalObject {
      * as that. Which side it is on: within {@link #SURE} of it, as the surface faces where it is nearest, its
      * corners' ways out blended there; further off, as most of the points further off joined to it say
      * ({@link #sided}), so that where the surface is folded over on itself and faces in, a point far off it is not
-     * taken to be inside.
+     * taken to be inside. A point outside it as far as it is from the nearest of what {@code over} finds, if that is
+     * nearer: what is worn over the surface lies outside it, and what lies between the two is taken to be within.
      */
-    Field.Sampled distance(final Nearness near, final Cut cut) {
+    Field.Sampled distance(final Nearness near, final List<Nearness> over, final Cut cut) {
         final Beneath b = near.beneath();
-        final float[] out = outward(b);
+        final float[] out = Facing.INSTANCE.outward(b);
+        final List<float[]> outs = over.stream().map(o -> Facing.INSTANCE.outward(o.beneath())).toList();
         final double[] box = cut.box();
         final double h = cut.sample();
         final int[] n = {(int) Math.ceil((box[3] - box[0]) / h) + 1, (int) Math.ceil((box[4] - box[1]) / h) + 1,
@@ -114,9 +138,10 @@ public record Plating() implements StatelessFunctionalObject {
         final float[] coarse = new float[m[0] * m[1] * m[2]];
         final double within = within(cut);
         final double reach = within + 2 * COARSE * h;
-        IntStream.range(0, coarse.length).parallel().forEach(at -> coarse[at] = (float) near.nearest(
-                point(box, h, at % m[0] * COARSE, at / m[0] % m[1] * COARSE, at / (m[0] * m[1]) * COARSE), reach,
-                k -> true).distance());
+        IntStream.range(0, coarse.length).parallel().forEach(at -> {
+            final V3 p = point(box, h, at % m[0] * COARSE, at / m[0] % m[1] * COARSE, at / (m[0] * m[1]) * COARSE);
+            coarse[at] = (float) Math.abs(worn(over, outs, p, near.nearest(p, reach, k -> true).distance()));
+        });
         final float[] v = new float[n[0] * n[1] * n[2]];
         final float[] far = new float[v.length];
         IntStream.range(0, v.length).parallel().forEach(at -> {
@@ -126,14 +151,36 @@ public record Plating() implements StatelessFunctionalObject {
                     + Math.pow(c[2] - q[2] * COARSE, 2));
             final double d = coarse[(q[2] * m[1] + q[1]) * m[0] + q[0]];
             final V3 p = point(box, h, c[0], c[1], c[2]);
-            final Nearness.Near found = d - r >= within ? null
-                    : near.nearest(p, Math.min(within, d + r + h), k -> true);
-            far[at] = found == null || found.triangle() < 0 ? (float) within : (float) found.distance();
-            v[at] = found == null || found.triangle() < 0 ? 0
-                    : (float) (behind(b, out, found, p, cut.core()) ? -found.distance() : found.distance());
+            final double look = Math.min(within, d + r + h);
+            final boolean skip = d - r >= within;
+            final Nearness.Near found = skip ? null : near.nearest(p, look, k -> true);
+            final boolean met = found != null && found.triangle() >= 0;
+            final boolean in = met && Facing.INSTANCE.behind(b, out, found, p, cut.core());
+            final double worn = skip || in ? look : worn(over, outs, p, look);
+            final double apart = in ? -found.distance() : worn < 0 ? worn : Math.min(met ? found.distance() : look,
+                    worn);
+            final boolean known = met || worn < look;
+            far[at] = known ? (float) Math.abs(apart) : (float) within;
+            v[at] = known ? (float) apart : 0;
         });
         sided(v, far, n);
         return new Field.Sampled(new double[] {box[0], box[1], box[2]}, h, n, v, box);
+    }
+
+    /**
+     * How far {@code p} is outside the nearest of what {@code over} finds, behind it less than nothing, as each faces
+     * ({@code outs}); looked for no further than {@code reach}, and that if none is nearer.
+     */
+    private double worn(final List<Nearness> over, final List<float[]> outs, final V3 p, final double reach) {
+        double d = reach;
+        for (int i = 0; i < over.size(); i++) {
+            final Nearness.Near m = over.get(i).nearest(p, Math.abs(d), k -> true);
+            if (m.triangle() >= 0) {
+                d = Facing.INSTANCE.behind(over.get(i).beneath(), outs.get(i), m, p, Optional.empty()) ? -m.distance()
+                        : m.distance();
+            }
+        }
+        return d;
     }
 
     /** The coarse grid's step nearest the fine grid's {@code c}, of the {@code m} along it. */
@@ -184,43 +231,5 @@ public record Plating() implements StatelessFunctionalObject {
         for (int i = 0; i < v.length; i++) {
             v[i] = run[i] < 0 ? v[i] : (sides.get(run[i]) < 0 ? -far[i] : far[i]);
         }
-    }
-    /** Each of {@code b}'s points' way out, its triangles' summed, each as large as it is: three numbers each. */
-    private float[] outward(final Beneath b) {
-        final int[] t = b.triangles();
-        final float[] out = new float[b.points().length];
-        for (int i = 0; i < t.length; i += 3) {
-            final V3 a = b.point(t[i]);
-            final V3 n = b.point(t[i + 1]).minus(a).cross(b.point(t[i + 2]).minus(a));
-            for (int c = 0; c < 3; c++) {
-                out[3 * t[i + c]] += (float) n.x();
-                out[3 * t[i + c] + 1] += (float) n.y();
-                out[3 * t[i + c] + 2] += (float) n.z();
-            }
-        }
-        return out;
-    }
-
-    /**
-     * Whether {@code p}, nearest {@code m} on {@code b}, is behind it, as its corners' ways out {@code out} blend;
-     * where {@code core} says the surface lies round a line and it faces back toward the line, as the way from it.
-     */
-    private boolean behind(final Beneath b, final float[] out, final Nearness.Near m, final V3 p,
-                           final Optional<Core> core) {
-        final int[] t = b.triangles();
-        final double[] w = {m.a(), m.b(), m.c()};
-        V3 at = V3.ZERO;
-        V3 way = V3.ZERO;
-        for (int c = 0; c < 3; c++) {
-            final int i = t[3 * m.triangle() + c];
-            at = at.plus(b.point(i).times(w[c]));
-            way = way.plus(new V3(out[3 * i], out[3 * i + 1], out[3 * i + 2]).unit().times(w[c]));
-        }
-        if (core.isPresent() && b.main()[t[3 * m.triangle()]] == core.get().part()) {
-            final V3 from = at.minus(core.get().at());
-            final V3 off = from.minus(core.get().way().times(from.dot(core.get().way()))).unit();
-            way = way.unit().dot(off) < BACK ? off : way;
-        }
-        return p.minus(at).dot(way) < 0;
     }
 }

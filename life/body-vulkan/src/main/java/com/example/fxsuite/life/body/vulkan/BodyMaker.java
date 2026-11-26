@@ -45,7 +45,8 @@ public final class BodyMaker {
     /**
      * The body made, as it is bound: its bones, each moving with its part; its skin; its muscles; the body as bound;
      * what it may wear, each hard piece moving with its part: the helmet ({@link Helmet}) and the armour
-     * ({@link Armour}); and what it may wear of cloth, bending as it does ({@link Tailor}).
+     * ({@link Armour}), shaped over the cloth as well as the skin; and what it may wear of cloth, bending as it does
+     * ({@link Tailor}).
      *
      * @param bones   its bones
      * @param skin    its skin
@@ -71,13 +72,15 @@ public final class BodyMaker {
         final Skins skins = new Skins(FatPattern.LEAN);
         final Flesh skin = "coarse".equals(System.getProperty("body.skin")) ? skins.moving(p) : skins.of(p);
         final Flesh worn = clayed(skin, told);
-        told.accept("its helmet and its armour");
-        final List<BodyPieces.Worn> wears = new ArrayList<>(new BodyPieces().worn(bound, Helmet.INSTANCE.made()));
         final Beneath beneath = skins.beneath(skin);
-        wears.addAll(new BodyPieces().worn(Armour.INSTANCE.of(beneath, bound)));
         told.accept("its tights and its briefs");
         final List<Garment> clothes = List.of(Tailor.INSTANCE.tights(beneath, bound, CLOTH),
                 Tailor.INSTANCE.briefs(beneath, bound, CLOTH));
+        told.accept("its helmet and its armour");
+        final List<BodyPieces.Worn> wears = new ArrayList<>(new BodyPieces().worn(bound, Helmet.INSTANCE.made()));
+        wears.addAll(new BodyPieces().worn(Armour.INSTANCE.of(beneath,
+                skins.beneath(skin, new Rig(p, Armour.INSTANCE.held(), false)),
+                clothes.stream().map(c -> skins.beneath(c.cloth())).toList(), bound)));
         return new Made(bones, worn, muscles, bound, wears, clothes);
     }
 
