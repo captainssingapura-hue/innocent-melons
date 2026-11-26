@@ -3,6 +3,8 @@ package melons.innocent.core.walk;
 import melons.innocent.core.motion.Spot;
 import melons.innocent.core.step.Explanation;
 
+import java.util.List;
+
 /**
  * What the walking engine worked out for a walker in a tick: one of the ways it can come out, each with the
  * figures it came by.
@@ -62,6 +64,16 @@ public sealed interface Stride extends Explanation<Walker> {
      * @param fell how fast it was coming down, against that
      */
     record CameDown(String on, double fell) implements Stride {
+    }
+
+    /**
+     * The first correction: its stepping put right for what stood in its path.
+     *
+     * @param regular what the regular stepping had worked out
+     * @param met     what it met
+     * @param lost    the going taken away, which was into what it met
+     */
+    record Barred(Stride regular, List<String> met, Spot lost) implements Stride {
     }
 
     /** The one empty explanation, given every time while explaining is off. */

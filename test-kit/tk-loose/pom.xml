@@ -50,6 +50,15 @@
             <groupId>melons.innocent.core</groupId>
             <artifactId>core-surface</artifactId>
         </dependency>
+        <!-- the core's own walker and the one tick of things and walkers: the second figure -->
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-walk</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-whole</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.example.fxsuite</groupId>
             <artifactId>fxsuite-existence</artifactId>

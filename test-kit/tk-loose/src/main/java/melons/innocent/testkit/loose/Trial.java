@@ -12,6 +12,7 @@ import melons.innocent.core.rest.Stamped;
 import melons.innocent.core.rest.Throw;
 import melons.innocent.core.rest.World;
 import melons.innocent.core.step.Explanation;
+import melons.innocent.core.whole.Given;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,6 +68,9 @@ public final class Trial {
     private final Map<String, Moved> flung = new TreeMap<>();
     private Optional<Flown> flown = Optional.empty();
     private final Blows blows = new Blows();
+    /** The second figure, the core's own walker, where the run asks for it by {@code -Dloose.second=true}. */
+    private final Optional<Second> second = Boolean.getBoolean("loose.second") ? Optional.of(new Second())
+            : Optional.empty();
     /** What the engine worked out for each thing it stepped in the last tick: said only where the run explains. */
     private Map<String, Explanation<Rigid>> why = Map.of();
     /** How the wagon is to be driven from the next tick, where that has been asked. */
@@ -124,7 +128,7 @@ public final class Trial {
         flung.keySet().removeIf(name -> !world.things().contains(name) || going.contains(name)
                 || lifted.contains(name));
         blows.before(world);
-        final Stamped stamped = world.ticked(new Asked(going, lifted, flung, driving(going),
+        final Stamped stamped = stamped(new Asked(going, lifted, flung, driving(going),
                 walker.outsiders(world.tick())));
         final List<Happened> happened = stamped.happened();
         why = stamped.why();
@@ -139,6 +143,19 @@ public final class Trial {
         }
         changes += happened.stream().filter(one -> !(one instanceof Happened.Landed)).count();
         return happened;
+    }
+
+    /**
+     * The world a tick on: by itself; or, where the second figure is in it, things and walker together by the
+     * core's one tick, the world then taken up again from the things that tick gave.
+     */
+    private Stamped stamped(final Asked asked) {
+        if (second.filter(Second::set).isEmpty()) {
+            return world.ticked(asked);
+        }
+        final Given given = second.get().ticked(world, asked, new Footing(this));
+        world = new World(world.core(), given.whole().things());
+        return given.stamped();
     }
 
     /** The slices of what is to be cut and is still there, each melon cut added to what is {@code going}. */
@@ -255,6 +272,7 @@ public final class Trial {
         cutting.clear();
         flung.clear();
         blows.clear();
+        second.ifPresent(Second::again);
         flown = Optional.empty();
         drive = Optional.empty();
         changes++;
@@ -264,6 +282,11 @@ public final class Trial {
     /** What the engine worked out for each thing in motion in the last tick, by name: see {@link Scenes}. */
     public Map<String, Explanation<Rigid>> why() {
         return why;
+    }
+
+    /** The second figure, where the run asked for one. */
+    Optional<Second> second() {
+        return second;
     }
 
     /** The world it is trying. */

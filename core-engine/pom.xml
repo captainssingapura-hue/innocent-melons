@@ -41,6 +41,8 @@
         <module>core-surface</module>
         <!-- The walking engine: a walker on whatever surface is under it, as an engine in the one shape. -->
         <module>core-walk</module>
+        <!-- The whole of a world in one tick: things and walkers, each by the engine for its kind. -->
+        <module>core-whole</module>
     </modules>
 
     <properties>
