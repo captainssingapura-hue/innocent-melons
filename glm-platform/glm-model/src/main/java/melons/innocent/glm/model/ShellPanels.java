@@ -18,8 +18,9 @@ import java.util.Map;
  * The shell's panels welded to its underbody and its body sides, each a part of its own, pressed steel, painted: the
  * bulkhead between the engine and the cabin, up to the scuttle under the windscreen, notched over the tunnel, the
  * bonnet hinged to it; the tail panel across the tail, from the boot's floor up to the boot lid's edge, cut for the
- * tail lamps each side of the number plate; and the roof's two headers across between the body sides' roof rails,
- * over the windscreen and over the rear window, closing the shell into a cage the roof's glass will lie on.
+ * tail lamps each side of the number plate ({@link TailLamps}); and the roof's two headers across between the body
+ * sides' roof rails, over the windscreen and over the rear window, closing the shell into a cage the roof's glass will
+ * lie on.
  *
  * @param lines where the shell runs
  */
@@ -31,10 +32,7 @@ record ShellPanels(ShellLines lines) {
     /** How far inside the body sides' faces the panels stop; how far the scuttle reaches ahead. */
     private static final double INSIDE = 2;
     private static final double SCUTTLE = 14;
-    /** The tail lamps' openings, across and up; how high the tail panel's top is. */
-    private static final double LAMP_IN = 18;
-    private static final double LAMP_LOW = 79;
-    private static final double LAMP_HIGH = 91;
+    /** How high the tail panel's top is. */
     private static final double TAIL_TOP = 100.5;
     /** How much higher a header is at the middle than at its ends. */
     private static final double CROWN = 3;
@@ -66,11 +64,15 @@ record ShellPanels(ShellLines lines) {
         final double floor = lines.boot();
         final List<Spot> outline = new ArrayList<>(edge(z, floor, TAIL_TOP, 1));
         outline.addAll(edge(z, floor, TAIL_TOP, -1).reversed());
-        final double out = lines.half(z, (LAMP_LOW + LAMP_HIGH) / 2) - INSIDE - 6;
-        final List<List<Spot>> lamps = List.of(SHEETS.rectangle(LAMP_IN, LAMP_LOW, out, LAMP_HIGH),
-                SHEETS.rectangle(-out, LAMP_LOW, -LAMP_IN, LAMP_HIGH));
-        return PRESSED.part("tail panel", Group.BODYWORK, false, Map.of("underbody", new Vec3(0, floor, z)),
-                SHEETS.across(z, outline, lamps));
+        final TailLamps tailLamps = new TailLamps(lines.lines());
+        final List<Spot> right = tailLamps.opening();
+        final List<List<Spot>> lamps = List.of(right, right.stream().map(s -> new Spot(-s.u(), s.v())).toList());
+        final Vec3 lamp = tailLamps.middle();
+        final Map<String, Vec3> points = new LinkedHashMap<>();
+        points.put("underbody", new Vec3(0, floor, z));
+        points.put("tail lamp, right", lamp);
+        points.put("tail lamp, left", new Vec3(-lamp.x(), lamp.y(), lamp.z()));
+        return PRESSED.part("tail panel", Group.BODYWORK, false, points, SHEETS.across(z, outline, lamps));
     }
 
     /** A roof header across at {@code at}, along and up, from the right body side's rail to the left's. */

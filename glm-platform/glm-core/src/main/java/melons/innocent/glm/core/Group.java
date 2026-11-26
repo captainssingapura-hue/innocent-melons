@@ -19,6 +19,8 @@ public enum Group {
     ROOF("Glass roof"),
     TRIM("Bumpers and trim"),
     LAMPS("Lamps"),
+    TAIL_LAMPS("Tail lamps"),
+    SIGNALS("Rear indicators"),
     STEERING("Steering"),
     WHEELS("Wheels"),
     TYRES("Tyres");
