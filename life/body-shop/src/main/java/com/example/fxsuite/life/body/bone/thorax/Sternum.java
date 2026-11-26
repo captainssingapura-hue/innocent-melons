@@ -14,11 +14,15 @@ import static com.example.fxsuite.life.body.Sketch.v;
 
 /**
  * The breastbone, drawn in the body's frame at rest and moving with the chest: its manubrium, notched at its top and at
- * either side for the clavicles; the angle where it meets the body; the body; the xiphoid below.
+ * either side for the clavicles; the angle where it meets the body; the body; the xiphoid below, angled back, its tip
+ * {@link #BACK} behind the body's lower end, under the rectus abdominis, not standing at the chest's front.
  */
 public record Sternum() implements Bone {
 
     public static final Sternum INSTANCE = new Sternum();
+
+    /** How far behind the body's lower end the xiphoid's tip is, cm. */
+    private static final double BACK = 1.0;
 
     /** Where it meets its neighbours, as on the right, each a frame in the frame it is drawn in. */
     public enum Points implements Point<Sternum> {
@@ -78,7 +82,8 @@ public record Sternum() implements Bone {
         s.rod(v(-1.45, 40.85, 7.55), v(1.45, 40.85, 7.55), 0.45, 0.45);
         s.plate(v(-1.4, 40.9, 7.45), v(1.4, 40.9, 7.45), v(1.85, 35.5, 8.4), v(-1.85, 35.5, 8.4), 0.95 * light);
         s.plate(v(-1.85, 35.5, 8.4), v(1.85, 35.5, 8.4), v(1.5, 31.1, 9.2), v(-1.5, 31.1, 9.2), 0.9 * light);
-        s.flat(v(0, 31.0, 9.2), v(0, 28.6, 9.0), 0.6, 0.25, v(0, 0, 1), 0.5);
+        final double down = 2.4;
+        s.flat(v(0, 31.0, 9.2), v(0, 31.0 - down, 9.2 - BACK), 0.6, 0.25, v(0, -BACK, down).unit(), 0.5);
         s.blend(0.3).carve().ball(v(0, 46.2, 6.6), 0.85);
         s.carve().ball(v(2.6, 45.3, 6.8), 1.12);
         s.carve().ball(v(-2.6, 45.3, 6.8), 1.12);
