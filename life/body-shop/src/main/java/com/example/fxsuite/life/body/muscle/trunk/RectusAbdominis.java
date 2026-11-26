@@ -14,7 +14,7 @@ import java.util.List;
 
 /**
  * The rectus abdominis: from the pubic crest, up the front of the belly either side of the linea alba, widening, to the
- * fifth, sixth and seventh ribs' cartilages and the xiphoid.
+ * fifth, sixth and seventh ribs' cartilages and the xiphoid, its top as high as the fifth's, under the pectoral.
  */
 public record RectusAbdominis() implements Muscle {
 
@@ -37,7 +37,7 @@ public record RectusAbdominis() implements Muscle {
                 s.at(HipBone.INSTANCE, 1.6, -2.4, 6.5, 2.6, 1.0, 0, 0, 1),
                 s.at(L5.INSTANCE, 3, 6, 7.1, 5.4, 1.0, 0, 0, 1),
                 s.at(L3.INSTANCE, 3.6, 16, 7.8, 6.4, 1.2, 0, 0, 1),
-                s.at(T12.INSTANCE, 4, 24, 8.5, 7.0, 1.0, 0, 0, 1),
-                s.at(Sternum.INSTANCE, 4.6, 29.922, 9.208, 7.4, 0.8, 0, 0.2, 1));
+                s.at(T12.INSTANCE, 4.4, 24, 8.5, 8.0, 1.0, 0, 0, 1),
+                s.at(Sternum.INSTANCE, 5.2, 31.5, 9.0, 9.0, 0.8, 0, 0.25, 1));
     }
 }
