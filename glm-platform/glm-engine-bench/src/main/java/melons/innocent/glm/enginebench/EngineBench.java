@@ -92,6 +92,8 @@ public final class EngineBench {
     private EngineFigures engine;
     private Firing firing;
     private double turned = said("engine.turned", 0);
+    /** How far the bike has rolled forward, its back wheel and belt turned as far. */
+    private double rolled;
 
     public static void main(final String[] args) throws IOException {
         new EngineBench().run();
@@ -143,6 +145,7 @@ public final class EngineBench {
             last = time;
             driven.step(held != null ? new Driver(Double.parseDouble(held)) : keys.read(window, seconds), seconds);
             turned = (turned + driven.rpm() / 60 * 360 * seconds * now.slow()) % 720;
+            rolled += driven.kmh() / 3.6 * 100 * seconds * now.slow();
             sound.set(driven.rpm(), driven.firing(), driven.load());
             sound.volume(now.volume());
             skies.stepped(seconds);
@@ -170,7 +173,7 @@ public final class EngineBench {
 
     /** One frame of the engine as it runs now, drawn on {@code target}. */
     private void frame(final Target target, final EngineView view, final EngineRun now) {
-        view.drawn(target, turned, now.block(), new MadeOf().with(Material.TITANIUM, now.made()), LIFT,
+        view.drawn(target, turned, rolled, now.block(), new MadeOf().with(Material.TITANIUM, now.made()), LIFT,
                 orbit.camera(48, 1), skies.lit(), asked.shadowed(), asked.shadowing(), driven);
     }
 

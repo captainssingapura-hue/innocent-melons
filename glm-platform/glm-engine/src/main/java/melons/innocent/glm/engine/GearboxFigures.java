@@ -6,12 +6,13 @@ import java.util.List;
 
 /**
  * Where a twin's gearbox lies in its crankcase, and how big what turns in it is, in the block's frame, across the
- * crank as x and up as y, its front bank toward -x and its back bank, and the gearbox, toward +x: after the reference
- * twin's figures, its primary drive 89 teeth to 49, its six gears 2.857, 2.111, 1.636, 1.320, 1.107 and 0.967 to
- * one; where its shafts lie and how far apart, estimates. Its mainshaft behind the crank and a little under it, as far
- * off as the crank's swing and the mainshaft's biggest gear clear each other; its countershaft behind the mainshaft
- * and lower, the pairs' gears between them. The clutch on the mainshaft at the crankcase's back end, the primary
- * drive's gear round its basket; the output pulley on the countershaft at its front end, beside the timing cover.
+ * crank as x and up as y, its back bank, and the gearbox, toward -x and its front bank toward +x, the way the bike
+ * goes as its crank turns: after the reference twin's figures, its primary drive 89 teeth to 49, its six gears 2.857,
+ * 2.111, 1.636, 1.320, 1.107 and 0.967 to one; where its shafts lie and how far apart, estimates. Its mainshaft
+ * behind the crank and a little under it, as far off as the crank's swing and the mainshaft's biggest gear clear each
+ * other; its countershaft behind the mainshaft and lower, the pairs' gears between them. The clutch on the mainshaft
+ * at the crankcase's front end, the bike's left, outside the cam chains, the primary drive's gear round its basket;
+ * the output pulley on the countershaft at its back end, the bike's right.
  *
  * @param figures the engine's figures
  */
@@ -80,9 +81,9 @@ record GearboxFigures(EngineFigures figures) {
         return countershaft().v() - counterCase();
     }
 
-    /** How far {@code from} the spot {@code far} off it is, {@code down} degrees under back. */
+    /** The spot {@code far} off {@code from}, back toward -x and {@code down} degrees under level. */
     private Spot toward(final Spot from, final double far, final double down) {
         final double a = Math.toRadians(-down);
-        return new Spot(from.u() + far * Math.cos(a), from.v() + far * Math.sin(a));
+        return new Spot(from.u() - far * Math.cos(a), from.v() + far * Math.sin(a));
     }
 }

@@ -24,11 +24,11 @@ record OilPan(EngineFigures figures) {
     private static final double DEEP = 2.5;
     private static final double THICK = 0.5;
 
-    /** Where the crankcase's bottom is, and how far it runs, across the crank: from its front to the countershaft. */
+    /** Where the crankcase's bottom is, and how far it runs, across the crank: from the countershaft to its front. */
     double[] bottom() {
         final GearboxFigures gearbox = new GearboxFigures(figures);
-        return new double[] {-new UprightCase(figures, new BlockForm(figures)).skirt(),
-            gearbox.countershaft().u(), gearbox.bottom()};
+        return new double[] {gearbox.countershaft().u(), new UprightCase(figures, new BlockForm(figures)).skirt(),
+            gearbox.bottom()};
     }
 
     /** Where its rim's middle is, on the crankcase's bottom. */

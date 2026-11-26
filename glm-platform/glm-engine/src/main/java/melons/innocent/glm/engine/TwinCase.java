@@ -48,9 +48,9 @@ record TwinCase(EngineFigures figures, BlockForm block) implements Casing {
 
     /**
      * The section, drawn across and up, round to the left, starting along the open bottom, flat under the crank and
-     * the gearbox, which the oil pan closes: round under the gearbox's shafts and up behind them, along each bank's
-     * outer wall to its barrel's foot, across the foot to its inner side, and down the front bank's outer wall and
-     * skirt; the smallest outline round them all, its case round its gearbox ({@link GearboxFigures}).
+     * the gearbox, which the oil pan closes: up the skirt under the front bank, along each bank's outer wall to its
+     * barrel's foot and across the foot to its inner side, and down behind the gearbox's shafts and round under them;
+     * the smallest outline round them all, its case round its gearbox ({@link GearboxFigures}).
      */
     @Override
     public List<Spot> section() {
@@ -59,7 +59,7 @@ record TwinCase(EngineFigures figures, BlockForm block) implements Casing {
         final double s = upright.skirt();
         final double bottom = gearbox.bottom();
         final Spot counter = gearbox.countershaft();
-        final List<Spot> round = new ArrayList<>(List.of(new Spot(-s, bottom), new Spot(counter.u(), bottom)));
+        final List<Spot> round = new ArrayList<>(List.of(new Spot(counter.u(), bottom), new Spot(s, bottom)));
         for (final int b : List.of(0, 1)) {
             final Vec3 foot = block.up(b).times(foot());
             round.addAll(upright.flank(b, s));
@@ -70,7 +70,7 @@ record TwinCase(EngineFigures figures, BlockForm block) implements Casing {
         round.addAll(outlines.circle(gearbox.mainshaft(), gearbox.mainCase()));
         round.addAll(outlines.circle(counter, gearbox.counterCase()));
         final List<Spot> hull = new Hull(round.stream().filter(p -> p.v() >= bottom).toList()).outline();
-        // begin along the bottom, from its front end, as a section does
+        // begin along the bottom, from its end toward -x, as a section does
         int first = -1;
         for (int i = 0; i < hull.size(); i++) {
             if (hull.get(i).v() < bottom + 1e-9 && (first < 0 || hull.get(i).u() < hull.get(first).u())) {
@@ -96,17 +96,17 @@ record TwinCase(EngineFigures figures, BlockForm block) implements Casing {
     }
 
     /**
-     * Where the engine's mount is on side {@code side}: ahead, on the skirt's face under the front bank; behind, on
-     * the case's back round the countershaft; each a little ahead of the middle along the crank.
+     * Where the engine's mount is on side {@code side}: ahead, toward +x, on the skirt's face under the front bank;
+     * behind, on the case's back round the countershaft; each a little ahead of the middle along the crank.
      */
     @Override
     public Vec3 mount(final int side) {
-        if (side < 0) {
+        if (side > 0) {
             return new UprightCase(figures, block).mount(side);
         }
         final GearboxFigures gearbox = new GearboxFigures(figures);
         final Spot counter = gearbox.countershaft();
-        return new Vec3(counter.u() + gearbox.counterCase() + 1.5, counter.v(), figures.length() * 0.42);
+        return new Vec3(counter.u() - gearbox.counterCase() - 1.5, counter.v(), figures.length() * 0.42);
     }
 
     private Spot spot(final Vec3 p) {

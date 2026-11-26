@@ -114,27 +114,27 @@ final class EngineView implements AutoCloseable {
         this.inside = engine;
         this.built = assembled;
         assembled.placed().keySet().forEach(p -> parts.put(p, new Shaped(card, laid, p.shape().form())));
-        assembled.placed().keySet().stream().filter(p -> engine.chain(p.part()))
-                .forEach(p -> links.put(p, new Shaped(card, laid, engine.link(p.part()))));
+        assembled.placed().keySet().stream().filter(p -> engine.drives().wrapped(p.part()))
+                .forEach(p -> links.put(p, new Shaped(card, laid, engine.drives().link(p.part()))));
     }
 
     /**
-     * One frame drawn on {@code target}: the engine, the crank turned {@code turned} degrees, its block shown as
-     * {@code block}, made of what {@code madeOf} says, lifted {@code lift} off the floor, seen by {@code camera} in
-     * {@code time}'s light; with shadows, found {@code by} that way, where {@code shadowed}; over it, the instruments
-     * of {@code driven}.
+     * One frame drawn on {@code target}: the engine, the crank turned {@code turned} degrees and the bike rolled
+     * {@code rolled} forward, its block shown as {@code block}, made of what {@code madeOf} says, lifted {@code lift}
+     * off the floor, seen by {@code camera} in {@code time}'s light; with shadows, found {@code by} that way, where
+     * {@code shadowed}; over it, the instruments of {@code driven}.
      */
-    void drawn(final Target target, final double turned, final EngineRun.Block block, final MadeOf madeOf,
-               final Vec3 lift, final Camera camera, final Daylight time, final boolean shadowed,
+    void drawn(final Target target, final double turned, final double rolled, final EngineRun.Block block,
+               final MadeOf madeOf, final Vec3 lift, final Camera camera, final Daylight time, final boolean shadowed,
                final Shadowing by, final Drivetrain driven) {
         final double aspect = (double) target.width() / target.height();
         final Framed framed = new Framed(laid, camera, time.light());
-        final Consumer<Pass> solid = pass -> parts(pass, camera, turned, block, madeOf, lift, false);
+        final Consumer<Pass> solid = pass -> parts(pass, camera, turned, rolled, block, madeOf, lift, false);
         final Consumer<Pass> all = pass -> {
             cast.ground(pass, camera);
             solid.accept(pass);
             burning(pass, camera, turned, lift);
-            parts(pass, camera, turned, block, madeOf, lift, true);
+            parts(pass, camera, turned, rolled, block, madeOf, lift, true);
             instruments.drawn(pass, overlay.over(camera, aspect), driven);
         };
         if (shadowed) {
@@ -146,8 +146,9 @@ final class EngineView implements AutoCloseable {
     }
 
     /** Its parts, those seen through or those not, each where it has moved to. */
-    private void parts(final Pass pass, final Camera camera, final double turned, final EngineRun.Block block,
-                       final MadeOf madeOf, final Vec3 lift, final boolean seenThrough) {
+    private void parts(final Pass pass, final Camera camera, final double turned, final double rolled,
+                       final EngineRun.Block block, final MadeOf madeOf, final Vec3 lift,
+                       final boolean seenThrough) {
         for (final PartAt p : built.placed().keySet()) {
             final boolean isBlock = p.part().equals(root) || inside.cast(p.part()) || inside.cover(p.part());
             if (isBlock && block == EngineRun.Block.HIDDEN) {
@@ -157,11 +158,11 @@ final class EngineView implements AutoCloseable {
             if (coats.seenThrough(coat) == seenThrough) {
                 if (links.containsKey(p)) {
                     final Mat4 from = new Mat4(lift.plus(built.at(p)));
-                    inside.links(p.part(), turned).forEach(m -> coats.drawn(pass, links.get(p), from.times(m), camera,
-                            coat));
+                    inside.drives().links(p.part(), turned, rolled)
+                            .forEach(m -> coats.drawn(pass, links.get(p), from.times(m), camera, coat));
                     continue;
                 }
-                final Mat4 at = new Mat4(lift.plus(built.at(p))).times(inside.moved(p.part(), turned));
+                final Mat4 at = new Mat4(lift.plus(built.at(p))).times(inside.moved(p.part(), turned, rolled));
                 coats.drawn(pass, parts.get(p), at, camera, coat);
             }
         }

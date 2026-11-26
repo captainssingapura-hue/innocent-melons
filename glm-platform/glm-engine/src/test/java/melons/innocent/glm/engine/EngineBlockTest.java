@@ -71,8 +71,8 @@ class EngineBlockTest {
         assertEquals(gearbox.bottom(), section.get(0).v(), 1e-9, "flat beneath, for the oil pan");
         assertEquals(gearbox.bottom(), section.get(1).v(), 1e-9);
         assertTrue(gearbox.primary() >= form.clear() + gearbox.mainGear(), "the crank's swing clear of the gears");
-        assertTrue(gearbox.mainshaft().u() > 0 && gearbox.countershaft().u() > gearbox.mainshaft().u(),
-                "the gearbox behind the crank, under the back bank");
+        assertTrue(gearbox.mainshaft().u() < 0 && gearbox.countershaft().u() < gearbox.mainshaft().u(),
+                "the gearbox behind the crank, toward -x, under the back bank");
         for (final Spot shaft : List.of(gearbox.mainshaft(), gearbox.countershaft())) {
             final double room = shaft == gearbox.mainshaft() ? gearbox.mainCase() : gearbox.counterCase();
             for (int i = 0; i < section.size(); i++) {
@@ -88,8 +88,9 @@ class EngineBlockTest {
             assertTrue(section.stream().anyMatch(p -> Math.hypot(p.u() - outer.u(), p.v() - outer.v()) < 1e-6),
                     "the barrel's foot still on the case, bank " + (b + 1));
         }
-        assertEquals(v2.length() + ClutchCover.OUT, new ClutchCover(v2).part().form().points().stream()
-                .mapToDouble(Vec3::z).max().orElseThrow() - 0.2, 1e-6, "the clutch cover out past the clutch");
+        assertEquals(new ClutchCover(v2).face(), new ClutchCover(v2).part().form().points().stream()
+                .mapToDouble(Vec3::z).min().orElseThrow() + 0.2, 1e-6, "the clutch cover out past the clutch");
+        assertTrue(new ClutchCover(v2).face() < new TimingCover(v2).face(), "outside the cam chains' cover");
     }
 
     /** How far {@code p} is from the line through {@code a} and {@code b}, inside a section drawn to the left. */
@@ -115,8 +116,8 @@ class EngineBlockTest {
                 }
             }
         }
-        assertEquals(11, outside.size(), "two barrels, two heads, two cam covers, their coils, the oil pan, the timing"
-                + " cover and the clutch cover");
+        assertEquals(12, outside.size(), "two barrels, two heads, two cam covers, their coils, the oil pan, the timing"
+                + " cover, the clutch cover and the alternator cover");
         assertEquals(List.of(), touched, "each bank's barrel, head, cover and coils clear of the other's");
     }
 
@@ -160,8 +161,9 @@ class EngineBlockTest {
     void theRangePutTogetherOnItsStands() {
         final Assembled shown = new Assembly(new EngineShow().platform()).assembled();
         assertEquals(List.of(), shown.problems(1e-6));
-        assertEquals(1 + 8 + 2 + 1 + 8 + 6 * (2 + 1 + 2 + 1 + 2 + 2 + 2 + 2) + 11 * (2 + 4 + 4 + 5 + 6 + 6 + 8 + 12),
-                shown.placed().size(), "the stands, eight blocks, the twin's two barrels and oil pan, eight cranks;"
+        assertEquals(1 + 8 + 2 + 1 + 3 + 8 + 6 * (2 + 1 + 2 + 1 + 2 + 2 + 2 + 2)
+                + 11 * (2 + 4 + 4 + 5 + 6 + 6 + 8 + 12), shown.placed().size(), "the stands, eight blocks, the twin's"
+                        + " two barrels, oil pan and belt drive, eight cranks;"
                         + " a head, two camshafts, a timing chain, its guide and its tensioner on every bank; and a rod,"
                         + " a piston, a pin, four valves and four springs in every cylinder");
     }

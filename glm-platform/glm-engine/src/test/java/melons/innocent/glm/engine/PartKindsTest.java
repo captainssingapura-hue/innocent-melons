@@ -6,6 +6,8 @@ import melons.innocent.glm.core.Assembly;
 import melons.innocent.glm.core.Part;
 import melons.innocent.glm.core.PartAt;
 import melons.innocent.glm.existences.EngineParts;
+import melons.innocent.glm.existences.MotorcycleParts;
+import melons.innocent.glm.existences.Transmission;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -24,18 +26,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class PartKindsTest {
 
     private final Taxonomy tree = new EngineParts().tree();
+    private final Taxonomy bike = new MotorcycleParts().tree();
 
     @Test
     void everyPartOfAKindAmongTheGlmsOwnButTheTwinsOwn() {
         for (final EngineFigures e : new EngineRange().all()) {
             for (final Part part : parts(e)) {
                 assertTrue(part.kind().isPresent(), part.name() + " of no kind");
-                assertTrue(tree.has(part.kind().get()), part.name());
-                final String side = part.kind().get().lineage().get(1).title();
+                final boolean ridden = bike.has(part.kind().get());
+                assertTrue(tree.has(part.kind().get()) || ridden, part.name());
+                final List<Node> lineage = part.kind().get().lineage();
+                final String side = lineage.get(lineage.size() - 3).title();
                 final boolean own = e.twin() && (part.is(new EngineParts.Blocks())
                         || part.is(new EngineParts.TwinCamHead()) || part.is(new EngineParts.V2Covers())
-                        || part.is(new EngineParts.SplitPinCrankshaft()) || part.is(new EngineParts.CamChain()));
-                assertTrue(side.startsWith(own ? "V2" : "Glm"), part.name() + " among the right ones, not " + side);
+                        || part.is(new EngineParts.SplitPinCrankshaft()) || part.is(new EngineParts.V2Drives()));
+                assertTrue(side.startsWith(ridden ? "Moto" : own ? "V2" : "Glm"),
+                        part.name() + " among the right ones, not " + side);
             }
         }
     }
@@ -54,6 +60,10 @@ class PartKindsTest {
         assertEquals(2, count(twin, new EngineParts.CamCover()));
         assertEquals(1, count(twin, new EngineParts.ClutchCover()));
         assertEquals(1, count(twin, new EngineParts.OilSump()));
+        assertEquals(1, count(twin, new EngineParts.AlternatorCover()));
+        assertEquals(1, count(twin, new Transmission.OutputPulley()));
+        assertEquals(1, count(twin, new MotorcycleParts.DriveBelt()));
+        assertEquals(1, count(twin, new MotorcycleParts.RearPulley()));
         for (final EngineFigures e : range.all()) {
             final List<Part> parts = parts(e);
             final int cylinders = e.cylinders();
@@ -76,7 +86,8 @@ class PartKindsTest {
             assertEquals(e.banks(), count(parts, new EngineParts.ChainGuide()), e.name());
             assertEquals(e.banks(), count(parts, new EngineParts.ChainTensioner()), e.name());
             assertEquals(e.boxer() ? 0 : glm, count(parts, new EngineParts.TrimCover()), e.name());
-            assertEquals(parts.size(), count(parts, new EngineParts.EnginePart()), e.name() + " every one counted");
+            assertEquals(parts.size(), count(parts, new EngineParts.EnginePart())
+                    + count(parts, new MotorcycleParts.MotorcyclePart()), e.name() + " every one counted");
         }
     }
 
