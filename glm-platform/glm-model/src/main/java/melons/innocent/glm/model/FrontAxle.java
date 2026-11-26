@@ -5,6 +5,8 @@ import melons.innocent.glm.core.Joining;
 import melons.innocent.glm.core.Part;
 import melons.innocent.glm.core.Platform;
 import melons.innocent.vehiclelab.forms.Shapes;
+import melons.innocent.vehiclelab.wheels.Rim;
+import melons.innocent.vehiclelab.wheels.RimDesign;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,14 +22,20 @@ import java.util.List;
  * the wheel and the tyre. Said as on the right, the left its mirror.
  *
  * @param proportions the car's figures
+ * @param rim         its wheels' rims' design
  */
-public record FrontAxle(Proportions proportions) {
+public record FrontAxle(Proportions proportions, RimDesign rim) {
 
     private static final int ROUND = 24;
 
     /** A large SUV's. */
     public FrontAxle() {
         this(new Proportions());
+    }
+
+    /** Made to {@code proportions}, on spoked rims. */
+    public FrontAxle(final Proportions proportions) {
+        this(proportions, RimDesign.SPOKED);
     }
 
     /** It, as a platform to be put together, the underbody's front its root. */
@@ -48,8 +56,9 @@ public record FrontAxle(Proportions proportions) {
         final FrontSubframe subframe = new FrontSubframe(points);
         final FrontLinks links = new FrontLinks(points, shapes);
         final FrontStrut strut = new FrontStrut(points, shapes);
-        final Corner corner = new Corner(points, shapes);
-        final Wheel wheel = new Wheel(proportions, points, shapes);
+        final Rim made = rim.rim(shapes);
+        final Corner corner = new Corner(points, shapes, made.inside(proportions.wheel()));
+        final Wheel wheel = new Wheel(proportions, points, shapes, made);
         final Part arm = links.controlArm();
         final Part ball = links.controlArmBallJoint();
         final Part carrier = corner.carrier();

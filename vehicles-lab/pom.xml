@@ -29,12 +29,16 @@
         <module>vl-frame</module>
         <!-- What a vehicle's parts are made of and finished in: its shapes, and its finishes. No card, no window. -->
         <module>vl-forms</module>
+        <!-- A wheel and its tyre at any size: its rim, of one design or another, its barrel and its face. -->
+        <module>vl-wheels</module>
         <!-- A motorcycle as it is made: the boxer, its parts, what each is finished in and what it turns with. -->
         <module>vl-motorcycle</module>
         <!-- A vehicle on the card, each part in the material lab's material for its finish. -->
         <module>vl-drawn</module>
         <!-- The vehicles bench: a vehicle looked at from any side, its finishes chosen, its bars turned. -->
         <module>vl-bench</module>
+        <!-- The wheels bench: one wheel and its tyre, of any design and size, looked at from any side. -->
+        <module>vl-wheel-bench</module>
     </modules>
 
     <dependencyManagement>
@@ -65,6 +69,11 @@
             <dependency>
                 <groupId>melons.innocent.vehiclelab</groupId>
                 <artifactId>vl-forms</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.vehiclelab</groupId>
+                <artifactId>vl-wheels</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

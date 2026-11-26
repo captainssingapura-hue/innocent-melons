@@ -4,6 +4,7 @@ import com.example.fxsuite.vulkan.space.Vec3;
 import melons.innocent.glm.core.Connection;
 import melons.innocent.glm.core.Joining;
 import melons.innocent.glm.core.Part;
+import melons.innocent.vehiclelab.wheels.RimDesign;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +36,12 @@ public record Santana() implements Bodywork {
     /** It on the platform, {@code bay} its engine in its bay, or none, null. */
     public GlmPlatform platform(final EngineBay bay) {
         return new GlmPlatform(proportions(), figures(), bay, this);
+    }
+
+    /** The classic alloy rims, eight windows round a large plain cap, as the retro saloons of the eighties wore. */
+    @Override
+    public RimDesign rim() {
+        return RimDesign.CLASSIC;
     }
 
     @Override

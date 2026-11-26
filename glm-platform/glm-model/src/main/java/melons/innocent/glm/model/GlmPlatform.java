@@ -3,6 +3,7 @@ package melons.innocent.glm.model;
 import melons.innocent.glm.core.Connection;
 import melons.innocent.glm.core.Part;
 import melons.innocent.glm.core.Platform;
+import melons.innocent.vehiclelab.wheels.RimDesign;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,8 +41,9 @@ public record GlmPlatform(Proportions proportions, BodyFigures figures, EngineBa
         final FrontPoints front = new FrontPoints(proportions);
         final Part body = bodywork == null ? new CastBody(new BodyLines(proportions, figures, front,
                 new RearPoints(proportions))).part() : bodywork.root(proportions);
-        final List<Connection> joined = new ArrayList<>(new RearAxle(proportions).joined(body));
-        joined.addAll(new FrontAxle(proportions).joined(body));
+        final RimDesign rim = bodywork == null ? RimDesign.SPOKED : bodywork.rim();
+        final List<Connection> joined = new ArrayList<>(new RearAxle(proportions, rim).joined(body));
+        joined.addAll(new FrontAxle(proportions, rim).joined(body));
         if (bay != null) {
             final Part strut = joined.stream().map(Connection::carried).filter(p -> p.has("engine mount"))
                     .findFirst().orElseThrow();

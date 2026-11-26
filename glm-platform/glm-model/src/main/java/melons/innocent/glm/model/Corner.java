@@ -24,8 +24,9 @@ import java.util.Map;
  *
  * @param points the corner's points
  * @param shapes what it is shaped with
+ * @param inside how far the wheel's barrel is inside, from the axle: what its brake must keep inside
  */
-record Corner(WheelEnd points, Shapes shapes) {
+record Corner(WheelEnd points, Shapes shapes, double inside) {
 
     /** What its parts are made of, and whether they are bare. */
     private static final Making CARRIER_MADE = new Making(new Made(Material.ALUMINIUM, true));
@@ -43,13 +44,15 @@ record Corner(WheelEnd points, Shapes shapes) {
     private static final double SHIELD_PAST = 1.5;
     private static final double SHIELD_IN = 8;
     private static final double SHIELD_GAP = 40;
-    /** The hub, how round; the disc, how round and how thick; the caliper, how big. */
+    /** The hub, how round; the disc, how round at most and how thick; the caliper, how big. */
     private static final double HUB = 7.5;
     private static final double DISC = 17.5;
     private static final double DISC_THICK = 2;
     private static final double CALIPER_WIDE = 7;
     private static final double CALIPER_TALL = 10;
     private static final double CALIPER_LONG = 7;
+    /** How far inside the wheel's barrel the caliper's furthest corner keeps. */
+    private static final double CLEAR = 0.8;
 
     /** The wheel's carrier. */
     Part carrier() {
@@ -78,7 +81,7 @@ record Corner(WheelEnd points, Shapes shapes) {
         named.put("hub", points.disc());
         final Vec3 across = new Vec3(DISC_THICK / 2, 0, 0);
         return DISC_MADE.part(points.called() + "brake disc", Group.BRAKES, true, named,
-                shapes.drum(points.disc().minus(across), points.disc().plus(across), DISC));
+                shapes.drum(points.disc().minus(across), points.disc().plus(across), round()));
     }
 
     /**
@@ -95,7 +98,7 @@ record Corner(WheelEnd points, Shapes shapes) {
         final int steps = 36;
         for (int k = 0; k <= steps; k++) {
             final double a = Math.toRadians(gap + SHIELD_GAP + (360 - 2 * SHIELD_GAP) * k / steps);
-            outline.add(new Spot((DISC + SHIELD_PAST) * Math.cos(a), (DISC + SHIELD_PAST) * Math.sin(a)));
+            outline.add(new Spot((round() + SHIELD_PAST) * Math.cos(a), (round() + SHIELD_PAST) * Math.sin(a)));
         }
         for (int k = steps; k >= 0; k--) {
             final double a = Math.toRadians(gap + SHIELD_GAP + (360 - 2 * SHIELD_GAP) * k / steps);
@@ -106,12 +109,22 @@ record Corner(WheelEnd points, Shapes shapes) {
                         new Vec3(0, 0, 1), new Vec3(0, 1, 0), 0.15).mesh());
     }
 
+    /**
+     * How far round the disc is: a large car's, as big as its wheel lets it be, its caliper's furthest corner kept
+     * inside the wheel's barrel.
+     */
+    private double round() {
+        final double up = CALIPER_TALL / 2 + CALIPER_TALL / 3;
+        final double reach = inside - CLEAR;
+        return Math.min(DISC, Math.sqrt(reach * reach - up * up) - (CALIPER_LONG / 2 - 1));
+    }
+
     /** The caliper, astride the disc behind the axle. */
     Part caliper() {
         final Map<String, Vec3> named = new LinkedHashMap<>();
         named.put("carrier", points.caliper());
         final Vec3 wheel = points.wheel();
-        final Vec3 middle = new Vec3(points.disc().x(), wheel.y() + CALIPER_TALL / 3, wheel.z() - DISC + 1);
+        final Vec3 middle = new Vec3(points.disc().x(), wheel.y() + CALIPER_TALL / 3, wheel.z() - round() + 1);
         return CALIPER_MADE.part(points.called() + "brake caliper", Group.CALIPERS, true, named, shapes.joined(List.of(
                 shapes.box(middle, CALIPER_WIDE, CALIPER_TALL, CALIPER_LONG),
                 shapes.capsule(points.caliper(), middle, BOSS))));
