@@ -7,6 +7,7 @@ import com.example.fxsuite.life.body.Proportions;
 import com.example.fxsuite.life.body.Rig;
 import com.example.fxsuite.life.body.fat.FatBeneath;
 import com.example.fxsuite.life.body.fat.FatMap;
+import com.example.fxsuite.life.body.fat.FatPattern;
 import com.example.fxsuite.life.body.fat.FatTarget;
 import com.example.fxsuite.life.body.fat.Nearness;
 import com.example.fxsuite.life.body.fat.SheetBed;
@@ -22,8 +23,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A body's skin as a bench wears it: over its muscles, its deep ones too, and its bones, the fat under it as thick as
- * Störchle's young men had it on average, drawn as taut as the skin bench draws it by default ({@link SkinFit}); found
- * once for a body its size and kept. And the skin as what is worn over it is fitted to ({@link Beneath}).
+ * Störchle's young men had it on average, or as the man it is told had it ({@link FatPattern}), drawn as taut as the
+ * skin bench draws it by default ({@link SkinFit}); found once for a body its size and kept. And the skin as what is
+ * worn over it is fitted to ({@link Beneath}).
  */
 public final class Skins {
 
@@ -36,6 +38,17 @@ public final class Skins {
 
     private final Map<Proportions, Flesh> made = new ConcurrentHashMap<>();
     private final Map<Proportions, Flesh> moving = new ConcurrentHashMap<>();
+    private final FatPattern fat;
+
+    /** Skins over fat as Störchle's ten young men had it on average. */
+    public Skins() {
+        this(FatPattern.AVERAGE);
+    }
+
+    /** Skins over fat as {@code fat} says a man had it, as thick as he had it. */
+    public Skins(final FatPattern fat) {
+        this.fat = fat;
+    }
 
     /** The skin of a body of {@code p}'s size: found now, if not yet; a long while, best away from the screen. */
     public Flesh of(final Proportions p) {
@@ -58,7 +71,7 @@ public final class Skins {
         final Rig bind = new Rig(p, BoundPose.INSTANCE.pose(), false);
         final Nearness near = new Nearness(FatBeneath.INSTANCE.of(SheetBed.INSTANCE.body(p, true, 1), bind));
         final Nearness bones = new Nearness(Underneath.INSTANCE.bones(bind, new Detail(0.6)));
-        return new FatTarget(near, new FatMap(FatMap.MEASURED, SKIN), bind, Optional.of(bones));
+        return new FatTarget(near, new FatMap(fat, fat.mean(), SKIN), bind, Optional.of(bones));
     }
 
     /** {@code skin} as what is worn over it is fitted to: its points, its triangles, how each follows the body. */

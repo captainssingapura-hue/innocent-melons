@@ -13,7 +13,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * The fat as thick as it was measured part by part: the buttocks the thickest, thicker than the back above them and the
- * belly before; the hands the thinnest; a body twice as fat on average twice as thick everywhere.
+ * belly before; the hands the thinnest; the belly below the navel as much thicker than above it as the judokas' was,
+ * the trunk's front on average as measured; the thigh's outer side as much thicker than its front; the leanest man's
+ * thinner everywhere; a body twice as fat on average twice as thick everywhere.
  */
 class FatMapTest {
 
@@ -21,15 +23,35 @@ class FatMapTest {
 
     @Test
     void theButtocksAreThickestTheHandsThinnest() {
-        final double buttock = at(Part.PELVIS, new V3(6, -2, -10));
-        final double back = at(Part.CHEST, new V3(6, 5, -10));
-        final double belly = at(Part.PELVIS, new V3(6, 6, 10));
-        final double hand = at(Part.RIGHT_HAND, new V3(0, -6, 0));
+        final double buttock = at(FatMap.AS_MEASURED, Part.PELVIS, new V3(6, -2, -10));
+        final double back = at(FatMap.AS_MEASURED, Part.CHEST, new V3(6, 5, -10));
+        final double belly = at(FatMap.AS_MEASURED, Part.PELVIS, new V3(6, 6, 10));
+        final double hand = at(FatMap.AS_MEASURED, Part.RIGHT_HAND, new V3(0, -6, 0));
         assertEquals(1.072, buttock, 0.01, "the buttocks, cm");
         assertEquals(0.317, back, 0.01, "the back");
-        assertEquals(0.399, belly, 0.01, "the belly");
         assertEquals(0.029, hand, 0.001, "the hand");
         assertTrue(buttock > belly && belly > back && back > hand);
+    }
+
+    @Test
+    void theBellyBelowTheNavelAndTheThighsOuterSideAreThickerAsMeasured() {
+        final double below = at(FatMap.AS_MEASURED, Part.PELVIS, new V3(6, 6, 10));
+        final double above = at(FatMap.AS_MEASURED, Part.ABDOMEN, new V3(6, 6, 10));
+        assertEquals(5.1 / 2.2, below / above, 1e-6, "as the judokas' sites below and above the navel");
+        assertEquals(0.399, (2 * above + below) / 3, 1e-3, "the trunk's front on average as the ten had it");
+        final double side = at(FatMap.AS_MEASURED, Part.RIGHT_THIGH, new V3(8, -20, 0));
+        final double inner = at(FatMap.AS_MEASURED, Part.RIGHT_THIGH, new V3(-8, -20, 0));
+        assertEquals(4.2 / 2.5, side / inner, 1e-6, "as the judokas' outer and front thigh, the inner as the front");
+    }
+
+    @Test
+    void theLeanestMansFatIsThinnerEverywhere() {
+        final FatMap lean = new FatMap(FatPattern.LEAN, FatPattern.LEAN.mean(), 0);
+        for (final Part p : Part.values()) {
+            final V3 local = new V3(2, -3, 4);
+            assertTrue(at(lean, p, local) < at(FatMap.AS_MEASURED, p, local), p.said());
+        }
+        assertEquals(0.649, at(lean, Part.PELVIS, new V3(6, -2, -10)), 0.01, "his buttocks, cm");
     }
 
     @Test
@@ -42,9 +64,9 @@ class FatMapTest {
         }
     }
 
-    /** How thick, cm, at {@code local} in part {@code p}'s own frame, following it alone. */
-    private double at(final Part p, final V3 local) {
-        return FatMap.AS_MEASURED.thickness(alone(p), bind.frame(p).place(local), bind);
+    /** How thick {@code map} is, cm, at {@code local} in part {@code p}'s own frame, following it alone. */
+    private double at(final FatMap map, final Part p, final V3 local) {
+        return map.thickness(alone(p), bind.frame(p).place(local), bind);
     }
 
     private Weights alone(final Part p) {

@@ -7,6 +7,7 @@ import com.example.fxsuite.life.body.Proportions;
 import com.example.fxsuite.life.body.Rig;
 import com.example.fxsuite.life.body.V3;
 import com.example.fxsuite.life.body.bone.skull.SkullForm;
+import com.example.fxsuite.life.body.fat.FatPattern;
 import com.example.fxsuite.life.body.fat.SheetBed;
 import com.example.fxsuite.life.body.flesh.Flesh;
 import com.example.fxsuite.life.body.head.ClayHead;
@@ -57,7 +58,7 @@ public final class BodyMaker {
         told.accept("its muscles");
         final MuscleBody.Bound muscles = SheetBed.INSTANCE.body(p, Boolean.getBoolean("body.deep"), 1);
         told.accept("its skin");
-        final Skins skins = new Skins();
+        final Skins skins = new Skins(FatPattern.LEAN);
         final Flesh skin = "coarse".equals(System.getProperty("body.skin")) ? skins.moving(p) : skins.of(p);
         final Flesh worn = clayed(skin, told);
         told.accept("its helmet");
