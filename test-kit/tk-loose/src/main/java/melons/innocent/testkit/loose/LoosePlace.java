@@ -26,6 +26,7 @@ import melons.innocent.core.rest.Box;
 import melons.innocent.core.rest.Ellipsoid;
 import melons.innocent.core.rest.Placed;
 import melons.innocent.core.rest.ShapeImpl;
+import melons.innocent.core.rest.Shell;
 import melons.innocent.core.rest.Slab;
 import melons.innocent.core.rest.Throw;
 import melons.innocent.core.rest.World;
@@ -156,6 +157,7 @@ public final class LoosePlace implements Place {
             case Slab slab -> new Cuboid(slab.box().across(), slab.box().up(), slab.box().along()).formed();
             case Ellipsoid round -> new com.example.fxsuite.vulkan.form.Ellipsoid(round.across(), round.up(),
                     round.along()).formed(ROUND, ROUND / 2);
+            case Shell shell -> throw new IllegalArgumentException("the trial has no shells: " + shell);
         };
     }
 
@@ -223,8 +225,10 @@ public final class LoosePlace implements Place {
     @Override
     public String said() {
         final World world = trial.world();
-        return String.format(Locale.ENGLISH, "Loose bodies: %d at rest, %d in motion; %d checked since it began",
-                world.things().size() - world.moving(), world.moving(), world.checks())
+        final String going = names.stream().filter(name -> world.things().contains(name) && !world.resting(name))
+                .reduce((one, other) -> one + ", " + other).map(moving -> " (" + moving + ")").orElse("");
+        return String.format(Locale.ENGLISH, "Loose bodies: %d at rest, %d in motion%s; %d checked since it began",
+                world.things().size() - world.moving(), world.moving(), going, world.checks())
                 + System.lineSeparator() + footing.said(handling.feet())
                 + System.lineSeparator() + handling.said()
                 + trial.flown().map(flown -> System.lineSeparator() + flown.said()).orElse("")

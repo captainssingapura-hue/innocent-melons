@@ -16,6 +16,26 @@ import java.util.List;
  */
 public record RoundTouch(double slack, double skin) {
 
+    /**
+     * Where {@code round} placed so meets another round thing, {@code ball}, called {@code on} and standing as
+     * said: along the line from one's middle to the other's, where that line leaves each. That is exact for two
+     * balls, and near enough for melons. It is pushed straight away from the other's middle. None, where they are
+     * apart.
+     */
+    public List<Touch> rounds(final Ellipsoid round, final Placed placed, final String on, final Ellipsoid ball,
+                              final Placed stands) {
+        final Spot apart = stands.at().minus(placed.at());
+        final double far = apart.length();
+        if (far == 0) {
+            return List.of();
+        }
+        final Spot toward = apart.times(1 / far);
+        final double reach = round.out(placed.lying(toward));
+        final double deep = reach + ball.out(stands.lying(toward.times(-1))) - far;
+        return deep >= -slack ? List.of(new Touch(placed.at().plus(toward.times(reach - Math.max(0, deep) / 2)),
+                toward.times(-1), deep, on)) : List.of();
+    }
+
     /** Where {@code round} placed so touches the {@code ground}: its lowest spot, on it or under it. */
     public List<Touch> grounded(final Ellipsoid round, final Placed placed, final Ground ground) {
         final Spot lowest = furthest(round, placed, new Spot(0, -1, 0));

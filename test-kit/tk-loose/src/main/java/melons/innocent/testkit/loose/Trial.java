@@ -47,6 +47,8 @@ public final class Trial {
     /** The names of what goes at the first asking: as the run says by {@code -Dloose.first=}, a comma between. */
     private final String first = System.getProperty("loose.first", FIRST);
     private World world;
+    /** Whoever walks it, whom the world is told of each tick. */
+    private final Walker walker = new Walker();
     /** How steep its ramp is, in degrees. */
     private double slope;
     private long ticks;
@@ -89,6 +91,11 @@ public final class Trial {
     }
 
     /** A tick: what is asked to go, or due to go of itself, is destroyed, and the world is a step on. */
+    /** Whoever walks it now stands with their feet at {@code feet}, facing {@code yaw} degrees round. */
+    public void stood(final Spot feet, final double yaw) {
+        walker.stood(feet, yaw);
+    }
+
     public List<Happened> ticked() {
         ticks++;
         if (after > 0 && (ticks == after || ticks == 2 * after)) {
@@ -112,7 +119,8 @@ public final class Trial {
         flung.keySet().removeIf(name -> !world.things().contains(name) || going.contains(name)
                 || lifted.contains(name));
         blows.before(world);
-        final List<Happened> happened = world.ticked(new Asked(going, lifted, flung, driving(going)), TICK);
+        final List<Happened> happened = world.ticked(new Asked(going, lifted, flung, driving(going),
+                walker.outsiders()), TICK);
         lifted.clear();
         slices.forEach(slice -> put(slice.rigid(), slice.placed(), Stuff.FLESH, new Things.MelonSlice()));
         flung.keySet().forEach(blows::thrown);

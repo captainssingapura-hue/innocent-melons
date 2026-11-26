@@ -14,15 +14,24 @@ import java.util.Map;
  * @param taken     the names of the things taken up out of the world, into someone's hands
  * @param thrown    the things given a motion all at once, on top of whatever motion they had
  * @param driven    the driven things whose going is changed
+ * @param outsiders what is in the world this tick and is not the world's to step, each by its name: the game engine's
+ *                  avatar. They are not done in any order: they are only there, for what moves to meet
  */
 public record Asked(Collection<String> destroyed, Collection<String> taken, Map<String, Moved> thrown,
-                    Map<String, Moved> driven) {
+                    Map<String, Moved> driven, Map<String, Outsider> outsiders) {
 
     public Asked {
         destroyed = List.copyOf(destroyed);
         taken = List.copyOf(taken);
         thrown = Map.copyOf(thrown);
         driven = Map.copyOf(driven);
+        outsiders = Map.copyOf(outsiders);
+    }
+
+    /** Things destroyed, taken up, thrown and driven otherwise, and nothing there but the world's own things. */
+    public Asked(final Collection<String> destroyed, final Collection<String> taken, final Map<String, Moved> thrown,
+                 final Map<String, Moved> driven) {
+        this(destroyed, taken, thrown, driven, Map.of());
     }
 
     /** Things destroyed, thrown and driven otherwise, and nothing taken up. */

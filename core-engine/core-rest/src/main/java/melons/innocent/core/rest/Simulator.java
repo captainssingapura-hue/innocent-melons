@@ -45,4 +45,16 @@ public interface Simulator {
 
     /** {@code rigid}, standing and moving as {@code now} says, a tick of so many {@code seconds} on. */
     Stepped stepped(Rigid rigid, Mover now, Around around, double seconds);
+
+    /**
+     * The first correction of a tick's stepping: {@code stepped}, which is what {@link #stepped} gave for the very
+     * same thing, tick and world, put right for the {@code collisions} the world then found in the thing's path.
+     * It is told all that the step before it was told, that step's result, and what is new for this step, the
+     * collisions; it says how the thing stands and moves a tick on after all. A simulator that corrects nothing
+     * gives the stepping back as it was.
+     */
+    default Stepped correctionS1(final Rigid rigid, final Mover now, final Around around, final double seconds,
+                                 final Stepped stepped, final List<Collision> collisions) {
+        return stepped;
+    }
 }

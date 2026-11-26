@@ -6,6 +6,7 @@ import melons.innocent.core.rest.Box;
 import melons.innocent.core.rest.Ellipsoid;
 import melons.innocent.core.rest.Placed;
 import melons.innocent.core.rest.ShapeImpl;
+import melons.innocent.core.rest.Shell;
 import melons.innocent.core.rest.Slab;
 
 import java.util.List;
@@ -26,6 +27,7 @@ public record StandIn() {
             case Ellipsoid round -> new Block(placed.at().across(), placed.at().along(), round.reaches(),
                     round.reaches(), 0, Math.max(0, placed.at().up() - round.reaches()),
                     placed.at().up() + round.reaches());
+            case Shell shell -> throw new IllegalArgumentException("a shell is stood on by its own pavement: " + shell);
         };
     }
 
