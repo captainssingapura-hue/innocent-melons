@@ -42,3 +42,15 @@ Armour round a forearm, from below the elbow to above the wrist.
 ## Greave
 
 Armour round a shin, from below the knee to above the ankle.
+
+## Fauld
+
+Armour round the belly and the small of the back, below the cuirass, down over the hips.
+
+## Gorget
+
+Armour round the neck, between the cuirass and the helmet.
+
+## Gauntlet
+
+Armour over a hand, with a cuff over the wrist.

@@ -26,8 +26,11 @@ public record Plating() implements StatelessFunctionalObject {
 
     public static final Plating INSTANCE = new Plating();
 
-    /** How far from the surface beneath it is found exactly, cm. */
-    private static final double WITHIN = 4.5;
+    /**
+     * How far from the surface beneath a point is found exactly at the least, cm: further than {@link #SURE}; and
+     * beyond that, as far as smoothing reaches ({@link #within}).
+     */
+    private static final double LEAST = 3;
     /** How near the surface a point must be for the surface where it is nearest to say which side it is on, cm. */
     private static final double SURE = 2;
     /** How many of its steps apart a grid is first found on, coarsely, to know where the surface is not near. */
@@ -78,6 +81,15 @@ public record Plating() implements StatelessFunctionalObject {
         return new Plate(cut.kind(), cut.part(), Mesher.of(f, cut.cell()));
     }
 
+    /**
+     * How far from the surface beneath {@code cut} needs it found exactly, cm: as far as its outside stands off it and
+     * twice as far again as its smoothing spreads, beyond which the smoothing hardly reaches; {@link #LEAST} at least.
+     */
+    private double within(final Cut cut) {
+        final double spread = cut.sample() * Math.sqrt(PASSES * (Math.pow(2 * REACH + 1, 2) - 1) / 12);
+        return Math.max(LEAST, cut.off() + 2 * spread);
+    }
+
     /** {@code shape} swollen all round by {@code by}. */
     private Field.Shape swollen(final Field.Shape shape, final double by) {
         return new Reshaped(shape, V3.ZERO, V3.ZERO, Rot.NONE, new V3(1, 1, 1), by);
@@ -85,7 +97,7 @@ public record Plating() implements StatelessFunctionalObject {
 
     /**
      * How far outside the surface {@code near} finds each point of a grid over {@code cut}'s box is,
-     * {@code cut.sample()} apart, behind it less than nothing: as far as it is, within {@link #WITHIN}; beyond, as far
+     * {@code cut.sample()} apart, behind it less than nothing: as far as it is, within {@link #within}; beyond, as far
      * as that. Which side it is on: within {@link #SURE} of it, as the surface faces where it is nearest, its
      * corners' ways out blended there; further off, as most of the points further off joined to it say
      * ({@link #sided}), so that where the surface is folded over on itself and faces in, a point far off it is not
@@ -100,7 +112,8 @@ public record Plating() implements StatelessFunctionalObject {
             (int) Math.ceil((box[5] - box[2]) / h) + 1};
         final int[] m = {n[0] / COARSE + 1, n[1] / COARSE + 1, n[2] / COARSE + 1};
         final float[] coarse = new float[m[0] * m[1] * m[2]];
-        final double reach = WITHIN + 2 * COARSE * h;
+        final double within = within(cut);
+        final double reach = within + 2 * COARSE * h;
         IntStream.range(0, coarse.length).parallel().forEach(at -> coarse[at] = (float) near.nearest(
                 point(box, h, at % m[0] * COARSE, at / m[0] % m[1] * COARSE, at / (m[0] * m[1]) * COARSE), reach,
                 k -> true).distance());
@@ -113,9 +126,9 @@ public record Plating() implements StatelessFunctionalObject {
                     + Math.pow(c[2] - q[2] * COARSE, 2));
             final double d = coarse[(q[2] * m[1] + q[1]) * m[0] + q[0]];
             final V3 p = point(box, h, c[0], c[1], c[2]);
-            final Nearness.Near found = d - r >= WITHIN ? null
-                    : near.nearest(p, Math.min(WITHIN, d + r + h), k -> true);
-            far[at] = found == null || found.triangle() < 0 ? (float) WITHIN : (float) found.distance();
+            final Nearness.Near found = d - r >= within ? null
+                    : near.nearest(p, Math.min(within, d + r + h), k -> true);
+            far[at] = found == null || found.triangle() < 0 ? (float) within : (float) found.distance();
             v[at] = found == null || found.triangle() < 0 ? 0
                     : (float) (behind(b, out, found, p, cut.core()) ? -found.distance() : found.distance());
         });

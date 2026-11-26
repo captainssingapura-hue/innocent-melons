@@ -29,8 +29,9 @@ public record WornShown(List<Leaf<?>> on, Material material, Vec3 colour, Vec3 v
 
     /** The kinds it may wear, in the order they are offered. */
     public List<Leaf<?>> kinds() {
-        return List.of(new Wearables.Helmet(), new Wearables.Cuirass(), new Wearables.Pauldron(),
-                new Wearables.Vambrace(), new Wearables.Greave(), new Wearables.Tights(), new Wearables.Briefs());
+        return List.of(new Wearables.Helmet(), new Wearables.Gorget(), new Wearables.Cuirass(),
+                new Wearables.Pauldron(), new Wearables.Vambrace(), new Wearables.Gauntlet(), new Wearables.Fauld(),
+                new Wearables.Greave(), new Wearables.Tights(), new Wearables.Briefs());
     }
 
     /** Whether it wears {@code kind}. */

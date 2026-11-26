@@ -44,8 +44,9 @@ public record FirstShown() {
     private WornShown worn() {
         final WornShown plain = new WornShown(List.of(), new Materials.Steel(), colour("body.armour.colour", "#9aa3ad"),
                 colour("body.visor.colour", "#0d1116"), colour("body.cloth.colour", "#22262e"));
-        final List<String> named = Arrays.stream(System.getProperty("body.wear", "helmet,cuirass,pauldron,vambrace,"
-                + "greave,tights,briefs").toLowerCase(Locale.ROOT).split(",")).map(String::trim).toList();
+        final List<String> named = Arrays.stream(System.getProperty("body.wear", "helmet,gorget,cuirass,pauldron,"
+                + "vambrace,gauntlet,fauld,greave,tights,briefs").toLowerCase(Locale.ROOT).split(","))
+                .map(String::trim).toList();
         final List<Leaf<?>> on = plain.kinds().stream().filter(k -> named.contains(k.name())).toList();
         final String made = System.getProperty("body.armour.material", "").toLowerCase(Locale.ROOT);
         Material m = plain.material();

@@ -32,10 +32,10 @@ class ExistenceTest {
         assertEquals(20, Spaces.TREE.leaves().size());
         assertEquals(38, Elements.TREE.leaves().size());
         assertEquals(12, Things.TREE.leaves().size());
-        assertEquals(7, Wearables.TREE.leaves().size());
+        assertEquals(10, Wearables.TREE.leaves().size());
         assertEquals(List.of(new Things.Watermelon(), new Things.Melon(), new Things.Fruit(), new Things.Thing()),
                 new Things.Watermelon().lineage());
-        assertEquals(264,Existence.INSTANCE.trees().stream().mapToInt(tree -> tree.nodes().size()).sum());
+        assertEquals(267,Existence.INSTANCE.trees().stream().mapToInt(tree -> tree.nodes().size()).sum());
         assertEquals("Rooms let by the night, served from a lobby.", Uses.TREE.meaning(new Uses.HotelRooms()));
         assertEquals("A wide ditch round a town or a castle, often holding water, to keep out.",
                 Made.TREE.meaning(new Earthworks.Moat()));
@@ -134,8 +134,9 @@ class ExistenceTest {
                 new Wearables.Cuirass().lineage());
         assertEquals(List.of(new Wearables.Briefs(), new Wearables.Tights()),
                 Wearables.TREE.under(new Wearables.Garment()));
-        assertEquals(List.of(new Wearables.Helmet(), new Wearables.Cuirass(), new Wearables.Pauldron(),
-                new Wearables.Vambrace(), new Wearables.Greave()), Wearables.TREE.under(new Wearables.Armour()));
+        assertEquals(List.of(new Wearables.Helmet(), new Wearables.Gorget(), new Wearables.Cuirass(),
+                new Wearables.Pauldron(), new Wearables.Vambrace(), new Wearables.Gauntlet(), new Wearables.Fauld(),
+                new Wearables.Greave()), Wearables.TREE.under(new Wearables.Armour()));
         assertTrue(Wearables.TREE.has(new Wearables.Helmet()) && !Things.TREE.has(new Wearables.Helmet()));
     }
 }

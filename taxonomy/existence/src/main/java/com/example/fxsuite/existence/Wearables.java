@@ -22,8 +22,8 @@ public final class Wearables {
 
     /** The tree, read once from its leaves. */
     public static final Taxonomy TREE = new Taxonomy("wearables", new Wearable(), List.of(new Briefs(), new Tights(),
-            new Helmet(), new Cuirass(), new Pauldron(), new Vambrace(), new Greave()),
-            Meanings.INSTANCE.beside(Wearables.class));
+            new Helmet(), new Gorget(), new Cuirass(), new Pauldron(), new Vambrace(), new Gauntlet(), new Fauld(),
+            new Greave()), Meanings.INSTANCE.beside(Wearables.class));
 
     /** The root. What is put on the body and goes with it. */
     public record Wearable() implements L0 {
@@ -41,4 +41,7 @@ public final class Wearables {
     public record Pauldron() implements Leaf<Armour> { public Armour parent() { return new Armour(); } }
     public record Vambrace() implements Leaf<Armour> { public Armour parent() { return new Armour(); } }
     public record Greave() implements Leaf<Armour> { public Armour parent() { return new Armour(); } }
+    public record Fauld() implements Leaf<Armour> { public Armour parent() { return new Armour(); } }
+    public record Gorget() implements Leaf<Armour> { public Armour parent() { return new Armour(); } }
+    public record Gauntlet() implements Leaf<Armour> { public Armour parent() { return new Armour(); } }
 }

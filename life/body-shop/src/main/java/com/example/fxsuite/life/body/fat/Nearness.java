@@ -17,9 +17,10 @@ import java.util.function.IntPredicate;
  */
 public final class Nearness {
 
-    /** How big each cube is, cm. */
+    /** How big each cube is by default, cm. */
     private static final double CELL = 2;
 
+    private final double cell;
     private final Beneath beneath;
     private final Map<Long, int[]> cells = new HashMap<>();
 
@@ -27,8 +28,18 @@ public final class Nearness {
     public record Near(double distance, int triangle, double a, double b, double c) {
     }
 
+    /** What is {@code beneath}, looked in by cubes {@link #CELL} across. */
     public Nearness(final Beneath beneath) {
+        this(beneath, CELL);
+    }
+
+    /**
+     * What is {@code beneath}, looked in by cubes {@code cell} across: smaller for asking near a finely made surface,
+     * a hand's, where a large cube holds too many triangles.
+     */
+    public Nearness(final Beneath beneath, final double cell) {
         this.beneath = beneath;
+        this.cell = cell;
         final Map<Long, List<Integer>> by = new HashMap<>();
         final int[] t = beneath.triangles();
         for (int i = 0; i < t.length / 3; i++) {
@@ -37,7 +48,7 @@ public final class Nearness {
             for (int k = 0; k < 3; k++) {
                 final int p = t[3 * i + k];
                 for (int d = 0; d < 3; d++) {
-                    final int c = (int) Math.floor(beneath.points()[3 * p + d] / CELL);
+                    final int c = (int) Math.floor(beneath.points()[3 * p + d] / cell);
                     lo[d] = Math.min(lo[d], c);
                     hi[d] = Math.max(hi[d], c);
                 }
@@ -63,12 +74,12 @@ public final class Nearness {
      * {@code within}, none, if none is nearer.
      */
     public Near nearest(final V3 p, final double within, final IntPredicate counts) {
-        final int cx = (int) Math.floor(p.x() / CELL);
-        final int cy = (int) Math.floor(p.y() / CELL);
-        final int cz = (int) Math.floor(p.z() / CELL);
+        final int cx = (int) Math.floor(p.x() / cell);
+        final int cy = (int) Math.floor(p.y() / cell);
+        final int cz = (int) Math.floor(p.z() / cell);
         Near best = new Near(within, -1, 0, 0, 0);
-        final int shells = (int) Math.ceil(within / CELL) + 1;
-        for (int s = 0; s <= shells && (s - 1) * CELL < best.distance(); s++) {
+        final int shells = (int) Math.ceil(within / cell) + 1;
+        for (int s = 0; s <= shells && (s - 1) * cell < best.distance(); s++) {
             for (int x = -s; x <= s; x++) {
                 for (int y = -s; y <= s; y++) {
                     for (int z = -s; z <= s; z++) {
