@@ -8,14 +8,15 @@ import java.util.EnumMap;
 import java.util.Map;
 
 /**
- * What the body bench has on show: how deep each group of the body's parts is drawn, and the colour of the skin, as
- * much red, green and blue as it has. Said by the JavaFX window on the bench's bus, taken up by the card's thread as
- * its next frame begins; whole, and never changed once said.
+ * What the body bench has on show: how deep each group of the body's parts is drawn, the colour of the skin, as much
+ * red, green and blue as it has, and the helmet. Said by the JavaFX window on the bench's bus, taken up by the card's
+ * thread as its next frame begins; whole, and never changed once said.
  *
  * @param layers how deep each group is drawn; a group not named, as skin
  * @param skin   the skin's colour
+ * @param helmet the helmet, worn or not, as it is
  */
-public record BodyShown(Map<BodyGroup, Layer> layers, Vec3 skin) {
+public record BodyShown(Map<BodyGroup, Layer> layers, Vec3 skin, HelmetShown helmet) {
 
     public BodyShown {
         final Map<BodyGroup, Layer> all = new EnumMap<>(BodyGroup.class);

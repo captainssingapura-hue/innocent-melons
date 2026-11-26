@@ -11,6 +11,7 @@ import com.example.fxsuite.life.body.fat.SheetBed;
 import com.example.fxsuite.life.body.flesh.Flesh;
 import com.example.fxsuite.life.body.head.ClayHead;
 import com.example.fxsuite.life.body.head.FaceOpening;
+import com.example.fxsuite.life.body.head.Helmet;
 import com.example.fxsuite.life.body.head.NeckJoin;
 import com.example.fxsuite.life.body.muscle.MuscleBody;
 import com.example.fxsuite.life.body.skin.Skins;
@@ -33,14 +34,17 @@ import java.util.function.Consumer;
 public final class BodyMaker {
 
     /**
-     * The body made, as it is bound: its bones, each moving with its part; its skin; its muscles; the body as bound.
+     * The body made, as it is bound: its bones, each moving with its part; its skin; its muscles; the body as bound;
+     * the helmet it may wear ({@link Helmet}).
      *
      * @param bones   its bones
      * @param skin    its skin
      * @param muscles its muscles
      * @param bound   the body as it is bound
+     * @param helmet  the helmet, moving with the head
      */
-    public record Made(List<BodyPieces.Bone> bones, Flesh skin, MuscleBody.Bound muscles, Rig bound) {
+    public record Made(List<BodyPieces.Bone> bones, Flesh skin, MuscleBody.Bound muscles, Rig bound,
+                       BodyPieces.Worn helmet) {
     }
 
     /** The body made, each step said to {@code told} as it is begun. */
@@ -55,7 +59,9 @@ public final class BodyMaker {
         told.accept("its skin");
         final Skins skins = new Skins();
         final Flesh skin = "coarse".equals(System.getProperty("body.skin")) ? skins.moving(p) : skins.of(p);
-        return new Made(bones, clayed(skin, told), muscles, bound);
+        final Flesh worn = clayed(skin, told);
+        told.accept("its helmet");
+        return new Made(bones, worn, muscles, bound, new BodyPieces().worn(bound, Helmet.INSTANCE.made()));
     }
 
     /**

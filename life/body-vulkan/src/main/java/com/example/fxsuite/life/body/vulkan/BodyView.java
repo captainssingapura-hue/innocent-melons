@@ -59,6 +59,7 @@ public final class BodyView implements AutoCloseable {
     private final Cast cast;
     private final Shaded shadows;
     private final List<Runnable> closing = new ArrayList<>();
+    private final List<Sent> helmet = new ArrayList<>();
     private Rig bound;
 
     /** A piece sent to the card. */
@@ -82,8 +83,12 @@ public final class BodyView implements AutoCloseable {
         this.laid = laid;
         final Shades shades = new Shades();
         try {
-            for (final Material m : List.of(new Materials.Skin(), new Materials.Muscle(), new Materials.Tendon(),
-                    new Materials.Bone(), new Materials.Cartilage(), new Materials.ToothEnamel())) {
+            final List<Material> all = new ArrayList<>(List.of(new Materials.Skin(), new Materials.Muscle(),
+                    new Materials.Tendon(), new Materials.Bone(), new Materials.Cartilage(),
+                    new Materials.ToothEnamel()));
+            all.addAll(new HelmetShown(false, new Materials.Steel(), new Vec3(1, 1, 1), new Vec3(0, 0, 0))
+                    .offered());
+            for (final Material m : all) {
                 final Looked look = new Looked(card, new Look(laid, shades.of(m)));
                 closing.add(look::close);
                 looks.put(m, look);
@@ -109,6 +114,8 @@ public final class BodyView implements AutoCloseable {
         for (final BodyPieces.Bone b : made.bones()) {
             bones.add(new Bone(b.part(), sent(b.piece())));
         }
+        helmet.add(sent(made.helmet().shell().piece()));
+        helmet.add(sent(made.helmet().visor().piece()));
     }
 
     /** {@code pieces}, the skin and muscles posed, sent to the card in place of those posed before. */
@@ -162,6 +169,16 @@ public final class BodyView implements AutoCloseable {
                 drawn(pass, s, stands, shown, camera);
             }
         }
+        worn(pass, shown.helmet(), moved.get(Part.HEAD), camera);
+    }
+
+    /** The helmet, if it is worn, moved as the head has: its shell in what it is made of, its visor in its glass. */
+    private void worn(final Pass pass, final HelmetShown h, final Mat4 head, final Camera camera) {
+        if (!h.on() || helmet.isEmpty() || head == null) {
+            return;
+        }
+        looks.get(h.material()).drawn(pass, helmet.get(0).shaped(), head, camera, 1, h.colour());
+        looks.get(h.glass()).drawn(pass, helmet.get(1).shaped(), head, camera, 1, h.visor());
     }
 
     private void drawn(final Pass pass, final Sent s, final Mat4 at, final BodyShown shown, final Camera camera) {

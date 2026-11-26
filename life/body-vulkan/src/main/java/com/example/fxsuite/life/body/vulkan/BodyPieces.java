@@ -3,12 +3,14 @@ package com.example.fxsuite.life.body.vulkan;
 import com.example.fxsuite.life.body.BodyGroup;
 import com.example.fxsuite.life.body.Detail;
 import com.example.fxsuite.life.body.Layer;
+import com.example.fxsuite.life.body.Mesher;
 import com.example.fxsuite.life.body.Paint;
 import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.PartBones;
 import com.example.fxsuite.life.body.Rig;
 import com.example.fxsuite.life.body.V3;
 import com.example.fxsuite.life.body.flesh.Flesh;
+import com.example.fxsuite.life.body.head.Helmet;
 import com.example.fxsuite.life.body.muscle.MuscleBody;
 import com.example.fxsuite.texture.materials.Material;
 import com.example.fxsuite.texture.materials.Materials;
@@ -43,6 +45,30 @@ public final class BodyPieces {
 
     /** A bone, {@code piece}, as the body is bound, moving with {@code part}. */
     public record Bone(Part part, Piece piece) {
+    }
+
+    /** The helmet as the body is bound, moving with the head: its shell and its visor, each drawn as it is shown. */
+    public record Worn(Bone shell, Bone visor) {
+    }
+
+    /** {@code helmet}, made in the head's frame, on the body {@code bound} holds. */
+    public Worn worn(final Rig bound, final Helmet.Made helmet) {
+        return new Worn(worn(bound, helmet.shell(), new Materials.Steel()),
+                worn(bound, helmet.visor(), new Materials.GlossPaint()));
+    }
+
+    /** {@code mesh}, in the head's frame, on the body {@code bound} holds, in {@code material} till shown otherwise. */
+    private Bone worn(final Rig bound, final Mesher.Mesh mesh, final Material material) {
+        final Rig.Frame f = bound.frame(Part.HEAD);
+        final float[] at = mesh.points().clone();
+        for (int i = 0; i < at.length; i += 3) {
+            final V3 v = f.place(new V3(at[i], at[i + 1], at[i + 2]));
+            at[i] = (float) v.x();
+            at[i + 1] = (float) v.y();
+            at[i + 2] = (float) v.z();
+        }
+        return new Bone(Part.HEAD, new Piece(group(Part.HEAD), EnumSet.allOf(Layer.class), material,
+                new Sheet(at, mesh.triangles()).mesh()));
     }
 
     /** {@code skin}, its points at {@code at}, three numbers each, cut by the groups. */
