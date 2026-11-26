@@ -24,7 +24,7 @@ public record Guards() implements StatelessFunctionalObject {
     public static final Guards INSTANCE = new Guards();
 
     /** How far out each piece's outside stands from the skin, and how thick it is, cm. */
-    private static final double COUTER_OFF = 1.6;
+    private static final double COUTER_OFF = 1.8;
     private static final double CUISSE_OFF = 1.0;
     private static final double POLEYN_OFF = 2.0;
     private static final double SABATON_OFF = 0.9;

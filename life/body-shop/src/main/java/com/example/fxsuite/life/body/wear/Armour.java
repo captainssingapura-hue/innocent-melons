@@ -1,8 +1,11 @@
 package com.example.fxsuite.life.body.wear;
 
 import com.example.fxsuite.existence.Wearables;
+import com.example.fxsuite.life.body.BoundPose;
+import com.example.fxsuite.life.body.Dof;
 import com.example.fxsuite.life.body.Field;
 import com.example.fxsuite.life.body.Part;
+import com.example.fxsuite.life.body.Pose;
 import com.example.fxsuite.life.body.Rig;
 import com.example.fxsuite.life.body.V3;
 import com.example.fxsuite.life.body.fat.Nearness;
@@ -29,7 +32,7 @@ public record Armour() implements StatelessFunctionalObject {
     /** How far out each piece's outside stands from the skin, and how thick it is, cm. */
     private static final double CUIRASS_OFF = 1.6;
     private static final double PAULDRON_OFF = 2.8;
-    private static final double VAMBRACE_OFF = 0.9;
+    private static final double VAMBRACE_OFF = 1.3;
     private static final double GREAVE_OFF = 1.0;
     private static final double FAULD_OFF = 1.0;
     private static final double GORGET_OFF = 1.0;
@@ -46,11 +49,25 @@ public record Armour() implements StatelessFunctionalObject {
     private static final double LOOK = 0.6;
 
     /**
-     * Its pieces, shaped over {@code skin} as the body {@code bind} holds it, and over what is worn under them,
-     * {@code under}, cloth over the skin: standing off whichever is further out.
+     * How the body is held as the pieces round its forearms are shaped: as it is bound, but each forearm twisted as
+     * it is at rest, the palm toward the thigh. A forearm's flesh twists along it as the hand turns, its frame not; so
+     * a piece round it, moving with its frame, is shaped over it twisted as it usually is.
      */
-    public List<Plate> of(final Beneath skin, final List<Beneath> under, final Rig bind) {
+    public Pose held() {
+        final double right = Pose.REST.get(Part.RIGHT_FOREARM, Dof.FOREARM_TWIST);
+        final double left = Pose.REST.get(Part.LEFT_FOREARM, Dof.FOREARM_TWIST);
+        return BoundPose.INSTANCE.pose().with(Part.RIGHT_FOREARM, Dof.FOREARM_TWIST, right)
+                .with(Part.LEFT_FOREARM, Dof.FOREARM_TWIST, left);
+    }
+
+    /**
+     * Its pieces, shaped over {@code skin} as the body {@code bind} holds it, those round the forearms over it as
+     * {@link #held} ({@code held}); and over what is worn under them, {@code under}, cloth over the skin: standing off
+     * whichever is further out.
+     */
+    public List<Plate> of(final Beneath skin, final Beneath held, final List<Beneath> under, final Rig bind) {
         final Nearness near = new Nearness(skin, LOOK);
+        final Nearness twisted = new Nearness(held, LOOK);
         final List<Nearness> over = under.stream().map(u -> new Nearness(u, LOOK)).toList();
         final List<Plating.Cut> cuts = new ArrayList<>(List.of(cuirass(bind.frame(Part.CHEST)),
                 fauld(bind.frame(Part.ABDOMEN)), gorget(bind.frame(Part.NECK))));
@@ -69,7 +86,8 @@ public record Armour() implements StatelessFunctionalObject {
                     new double[] {-8, -37, -11, 9, -4, 8}));
         }
         cuts.addAll(Guards.INSTANCE.of(bind));
-        return cuts.stream().map(c -> Plating.INSTANCE.of(near, over, c)).toList();
+        return cuts.stream().map(c -> Plating.INSTANCE.of(c.part() == Part.RIGHT_FOREARM
+                || c.part() == Part.LEFT_FOREARM ? twisted : near, over, c)).toList();
     }
 
     /**

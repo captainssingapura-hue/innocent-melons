@@ -97,4 +97,12 @@ public final class Skins {
         }
         return new Beneath(points, skin.triangles(), main, weights);
     }
+
+    /** {@code skin} as {@link #beneath(Flesh)}, its points where {@code rig} holds them. */
+    public Beneath beneath(final Flesh skin, final Rig rig) {
+        final Beneath b = beneath(skin);
+        final float[] at = new float[b.points().length];
+        skin.posed(rig, at, new float[at.length]);
+        return new Beneath(at, b.triangles(), b.main(), b.weights());
+    }
 }

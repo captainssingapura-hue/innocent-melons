@@ -79,6 +79,7 @@ public final class BodyMaker {
         told.accept("its helmet and its armour");
         final List<BodyPieces.Worn> wears = new ArrayList<>(new BodyPieces().worn(bound, Helmet.INSTANCE.made()));
         wears.addAll(new BodyPieces().worn(Armour.INSTANCE.of(beneath,
+                skins.beneath(skin, new Rig(p, Armour.INSTANCE.held(), false)),
                 clothes.stream().map(c -> skins.beneath(c.cloth())).toList(), bound)));
         return new Made(bones, worn, muscles, bound, wears, clothes);
     }
