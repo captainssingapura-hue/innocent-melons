@@ -13,10 +13,10 @@ import java.util.function.ToDoubleFunction;
 
 /**
  * A clay head ({@link ClayHead}) joined to a body's skin, one surface, moving as one: the clay head cut where the head
- * ends ({@link HeadLine}), under the chin and the jaw's lower border, behind the ear and along the occiput, its own
+ * ends ({@link HeadLine}), at the hyoid under the chin and the jaw, behind the ear and along the occiput, its own
  * neck gone, its nape as well as its throat, for its neck is not the body's and lies in front of the body's spine;
  * the body's skin, its head and the top of its neck gone, cut {@link #UNDER} under the same line, so that its nape is
- * its own, over the trapezius on the neck's spines, up to under the skull, and its throat under the chin; each cut
+ * its own, over the trapezius on the neck's spines, up to under the skull, and its throat under the hyoid; each cut
  * through its triangles ({@link NeckCut}), so that each ends on its cut. Each cut again {@link #IN} further in, to see
  * which way each surface runs from its edge; between the two edges a band ({@link NeckBand}), the underside of the chin
  * in front, the top of the nape behind, leaving each edge as its surface runs. The clay head following the head alone.
@@ -26,7 +26,7 @@ public record NeckJoin() implements StatelessFunctionalObject {
 
     public static final NeckJoin INSTANCE = new NeckJoin();
 
-    /** How far under the head's line the body's skin is cut: in front, 3.5 cm under the chin's bone, cm. */
+    /** How far under the head's line the body's skin is cut, cm. */
     private static final double UNDER = 2.9;
     /** How far in from each cut each surface is cut again, cm. */
     private static final double IN = 1;
