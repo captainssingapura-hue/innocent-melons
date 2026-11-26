@@ -148,8 +148,7 @@ public final class LoosePlace implements Place {
                 shapes.put(name, new Shaped(card, laid, meshed(trial.world().thing(name).shape())));
             }
         }
-        trial.second().ifPresent(second -> shapes.computeIfAbsent(Second.NAME,
-                name -> new Shaped(card, laid, meshed(second.bulk().whole()))));
+        shapes.computeIfAbsent(Second.NAME, name -> new Shaped(card, laid, meshed(trial.second().bulk().whole())));
     }
 
     /** A thing's shape as a mesh: a box or a slab its six faces, a round thing round. */
@@ -233,7 +232,7 @@ public final class LoosePlace implements Place {
                 world.things().size() - world.moving(), world.moving(), going, world.checks())
                 + System.lineSeparator() + footing.said(handling.feet())
                 + System.lineSeparator() + handling.said()
-                + trial.second().map(second -> System.lineSeparator() + second.said()).orElse("")
+                + (trial.second().set() ? System.lineSeparator() + trial.second().said() : "")
                 + trial.flown().map(flown -> System.lineSeparator() + flown.said()).orElse("")
                 + trial.struck().map(struck -> System.lineSeparator() + struck).orElse("");
     }
@@ -249,7 +248,7 @@ public final class LoosePlace implements Place {
             }
         }
         // the second figure, the core's own walker, as the box other things meet it as
-        trial.second().flatMap(Second::stands).filter(placed -> shapes.containsKey(Second.NAME))
+        trial.second().stands().filter(placed -> trial.second().boxed() && shapes.containsKey(Second.NAME))
                 .ifPresent(placed -> looks.get(Stuff.PEEL).drawn(pass, shapes.get(Second.NAME), stands(placed),
                         camera, 1, new Vec3(0.15, 0.4, 0.9)));
         // what is held, before the hands; and a light over what is at hand

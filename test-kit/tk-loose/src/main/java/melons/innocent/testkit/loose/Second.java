@@ -43,6 +43,7 @@ final class Second {
     private Optional<Stride> why = Optional.empty();
     private Wish wish = new Wish();
     private double faced;
+    private boolean boxed;
 
     /**
      * What it is asked at this step: the keys {@code held} and {@code pressed}, and the avatar, whose feet are at
@@ -55,11 +56,28 @@ final class Second {
                     yaw));
             faced = yaw;
         }
-        final double ahead = (held.contains("W") ? 1 : 0) - (held.contains("S") ? 1 : 0);
-        final double aside = (held.contains("D") ? 1 : 0) - (held.contains("A") ? 1 : 0);
-        final double turned = (yaw - faced + 540) % 360 - 180;
-        wish = new Wish(ahead, aside, turned, !held.contains("SHIFT"), pressed.contains("SPACE"));
+        wish = new Keyed(held, pressed).wish((yaw - faced + 540) % 360 - 180);
         faced = yaw;
+        boxed = true;
+    }
+
+    /**
+     * Set down at {@code feet} facing {@code yaw}, to be the walk's own figure: asked directly from then on
+     * ({@link #wished}), and drawn by the walk as its figure and not as a box.
+     */
+    void set(final Spot feet, final double yaw) {
+        standing = Optional.of(new Standing(feet, yaw));
+        boxed = false;
+    }
+
+    /** What it is asked at the next tick. */
+    void wished(final Wish asked) {
+        wish = asked;
+    }
+
+    /** Whether it is to be drawn as a box: where it is a second figure beside the walk's own. */
+    boolean boxed() {
+        return boxed;
     }
 
     /** Whether it has been set down yet. */
@@ -101,8 +119,9 @@ final class Second {
 
     /** In words, for the walk's window. */
     String said() {
-        return standing.map(stood -> "The second figure, by the core: " + stood.on().map(on -> "on " + on)
+        final String who = boxed ? "The second figure" : "The walker";
+        return standing.map(stood -> who + ", by the core: " + stood.on().map(on -> "on " + on)
                 .orElse("in the air") + String.format(", %.1f m/s", stood.going().length() / 100))
-                .orElse("The second figure: not set down yet");
+                .orElse("");
     }
 }

@@ -29,15 +29,23 @@ public final class LooseWalk {
     public static void main(final String[] args) throws IOException {
         final Trial trial = new Trial();
         final Handling handling = new Handling(trial);
+        // the walk's figure goes by the core unless the run asks for the old engine's avatar
+        final boolean old = "old".equals(System.getProperty("loose.avatar", "core"));
+        final boolean second = old && Boolean.getBoolean("loose.second");
         new TestKit("Loose bodies: the world at rest, what falls, and what is handled", new BaseMap())
                 .with((card, laid) -> new LoosePlace(card, laid, trial, handling))
-                .walked(new Stepping(new Afoot(), (step, going) -> {
+                .walked(new Stepping(old ? new Afoot() : new ByTheCore(trial), (step, going) -> {
                     final Vec3 head = going.head(1);
+                    final Spot feet = new Spot(head.x(), head.y() - EYES, head.z());
                     handling.stepped(step, new Spot(head.x(), head.y(), head.z()), going.yaw(1), going.tilt(1));
-                    trial.stood(new Spot(head.x(), head.y() - EYES, head.z()), going.yaw(1));
-                    trial.second().ifPresent(second -> second.asked(step.held(), step.pressed(),
-                            new Spot(head.x(), head.y() - EYES, head.z()), going.yaw(1)));
-                    trial.ticked();
+                    // by the core, the walk's own step has ticked the trial already, its walker in it
+                    if (old) {
+                        trial.stood(feet, going.yaw(1));
+                        if (second) {
+                            trial.second().asked(step.held(), step.pressed(), feet, going.yaw(1));
+                        }
+                        trial.ticked();
+                    }
                 }, List.of("  T: take up what is at hand, or put down what is held",
                         "  G: more to do with it; up and down choose, T does it",
                         "  readied to throw: hold the mouse's button for power,",

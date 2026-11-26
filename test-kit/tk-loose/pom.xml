@@ -28,6 +28,11 @@
             <groupId>com.example.fxsuite.vulkan</groupId>
             <artifactId>vk-bench</artifactId>
         </dependency>
+        <!-- the flights' chase camera, which a walk by the core follows its figure with -->
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-flight</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.example.fxsuite.texture</groupId>
             <artifactId>tx-materials</artifactId>

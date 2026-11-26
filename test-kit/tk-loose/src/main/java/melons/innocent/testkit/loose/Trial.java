@@ -68,9 +68,8 @@ public final class Trial {
     private final Map<String, Moved> flung = new TreeMap<>();
     private Optional<Flown> flown = Optional.empty();
     private final Blows blows = new Blows();
-    /** The second figure, the core's own walker, where the run asks for it by {@code -Dloose.second=true}. */
-    private final Optional<Second> second = Boolean.getBoolean("loose.second") ? Optional.of(new Second())
-            : Optional.empty();
+    /** The core's own walker: the walk's figure, or a second one beside it; in no tick until it is set down. */
+    private final Second second = new Second();
     /** What the engine worked out for each thing it stepped in the last tick: said only where the run explains. */
     private Map<String, Explanation<Rigid>> why = Map.of();
     /** How the wagon is to be driven from the next tick, where that has been asked. */
@@ -150,10 +149,10 @@ public final class Trial {
      * core's one tick, the world then taken up again from the things that tick gave.
      */
     private Stamped stamped(final Asked asked) {
-        if (second.filter(Second::set).isEmpty()) {
+        if (!second.set()) {
             return world.ticked(asked);
         }
-        final Given given = second.get().ticked(world, asked, new Footing(this));
+        final Given given = second.ticked(world, asked, new Footing(this));
         world = new World(world.core(), given.whole().things());
         return given.stamped();
     }
@@ -272,7 +271,7 @@ public final class Trial {
         cutting.clear();
         flung.clear();
         blows.clear();
-        second.ifPresent(Second::again);
+        second.again();
         flown = Optional.empty();
         drive = Optional.empty();
         changes++;
@@ -284,8 +283,8 @@ public final class Trial {
         return why;
     }
 
-    /** The second figure, where the run asked for one. */
-    Optional<Second> second() {
+    /** The core's own walker, which is in the world once it has been set down. */
+    Second second() {
         return second;
     }
 
