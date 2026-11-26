@@ -37,29 +37,60 @@ public record SkullUnder() implements StatelessFunctionalObject {
     private static final double REACH = 20;
     private static final double STEP = 0.02;
 
-    /** Where the head is set on the skull, moved from where its frame has it; where its skin asks the bone to lie. */
-    public record Fit(V3 headAt, Map<Landmark, V3> asked) {
+    /**
+     * Where the head is set on the skull, moved from where its frame has it; how it is made a man's size, region by
+     * region; where its skin asks the bone to lie.
+     */
+    public record Fit(V3 headAt, HeadWarp warp, Map<Landmark, V3> asked) {
     }
 
-    /** The skull under the clay head made from the reference head at {@code reference}. */
+    /**
+     * The skull under the clay head made from the reference head at {@code reference}, the head first made a man's
+     * size region by region ({@link HeadSize}).
+     */
     public Fit fit(final Path reference) throws IOException {
         final ReferenceHead r = ReferenceReading.INSTANCE.of(reference);
         final Map<Landmark, V3> men = SkullLandmarks.INSTANCE.targets();
-        final List<Landmark> orbit = List.of(Landmark.DACRYON, Landmark.ECTOCONCHION, Landmark.ORBIT_TOP,
-                Landmark.ORBIT_FOOT);
-        V3 opening = V3.ZERO;
-        for (final Landmark l : orbit) {
-            opening = opening.plus(men.get(l).times(1.0 / orbit.size()));
-        }
-        final V3 eye = r.rightEye().middle();
-        final V3 headAt = new V3(0, opening.y() - eye.y(), opening.z() - BEHIND - eye.z());
         final Field head = ClayHead.INSTANCE.field(r, EnumSet.of(Piece.NOSE, Piece.MOUTH, Piece.EYES));
-        final Map<Landmark, V3> asked = under(Field.Compound.of(head.elements()), headAt, men);
-        final V3 across = new V3(eye.x() - opening.x(), 0, 0);
-        for (final Landmark l : orbit) {
+        final Field.Shape skin = Field.Compound.of(head.elements());
+        final HeadWarp warp = HeadSize.INSTANCE.of(skin, r.rightEye().middle());
+        final V3 eye = warp.apply(r.rightEye().middle());
+        final V3 headAt = at(eye);
+        final Map<Landmark, V3> asked = under(HeadSize.INSTANCE.made(skin, warp), headAt, men);
+        final V3 across = new V3(eye.x() - opening(men).x(), 0, 0);
+        for (final Landmark l : orbit()) {
             asked.put(l, men.get(l).plus(across));
         }
-        return new Fit(headAt, asked);
+        return new Fit(headAt, warp, asked);
+    }
+
+    /**
+     * Where a head is set on the skull, moved from where its frame has it, its right eye's middle at {@code eye}: its
+     * eyes in the skull's orbits as men's are measured ({@link #eyeOnSkull}).
+     */
+    public V3 at(final V3 eye) {
+        final V3 on = eyeOnSkull();
+        return new V3(0, on.y() - eye.y(), on.z() - eye.z());
+    }
+
+    /** Where a right eye's middle lies on a man's skull: in its orbit's opening, behind its rim, {@link #BEHIND}. */
+    public V3 eyeOnSkull() {
+        final V3 opening = opening(SkullLandmarks.INSTANCE.targets());
+        return new V3(opening.x(), opening.y(), opening.z() - BEHIND);
+    }
+
+    /** The middle of the right orbit's opening, where {@code men} has its rim. */
+    private V3 opening(final Map<Landmark, V3> men) {
+        V3 opening = V3.ZERO;
+        for (final Landmark l : orbit()) {
+            opening = opening.plus(men.get(l).times(1.0 / orbit().size()));
+        }
+        return opening;
+    }
+
+    /** The landmarks round an orbit's rim. */
+    private List<Landmark> orbit() {
+        return List.of(Landmark.DACRYON, Landmark.ECTOCONCHION, Landmark.ORBIT_TOP, Landmark.ORBIT_FOOT);
     }
 
     /**

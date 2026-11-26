@@ -1,10 +1,7 @@
 package com.example.fxsuite.life.body.vulkan;
 
 import com.example.fxsuite.avatar.bench.kit.Bus;
-import com.example.fxsuite.life.body.BodyGroup;
-import com.example.fxsuite.life.body.Layer;
 import com.example.fxsuite.life.body.Move;
-import com.example.fxsuite.life.body.skin.Skins;
 import com.example.fxsuite.vulkan.bench.Asked;
 import com.example.fxsuite.vulkan.bench.Skies;
 import com.example.fxsuite.vulkan.device.Canvas;
@@ -25,10 +22,8 @@ import javafx.application.Platform;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
-import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -45,9 +40,10 @@ import java.util.concurrent.atomic.AtomicReference;
  * (skin, muscles, skeleton, hidden) how deep each group is drawn first; {@code -Dbody.speed} (cm/s), {@code
  * -Dbody.at} (where in its stride, 0 to 1) and {@code -Dbody.going} how it moves first; {@code -Dbench.yaw}, {@code
  * -Dbench.pitch}, {@code -Dbench.distance} (cm) and {@code -Dbench.height} (cm) where it is seen from; the light's
- * options as the material bench has them ({@code bench.shadows}, {@code bench.sun.high}, {@code bench.sun.round});
+ * options as the material bench has them ({@code bench.shadows}, {@code bench.shadows.mode}, {@code bench.sun.high},
+ * {@code bench.sun.round});
  * {@code -Dbench.settle=} so many thousandths of a second after its skin is first shown ends it; {@code
- * -Dbench.snapshot.card=} a file saves the card's picture then.</p>
+ * -Dbench.snapshot.card=} a file saves the card's picture then; what it wears as {@link FirstShown} says.</p>
  */
 public final class BodyBench {
 
@@ -69,7 +65,7 @@ public final class BodyBench {
             new Asked.Sun(said("bench.sun.high", noon.sunHigh()), said("bench.sun.round", noon.sunRound())));
     private final Skies skies = new Skies(asked);
     private final Bus bus = new Bus();
-    private final AtomicReference<BodyShown> shown = new AtomicReference<>(first());
+    private final AtomicReference<BodyShown> shown = new AtomicReference<>(new FirstShown().of());
     private final AtomicReference<Motion> motion = new AtomicReference<>(new Motion(Move.WALK,
             said("body.speed", 0), Boolean.getBoolean("body.going"), said("body.at", 0), 1, true));
     private final AtomicReference<BodyMaker.Made> made = new AtomicReference<>();
@@ -89,15 +85,7 @@ public final class BodyBench {
         bus.subscribe(BodyShown.class, shown::set, Bus.HERE);
         bus.subscribe(Motion.class, motion::set, Bus.HERE);
         final BodyConsole console = new BodyConsole(bus, asked, shown.get(), motion.get());
-        final Thread making = new Thread(() -> {
-            final long began = System.nanoTime();
-            final BodyMaker.Made body = new BodyMaker().made(step -> {
-                System.out.println("making " + step);
-                bus.publish(new Bus.Working(true, step));
-            });
-            System.out.printf(Locale.ROOT, "the body made in %.1f s%n", (System.nanoTime() - began) / BILLION);
-            made.set(body);
-        }, "the body");
+        final Thread making = new Thread(this::make, "the body");
         making.setDaemon(true);
         making.start();
         try (Desk desk = new Desk();
@@ -105,6 +93,7 @@ public final class BodyBench {
              Window window = card.window("The body bench, drawn on " + card.name(), WIDTH, HEIGHT);
              BodyView view = new BodyView(card, new Laid().asking(card.rays()))) {
             asked.offered(view.offered());
+            asked.shadowing(System.getProperty("bench.shadows.mode", ""));
             Platform.startup(() -> console.shown(LEFT, TOP));
             window.shown(LEFT + BESIDE, TOP);
             drawn(desk, card, window, view, console);
@@ -120,6 +109,25 @@ public final class BodyBench {
                 posing.close();
             }
             Platform.exit();
+        }
+    }
+
+    /**
+     * The body made, away from the screen, each step told as it begins; if it cannot be, why, told at once, not kept
+     * until the bench ends, and the console no longer working.
+     */
+    private void make() {
+        final long began = System.nanoTime();
+        try {
+            final BodyMaker.Made body = new BodyMaker().made(step -> {
+                System.out.println("making " + step);
+                bus.publish(new Bus.Working(true, step));
+            });
+            System.out.printf(Locale.ROOT, "the body made in %.1f s%n", (System.nanoTime() - began) / BILLION);
+            made.set(body);
+        } catch (final RuntimeException failed) {
+            failed.printStackTrace();
+            bus.publish(new Bus.Working(false, "the body not made: " + failed.getMessage()));
         }
     }
 
@@ -182,7 +190,7 @@ public final class BodyBench {
             posing.ask(askedFor, moving.rig());
         }
         posing.taken().ifPresent(p -> {
-            view.fleshed(p.flesh());
+            view.fleshed(p.flesh(), p.clothes());
             onCard = p.still();
             bus.publish(new Bus.Working(false, "posing its skin and muscles"));
             System.out.printf(Locale.ROOT, "skin and muscles posed in %,d ms%n", p.ms());
@@ -203,23 +211,6 @@ public final class BodyBench {
         final boolean fleshed = !m.playing() && m.settled() && m.still().equals(onCard);
         view.drawn(target, shown.get(), new BodyView.Held(moving.rig(), moving.lift(), fleshed),
                 orbit.camera(40, 5), skies.lit(), asked.shadowed(), asked.shadowing());
-    }
-
-    /** What is on show to begin with: each group as {@code -Dbody.<group>} says, else as skin; the skin's colour. */
-    private BodyShown first() {
-        final Map<BodyGroup, Layer> layers = new EnumMap<>(BodyGroup.class);
-        for (final BodyGroup g : BodyGroup.values()) {
-            final String s = System.getProperty("body." + g.name().toLowerCase(Locale.ROOT), "")
-                    .toLowerCase(Locale.ROOT);
-            for (final Layer l : Layer.values()) {
-                if (!s.isEmpty() && l.name().toLowerCase(Locale.ROOT).startsWith(s)) {
-                    layers.put(g, l);
-                }
-            }
-        }
-        final javafx.scene.paint.Color c = javafx.scene.paint.Color.web(System.getProperty("body.colour",
-                Skins.COLOUR));
-        return new BodyShown(layers, new Vec3(c.getRed(), c.getGreen(), c.getBlue()));
     }
 
     /** The number the run was told as {@code name}, or {@code otherwise} where it was told none. */

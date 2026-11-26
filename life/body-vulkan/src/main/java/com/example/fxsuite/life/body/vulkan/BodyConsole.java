@@ -22,6 +22,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -29,9 +30,9 @@ import java.util.Map;
  * The body bench's JavaFX window, beside the card's, laid out by the engine's bench kit as every bench's is: on its
  * left, the light; in its middle, how the body moves (how it goes, how fast, going or stopped, where in its stride,
  * how slowly), how deep each group of its parts is drawn (its skin, its muscles on its bones, its bones, or not at
- * all), the skin's colour, and what the card says it draws. It draws nothing itself: what is on show and how the body
- * moves go out on the bench's bus ({@link BodyShown}, {@link Motion}); where the going body has got to in its stride
- * comes back on it ({@link Strided}).
+ * all), the skin's colour, what it wears ({@link WardrobePanel}), and what the card says it draws. It draws nothing
+ * itself: what is on show and how the body moves go out on the bench's bus ({@link BodyShown}, {@link Motion});
+ * where the going body has got to in its stride comes back on it ({@link Strided}).
  */
 public final class BodyConsole {
 
@@ -151,16 +152,28 @@ public final class BodyConsole {
             boxes.put(g, box);
             grid.addRow(row++, new Label(g.label()), box);
         }
-        final ColorPicker skin = new ColorPicker(Color.color(first.skin().x(), first.skin().y(), first.skin().z()));
+        final ColorPicker skin = picker(first.skin());
+        final WardrobePanel wardrobe = new WardrobePanel(first.worn());
         final Runnable changed = () -> {
             final Map<BodyGroup, Layer> layers = new EnumMap<>(BodyGroup.class);
             boxes.forEach((g, box) -> layers.put(g, box.getValue()));
-            final Color c = skin.getValue();
-            bus.publish(new BodyShown(layers, new Vec3(c.getRed(), c.getGreen(), c.getBlue())));
+            bus.publish(new BodyShown(layers, said(skin), wardrobe.shown()));
         };
         boxes.values().forEach(box -> box.valueProperty().addListener((o, was, is) -> changed.run()));
         skin.setOnAction(set -> changed.run());
-        return new VBox(GAP / 2, grid, new Label("The skin's colour"), skin);
+        wardrobe.listen(changed);
+        return new VBox(GAP / 2, grid, new Label("The skin's colour"), skin, wardrobe.node());
+    }
+
+    /** A colour picker showing {@code c}. */
+    private ColorPicker picker(final Vec3 c) {
+        return new ColorPicker(Color.color(c.x(), c.y(), c.z()));
+    }
+
+    /** The colour {@code p} shows, as much red, green and blue as it has. */
+    private Vec3 said(final ColorPicker p) {
+        final Color c = p.getValue();
+        return new Vec3(c.getRed(), c.getGreen(), c.getBlue());
     }
 
     /** How it moves now, said on the bus. */

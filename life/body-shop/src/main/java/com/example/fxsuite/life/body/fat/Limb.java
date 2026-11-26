@@ -17,6 +17,14 @@ import java.util.function.IntPredicate;
  */
 final class Limb {
 
+    /**
+     * How far a ring's point is looked for along its line in, as many times as far as it starts out: on past the
+     * ring's middle, which may lie at the limb's edge and not within it, the forearm's by the wrist, all of whose
+     * flesh lies before the line through its joints; so that a point on the side where none is meets the limb beyond
+     * the middle, and is not left where it began, standing off the limb as a fin.
+     */
+    private static final double PAST = 2;
+
     private final FatTarget target;
     private V3[] ways = new V3[0];
 
@@ -65,7 +73,7 @@ final class Limb {
                 final double start = Math.cos(a) > 0 ? Math.min(ring.out(), 0.95 * ring.toward() / Math.cos(a))
                         : ring.out();
                 final double before = reach;
-                final V3 p = target.onto(ring.middle().plus(out.times(start)), out.times(-1), counts, start)
+                final V3 p = target.onto(ring.middle().plus(out.times(start)), out.times(-1), counts, PAST * start)
                         .map(FatTarget.Hit::at)
                         .orElse(ring.middle().plus(out.times(Math.min(before, start))));
                 far = Math.max(far, p.minus(ring.middle()).length());

@@ -1,15 +1,21 @@
 package com.example.fxsuite.life.body.vulkan;
 
+import com.example.fxsuite.existence.Wearables;
 import com.example.fxsuite.life.body.BodyGroup;
 import com.example.fxsuite.life.body.Detail;
 import com.example.fxsuite.life.body.Layer;
+import com.example.fxsuite.life.body.Mesher;
 import com.example.fxsuite.life.body.Paint;
 import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.PartBones;
 import com.example.fxsuite.life.body.Rig;
 import com.example.fxsuite.life.body.V3;
 import com.example.fxsuite.life.body.flesh.Flesh;
+import com.example.fxsuite.life.body.head.Helmet;
 import com.example.fxsuite.life.body.muscle.MuscleBody;
+import com.example.fxsuite.life.body.wear.Garment;
+import com.example.fxsuite.life.body.wear.Plate;
+import com.example.fxsuite.taxonomy.Leaf;
 import com.example.fxsuite.texture.materials.Material;
 import com.example.fxsuite.texture.materials.Materials;
 import com.example.fxsuite.vulkan.form.Mesh;
@@ -43,6 +49,53 @@ public final class BodyPieces {
 
     /** A bone, {@code piece}, as the body is bound, moving with {@code part}. */
     public record Bone(Part part, Piece piece) {
+    }
+
+    /**
+     * A thing worn as the body is bound, of {@code kind}, a hard piece moving with its part, {@code bone}; its glass,
+     * if {@code glass}, drawn in a glass and not in what the rest is made of.
+     */
+    public record Worn(Leaf<?> kind, boolean glass, Bone bone) {
+    }
+
+    /** {@code helmet}, made in the head's frame, on the body {@code bound} holds: its shell, and its visor in glass. */
+    public List<Worn> worn(final Rig bound, final Helmet.Made helmet) {
+        final Leaf<?> kind = new Wearables.Helmet();
+        return List.of(new Worn(kind, false, worn(Part.HEAD, placed(bound.frame(Part.HEAD), helmet.shell()))),
+                new Worn(kind, true, worn(Part.HEAD, placed(bound.frame(Part.HEAD), helmet.visor()))));
+    }
+
+    /** {@code plates}, made as the body is bound, each moving with its part. */
+    public List<Worn> worn(final List<Plate> plates) {
+        return plates.stream().map(p -> new Worn(p.kind(), false, worn(p.part(), p.mesh()))).toList();
+    }
+
+    /** {@code mesh}, made in {@code f}'s frame, in the body's. */
+    private Mesher.Mesh placed(final Rig.Frame f, final Mesher.Mesh mesh) {
+        final float[] at = mesh.points().clone();
+        for (int i = 0; i < at.length; i += 3) {
+            final V3 v = f.place(new V3(at[i], at[i + 1], at[i + 2]));
+            at[i] = (float) v.x();
+            at[i + 1] = (float) v.y();
+            at[i + 2] = (float) v.z();
+        }
+        return new Mesher.Mesh(at, mesh.triangles());
+    }
+
+    /** {@code mesh}, as the body is bound, moving with {@code part}, shown however deep its group is drawn. */
+    private Bone worn(final Part part, final Mesher.Mesh mesh) {
+        return new Bone(part, new Piece(group(part), EnumSet.allOf(Layer.class), new Materials.Steel(),
+                new Sheet(mesh.points(), mesh.triangles()).mesh()));
+    }
+
+    /** A thing worn of cloth, of {@code kind}, posed as the body is: {@code piece}. */
+    public record Cloth(Leaf<?> kind, Piece piece) {
+    }
+
+    /** {@code garment}, its points at {@code at}, three numbers each, shown however deep the body is drawn. */
+    public Cloth cloth(final Garment garment, final float[] at) {
+        return new Cloth(garment.kind(), new Piece(BodyGroup.LEGS, EnumSet.allOf(Layer.class),
+                new Materials.Skin(), new Sheet(at, garment.cloth().triangles()).mesh()));
     }
 
     /** {@code skin}, its points at {@code at}, three numbers each, cut by the groups. */

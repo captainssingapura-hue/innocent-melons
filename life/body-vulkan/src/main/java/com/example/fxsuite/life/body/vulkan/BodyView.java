@@ -37,9 +37,9 @@ import java.util.function.Consumer;
  * once, when the view is. Its bones are sent once, as the body is bound, and each frame drawn moved as their part has
  * moved since, so the skeleton goes as the body does. Its skin and muscles are sent posed, a stopped body at a time,
  * those posed before let go; drawn only when asked, while they are the body's as it stands, and its bones drawn in
- * their place meanwhile, whatever group is drawn as deep as its skin or muscles. The body is turned to
- * face the noon sun and stands on the ground. It casts shadows on the ground and on itself when shadows are asked for.
- * Closed, all of it is gone from the card.
+ * their place meanwhile, whatever group is drawn as deep as its skin or muscles. What it wears is drawn with it
+ * ({@link WornDrawn}). The body is turned to face the noon sun and stands on the ground. It casts shadows on the
+ * ground and on itself when shadows are asked for. Closed, all of it is gone from the card.
  */
 public final class BodyView implements AutoCloseable {
 
@@ -59,6 +59,7 @@ public final class BodyView implements AutoCloseable {
     private final Cast cast;
     private final Shaded shadows;
     private final List<Runnable> closing = new ArrayList<>();
+    private final WornDrawn wearing = new WornDrawn();
     private Rig bound;
 
     /** A piece sent to the card. */
@@ -82,8 +83,13 @@ public final class BodyView implements AutoCloseable {
         this.laid = laid;
         final Shades shades = new Shades();
         try {
-            for (final Material m : List.of(new Materials.Skin(), new Materials.Muscle(), new Materials.Tendon(),
-                    new Materials.Bone(), new Materials.Cartilage(), new Materials.ToothEnamel())) {
+            final List<Material> all = new ArrayList<>(List.of(new Materials.Skin(), new Materials.Muscle(),
+                    new Materials.Tendon(), new Materials.Bone(), new Materials.Cartilage(),
+                    new Materials.ToothEnamel()));
+            all.addAll(new WornShown(List.of(), new Materials.Steel(), new Vec3(1, 1, 1), new Vec3(0, 0, 0),
+                    new Vec3(1, 1, 1))
+                    .offered());
+            for (final Material m : all) {
                 final Looked look = new Looked(card, new Look(laid, shades.of(m)));
                 closing.add(look::close);
                 looks.put(m, look);
@@ -109,18 +115,28 @@ public final class BodyView implements AutoCloseable {
         for (final BodyPieces.Bone b : made.bones()) {
             bones.add(new Bone(b.part(), sent(b.piece())));
         }
+        wearing.bound(made.worn(), p -> sent(p).shaped());
     }
 
-    /** {@code pieces}, the skin and muscles posed, sent to the card in place of those posed before. */
-    public void fleshed(final List<BodyPieces.Piece> pieces) {
+    /**
+     * {@code pieces}, the skin and muscles posed, and {@code clothes}, what it wears of cloth posed with them, sent to
+     * the card in place of those posed before.
+     */
+    public void fleshed(final List<BodyPieces.Piece> pieces, final List<BodyPieces.Cloth> clothes) {
         for (final Sent s : flesh) {
-            closing.remove(new Closer(s.shaped()));
-            s.shaped().close();
+            let(s.shaped());
         }
         flesh.clear();
         for (final BodyPieces.Piece p : pieces) {
             flesh.add(sent(p));
         }
+        wearing.posed(clothes, p -> sent(p).shaped(), this::let);
+    }
+
+    /** {@code shaped} let go from the card now, not when the view is closed. */
+    private void let(final Shaped shaped) {
+        closing.remove(new Closer(shaped));
+        shaped.close();
     }
 
     /**
@@ -162,6 +178,7 @@ public final class BodyView implements AutoCloseable {
                 drawn(pass, s, stands, shown, camera);
             }
         }
+        wearing.drawn(pass, shown.worn(), looks, moved, stands, held.fleshed(), camera);
     }
 
     private void drawn(final Pass pass, final Sent s, final Mat4 at, final BodyShown shown, final Camera camera) {

@@ -39,6 +39,12 @@
             <artifactId>math-curves</artifactId>
             <version>0.1.0-SNAPSHOT</version>
         </dependency>
+        <!-- what exists: the kinds of thing worn, each piece of the wardrobe tagged with its kind -->
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>fxsuite-existence</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
         <!-- what kind of object each thing is: the stateless bones, the immutable values -->
         <dependency>
             <groupId>io.github.captainssingapura-hue.lang.ontology</groupId>

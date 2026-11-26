@@ -1,5 +1,6 @@
 package com.example.fxsuite.life.body.wear;
 
+import com.example.fxsuite.existence.Wearables;
 import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Rig;
 import com.example.fxsuite.life.body.V3;
@@ -44,7 +45,7 @@ public record Tailor() implements StatelessFunctionalObject {
         final V3 hip = bind.frame(Part.RIGHT_THIGH).at();
         final Sheet knit = Legwear.INSTANCE.sheet(b, bind, m, TIGHTS);
         return new Garment("Tights", colour, knit.cut(new V3(0, hip.y() + 12, 0), new V3(0, -1, -0.12).unit())
-                .flesh(bind));
+                .flesh(bind), new Wearables.Tights());
     }
 
     /** Briefs over {@code b}, where {@code bind} holds the body: low on the hips, cut away up the sides of the legs. */
@@ -60,7 +61,7 @@ public record Tailor() implements StatelessFunctionalObject {
             final V3 n = crotch.minus(top).cross(new V3(0, 0.25, 1)).unit();
             s = s.cut(top, side > 0 ? n : n.times(-1));
         }
-        return new Garment("Briefs", colour, s.flesh(bind));
+        return new Garment("Briefs", colour, s.flesh(bind), new Wearables.Briefs());
     }
 
     /** How low {@code b} goes where {@code where} says, of the points going with {@code parts}. */

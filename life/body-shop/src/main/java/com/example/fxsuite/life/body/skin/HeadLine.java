@@ -14,21 +14,24 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.ToDoubleFunction;
 
 /**
- * Where the skin of the head ends and the neck's begins, as anatomy draws it, not level: from under the chin along the
- * lower border of the jaw to its angle, up behind the ear to the mastoid's tip, then along the superior nuchal line to
- * the external occipital protuberance behind; the chin and the jaw's edge the head's, the nape up to the occiput the
- * neck's. Each of the skin's triangles of the head or the neck given to the one its middle is on, the line at each way
- * round the head's upright found between its points either side; the skin under the chin and the jaw lying a little
- * below the bone, {@link #UNDER}.
+ * Where the skin of the head ends and the neck's begins, as a sculptor draws it, the neck a column under the head: in
+ * front at the hyoid, where the throat meets the underside of the chin, {@link #UNDER_CHIN} under the chin's lowest;
+ * level back from there, under the jaw's angle by {@link #UNDER_ANGLE}, to the side of the neck; up behind the ear to
+ * the mastoid's tip, then along the superior nuchal line to the external occipital protuberance behind. The chin, the
+ * jaw's edge and the plane under them the head's, the nape up to the occiput the neck's. Each of the skin's triangles
+ * of the head or the neck given to the one its middle is on, the line at each way round the head's upright found
+ * between its points either side.
  */
 public record HeadLine() implements StatelessFunctionalObject {
 
     public static final HeadLine INSTANCE = new HeadLine();
 
-    /** How far under the bone of the chin and the jaw the skin there is, cm. */
-    private static final double UNDER = 0.6;
+    /** How far under the chin's lowest the line is in front, and under the jaw's angle at the side, cm. */
+    private static final double UNDER_CHIN = 2.0;
+    private static final double UNDER_ANGLE = 2.5;
 
     /**
      * The parts of {@code sheet}'s {@code triangles}, {@code patches} as they were, but those of the head or the neck
@@ -36,7 +39,7 @@ public record HeadLine() implements StatelessFunctionalObject {
      */
     public Part[] split(final Part[] patches, final Sheet sheet, final int[] triangles, final Rig bind) {
         final Rig.Frame head = bind.frame(Part.HEAD);
-        final List<V3> line = line();
+        final ToDoubleFunction<V3> above = above();
         final Part[] split = patches.clone();
         for (int t = 0; t < split.length; t++) {
             if (split[t] != Part.HEAD && split[t] != Part.NECK) {
@@ -45,11 +48,20 @@ public record HeadLine() implements StatelessFunctionalObject {
             final V3 middle = sheet.point(triangles[3 * t]).plus(sheet.point(triangles[3 * t + 1]))
                     .plus(sheet.point(triangles[3 * t + 2])).times(1.0 / 3);
             final V3 p = head.local(middle);
-            split[t] = p.y() > height(line, round(p)) ? Part.HEAD : Part.NECK;
+            split[t] = above.applyAsDouble(p) > 0 ? Part.HEAD : Part.NECK;
         }
         whole(split, triangles, Part.NECK);
         whole(split, triangles, Part.HEAD);
         return split;
+    }
+
+    /**
+     * How far above the line a point is, cm, the point in the head's frame as the body was bound: up, not square to
+     * it; the line found once, for many points.
+     */
+    public ToDoubleFunction<V3> above() {
+        final List<V3> line = line();
+        return p -> p.y() - height(line, round(p));
     }
 
     /**
@@ -119,15 +131,18 @@ public record HeadLine() implements StatelessFunctionalObject {
     }
 
     /**
-     * The line's points, front to back, on the right, in the head's frame as the skull is bent: under the chin; under
-     * the jaw's angle; the mastoid's tip, about a centimetre and a half under the condyle's top, behind it, as wide as
-     * the skull is across the mastoids, a man's ten; the external occipital protuberance, where the trapezius arises.
+     * The line's points, front to back, on the right, in the head's frame as the skull is bent: at the hyoid under the
+     * chin; under the jaw's angle, about as low; at the side of the neck, as low, straight out from the head's middle;
+     * the mastoid's tip, about a centimetre and a half under the condyle's top, behind it, as wide as the skull is
+     * across the mastoids, a man's ten; the external occipital protuberance, where the trapezius arises.
      */
     private List<V3> line() {
         final SkullForm s = SkullForm.INSTANCE;
-        final V3 down = new V3(0, -UNDER, 0);
-        return List.of(s.apply(Landmark.GNATHION.drawn()).plus(down), s.apply(Landmark.GONION.drawn()).plus(down),
-                s.apply(new V3(5.0, -0.5, -1.6)), s.apply(new V3(0, 3.96, -9.2)));
+        final V3 chin = s.apply(Landmark.GNATHION.drawn());
+        final V3 angle = s.apply(Landmark.GONION.drawn());
+        final double low = angle.y() - UNDER_ANGLE;
+        return List.of(new V3(0, chin.y() - UNDER_CHIN, chin.z()), new V3(angle.x(), low, angle.z()),
+                new V3(angle.x(), low, 0), s.apply(new V3(5.0, -0.5, -1.6)), s.apply(new V3(0, 3.96, -9.2)));
     }
 
     /** How high the line is at {@code round}, the way round the head's upright from straight ahead, either side. */

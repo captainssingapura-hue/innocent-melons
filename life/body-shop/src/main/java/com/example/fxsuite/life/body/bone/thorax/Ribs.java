@@ -41,14 +41,21 @@ public record Ribs() implements StatelessFunctionalObject {
 
     /** {@code rib}'s cartilage, from its bone's end to what it reaches, the lower ones dipping before they turn up. */
     public void cartilage(final Sketch s, final Rib rib, final double female) {
+        final double r = rib == Rib.FIRST ? 0.75 : rib.floating() ? 0.4 : 0.55;
+        s.blend(0.45).tube(r, r * 0.9, RibLine.INSTANCE.end(rib, female), through(rib, female), rib.cartilage());
+    }
+
+    /**
+     * Where {@code rib}'s cartilage passes between its bone's end and what it reaches: the lower ones dipping below
+     * both before they turn up, as the costal margin does, but no further forward than its ends, the rectus abdominis
+     * lying over them; the upper ones bowed a little forward, as they are between the ribs and the sternum.
+     */
+    public V3 through(final Rib rib, final double female) {
         final V3 a = RibLine.INSTANCE.end(rib, female);
         final V3 b = rib.cartilage();
-        final double r = rib == Rib.FIRST ? 0.75 : rib.floating() ? 0.4 : 0.55;
         final boolean lower = rib.ordinal() >= Rib.FIFTH.ordinal() && !rib.floating();
-        final V3 mid = lower
-                ? v((a.x() + b.x()) * 0.5, Math.min(a.y(), b.y()) - 0.6 - 0.15 * rib.ordinal(),
-                        Math.max(a.z(), b.z()) + 0.35)
+        return lower
+                ? v((a.x() + b.x()) * 0.5, Math.min(a.y(), b.y()) - 0.6 - 0.15 * rib.ordinal(), (a.z() + b.z()) * 0.5)
                 : a.plus(b).times(0.5).plus(v(0, 0, 0.25));
-        s.blend(0.45).tube(r, r * 0.9, a, mid, b);
     }
 }
