@@ -40,7 +40,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * (skin, muscles, skeleton, hidden) how deep each group is drawn first; {@code -Dbody.speed} (cm/s), {@code
  * -Dbody.at} (where in its stride, 0 to 1) and {@code -Dbody.going} how it moves first; {@code -Dbench.yaw}, {@code
  * -Dbench.pitch}, {@code -Dbench.distance} (cm) and {@code -Dbench.height} (cm) where it is seen from; the light's
- * options as the material bench has them ({@code bench.shadows}, {@code bench.sun.high}, {@code bench.sun.round});
+ * options as the material bench has them ({@code bench.shadows}, {@code bench.shadows.mode}, {@code bench.sun.high},
+ * {@code bench.sun.round});
  * {@code -Dbench.settle=} so many thousandths of a second after its skin is first shown ends it; {@code
  * -Dbench.snapshot.card=} a file saves the card's picture then; the helmet as {@link FirstShown} says.</p>
  */
@@ -92,6 +93,7 @@ public final class BodyBench {
              Window window = card.window("The body bench, drawn on " + card.name(), WIDTH, HEIGHT);
              BodyView view = new BodyView(card, new Laid().asking(card.rays()))) {
             asked.offered(view.offered());
+            asked.shadowing(System.getProperty("bench.shadows.mode", ""));
             Platform.startup(() -> console.shown(LEFT, TOP));
             window.shown(LEFT + BESIDE, TOP);
             drawn(desk, card, window, view, console);
