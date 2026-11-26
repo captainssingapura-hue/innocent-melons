@@ -10,7 +10,9 @@ import com.example.fxsuite.vulkan.space.Vec3;
  * the other, each square to its plane, its seat a little in from the bore; an inlet valve 0.39 of the bore across, an
  * exhaust 0.33; each valve 1.2 bores long, its camshaft over its tip; the spark plug in the ridge's middle. The inlets
  * come in from the bank's outer side, the exhausts go out the other: in a V, into the V, where the turbochargers
- * sit; in a boxer, whose outer side is up, the inlets from above and the exhausts out underneath.
+ * sit; in a boxer, whose outer side is up, the inlets from above and the exhausts out underneath. A motorcycle's twin
+ * the other way about, as motorcycles' are: breathing down into its V from the airbox over it, its exhausts out
+ * ahead of its front head and behind its back one.
  *
  * <p>Laid out in a cylinder's own frame: across, toward the inlet side; up the bore from its deck; and along the bank,
  * from its middle. {@link #at} carries that to the block's frame.
@@ -109,7 +111,7 @@ record HeadFigures(EngineFigures figures) {
     /** What carries bank {@code bank}'s cylinder {@code k}'s frame to the block's, its nought at its bore's top. */
     Mat4 frame(final int bank, final int k) {
         final BlockForm block = new BlockForm(figures);
-        final Vec3 u = block.out(bank);
+        final Vec3 u = figures.twin() ? block.out(bank).times(-1) : block.out(bank);
         final Vec3 v = block.up(bank);
         final Vec3 o = v.times(figures.deck()).plus(ALONG.times(figures.along(bank, k)));
         return new Mat4(new double[] {u.x(), v.x(), 0, o.x(), u.y(), v.y(), 0, o.y(), u.z(), v.z(), 1, o.z(),

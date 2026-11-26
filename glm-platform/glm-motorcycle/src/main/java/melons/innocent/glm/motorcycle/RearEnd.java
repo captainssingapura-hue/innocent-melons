@@ -17,7 +17,7 @@ import java.util.List;
  * A motorcycle's back end, as its figures and frames place it ({@link BikeFigures}, {@link Frames}): the swingarm,
  * steel, an arm each side from its pivot tube in the mid-structure back to the back axle, outside the belt and the
  * brake, a tube across them ahead of the tyre; and a shock each side, its spring round its damper, from a lug on its
- * arm near the axle up to the subframe's rail.
+ * arm near the axle up to its tower under the subframe's rail.
  *
  * @param figures the bike's figures
  * @param frames  its frames
@@ -73,8 +73,8 @@ record RearEnd(BikeFigures figures, Frames frames) {
         return arm(LUG, side).plus(new Vec3(0, 0, side * 2));
     }
 
-    /** Where the shock's top on side {@code side} is, on the subframe's rail, outside it. */
+    /** Where the shock's top on side {@code side} is, under the subframe's tower. */
     Vec3 top(final int side) {
-        return frames.shockTop(side);
+        return frames.subframe().shockTop(side);
     }
 }

@@ -26,10 +26,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class MotorcycleTest {
 
-    /** What the bars turn: the yokes and all they carry. */
+    /** What the bars turn: the yokes and all they carry, the bars and all on them among them. */
     private static final Set<String> STEERED = Set.of("bottom yoke", "top yoke", "fork leg, left",
             "fork leg, right", "front axle", "front wheel", "front tyre", "front brake disc", "front brake caliper",
-            "front fender");
+            "front fender", "handlebar", "gauge", "front master cylinder", "grip, left", "grip, right", "clutch lever",
+            "brake lever", "mirror, left", "mirror, right");
 
     private final Motorcycle bike = new Motorcycle();
     private final BikeFigures figures = bike.figures();
@@ -80,7 +81,7 @@ class MotorcycleTest {
         final long own = ownParts(platform).stream()
                 .filter(p -> p.kind().map(k -> kinds.tree().has(k)).orElse(false)).count();
         assertEquals(ownParts(platform).size(), own, "every one of its own parts of a motorcycle's kind");
-        assertEquals(28, ownParts(platform).size());
+        assertEquals(28 + 9 + 5, ownParts(platform).size());
     }
 
     @Test

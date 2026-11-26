@@ -23,27 +23,24 @@ import java.util.List;
  * its back clear of the fork's legs as they turn, down to the front head's node and back over the V to the back
  * head's, tubes across at each, a lug to the front head's face; the mid-structure, forged aluminium, a plate either
  * side outside the clutch cover and the belt, from the crankcase's mount behind the gearbox up to the back head's
- * node, a lug to its face, carrying the swingarm's pivot and the subframe; and the subframe, aluminium tube, back
- * from the mid-structure over the back wheel to the tail, carrying the seat and the shocks' tops.
+ * node, a lug to its face, carrying the swingarm's pivot and the subframe; and the subframe, back from the
+ * mid-structure over the back wheel to the tail, carrying the seat and the shocks' tops ({@link Subframe}).
  *
  * @param figures the bike's figures
  * @param mounts  where they are bolted to the engine
+ * @param beneath how high the engine reaches under the seat, which the subframe's rails carry the seat over
  */
-record Frames(BikeFigures figures, Mounts mounts) {
+record Frames(BikeFigures figures, Mounts mounts, double beneath) {
 
     private static final int ROUND = 16;
-    /** How far round its tubes are: the trellis's, the subframe's, a boss. */
+    /** How far round its tubes are: the trellis's, a boss. */
     private static final double TUBE = 1.4;
-    private static final double RAIL = 1.3;
     private static final double BOSS = 1.6;
-    /** How far out from the middle the mid-structure's plates are, and the swingarm's arms and the subframe's rails. */
+    /** How far out from the middle the mid-structure's plates are, and the swingarm's arms. */
     static final double PLATES = 20.5;
     static final double ARMS = 18.5;
-    /** How thick a plate is; where the tail is, behind the back axle and over it. */
+    /** How thick a plate is. */
     private static final double PLATE = 1;
-    private static final Vec3 TAIL = new Vec3(-12, 42, 0);
-    /** How far along the subframe the shocks' tops are. */
-    private static final double SHOCK = 0.42;
     /** How far behind the steering head the trellis's sides come in, and how far round the head is. */
     private static final double BEHIND = 9;
     private static final double HEAD = 2.4;
@@ -89,7 +86,7 @@ record Frames(BikeFigures figures, Mounts mounts) {
         final Vec3 rear = mounts.node(mounts.rear());
         final Vec3 pivot = figures.pivot();
         final Vec3 mount = mounts.rearMount();
-        final Vec3 top = subframe(0);
+        final Vec3 top = subframe().front();
         final List<Spot> round = new ArrayList<>(outlines.circle(spot(mount), 3));
         round.addAll(outlines.circle(spot(pivot), 3.5));
         round.addAll(outlines.circle(spot(rear), 3));
@@ -110,34 +107,10 @@ record Frames(BikeFigures figures, Mounts mounts) {
                 new Made(Material.ALUMINIUM, false)).as(new MotorcycleParts.MidStructure());
     }
 
-    /** The subframe: a rail each side from the mid-structure back over the back wheel to the tail, tubes across. */
-    Part subframe() {
-        final Shapes shapes = new Shapes(ROUND);
-        final List<Mesh> made = new ArrayList<>();
-        for (final int side : List.of(-1, 1)) {
-            made.add(shapes.drum(across(subframe(0), side * ARMS), across(subframe(1), side * ARMS), RAIL));
-        }
-        for (final double t : List.of(0.0, 0.3, 1.0)) {
-            made.add(shapes.drum(across(subframe(t), -ARMS), across(subframe(t), ARMS), RAIL * 0.8));
-        }
-        return new Part("subframe", Group.FRAME, false, List.of(new Point("front", subframe(0)),
-                new Point("tail", subframe(1)),
-                new Point("shock, left", shockTop(-1)), new Point("shock, right", shockTop(1))),
-                shapes.joined(made), new Made(Material.ALUMINIUM, false)).as(new MotorcycleParts.Subframe());
-    }
-
-    /** Where the shock's top on side {@code side} is, -1 the left: on the subframe's rail, outside it. */
-    Vec3 shockTop(final int side) {
-        final Vec3 at = subframe(SHOCK);
-        return new Vec3(at.x(), at.y(), figures.centre() + side * (ARMS + 2));
-    }
-
-    /** The place {@code t} of the way along the subframe's rails, from the mid-structure to the tail, in the middle. */
-    Vec3 subframe(final double t) {
+    /** The subframe, bolted to the mid-structure a little behind and under the back head's node ({@link Subframe}). */
+    Subframe subframe() {
         final Vec3 rear = mounts.node(mounts.rear());
-        final Vec3 from = new Vec3(rear.x() - 4, rear.y() - 6, figures.centre());
-        final Vec3 tail = figures.rearAxle().plus(TAIL);
-        return from.plus(tail.minus(from).times(t));
+        return new Subframe(figures, new Vec3(rear.x() - 4, rear.y() - 6, figures.centre()), beneath);
     }
 
     /** A lug from head {@code head}'s outer face out to its node, in the middle. */

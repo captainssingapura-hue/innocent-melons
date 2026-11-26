@@ -61,7 +61,8 @@ record FrontEnd(BikeFigures figures) {
         final Vec3 end = figures.stem(along + (top ? -YOKE / 2 - 0.3 : YOKE / 2 + 0.3));
         final Shapes shapes = new Shapes(ROUND);
         return new Part((top ? "top" : "bottom") + " yoke", Group.STEERING, false, List.of(new Point("head", end),
-                new Point("leg, left", leg(along, -1)), new Point("leg, right", leg(along, 1))),
+                new Point("leg, left", leg(along, -1)), new Point("leg, right", leg(along, 1)),
+                new Point("bars", figures.stem(along + YOKE / 2))),
                 shapes.joined(List.of(new Plate(new Hull(outline).outline(), holes,
                         stem, figures.ahead(), new Vec3(0, 0, 1), YOKE).mesh(), shapes.drum(stem, end, 1.6))),
                 new Made(Material.ALUMINIUM, false))

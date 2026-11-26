@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * A motorcycle's fenders, short as the reference bike's are: the front one a band over the front tyre, from a little
  * ahead of the axle back to the fork's legs, held to each leg by a bracket; the back one a band over the back tyre,
- * from over its front back to behind it, held to the subframe's rails by a strut each side.
+ * from over its front back to behind it, held to the subframe's rails over it by a strut each side.
  *
  * @param figures the bike's figures
  * @param frames  its frames
@@ -64,12 +64,13 @@ record Fenders(BikeFigures figures, Frames frames) {
         final List<Mesh> made = new ArrayList<>(List.of(band(axle, reach, wide, REAR_FROM, REAR_TO)));
         final double up = Math.toRadians(100);
         final Vec3 top = axle.plus(new Vec3(Math.cos(up), Math.sin(up), 0).times(reach + THICK));
-        final Vec3 rail = frames.subframe(railAt(top.x()));
+        final Subframe subframe = frames.subframe();
+        final double rail = subframe.top(top.x()) - Subframe.RAIL;
         for (final int side : List.of(-1, 1)) {
             made.add(shapes.drum(new Vec3(top.x(), top.y(), figures.centre() + side * (wide / 2 - 0.5)),
-                    new Vec3(rail.x(), rail.y(), figures.centre() + side * (Frames.ARMS - 1.2)), 0.7));
+                    new Vec3(top.x(), rail, figures.centre() + side * (Subframe.RAILS - 1.2)), 0.7));
         }
-        return new Part("rear fender", Group.BODYWORK, false, List.of(new Point("subframe", frames.subframe(1))),
+        return new Part("rear fender", Group.BODYWORK, false, List.of(new Point("subframe", subframe.tail())),
                 shapes.joined(made), new Made(Material.STEEL, false)).as(new MotorcycleParts.RearFender());
     }
 
@@ -80,9 +81,4 @@ record Fenders(BikeFigures figures, Frames frames) {
         return new Merged(List.of(new Merged.Placed(band, at))).mesh();
     }
 
-    /** How far along the subframe's rails, from the mid-structure to the tail, {@code x} along the bike is. */
-    private double railAt(final double x) {
-        final double from = frames.subframe(0).x();
-        return (x - from) / (frames.subframe(1).x() - from);
-    }
 }

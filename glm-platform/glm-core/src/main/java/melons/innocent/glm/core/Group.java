@@ -6,6 +6,7 @@ package melons.innocent.glm.core;
 public enum Group {
     UNDERBODY("Body"),
     FRAME("Frame"),
+    EXHAUST("Exhaust"),
     SUBFRAMES("Subframes"),
     LINKS("Suspension links"),
     CARRIERS("Wheel carriers and hubs"),

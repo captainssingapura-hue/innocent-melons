@@ -40,19 +40,65 @@ public record Motorcycle(EngineFigures twin) {
         final List<Connection> joined = new ArrayList<>(engine.connections());
         final Mounts mounts = new Mounts(figures(), carried(joined, "head, bank 2"), carried(joined, "head, bank 1"),
                 crankcase, carried(joined, "timing cover"));
-        final Frames frames = new Frames(figures(), mounts);
+        final Frames frames = new Frames(figures(), mounts, beneath(engine));
         final List<Connection> front = front(mounts, frames);
         final List<Connection> back = back(crankcase, frames);
         joined.addAll(front);
         joined.addAll(back);
         joined.addAll(again(mounts, front, back, carried(joined, "rear pulley")));
-        joined.addAll(bodywork(frames, front, back, beneath(engine)));
+        joined.addAll(bodywork(frames, front, back));
+        joined.addAll(controls(carried(front, "top yoke")));
+        joined.addAll(exhaust(mounts));
         return new Platform("the motorcycle", crankcase, joined);
+    }
+
+    /** What it is ridden with, at its bars, on the top yoke ({@link Controls}). */
+    private List<Connection> controls(final Part yoke) {
+        final Controls made = new Controls(figures());
+        final Part bar = made.handlebar();
+        final Part cylinder = made.masterCylinder();
+        final List<Connection> joined = new ArrayList<>(List.of(
+                new Connection("handlebar on its risers", yoke, "bars", bar, "yoke", Joining.BOLTED),
+                new Connection("gauge on the top yoke", yoke, "bars", made.gauge(), "yoke", Joining.BOLTED),
+                new Connection("front master cylinder on the bar", bar, "grip, right", cylinder, "bar",
+                        Joining.BOLTED),
+                new Connection("brake lever on its master cylinder", cylinder, "bar", made.lever(1), "bar",
+                        Joining.HINGE),
+                new Connection("clutch lever on the bar", bar, "grip, left", made.lever(-1), "bar", Joining.HINGE)));
+        for (final int side : List.of(-1, 1)) {
+            final String grip = "grip, " + (side < 0 ? "left" : "right");
+            joined.add(new Connection(grip + " on the bar", bar, grip, made.grip(side), "bar", Joining.SEATED));
+            joined.add(new Connection(grip + "'s mirror", bar, grip, made.mirror(side), "bar", Joining.BOLTED));
+        }
+        return joined;
+    }
+
+    /** Its exhaust, from the heads' exhaust ports back to the muffler ({@link Exhaust}). */
+    private List<Connection> exhaust(final Mounts mounts) {
+        final Exhaust made = new Exhaust(figures(), mounts.front(), mounts.rear());
+        final Part front = made.frontHeader();
+        final Part rear = made.rearHeader();
+        final Part collector = made.collector();
+        final Part muffler = made.muffler();
+        return List.of(
+                new Connection("front header on its port", mounts.front(), "exhaust port 2.1", front, "port",
+                        Joining.BOLTED),
+                new Connection("collector on the front header", front, "collector", collector, "headers",
+                        Joining.WELDED),
+                new Connection("back header on its port", mounts.rear(), "exhaust port 1.1", rear, "port",
+                        Joining.BOLTED),
+                new Connection("muffler on the collector", collector, "muffler", muffler, "collector",
+                        Joining.SEATED),
+                new Connection("heat shield on the muffler", muffler, "collector", made.heatShield(), "muffler",
+                        Joining.BOLTED),
+                new Connection("collector on the back header", rear, "collector", collector, "headers",
+                        Joining.WELDED),
+                new Connection("back header into the front", front, "collector", rear, "collector", Joining.WELDED));
     }
 
     /** How high {@code engine} reaches under where the seat goes, as far across as the seat is wide. */
     private double beneath(final Platform engine) {
-        final double[] along = new Bodywork(figures(), null, 0).seatRun();
+        final double[] along = new Bodywork(figures(), null).seatRun();
         return engine.connections().stream().map(Connection::carried).distinct()
                 .flatMap(p -> p.form().points().stream())
                 .filter(v -> v.x() < along[0] && v.x() > along[1] && Math.abs(v.z() - figures().centre()) < 16)
@@ -100,7 +146,7 @@ public record Motorcycle(EngineFigures twin) {
         return List.of(
                 new Connection("mid-structure on the crankcase", crankcase, "mount, right", mid, "crankcase",
                         Joining.BOLTED),
-                new Connection("subframe on the mid-structure", mid, "subframe", frames.subframe(), "front",
+                new Connection("subframe on the mid-structure", mid, "subframe", frames.subframe().part(), "front",
                         Joining.BOLTED),
                 new Connection("swingarm on its pivot", mid, "pivot", swingarm, "pivot", Joining.HINGE),
                 new Connection("left shock on the swingarm", swingarm, "shock, left", end.shock(-1), "lug",
@@ -146,8 +192,8 @@ public record Motorcycle(EngineFigures twin) {
      * {@link Fenders}).
      */
     private List<Connection> bodywork(final Frames frames, final List<Connection> front,
-                                      final List<Connection> back, final double beneath) {
-        final Bodywork body = new Bodywork(figures(), frames, beneath);
+                                      final List<Connection> back) {
+        final Bodywork body = new Bodywork(figures(), frames);
         final Fenders fenders = new Fenders(figures(), frames);
         final Part subframe = carried(back, "subframe");
         final Part fender = fenders.front();
