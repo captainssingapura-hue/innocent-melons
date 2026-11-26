@@ -178,6 +178,15 @@ class SteppedTest {
     }
 
     @Test
+    void heldOnWhatItStandsOnAThingWithCornersIsNotMovedByWhatMeetsIt() {
+        final Body standing = new Body(crate, new Simulator.Mover(new Placed(new Spot(0, 25, 0))), ground);
+        final Explained<Rigid, Body, Why> held = loose.simulated(standing, ticker.first(), List.of());
+        assertTrue(held.state().mover().landed());
+        assertSame(held, loose.correctionS1(standing, ticker.first(), held,
+                List.of(met(new Spot(0, 25, 0), new Spot(0, 0, -300)))), "nothing slides: what comes at it stops");
+    }
+
+    @Test
     void aSimulatorThatCorrectsNothingGivesItsSteppingBack() {
         final Still still = new Still();
         final Body now = flying(new Spot(0, 0, 300));

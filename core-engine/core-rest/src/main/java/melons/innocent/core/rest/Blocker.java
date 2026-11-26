@@ -3,8 +3,8 @@ package melons.innocent.core.rest;
 import melons.innocent.core.motion.Spot;
 
 /**
- * Something that may stand in the path a thing took in a tick: an outsider, another thing in motion, a round thing
- * at rest. It is where it was at the tick's start and where it is at its end, so a thing that is itself moving is
+ * Something that may stand in the path a thing took in a tick: an outsider, another thing in motion, a thing at
+ * rest. It is where it was at the tick's start and where it is at its end, so a thing that is itself moving is
  * met where the two truly were at the same moment.
  *
  * @param shape its shape

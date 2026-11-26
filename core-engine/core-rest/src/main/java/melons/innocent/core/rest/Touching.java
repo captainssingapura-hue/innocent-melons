@@ -18,6 +18,9 @@ import java.util.Optional;
  */
 public record Touching(double slack, double skin, double steep) {
 
+    /** How many times as far as counts as touching two things with corners must be run in to bar a path. */
+    private static final double BARS = 2;
+
     /** A face a corner lies on: which way it pushes whatever is on it, and how far in the corner is. */
     private record Face(Spot pushes, double deep) {
     }
@@ -58,15 +61,31 @@ public record Touching(double slack, double skin, double steep) {
 
     /**
      * Where a thing of {@code shape} placed so meets {@code other}, called {@code on}, standing as said, when what
-     * is asked is whether its path is barred and not what holds it up: as {@link #held} has it, and besides two
-     * round things where they meet, which hold neither up.
+     * is asked is whether its path is barred and not what holds it up. Whichever way it is met, and by whatever:
+     * two round things where they meet; a round thing by a face of one with corners, as {@link #held} has it; a
+     * thing with corners by a round one, the same touch the other way about; and two things with corners where
+     * they are run into each other by more than counts as touching, parted the way they are least run in
+     * ({@link Overlap}). Nothing meets a shell yet.
      */
     public List<Touch> met(final ShapeImpl<?> shape, final Placed placed, final String on,
                            final ShapeImpl<?> other, final Placed stands) {
-        if (shape instanceof Ellipsoid round && other instanceof Ellipsoid ball) {
-            return new RoundTouch(slack, skin).rounds(round, placed, on, ball, stands);
+        if (shape instanceof Shell || other instanceof Shell
+                || placed.at().minus(stands.at()).length() > shape.reaches() + other.reaches() + slack) {
+            return List.of();
         }
-        return held(shape, placed, on, other, stands);
+        if (shape instanceof Ellipsoid round) {
+            return other instanceof Ellipsoid ball
+                    ? new RoundTouch(slack, skin).rounds(round, placed, on, ball, stands)
+                    : held(shape, placed, on, other, stands);
+        }
+        if (other instanceof Ellipsoid ball) {
+            return new RoundTouch(slack, skin).met(ball, stands, on, boxed(shape), placed).stream()
+                    .map(touch -> new Touch(touch.at(), touch.pushes().times(-1), touch.deep(), on)).toList();
+        }
+        final Overlap overlap = new Overlap(boxed(shape), placed, boxed(other), stands);
+        return overlap.parting().filter(parting -> parting.deep() > BARS * slack)
+                .map(parting -> List.of(new Touch(overlap.meets(parting.pushes()), parting.pushes(),
+                        parting.deep(), on))).orElse(List.of());
     }
 
     /** Whether two things are run well into each other where they stand; never said of a round one. */
@@ -120,31 +139,7 @@ public record Touching(double slack, double skin, double steep) {
      * edge of each.
      */
     private boolean overlapping(final Box box, final Placed placed, final Box other, final Placed stands) {
-        final List<Spot> ways = new ArrayList<>();
-        for (int axis = 0; axis < 3; axis++) {
-            final Spot unit = new Spot(axis == 0 ? 1 : 0, axis == 1 ? 1 : 0, axis == 2 ? 1 : 0);
-            ways.add(placed.turned().turned(unit));
-            ways.add(stands.turned().turned(unit));
-        }
-        for (int mine = 0; mine < 6; mine += 2) {
-            for (int theirs = 1; theirs < 6; theirs += 2) {
-                final Spot square = ways.get(mine).cross(ways.get(theirs));
-                if (square.length() > 1e-9) {
-                    ways.add(square.unit());
-                }
-            }
-        }
-        final Spot apart = stands.at().minus(placed.at());
-        return ways.stream().allMatch(way ->
-                reach(box, placed, way) + reach(other, stands, way) - Math.abs(apart.dot(way)) > 1);
-    }
-
-    /** How far a box placed so reaches from its middle along {@code way}. */
-    private double reach(final Box box, final Placed placed, final Spot way) {
-        final Spot lying = placed.lying(way);
-        final Spot half = box.half();
-        return Math.abs(lying.across()) * half.across() + Math.abs(lying.up()) * half.up()
-                + Math.abs(lying.along()) * half.along();
+        return new Overlap(box, placed, other, stands).parting().map(parting -> parting.deep() > 1).orElse(false);
     }
 
     /**

@@ -106,6 +106,10 @@ public record Loose(Reckoning reckoning, double slack, Explaining explaining) im
 
     /** The first correction of a thing with corners: {@code regular} itself, where there is nothing to put right. */
     private Out cornered(final Mover now, final Out regular, final List<Collision> collisions) {
+        // held on what it stands on, it is not moved by what meets it: nothing slides, and what rolls into it stops
+        if (regular.next().landed()) {
+            return regular;
+        }
         Spot velocity = regular.next().moved().velocity();
         boolean pushed = false;
         for (final Collision collision : collisions) {

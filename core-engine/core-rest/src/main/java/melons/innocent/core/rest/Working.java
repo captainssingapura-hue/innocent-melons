@@ -110,7 +110,7 @@ final class Working<E extends Explanation<Rigid>> {
             moving.put(name, regular.get(name).state().mover());
         }
         final Others others = new Others(things, resting, carrying::going, before, new TreeMap<>(moving),
-                outsiders);
+                outsiders, taken.seconds());
         final Map<String, List<Collision>> found = new TreeMap<>();
         regular.forEach((name, stepped) -> found.put(name, new InThePath(touching).of(name,
                 things.get(name).shape(), before.get(name).placed(), stepped.state().mover().placed(),

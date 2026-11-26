@@ -9,8 +9,9 @@ import java.util.function.Function;
 
 /**
  * What else there is, for a thing that has just been stepped to find in its path: the outsiders; every other thing
- * in motion, from where it was to where its own engine has just put it; and the round things at rest, which
- * nothing rests on and the regular tick does not meet. All of it is as one tick found it and made it, so every
+ * in motion, from where it was to where its own engine has just put it; the round things at rest, which nothing
+ * rests on and the regular tick does not meet; and, for a thing with corners, the things with corners at rest,
+ * which its regular tick meets only from above. All of it is as one tick found it and made it, so every
  * thing's path is looked along against the same world, whatever order they are taken in.
  *
  * <p>Where what is met can itself be moved, the two are brought to how they would go on together along the line
@@ -23,10 +24,11 @@ import java.util.function.Function;
  * @param before    how each thing in motion stood and moved when the tick began
  * @param after     how each thing in motion stands and moves as its engine has just left it, uncorrected
  * @param outsiders what is in the world this tick and is not the world's to step
+ * @param seconds   how long the tick is
  */
 record Others(Map<String, Rigid> things, Map<String, Placed> resting, Function<String, Spot> carried,
               Map<String, Simulator.Mover> before, Map<String, Simulator.Mover> after,
-              Map<String, Outsider> outsiders) {
+              Map<String, Outsider> outsiders, double seconds) {
 
     /** How fast a thing at rest must be come at to be moved by it, in centimetres a second. */
     private static final double STRIKES = 1;
@@ -48,6 +50,12 @@ record Others(Map<String, Rigid> things, Map<String, Placed> resting, Function<S
                 final Spot its = carried.apply(with);
                 blockers.put(with, new Blocker(things.get(with).shape(), stands, stands,
                         going.minus(its).length() < STRIKES ? its : together(name, going, with, its)));
+            } else if (!(things.get(name).shape() instanceof Ellipsoid)
+                    && !(things.get(with).shape() instanceof Shell)) {
+                // a thing with corners at rest bars another's path and stands: from where it was carried from
+                final Spot its = carried.apply(with);
+                blockers.put(with, new Blocker(things.get(with).shape(), stands.moved(its.times(-seconds)),
+                        stands, its));
             }
         });
         return blockers;
