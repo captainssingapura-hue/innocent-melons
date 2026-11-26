@@ -1,6 +1,7 @@
 package melons.innocent.core.loose;
 
 import melons.innocent.core.motion.Spot;
+import melons.innocent.core.rest.Collision;
 import melons.innocent.core.motion.Turn;
 import melons.innocent.core.rest.Moved;
 import melons.innocent.core.rest.Placed;
@@ -73,6 +74,32 @@ public record Loose(Reckoning reckoning, double slack) implements Simulator {
     }
 
     /** One part of a tick: what rolls is rolled; what has corners flies, tips, or is held. */
+    /**
+     * What rolls is corrected as rolling corrects it. A thing with corners goes no further into what it met: it
+     * keeps what of its speed, and of its path, is not into that, as that is going.
+     */
+    @Override
+    public Stepped correctionS1(final Rigid rigid, final Mover now, final Around around, final double seconds,
+                                final Stepped stepped, final List<Collision> collisions) {
+        if (rigid.rolls()) {
+            return new Rolling(reckoning, slack).correctionS1(rigid, now, stepped, collisions, seconds);
+        }
+        Spot velocity = stepped.next().moved().velocity();
+        boolean pushed = false;
+        for (final Collision collision : collisions) {
+            final double into = velocity.minus(collision.touch().going()).dot(collision.touch().pushes());
+            pushed = pushed || into < 0;
+            velocity = into < 0 ? velocity.minus(collision.touch().pushes().times(into)) : velocity;
+        }
+        // only touching what it met, or leaving it: nothing to put right
+        if (!pushed) {
+            return stepped;
+        }
+        return new Stepped(new Mover(new Barred(collisions).placed(now, stepped),
+                new Moved(velocity, stepped.next().moved().spin()),
+                stepped.next().landed(), stepped.next().still()), stepped.on());
+    }
+
     private Stepped once(final Rigid rigid, final Mover now, final Around around, final double seconds) {
         if (rigid.rolls()) {
             return new Rolling(reckoning, slack).stepped(rigid, now, around, seconds);

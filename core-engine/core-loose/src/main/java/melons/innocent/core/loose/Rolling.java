@@ -1,6 +1,7 @@
 package melons.innocent.core.loose;
 
 import melons.innocent.core.motion.Spot;
+import melons.innocent.core.rest.Collision;
 import melons.innocent.core.rest.Moved;
 import melons.innocent.core.rest.Placed;
 import melons.innocent.core.rest.Reckoning;
@@ -63,6 +64,57 @@ record Rolling(Reckoning reckoning, double slack) {
         return new Simulator.Stepped(new Simulator.Mover(gone.moved(out), moved, stopped,
                 stopped ? now.still() + 1 : 0),
                 touches.isEmpty() && !met.isEmpty() ? Optional.of(met.getFirst().on()) : Optional.empty());
+    }
+
+    /**
+     * The first correction of a tick's rolling: {@code stepped} put right for what the world then found in the
+     * thing's path. At each spot it met something it is pushed straight out of it, just so much that the spot of it
+     * there is no longer moving into what it met, as that is going: it is not gripped there, and it is not thrown
+     * back. So it stops against what stands still and is taken along by what comes at it; and it goes on with
+     * whatever of its path is not into what it met ({@link Barred}). Where it was hardly moving when it met it,
+     * a melon leaning on someone's shin, it is stopped against it and counted toward its rest.
+     */
+    Simulator.Stepped correctionS1(final Rigid rigid, final Simulator.Mover now, final Simulator.Stepped stepped,
+                                   final List<Collision> collisions, final double seconds) {
+        final Barred barred = new Barred(collisions);
+        Moved moved = stepped.next().moved();
+        boolean pushed = false;
+        for (final Collision collision : collisions) {
+            final Optional<Moved> kept = kept(rigid, barred.first().there(), collision.touch(), moved);
+            pushed = pushed || kept.isPresent();
+            moved = kept.orElse(moved);
+        }
+        // only touching what it met, or leaving it, as a thing thrown leaves the hand: nothing to put right
+        if (!pushed) {
+            return stepped;
+        }
+        // hardly moving when it met it, and what it met hardly moving: it is leaning on it, and stopped against
+        // it, as rolling is slowed to a stop on the ground; counted toward its rest where it was
+        final double hardly = reckoning.rolling() * reckoning.gravity() * seconds;
+        if (stepped.next().moved().velocity().length() <= hardly
+                && barred.first().touch().going().length() <= hardly) {
+            return new Simulator.Stepped(new Simulator.Mover(new Placed(barred.first().there().at(),
+                    stepped.next().placed().turned()), new Moved(), true, now.still() + 1), stepped.on());
+        }
+        return new Simulator.Stepped(new Simulator.Mover(barred.placed(now, stepped), moved,
+                stepped.next().landed(), stepped.next().still()), stepped.on());
+    }
+
+    /**
+     * {@code moved} after the push straight out of what is met at {@code touch} that keeps the spot of the thing
+     * there from moving into it: none, where that spot is not moving into it at all.
+     */
+    private Optional<Moved> kept(final Rigid rigid, final Placed placed, final Touch touch, final Moved moved) {
+        final Spot arm = touch.at().minus(placed.at());
+        final double into = moved.velocity().plus(moved.spin().cross(arm)).minus(touch.going()).dot(touch.pushes());
+        if (into >= -1e-9) {
+            return Optional.empty();
+        }
+        final double kilograms = rigid.kilograms();
+        final Spot push = touch.pushes().times(-into / given(rigid, placed, arm, touch.pushes(), kilograms)
+                .dot(touch.pushes()));
+        return Optional.of(new Moved(moved.velocity().plus(push.times(1 / kilograms)),
+                moved.spin().plus(turned(rigid, placed, arm.cross(push)))));
     }
 
     /**

@@ -39,6 +39,10 @@ public sealed interface Happened {
     record Rested(String thing, Set<String> on) implements Happened {
     }
 
+    /** A thing at rest was struck by one in motion, {@code by}, and is let go with what the blow gave it. */
+    record Struck(String thing, String by) implements Happened {
+    }
+
     /** Two things were found run into each other where they were described: a fault in the description. */
     record Overlapping(String thing, String other) implements Happened {
     }

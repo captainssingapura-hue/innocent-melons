@@ -20,6 +20,9 @@ import java.util.List;
  */
 public final class LooseWalk {
 
+    /** How far over its feet the engine has the avatar's eyes, which is where a walk says its head is. */
+    private static final double EYES = 160;
+
     private LooseWalk() {
     }
 
@@ -31,6 +34,7 @@ public final class LooseWalk {
                 .walked(new Stepping(new Afoot(), (step, going) -> {
                     final Vec3 head = going.head(1);
                     handling.stepped(step, new Spot(head.x(), head.y(), head.z()), going.yaw(1), going.tilt(1));
+                    trial.stood(new Spot(head.x(), head.y() - EYES, head.z()), going.yaw(1));
                     trial.ticked();
                 }, List.of("  T: take up what is at hand, or put down what is held",
                         "  G: more to do with it; up and down choose, T does it",

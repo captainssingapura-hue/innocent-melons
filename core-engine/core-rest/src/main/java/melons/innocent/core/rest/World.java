@@ -118,14 +118,45 @@ public final class World {
         // who rides what, now that what is held is known; and then the driven things go on, their riders with them
         dirty.addAll(carrying.ridden(supports, resting));
         carrying.carried(resting, seconds);
-        for (final String name : lowestFirst(moving.keySet())) {
-            final Simulator.Stepped stepped = loose.stepped(things.get(name), moving.get(name),
-                    (rigid, placed) -> touches(name, rigid, placed, true), seconds);
-            moving.put(name, stepped.next());
-            stepped.on().ifPresent(on -> happened.add(new Happened.Landed(name, on)));
-        }
+        moved(asked.outsiders(), seconds, happened);
         rested(happened);
         return happened;
+    }
+
+    /**
+     * The things in motion a tick on. First the regular tick: each is stepped by its engine, the lowest first.
+     * Then, every one of them having been stepped, what stood in the path each took is looked for, all against
+     * the one tick, and each one's engine corrects what it worked out for what was found. Last, a thing at rest
+     * that one of them struck is let go, going as the blow leaves it.
+     */
+    private void moved(final Map<String, Outsider> outsiders, final double seconds, final List<Happened> happened) {
+        final Map<String, Simulator.Mover> before = new TreeMap<>(moving);
+        final Map<String, Simulator.Stepped> regular = new TreeMap<>();
+        for (final String name : lowestFirst(moving.keySet())) {
+            regular.put(name, loose.stepped(things.get(name), moving.get(name),
+                    (rigid, placed) -> touches(name, rigid, placed, true), seconds));
+            moving.put(name, regular.get(name).next());
+        }
+        final Others others = new Others(things, resting, carrying::going, before, regular, outsiders);
+        final Map<String, List<Collision>> found = new TreeMap<>();
+        regular.forEach((name, stepped) -> found.put(name, new InThePath(touching).of(name,
+                things.get(name).shape(), before.get(name).placed(), stepped.next().placed(), others.round(name))));
+        found.forEach((name, collisions) -> {
+            final Simulator.Stepped stepped = collisions.isEmpty() ? regular.get(name)
+                    : loose.correctionS1(things.get(name), before.get(name),
+                            (rigid, placed) -> touches(name, rigid, placed, true), seconds, regular.get(name),
+                            collisions);
+            moving.put(name, stepped.next());
+            stepped.on().ifPresent(on -> happened.add(new Happened.Landed(name, on)));
+        });
+        others.struck(found).forEach((name, collision) -> {
+            final Spot pushes = collision.touch().pushes();
+            final Spot more = pushes.times(collision.touch().going().minus(carrying.going(name)).dot(pushes));
+            letGo(name);
+            moving.put(name, new Simulator.Mover(moving.get(name).placed(),
+                    new Moved(moving.get(name).moved().velocity().plus(more), new Spot(0, 0, 0)), false, 0));
+            happened.add(new Happened.Struck(name, collision.thing()));
+        });
     }
 
     /** A thing out of the world, destroyed or taken up: what rode it let go, what stood on it to be checked. */

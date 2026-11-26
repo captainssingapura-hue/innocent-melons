@@ -49,6 +49,12 @@ public record Ellipsoid(double across, double up, double along) implements Shape
                 + twentieth * (across * across + up * up) * along.along() * along.along();
     }
 
+    /** How far its surface is from its middle the way {@code way} goes, in its own frame, {@code way} one long. */
+    public double out(final Spot way) {
+        final Spot scaled = new Spot(2 * way.across() / across, 2 * way.up() / up, 2 * way.along() / along);
+        return 1 / scaled.length();
+    }
+
     /** The spot of it, from its middle, that reaches furthest the {@code way} said, in its own frame. */
     public Spot furthest(final Spot way) {
         final Spot scaled = new Spot(way.across() * across / 2, way.up() * up / 2, way.along() * along / 2);

@@ -56,6 +56,19 @@ public record Touching(double slack, double skin, double steep) {
         };
     }
 
+    /**
+     * Where a thing of {@code shape} placed so meets {@code other}, called {@code on}, standing as said, when what
+     * is asked is whether its path is barred and not what holds it up: as {@link #held} has it, and besides two
+     * round things where they meet, which hold neither up.
+     */
+    public List<Touch> met(final ShapeImpl<?> shape, final Placed placed, final String on,
+                           final ShapeImpl<?> other, final Placed stands) {
+        if (shape instanceof Ellipsoid round && other instanceof Ellipsoid ball) {
+            return new RoundTouch(slack, skin).rounds(round, placed, on, ball, stands);
+        }
+        return held(shape, placed, on, other, stands);
+    }
+
     /** Whether two things are run well into each other where they stand; never said of a round one. */
     public boolean overlapping(final ShapeImpl<?> shape, final Placed placed, final ShapeImpl<?> other,
                                final Placed stands) {
