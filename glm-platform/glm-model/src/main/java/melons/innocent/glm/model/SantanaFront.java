@@ -46,6 +46,12 @@ record SantanaFront(SantanaLines lines) {
         return out;
     }
 
+    /** The front wheel's arch, its lip as the wing's outline runs round it. */
+    Arch arch() {
+        return new Arch(0, ARCH_UP, ARCH, Math.toDegrees(Math.asin((UNDER - ARCH_UP) / ARCH)),
+                180 - Math.toDegrees(Math.asin((FOOT - ARCH_UP) / ARCH)));
+    }
+
     /** Where a wing is bolted to the shell: its foot at its back edge, along and up, in centimetres. */
     Spot anchor() {
         return at(BACK, FOOT);

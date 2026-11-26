@@ -14,8 +14,9 @@ import java.util.List;
  * shell, its root its underbody, every chassis mount on it: the body sides welded along it, the bulkhead and the tail
  * panel across it, and the roof's two headers across between the body sides, a cage for the roof's glass; and its
  * four doors hung in it, its front wings, bumpers, front face and tail lamps bolted on ({@link FrontFace},
- * {@link TailLamps}), its number plates on the front bumper and the tail panel, its bonnet and boot lid hinged; and
- * its glass, the roof dark ({@link SantanaGlazing}).
+ * {@link TailLamps}), its number plates on the front bumper and the tail panel, its bonnet and boot lid hinged,
+ * chrome round its wheels' arches and mud flaps behind them ({@link WheelArches}); and its glass, the roof dark
+ * ({@link SantanaGlazing}).
  */
 public record Santana() implements Bodywork {
 
@@ -79,6 +80,8 @@ public record Santana() implements Bodywork {
         }
         joined.addAll(new FrontFace(LINES).joined(root));
         joined.addAll(new TailLamps(LINES).joined(tail));
+        joined.addAll(new WheelArches(LINES).joined(wing, new FrontWing(LINES).anchor(), side,
+                root.point("body side, right").at()));
         final Vec3 lamp = new TailLamps(LINES).middle();
         joined.addAll(new NumberPlate("rear number plate", new Vec3(0, lamp.y(), lamp.z()), -1).joined(tail,
                 "number plate"));

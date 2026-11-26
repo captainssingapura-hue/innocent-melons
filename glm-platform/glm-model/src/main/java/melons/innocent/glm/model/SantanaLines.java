@@ -153,6 +153,11 @@ record SantanaLines() {
             {-2_380, 932}, {-2_382, 1_278}, {-2_404, 1_286}, {-2_762, 950}, {-2_748, 940}});
     }
 
+    /** The rear wheel's arch, its lip as the body side's outline runs round it. */
+    Arch rearArch() {
+        return new Arch(ARCH_ALONG, ARCH_UP, ARCH, 180 - rise(ARCH, BOOT), rise(ARCH, 292));
+    }
+
     /**
      * How far out from the middle its side is, at {@code up} over the ground and {@code along} from the front axle,
      * in centimetres: as the front view's section has it, drawn in a little round the tail's corners and the nose's.
