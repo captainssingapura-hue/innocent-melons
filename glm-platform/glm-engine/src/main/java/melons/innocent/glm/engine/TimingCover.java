@@ -19,7 +19,8 @@ import java.util.List;
 /**
  * The timing cover, cast in aluminium, across the engine's front: closing in the chain that runs from the crank's
  * sprocket up round each camshaft's wheel, its face ahead of the wheels, as far round as the crank's sprocket and
- * every camshaft's wheel reach, the crank's nose through it; and its wall back from its face to the block and the
+ * every camshaft's wheel reach, in a V notched down between its banks as far as its chains let it, the crank's
+ * nose through it; and its wall back from its face to the block and the
  * heads. Its point: the crank's axis at the block's front, where it is bolted.
  *
  * @param figures the engine's figures
@@ -35,20 +36,37 @@ record TimingCover(EngineFigures figures) {
     private static final double PAST = 0.5;
     private static final double SPROCKET = 7;
 
+    /**
+     * Its outline, across the crank: round the crank's sprocket and every camshaft's; in a V, round each bank's
+     * own, so where the banks stand apart it is notched down between them as far as their chains, each a tower of its
+     * own ({@link Union}).
+     */
+    List<Spot> outline() {
+        if (figures.banks() == 2 && !figures.boxer()) {
+            return new Union(round(1, SPROCKET), round(0, SPROCKET - 0.1)).outline();
+        }
+        final List<Spot> all = new ArrayList<>(round(0, SPROCKET));
+        for (int b = 1; b < figures.banks(); b++) {
+            all.addAll(round(b, SPROCKET));
+        }
+        return new Hull(all).outline();
+    }
+
+    /** The outline round the crank's sprocket, {@code crank} round, and bank {@code bank}'s camshafts'. */
+    private List<Spot> round(final int bank, final double crank) {
+        final Outlines outlines = new Outlines(ROUND);
+        final List<Spot> round = new ArrayList<>(outlines.circle(new Spot(0, 0), crank));
+        final ChainFigures chain = new ChainFigures(figures, bank);
+        for (final boolean inlet : List.of(true, false)) {
+            round.addAll(outlines.circle(chain.cam(inlet), chain.cam() + Sprocket.TOOTH + PAST));
+        }
+        return new Hull(round).outline();
+    }
+
     /** It. */
     Part part() {
-        final HeadFigures head = new HeadFigures(figures);
-        final List<Spot> round = new ArrayList<>();
         final Outlines outlines = new Outlines(ROUND);
-        round.addAll(outlines.circle(new Spot(0, 0), SPROCKET));
-        for (int b = 0; b < figures.banks(); b++) {
-            for (final boolean inlet : List.of(true, false)) {
-                final Vec3 cam = head.at(b, 0, head.cam(inlet));
-                round.addAll(outlines.circle(new Spot(cam.x(), cam.y()), new ChainFigures(figures, b).cam()
-                        + Sprocket.TOOTH + PAST));
-            }
-        }
-        final List<Spot> outline = new Hull(round).outline();
+        final List<Spot> outline = outline();
         final List<Mesh> made = new ArrayList<>();
         final double nose = new CrankFigures(figures).main() * 0.8 + 0.3;
         made.add(new Plate(outline, List.of(outlines.circle(new Spot(0, 0), nose)), new Vec3(0, 0, FACE),

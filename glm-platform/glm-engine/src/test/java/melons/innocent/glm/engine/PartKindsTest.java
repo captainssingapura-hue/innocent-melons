@@ -33,7 +33,7 @@ class PartKindsTest {
                 assertTrue(tree.has(part.kind().get()), part.name());
                 final String side = part.kind().get().lineage().get(1).title();
                 final boolean own = e.twin() && (part.is(new EngineParts.Blocks())
-                        || part.is(new EngineParts.TwinCamHead()) || part.is(new EngineParts.CamCover())
+                        || part.is(new EngineParts.TwinCamHead()) || part.is(new EngineParts.V2Covers())
                         || part.is(new EngineParts.SplitPinCrankshaft()) || part.is(new EngineParts.CamChain()));
                 assertTrue(side.startsWith(own ? "V2" : "Glm"), part.name() + " among the right ones, not " + side);
             }
@@ -52,6 +52,8 @@ class PartKindsTest {
         assertEquals(1, count(twin, new EngineParts.SplitPinCrankshaft()));
         assertEquals(2, count(twin, new EngineParts.TwinCamHead()));
         assertEquals(2, count(twin, new EngineParts.CamCover()));
+        assertEquals(1, count(twin, new EngineParts.ClutchCover()));
+        assertEquals(1, count(twin, new EngineParts.OilSump()));
         for (final EngineFigures e : range.all()) {
             final List<Part> parts = parts(e);
             final int cylinders = e.cylinders();

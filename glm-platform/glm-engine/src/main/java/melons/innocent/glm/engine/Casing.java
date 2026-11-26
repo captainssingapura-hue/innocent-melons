@@ -21,4 +21,9 @@ interface Casing {
 
     /** Where the engine's mount is on side {@code side}. */
     Vec3 mount(int side);
+
+    /** Where shafts besides the crank go through its ends, each in its bearing: none, but a gearbox's. */
+    default List<Spot> shafts() {
+        return List.of();
+    }
 }

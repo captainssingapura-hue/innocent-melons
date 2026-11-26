@@ -16,7 +16,8 @@ import java.util.List;
  * An engine's block, cast in aluminium, bare, to its figures, in its own frame: the crank's axis along z from the
  * block's front. Its points: the crank's axis at its front and at its rear, where the gearbox is bolted; each main
  * bearing; the middle of each bank's deck, where its head is bolted, and each cylinder's middle at its deck, or in a
- * twin's crankcase each barrel's foot ({@link Barrel}); and its mounts, right and left.
+ * twin's crankcase each barrel's foot ({@link Barrel}); its mounts, right and left, a twin's ahead and behind; and a
+ * twin's oil pan's rim on its bottom ({@link OilPan}).
  *
  * @param figures the engine's figures
  */
@@ -48,6 +49,9 @@ public record CastBlock(EngineFigures figures) {
         // its right, seen from behind as the car's is, is -x in its own frame, its front at nought
         points.add(new Point("mount, right", form.mount(-1)));
         points.add(new Point("mount, left", form.mount(1)));
+        if (figures.twin()) {
+            points.add(new Point("sump", new OilPan(figures).rim()));
+        }
         return new Part(figures.name() + (figures.twin() ? " crankcase" : " block"), Group.ENGINE, false, points,
                 form.mesh(), new Made(Material.ALUMINIUM, true)).as(kind());
     }

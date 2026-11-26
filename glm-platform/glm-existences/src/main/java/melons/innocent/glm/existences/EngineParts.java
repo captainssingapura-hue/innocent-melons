@@ -7,12 +7,16 @@ import com.example.fxsuite.taxonomy.Leaf;
 import com.example.fxsuite.taxonomy.Meanings;
 import com.example.fxsuite.taxonomy.Taxonomy;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * Engine parts: the kinds of part an engine needs, by what each does in it. The blocks the cylinders are bored in and
  * the crank is carried by; the cranks, what turns and what goes up and down; the heads and what works the valves in
- * them; the covers; the electrics; the drives, from the crank to the cams and, in a motorcycle, on to its gearbox; and
+ * them; the covers; the electrics; the drives, from the crank to the cams and, in a motorcycle, on through its
+ * primary drive, its clutch and its gearbox, each a group of its own ({@link Transmission}); and
  * the fluids, its oil and its water. Each group is split twice: the GLM's own, generic to every engine its one
  * modular design casts; and the V2's, the motorcycle twin's own kinds, where its parts are not the GLM's. The V2 takes
  * the GLM's kinds wherever they serve it: its pistons, rods, valves and plugs are theirs.
@@ -36,10 +40,18 @@ public record EngineParts() {
                 new CoilPack(), new SparkPlug(),
                 new Alternator(), new StarterMotor(),
                 new TimingChain(), new ChainGuide(), new ChainTensioner(),
-                new CamChain(), new PrimaryDrive(), new WetClutch(), new Gearbox(),
+                new CamChain(),
+                new Transmission.ScissorGear(), new Transmission.ClutchGear(),
+                new Transmission.ClutchBasket(), new Transmission.ClutchHub(), new Transmission.FrictionPlate(),
+                new Transmission.SteelPlate(), new Transmission.PressurePlate(), new Transmission.ClutchSpring(),
+                new Transmission.SlipperRamp(),
+                new Transmission.Mainshaft(), new Transmission.Countershaft(), new Transmission.FixedGear(),
+                new Transmission.FreeGear(), new Transmission.SlidingGear(), new Transmission.ShiftDrum(),
+                new Transmission.ShiftFork(), new Transmission.ShiftShaft(), new Transmission.OutputPulley(),
                 new OilSump(), new OilPump(), new WaterPump(),
                 new OilCooler()),
-                Meanings.INSTANCE.beside(EngineParts.class));
+                Stream.of(EngineParts.class, Transmission.class).map(Meanings.INSTANCE::beside)
+                        .collect(LinkedHashMap<String, String>::new, Map::putAll, Map::putAll));
     }
 
     /** The root: a part of an engine. */
@@ -104,7 +116,9 @@ public record EngineParts() {
         public GlmElectrics parent() { return new GlmElectrics(); }
     }
     public record V2Electrics() implements L2<Electrics> { public Electrics parent() { return new Electrics(); } }
-    public record Alternator() implements Leaf<V2Electrics> { public V2Electrics parent() { return new V2Electrics(); } }
+    public record Alternator() implements Leaf<V2Electrics> {
+        public V2Electrics parent() { return new V2Electrics(); }
+    }
     public record StarterMotor() implements Leaf<V2Electrics> {
         public V2Electrics parent() { return new V2Electrics(); }
     }
@@ -119,9 +133,6 @@ public record EngineParts() {
     }
     public record V2Drives() implements L2<Drives> { public Drives parent() { return new Drives(); } }
     public record CamChain() implements Leaf<V2Drives> { public V2Drives parent() { return new V2Drives(); } }
-    public record PrimaryDrive() implements Leaf<V2Drives> { public V2Drives parent() { return new V2Drives(); } }
-    public record WetClutch() implements Leaf<V2Drives> { public V2Drives parent() { return new V2Drives(); } }
-    public record Gearbox() implements Leaf<V2Drives> { public V2Drives parent() { return new V2Drives(); } }
 
     // Fluids: what keeps the oil round the engine and the water through it
     public record Fluids() implements L1<EnginePart> { public EnginePart parent() { return new EnginePart(); } }

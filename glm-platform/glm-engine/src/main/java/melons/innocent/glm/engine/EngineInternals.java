@@ -37,6 +37,7 @@ public final class EngineInternals {
     private final Map<Part, String> pistons = new LinkedHashMap<>();
     private final List<Part> heads = new ArrayList<>();
     private final List<Part> barrels = new ArrayList<>();
+    private final List<Part> pan = new ArrayList<>();
     private final Valvetrain valvetrain;
     private final TimingDrive drive;
     private final Covers covers;
@@ -48,6 +49,9 @@ public final class EngineInternals {
         this.valvetrain = new Valvetrain(figures);
         this.drive = new TimingDrive(figures);
         this.covers = new Covers(figures);
+        if (figures.twin()) {
+            pan.add(new OilPan(figures).part());
+        }
         for (int b = 0; b < figures.banks(); b++) {
             heads.add(new CylinderHead(figures, b).part());
             if (figures.twin()) {
@@ -98,6 +102,8 @@ public final class EngineInternals {
             joined.add(new Connection(figures.name() + " main bearing " + j, block, "main bearing " + j, crank,
                     "main " + j, Joining.HINGE));
         }
+        pan.forEach(part -> joined.add(new Connection(part.name() + " under the crankcase", block, "sump", part, "rim",
+                Joining.BOLTED)));
         for (int b = 0; b < barrels.size(); b++) {
             joined.add(new Connection(barrels.get(b).name() + " on the crankcase", block, "barrel, bank " + (b + 1),
                     barrels.get(b), "foot", Joining.BOLTED));
@@ -181,9 +187,9 @@ public final class EngineInternals {
         return heads.contains(part);
     }
 
-    /** Whether {@code part} is cast as its block is, apart from it: one of its heads, or a twin's barrels. */
+    /** Whether {@code part} is cast as its block is, apart from it: one of its heads, or a twin's barrels or oil pan. */
     public boolean cast(final Part part) {
-        return heads.contains(part) || barrels.contains(part);
+        return heads.contains(part) || barrels.contains(part) || pan.contains(part);
     }
 
     /** A cylinder's combustion chamber whole, in its own frame, as the charge burning in it fills it. */

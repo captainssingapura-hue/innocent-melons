@@ -6,6 +6,7 @@ import melons.innocent.glm.core.Assembled;
 import melons.innocent.glm.core.Assembly;
 import melons.innocent.glm.core.Material;
 import melons.innocent.glm.core.Part;
+import melons.innocent.vehiclelab.forms.Spot;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -62,6 +63,43 @@ class EngineBlockTest {
     }
 
     @Test
+    void aTwinsCrankcaseRoundItsGearboxItsBarrelsStillSeated() {
+        final EngineFigures v2 = range.v2();
+        final BlockForm form = new BlockForm(v2);
+        final GearboxFigures gearbox = new GearboxFigures(v2);
+        final List<Spot> section = form.section();
+        assertEquals(gearbox.bottom(), section.get(0).v(), 1e-9, "flat beneath, for the oil pan");
+        assertEquals(gearbox.bottom(), section.get(1).v(), 1e-9);
+        assertTrue(gearbox.primary() >= form.clear() + gearbox.mainGear(), "the crank's swing clear of the gears");
+        assertTrue(gearbox.mainshaft().u() > 0 && gearbox.countershaft().u() > gearbox.mainshaft().u(),
+                "the gearbox behind the crank, under the back bank");
+        for (final Spot shaft : List.of(gearbox.mainshaft(), gearbox.countershaft())) {
+            final double room = shaft == gearbox.mainshaft() ? gearbox.mainCase() : gearbox.counterCase();
+            for (int i = 0; i < section.size(); i++) {
+                final double edge = apart(shaft, section.get(i), section.get((i + 1) % section.size()));
+                assertTrue(edge >= room * Math.cos(Math.PI / 24) - 1e-6,
+                        "the case round its gears at " + shaft);
+            }
+        }
+        for (int b = 0; b < 2; b++) {
+            final Vec3 foot = form.up(b).times(form.top());
+            final Spot outer = new Spot(foot.plus(form.out(b).times(form.half())).x(),
+                    foot.plus(form.out(b).times(form.half())).y());
+            assertTrue(section.stream().anyMatch(p -> Math.hypot(p.u() - outer.u(), p.v() - outer.v()) < 1e-6),
+                    "the barrel's foot still on the case, bank " + (b + 1));
+        }
+        assertEquals(v2.length() + ClutchCover.OUT, new ClutchCover(v2).part().form().points().stream()
+                .mapToDouble(Vec3::z).max().orElseThrow() - 0.2, 1e-6, "the clutch cover out past the clutch");
+    }
+
+    /** How far {@code p} is from the line through {@code a} and {@code b}, inside a section drawn to the left. */
+    private double apart(final Spot p, final Spot a, final Spot b) {
+        final double du = b.u() - a.u();
+        final double dv = b.v() - a.v();
+        return (du * (p.v() - a.v()) - dv * (p.u() - a.u())) / Math.hypot(du, dv);
+    }
+
+    @Test
     void aTwinsBanksClearOfEachOtherAcrossItsV() {
         final EngineInternals inside = new EngineInternals(range.v2());
         final Assembled covered = new Assembly(inside.platform(true)).assembled();
@@ -77,7 +115,8 @@ class EngineBlockTest {
                 }
             }
         }
-        assertEquals(9, outside.size(), "two barrels, two heads, two cam covers, their coils and the timing cover");
+        assertEquals(11, outside.size(), "two barrels, two heads, two cam covers, their coils, the oil pan, the timing"
+                + " cover and the clutch cover");
         assertEquals(List.of(), touched, "each bank's barrel, head, cover and coils clear of the other's");
     }
 
@@ -121,10 +160,10 @@ class EngineBlockTest {
     void theRangePutTogetherOnItsStands() {
         final Assembled shown = new Assembly(new EngineShow().platform()).assembled();
         assertEquals(List.of(), shown.problems(1e-6));
-        assertEquals(1 + 8 + 2 + 8 + 6 * (2 + 1 + 2 + 1 + 2 + 2 + 2 + 2) + 11 * (2 + 4 + 4 + 5 + 6 + 6 + 8 + 12),
-                shown.placed().size(), "the stands, eight blocks, the twin's two barrels, eight cranks; a head, two"
-                        + " camshafts, a timing chain, its guide and its tensioner on every bank; and a rod, a piston,"
-                        + " a pin, four valves and four springs in every cylinder");
+        assertEquals(1 + 8 + 2 + 1 + 8 + 6 * (2 + 1 + 2 + 1 + 2 + 2 + 2 + 2) + 11 * (2 + 4 + 4 + 5 + 6 + 6 + 8 + 12),
+                shown.placed().size(), "the stands, eight blocks, the twin's two barrels and oil pan, eight cranks;"
+                        + " a head, two camshafts, a timing chain, its guide and its tensioner on every bank; and a rod,"
+                        + " a piston, a pin, four valves and four springs in every cylinder");
     }
 
     @Test

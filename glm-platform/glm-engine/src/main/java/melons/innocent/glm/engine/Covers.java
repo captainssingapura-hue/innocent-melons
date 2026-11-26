@@ -12,7 +12,8 @@ import java.util.Optional;
  * What closes an engine in, as it is with the bonnet up: a cover bolted on each head over its camshafts, the coils
  * through it onto the plugs, the timing cover across the front over the chain, and over it all the trim cover, but on
  * a boxer, whose heads lie out either side and have nothing over them to hide. A twin wears its cam covers, its coils
- * and the timing cover over its cam chains, but no trim. Made once, its parts kept; joined to the engine only when
+ * and the timing cover over its cam chains, and the clutch cover over its primary drive and its clutch at the
+ * crankcase's other end, but no trim. Made once, its parts kept; joined to the engine only when
  * it is asked to be covered.
  */
 final class Covers {
@@ -21,6 +22,7 @@ final class Covers {
     private final List<Part> coils = new ArrayList<>();
     private final Optional<Part> timing;
     private final Optional<Part> trim;
+    private final Optional<Part> clutch;
 
     /** Its parts, made to {@code figures}. */
     Covers(final EngineFigures figures) {
@@ -30,6 +32,7 @@ final class Covers {
         }
         this.timing = Optional.of(new TimingCover(figures).part());
         this.trim = figures.boxer() || figures.twin() ? Optional.empty() : Optional.of(new TrimCover(figures).part());
+        this.clutch = figures.twin() ? Optional.of(new ClutchCover(figures).part()) : Optional.empty();
     }
 
     /** How they are joined to {@code block} and its heads {@code on}, one to a bank, in the order they are walked. */
@@ -45,17 +48,20 @@ final class Covers {
                 cover, "crank", Joining.BOLTED)));
         trim.ifPresent(cover -> joined.add(new Connection(cover.name() + " clipped on", heads.getFirst(), "top",
                 cover, "clip", Joining.SEATED)));
+        clutch.ifPresent(cover -> joined.add(new Connection(cover.name() + " on the crankcase", block, "crank, rear",
+                cover, "crank", Joining.BOLTED)));
         return joined;
     }
 
     /** Whether {@code part} is one of them. */
     boolean has(final Part part) {
         return heads.contains(part) || coils.contains(part) || timing.filter(t -> t == part).isPresent()
-                || trim.filter(t -> t == part).isPresent();
+                || trim.filter(t -> t == part).isPresent() || clutch.filter(c -> c == part).isPresent();
     }
 
     /** How many there are. */
     int count() {
-        return heads.size() + coils.size() + (timing.isPresent() ? 1 : 0) + (trim.isPresent() ? 1 : 0);
+        return heads.size() + coils.size() + (timing.isPresent() ? 1 : 0) + (trim.isPresent() ? 1 : 0)
+                + (clutch.isPresent() ? 1 : 0);
     }
 }
