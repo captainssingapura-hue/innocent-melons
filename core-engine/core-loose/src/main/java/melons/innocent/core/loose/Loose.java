@@ -1,54 +1,55 @@
 package melons.innocent.core.loose;
 
 import melons.innocent.core.motion.Spot;
+import melons.innocent.core.rest.Body;
 import melons.innocent.core.rest.Collision;
-import melons.innocent.core.motion.Turn;
+import melons.innocent.core.rest.Gravity;
+import melons.innocent.core.rest.Landing;
 import melons.innocent.core.rest.Moved;
-import melons.innocent.core.rest.Placed;
-import melons.innocent.core.rest.Reckoned;
 import melons.innocent.core.rest.Reckoning;
 import melons.innocent.core.rest.Rigid;
 import melons.innocent.core.rest.Simulator;
 import melons.innocent.core.rest.Touch;
+import melons.innocent.core.step.Event;
+import melons.innocent.core.step.Explained;
+import melons.innocent.core.step.Explaining;
+import melons.innocent.core.step.Said;
+import melons.innocent.core.tick.Tick;
 
-import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 /**
- * The loose body: the simulator of a thing nothing drives. Each tick it makes the check's own reckoning of the
- * thing's forces ({@link Reckoning}), takes the change of velocity or of turning that comes of it, and moves the
- * thing by what it then has, the new velocity first. So it does one of three things in a tick:
+ * The loose body: the engine of a rigid thing nothing drives, in the one shape of an engine. It keeps nothing: it
+ * is handed the thing, how it stands and moves, what is round it and the tick, and gives how the thing stands and
+ * moves a tick on, with its explanation ({@link Why}) and, where the thing came down on something, that it landed.
  *
- * <ul>
- * <li><b>It flies</b>, touched by nothing, or thrown up off what it stood on: its velocity gains gravity's pull,
- *     it goes on turning as it was, and it moves by both ({@link Flight}), whatever its shape.</li>
- * <li><b>It tips</b>, touched but not balanced: its turning gains what its weight makes about the line it is held
- *     along, and it is carried round that line, which does not slip.</li>
- * <li><b>It is held</b>, balanced on what it touches: it does not move, and the tick is counted toward its rest.</li>
- * </ul>
+ * <p>It does little itself and hands on to an engine under it, chosen by the thing's shape: what rolls to
+ * {@link Rolling}, which keeps its motion; what has corners to {@link Cornered}, which flies, tips or is held, and
+ * stops dead where it lands. A thing on something that is itself going is carried on with that for the tick and
+ * stepped against it. A thing going fast is taken through the tick in parts.
  *
- * <p>That is a thing with corners. A thing of a shape that rolls keeps its motion and is stepped otherwise
- * ({@link Rolling}).
+ * <p>Nothing bounces and nothing slides. In its stepping a thing meets only what is at rest or has itself landed;
+ * what stands in its path besides is found by the core afterwards and put right in the first correction.
  *
- * <p>A landing stops: where falling or tipping would carry it into what could hold it, it is set down just touching
- * and loses all its motion, to be reckoned afresh from there at the next tick. Nothing bounces and nothing slides,
- * and it meets only what is at rest or has itself landed: two loose bodies meeting in the air pass through each
- * other for now.
- *
- * @param reckoning the check it steps by
- * @param slack     how far into something it may be and count as only touching it, in centimetres
+ * @param reckoning  the check it steps by
+ * @param slack      how far into something a thing may be and count as only touching it, in centimetres
+ * @param explaining whether it explains what it works out: the run's switch, said once
  */
-public record Loose(Reckoning reckoning, double slack) implements Simulator {
+public record Loose(Reckoning reckoning, double slack, Explaining explaining) implements Simulator<Why> {
 
-    /** How many times a tipping's last tick is halved to find where it lands. */
-    private static final int HALVINGS = 24;
     /** How far a thing may go in one part of a tick, in centimetres: less than the thinnest thing it should meet. */
     private static final double STRIDE = 8;
 
-    /** A loose body on the Earth, touching within a hundredth of a centimetre. */
+    /** A loose body on the Earth, touching within a hundredth of a centimetre, explaining nothing. */
     public Loose() {
-        this(new Reckoning(), 0.01);
+        this(new Explaining());
+    }
+
+    /** The same, explaining as {@code explaining} says. */
+    public Loose(final Explaining explaining) {
+        this(new Reckoning(), 0.01, explaining);
     }
 
     /**
@@ -57,135 +58,100 @@ public record Loose(Reckoning reckoning, double slack) implements Simulator {
      * rest once a tick, however many parts the tick was cut in.
      */
     @Override
-    public Stepped stepped(final Rigid rigid, final Mover now, final Around around, final double seconds) {
+    public Explained<Rigid, Body, Why> simulated(final Body before, final Tick tick,
+                                                 final List<? extends Event<Rigid>> events) {
+        final Mover now = before.mover();
+        final double seconds = tick.seconds();
         final int parts = (int) Math.max(1, Math.ceil(now.moved().velocity().length() * seconds / STRIDE));
         if (parts == 1) {
-            return once(rigid, now, around, seconds);
+            return given(before, once(before.rigid(), now, before.around(), seconds, before.gravity()));
         }
         Mover mover = now;
         Optional<String> on = Optional.empty();
+        final List<Why> each = new ArrayList<>();
         for (int part = 0; part < parts; part++) {
-            final Stepped stepped = once(rigid, mover, around, seconds / parts);
-            mover = stepped.next();
-            on = on.isPresent() ? on : stepped.on();
+            final Out out = once(before.rigid(), mover, before.around(), seconds / parts, before.gravity());
+            mover = out.next();
+            on = on.isPresent() ? on : out.on();
+            if (explaining.on()) {
+                each.add(out.why());
+            }
         }
-        return new Stepped(new Mover(mover.placed(), mover.moved(), mover.landed(),
-                mover.landed() ? now.still() + 1 : 0), on);
+        return given(before, new Out(new Mover(mover.placed(), mover.moved(), mover.landed(),
+                mover.landed() ? now.still() + 1 : 0), on, new Whys(explaining).of(() -> new Why.InParts(each))));
     }
 
-    /** One part of a tick: what rolls is rolled; what has corners flies, tips, or is held. */
     /**
      * What rolls is corrected as rolling corrects it. A thing with corners goes no further into what it met: it
-     * keeps what of its speed, and of its path, is not into that, as that is going.
+     * keeps what of its speed, and of its path, is not into that, as that is going. Where there was nothing to put
+     * right, the stepping is given back as it was.
      */
     @Override
-    public Stepped correctionS1(final Rigid rigid, final Mover now, final Around around, final double seconds,
-                                final Stepped stepped, final List<Collision> collisions) {
-        if (rigid.rolls()) {
-            return new Rolling(reckoning, slack).correctionS1(rigid, now, stepped, collisions, seconds);
+    public Explained<Rigid, Body, Why> correctionS1(final Body before, final Tick tick,
+                                                    final Explained<Rigid, Body, Why> stepped,
+                                                    final List<Collision> collisions) {
+        final Out regular = new Out(stepped.state().mover(), stepped.said().stream()
+                .filter(Landing.class::isInstance).map(said -> ((Landing) said).on()).findFirst(), stepped.why());
+        final Out corrected = before.rigid().rolls()
+                ? new Rolling(reckoning, slack, new Whys(explaining), before.gravity())
+                        .correctionS1(before.rigid(), before.mover(), regular, collisions, tick.seconds())
+                : cornered(before.mover(), regular, collisions);
+        // only touching what it met, or leaving it: nothing to put right
+        if (corrected == regular) {
+            return stepped;
         }
-        Spot velocity = stepped.next().moved().velocity();
+        return given(before, new Out(corrected.next(), corrected.on(), new Whys(explaining).of(
+                () -> new Why.Corrected(regular.why(), collisions.stream().map(Collision::with).distinct().toList(),
+                        regular.next().moved().velocity().minus(corrected.next().moved().velocity())))));
+    }
+
+    /** The first correction of a thing with corners: {@code regular} itself, where there is nothing to put right. */
+    private Out cornered(final Mover now, final Out regular, final List<Collision> collisions) {
+        // held on what it stands on, it is not moved by what meets it: nothing slides, and what rolls into it stops
+        if (regular.next().landed()) {
+            return regular;
+        }
+        Spot velocity = regular.next().moved().velocity();
         boolean pushed = false;
         for (final Collision collision : collisions) {
             final double into = velocity.minus(collision.touch().going()).dot(collision.touch().pushes());
             pushed = pushed || into < 0;
             velocity = into < 0 ? velocity.minus(collision.touch().pushes().times(into)) : velocity;
         }
-        // only touching what it met, or leaving it: nothing to put right
         if (!pushed) {
-            return stepped;
+            return regular;
         }
-        return new Stepped(new Mover(new Barred(collisions).placed(now, stepped),
-                new Moved(velocity, stepped.next().moved().spin()),
-                stepped.next().landed(), stepped.next().still()), stepped.on());
+        return new Out(new Mover(new Barred(collisions).placed(now, regular.next()),
+                new Moved(velocity, regular.next().moved().spin()),
+                regular.next().landed(), regular.next().still()), regular.on(), regular.why());
     }
 
-    private Stepped once(final Rigid rigid, final Mover now, final Around around, final double seconds) {
+    /** What the core is given back: the body as {@code out} leaves it, its explanation, and its landing if any. */
+    private Explained<Rigid, Body, Why> given(final Body before, final Out out) {
+        return new Explained<>(before.moved(out.next()), out.why(),
+                out.on().map(on -> List.<Said>of(new Landing(on))).orElse(List.of()));
+    }
+
+    /** One part of a tick: handed on to rolling or to what has corners, on what stands still or in a frame. */
+    private Out once(final Rigid rigid, final Mover now, final Around around, final double seconds,
+                     final Gravity gravity) {
+        final Whys whys = new Whys(explaining);
         if (rigid.rolls()) {
-            return new Rolling(reckoning, slack).stepped(rigid, now, around, seconds);
+            return new Rolling(reckoning, slack, whys, gravity).stepped(rigid, now, around, seconds);
         }
+        final Cornered cornered = new Cornered(reckoning, slack, whys, gravity);
         final List<Touch> first = around.touches(rigid, now.placed());
         final Spot frame = first.isEmpty() ? new Spot(0, 0, 0) : first.getFirst().going();
         if (frame.length() == 0) {
-            return cornered(rigid, now, around, seconds);
+            return cornered.stepped(rigid, now, around, seconds);
         }
         // on something that is itself going: carried on with it, and stepped as it stands and moves against that
-        final Stepped within = cornered(rigid, new Mover(now.placed().moved(frame.times(seconds)),
+        final Out within = cornered.stepped(rigid, new Mover(now.placed().moved(frame.times(seconds)),
                 new Moved(now.moved().velocity().minus(frame), now.moved().spin()), now.landed(), now.still()),
                 (shape, placed) -> around.touches(shape, placed).stream()
                         .map(touch -> touch.carried(touch.going().minus(frame))).toList(), seconds);
-        return new Stepped(new Mover(within.next().placed(), new Moved(within.next().moved().velocity().plus(frame),
-                within.next().moved().spin()), within.next().landed(), within.next().still()), within.on());
-    }
-
-    /** A part of a tick of a thing with corners, among things that stand still: it flies, tips, or is held. */
-    private Stepped cornered(final Rigid rigid, final Mover now, final Around around, final double seconds) {
-        final List<Touch> touches = around.touches(rigid, now.placed());
-        // thrown up off what it stood on, it is in flight though it still touches it
-        if (!touches.isEmpty() && touches.stream().allMatch(touch ->
-                now.moved().velocity().dot(touch.pushes()) > 0)) {
-            return fallen(rigid, now, around, seconds);
-        }
-        final Reckoned reckoned = reckoning.of(rigid, now.placed(), touches, seconds);
-        if (reckoned.held()) {
-            // held: stopped where it is, and said to have landed if it was not already down
-            return new Stepped(new Mover(now.placed(), new Moved(), true, now.still() + 1),
-                    now.landed() ? Optional.empty() : Optional.of(touches.getFirst().on()));
-        }
-        return reckoned.hinge().map(hinge -> tipped(rigid, now, around, seconds, reckoned, hinge))
-                .orElseGet(() -> fallen(rigid, now, around, seconds));
-    }
-
-    /** In flight ({@link Flight}): gravity's pull taken, moved by what it then has, and set down where it lands. */
-    private Stepped fallen(final Rigid rigid, final Mover now, final Around around, final double seconds) {
-        final Flight flight = new Flight(reckoning.gravity());
-        final Moved flying = flight.pulled(now.moved(), seconds);
-        final Placed fell = flight.carried(now.placed(), now.moved(), flying, seconds);
-        final Optional<Touch> met = deepest(around.touches(rigid, fell));
-        if (met.isEmpty()) {
-            return new Stepped(new Mover(fell, flying, false, 0), Optional.empty());
-        }
-        // lifted straight up until its deepest corner only touches
-        final double lift = around.touches(rigid, fell).stream().filter(touch -> touch.deep() > slack)
-                .mapToDouble(touch -> touch.deep() / touch.pushes().up()).max().orElse(0);
-        // stopped against what it has come down on, which may itself be going
-        return new Stepped(new Mover(fell.moved(new Spot(0, lift, 0)),
-                new Moved(met.get().going(), new Spot(0, 0, 0)), true, 0), met.map(Touch::on));
-    }
-
-    /** Tipping: its turning about its hinge changed, carried round by it, and stopped where it lands. */
-    private Stepped tipped(final Rigid rigid, final Mover now, final Around around, final double seconds,
-                           final Reckoned reckoned, final Reckoned.Hinge hinge) {
-        final double turning = now.moved().spin().dot(hinge.along()) + reckoned.spin().dot(hinge.along());
-        final double angle = turning * seconds;
-        final Placed round = carried(now.placed(), hinge, angle);
-        final Optional<Touch> met = deepest(around.touches(rigid, round));
-        if (met.isEmpty()) {
-            final Spot spin = hinge.along().times(turning);
-            return new Stepped(new Mover(round, new Moved(spin.cross(round.at().minus(hinge.through())), spin),
-                    false, 0), Optional.empty());
-        }
-        double clear = 0;
-        double into = angle;
-        for (int halving = 0; halving < HALVINGS; halving++) {
-            final double middle = (clear + into) / 2;
-            if (deepest(around.touches(rigid, carried(now.placed(), hinge, middle))).isEmpty()) {
-                clear = middle;
-            } else {
-                into = middle;
-            }
-        }
-        return new Stepped(new Mover(carried(now.placed(), hinge, clear), new Moved(), true, 0),
-                met.map(Touch::on));
-    }
-
-    /** {@code placed} carried round {@code hinge} by so many radians. */
-    private Placed carried(final Placed placed, final Reckoned.Hinge hinge, final double angle) {
-        return angle == 0 ? placed : placed.about(hinge.through(), new Turn(hinge.along(), angle));
-    }
-
-    /** The touch that is furthest into what it touches, of those that are in at all. */
-    private Optional<Touch> deepest(final List<Touch> touches) {
-        return touches.stream().filter(touch -> touch.deep() > slack).max(Comparator.comparingDouble(Touch::deep));
+        return new Out(new Mover(within.next().placed(), new Moved(within.next().moved().velocity().plus(frame),
+                within.next().moved().spin()), within.next().landed(), within.next().still()), within.on(),
+                whys.of(() -> new Why.Carried(frame, within.why())));
     }
 }

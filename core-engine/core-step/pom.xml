@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.core</groupId>
+        <artifactId>core-engine</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>core-step</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        The one shape of an engine: a function that is handed an object's state with what is round it, the tick and
+        the tick's events, and gives the state a tick on with an explanation of what it worked out, in a type of
+        its own, and what it says happened. An engine keeps nothing between ticks and reads nothing but what it is
+        handed. A correction is a further function of the same shape, handed the step before's result and what is
+        new for this step. Explaining is switched on or off once, when a run begins.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-tick</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

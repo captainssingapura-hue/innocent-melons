@@ -17,6 +17,26 @@ public final class Supports {
     /** What each thing holds up, by name: the other way round. */
     private final Map<String, Set<String>> holds = new TreeMap<>();
 
+    /** Nothing standing on anything yet. */
+    public Supports() {
+    }
+
+    /** What stands on what as a state keeps it, to be worked on for a tick. */
+    Supports(final Map<String, Set<String>> on, final Map<String, Set<String>> holds) {
+        this.on.putAll(new Sets(on).thawed());
+        this.holds.putAll(new Sets(holds).thawed());
+    }
+
+    /** What each thing at rest stands on, as a state keeps it. */
+    Map<String, Set<String>> on() {
+        return new Sets(on).frozen();
+    }
+
+    /** What each thing holds up, as a state keeps it. */
+    Map<String, Set<String>> holds() {
+        return new Sets(holds).frozen();
+    }
+
     /** {@code thing} now stands on {@code these}, and on nothing it stood on before. */
     public void stands(final String thing, final Set<String> these) {
         left(thing);

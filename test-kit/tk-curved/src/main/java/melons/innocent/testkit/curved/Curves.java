@@ -11,7 +11,7 @@ import melons.innocent.core.rest.Ground;
 import melons.innocent.core.rest.Placed;
 import melons.innocent.core.rest.Rigid;
 import melons.innocent.core.rest.Shell;
-import melons.innocent.core.rest.Simulator;
+import melons.innocent.core.rest.Still;
 import melons.innocent.core.rest.World;
 import melons.innocent.core.sheet.Arched;
 import melons.innocent.core.sheet.Banked;
@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.IntStream;
 
 /**
@@ -47,14 +46,13 @@ final class Curves implements Facts {
 
     /** The three as they stand. */
     Curves() {
-        final Simulator still = (rigid, now, around, seconds) -> new Simulator.Stepped(now, Optional.empty());
         final Shell ramp = new Shell(new Swept(new Round(new Spot(0, 6, 0), 900, 270, 2, 360),
                 new Banked(-200, 200, -0.03)), 30);
         final Shell vault = new Shell(new Swept(new Straight(new Spot(0, 0, -700), 0, 1_400),
                 new Arched(800, 300)), 30);
         final Shell dome = new Shell(new Swept(new Round(new Spot(0, 0, 0), 700, 0, 1, 0),
                 new Arched(0, 700, 700, (700.0 * 700 + 220.0 * 220) / (2 * 220), 220)), 30);
-        this.world = new World(new Ground(), still)
+        this.world = new World(new Ground(), new Still())
                 .stood(new Rigid(RAMP, ramp, 2_400), new Placed(new Spot(300, 0, 1_500)))
                 .stood(new Rigid(VAULT, vault, 600), new Placed(new Spot(2_700, 0, 1_200)))
                 .stood(new Rigid(DOME, dome, 8_700), new Placed(new Spot(-2_000, 0, 1_000)));

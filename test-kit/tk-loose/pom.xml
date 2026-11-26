@@ -28,6 +28,11 @@
             <groupId>com.example.fxsuite.vulkan</groupId>
             <artifactId>vk-bench</artifactId>
         </dependency>
+        <!-- the flights' chase camera, which a walk by the core follows its figure with -->
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-flight</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.example.fxsuite.texture</groupId>
             <artifactId>tx-materials</artifactId>
@@ -49,6 +54,15 @@
         <dependency>
             <groupId>melons.innocent.core</groupId>
             <artifactId>core-surface</artifactId>
+        </dependency>
+        <!-- the core's own walker and the one tick of things and walkers: the second figure -->
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-walk</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-whole</artifactId>
         </dependency>
         <dependency>
             <groupId>com.example.fxsuite</groupId>

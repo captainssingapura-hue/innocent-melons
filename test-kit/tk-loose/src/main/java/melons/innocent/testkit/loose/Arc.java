@@ -13,10 +13,10 @@ import java.util.List;
  * @param from  where it is let go, in centimetres
  * @param going how it is going as it is let go, in centimetres a second
  * @param floor how high the floor is that it comes down to
+ * @param pull  how hard the world pulls down, in centimetres a second each second
  */
-record Arc(Spot from, Spot going, double floor) {
+record Arc(Spot from, Spot going, double floor, double pull) {
 
-    private static final double GRAVITY = 981;
     /** How far apart in time its spots are, in seconds, and how many there are at most. */
     private static final double APART = 0.05;
     private static final int MOST = 100;
@@ -28,7 +28,7 @@ record Arc(Spot from, Spot going, double floor) {
         final List<Spot> spots = new ArrayList<>();
         for (int spot = 1; spot <= MOST; spot++) {
             final double after = spot * APART;
-            final Spot at = from.plus(going.times(after)).plus(new Spot(0, -GRAVITY * after * after / 2, 0));
+            final Spot at = from.plus(going.times(after)).plus(new Spot(0, -pull * after * after / 2, 0));
             if (at.up() < floor) {
                 break;
             }

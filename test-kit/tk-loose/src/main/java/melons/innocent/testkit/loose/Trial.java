@@ -8,8 +8,11 @@ import melons.innocent.core.rest.Happened;
 import melons.innocent.core.rest.Moved;
 import melons.innocent.core.rest.Placed;
 import melons.innocent.core.rest.Rigid;
+import melons.innocent.core.rest.Stamped;
 import melons.innocent.core.rest.Throw;
 import melons.innocent.core.rest.World;
+import melons.innocent.core.step.Explanation;
+import melons.innocent.core.whole.Given;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +37,6 @@ import java.util.TreeMap;
  */
 public final class Trial {
 
-    private static final double TICK = 1.0 / 120;
     /** What goes at the first asking, unless the run says, and at the second, of what is still there. */
     private static final String FIRST = "the stack's pillar, the beam's right pillar";
     private static final String SECOND = "the beam's left pillar";
@@ -51,7 +53,6 @@ public final class Trial {
     private final Walker walker = new Walker();
     /** How steep its ramp is, in degrees. */
     private double slope;
-    private long ticks;
     /** How many times its supports have been taken away since it began. */
     private int taken;
     private int asked;
@@ -67,6 +68,10 @@ public final class Trial {
     private final Map<String, Moved> flung = new TreeMap<>();
     private Optional<Flown> flown = Optional.empty();
     private final Blows blows = new Blows();
+    /** The core's own walker: the walk's figure, or a second one beside it; in no tick until it is set down. */
+    private final Second second = new Second();
+    /** What the engine worked out for each thing it stepped in the last tick: said only where the run explains. */
+    private Map<String, Explanation<Rigid>> why = Map.of();
     /** How the wagon is to be driven from the next tick, where that has been asked. */
     private Optional<Moved> drive = Optional.empty();
 
@@ -85,19 +90,22 @@ public final class Trial {
      * whose ramp slopes so many degrees.
      */
     public Trial(final double after, final double slope) {
-        this.after = after < 0 ? -1 : Math.max(1, Math.round(after / TICK));
         this.slope = slope;
         this.world = new Scenes(listed, slope).described();
+        this.after = after < 0 ? -1 : Math.max(1, Math.round(after * world.tick().rate()));
     }
 
-    /** A tick: what is asked to go, or due to go of itself, is destroyed, and the world is a step on. */
     /** Whoever walks it now stands with their feet at {@code feet}, facing {@code yaw} degrees round. */
     public void stood(final Spot feet, final double yaw) {
         walker.stood(feet, yaw);
     }
 
+    /**
+     * A tick: what is asked to go, or due to go of itself, is destroyed, and the world is a step on. Which tick it
+     * is, the world itself counts.
+     */
     public List<Happened> ticked() {
-        ticks++;
+        final long ticks = world.tick().count() + 1;
         if (after > 0 && (ticks == after || ticks == 2 * after)) {
             asked++;
         }
@@ -119,8 +127,10 @@ public final class Trial {
         flung.keySet().removeIf(name -> !world.things().contains(name) || going.contains(name)
                 || lifted.contains(name));
         blows.before(world);
-        final List<Happened> happened = world.ticked(new Asked(going, lifted, flung, driving(going),
-                walker.outsiders()), TICK);
+        final Stamped stamped = stamped(new Asked(going, lifted, flung, driving(going),
+                walker.outsiders(world.tick())));
+        final List<Happened> happened = stamped.happened();
+        why = stamped.why();
         lifted.clear();
         slices.forEach(slice -> put(slice.rigid(), slice.placed(), Stuff.FLESH, new Things.MelonSlice()));
         flung.keySet().forEach(blows::thrown);
@@ -132,6 +142,19 @@ public final class Trial {
         }
         changes += happened.stream().filter(one -> !(one instanceof Happened.Landed)).count();
         return happened;
+    }
+
+    /**
+     * The world a tick on: by itself; or, where the second figure is in it, things and walker together by the
+     * core's one tick, the world then taken up again from the things that tick gave.
+     */
+    private Stamped stamped(final Asked asked) {
+        if (!second.set()) {
+            return world.ticked(asked);
+        }
+        final Given given = second.ticked(world, asked, new Footing(this));
+        world = new World(world.core(), given.whole().things());
+        return given.stamped();
     }
 
     /** The slices of what is to be cut and is still there, each melon cut added to what is {@code going}. */
@@ -149,7 +172,7 @@ public final class Trial {
 
     /** How the wagon is driven otherwise this tick, where that is asked or it has gone far out along its track. */
     private Map<String, Moved> driving(final List<String> going) {
-        if (ticks == 1 && !System.getProperty("loose.wagon", "").isBlank()) {
+        if (world.tick().count() == 0 && !System.getProperty("loose.wagon", "").isBlank()) {
             driven(Double.parseDouble(System.getProperty("loose.wagon")));
         }
         if (world.things().contains(Scenes.WAGON) && world.moved(Scenes.WAGON).velocity().length() > 0
@@ -211,7 +234,8 @@ public final class Trial {
         final Rigid rigid = world.thing(name);
         flung.put(name, new Moved(thrown.of(rigid).velocity().plus(carried), new Spot(0, 0, 0)));
         flown = Optional.of(new Flown(name, world.placed(name).orElseThrow().at(), thrown.speed(rigid),
-                thrown.upward(), thrown.round(), world.moved(name).velocity().plus(carried)));
+                thrown.upward(), thrown.round(), world.moved(name).velocity().plus(carried),
+                world.gravity().pull()));
     }
 
     /** The wagon is to go so many kilometres an hour along its track from the next tick: none, and it stops. */
@@ -240,7 +264,6 @@ public final class Trial {
         slope = degrees;
         listed.clear();
         world = new Scenes(listed, slope).described();
-        ticks = 0;
         taken = 0;
         asked = 0;
         named.clear();
@@ -248,10 +271,21 @@ public final class Trial {
         cutting.clear();
         flung.clear();
         blows.clear();
+        second.again();
         flown = Optional.empty();
         drive = Optional.empty();
         changes++;
         begun++;
+    }
+
+    /** What the engine worked out for each thing in motion in the last tick, by name: see {@link Scenes}. */
+    public Map<String, Explanation<Rigid>> why() {
+        return why;
+    }
+
+    /** The core's own walker, which is in the world once it has been set down. */
+    Second second() {
+        return second;
     }
 
     /** The world it is trying. */

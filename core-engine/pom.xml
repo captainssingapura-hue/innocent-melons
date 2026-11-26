@@ -19,6 +19,10 @@
     </description>
 
     <modules>
+        <!-- The world's one ticker: the tick as a count, and the calendar worked out from it. -->
+        <module>core-tick</module>
+        <!-- The one shape of an engine: state, tick and events in; the next state and its explanation out. -->
+        <module>core-step</module>
         <!-- How an observer moves: its speed and its way, its turning, and where it will be shortly. -->
         <module>core-motion</module>
         <!-- How well an observer could see a thing: its sharpness, a number that changes smoothly. -->
@@ -35,6 +39,10 @@
         <module>core-mechanism</module>
         <!-- What a mover is on: the question it asks of a surface, and the answer its provider gives. -->
         <module>core-surface</module>
+        <!-- The walking engine: a walker on whatever surface is under it, as an engine in the one shape. -->
+        <module>core-walk</module>
+        <!-- The whole of a world in one tick: things and walkers, each by the engine for its kind. -->
+        <module>core-whole</module>
     </modules>
 
     <properties>

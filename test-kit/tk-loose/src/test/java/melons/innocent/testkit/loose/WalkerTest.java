@@ -2,6 +2,8 @@ package melons.innocent.testkit.loose;
 
 import melons.innocent.core.motion.Spot;
 import melons.innocent.core.rest.Outsider;
+import melons.innocent.core.tick.Tick;
+import melons.innocent.core.tick.Ticker;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -20,24 +22,26 @@ class WalkerTest {
 
     /** Below the ramp's lower edge by a metre, in the way the ramp's melon rolls down. */
     private final Spot below = new Spot(1520, 0, 1100);
+    /** The tick the walker is told at: which one it is makes no difference to it, only how long. */
+    private final Tick now = new Ticker().first();
 
     @Test
     void nobodyIsToldOfBeforeTheWalksFirstStep() {
-        assertEquals(Map.of(), new Walker().outsiders());
+        assertEquals(Map.of(), new Walker().outsiders(now));
     }
 
     @Test
     void theWalkerIsABoxOnItsFeetTurnedAsItFacesAndGoingAsItWentSinceTheStepBefore() {
         final Walker walker = new Walker();
         walker.stood(new Spot(100, 0, 200), 90);
-        final Outsider first = walker.outsiders().get(Walker.NAME);
+        final Outsider first = walker.outsiders(now).get(Walker.NAME);
         assertEquals(0, first.placed().at().minus(new Spot(100, 100, 200)).length(), 1e-12, "its middle a metre up");
         assertEquals(0, first.going().length(), 0, "going nowhere, at its first step");
         assertEquals(200, first.box().up(), 0);
         // turned a quarter round, what was its front faces across
         assertEquals(1, Math.abs(first.placed().turned().turned(new Spot(0, 0, 1)).across()), 1e-9);
         walker.stood(new Spot(100, 0, 201), 90);
-        assertEquals(0, walker.outsiders().get(Walker.NAME).going().minus(new Spot(0, 0, 120)).length(), 1e-9,
+        assertEquals(0, walker.outsiders(now).get(Walker.NAME).going().minus(new Spot(0, 0, 120)).length(), 1e-9,
                 "a centimetre in a tick is a hundred and twenty a second");
     }
 
@@ -46,7 +50,7 @@ class WalkerTest {
         final Walker walker = new Walker();
         walker.stood(new Spot(100, 0, 200), 0);
         walker.stood(new Spot(100, 0, 200.00001), 0);
-        assertEquals(0, walker.outsiders().get(Walker.NAME).going().length(), 0);
+        assertEquals(0, walker.outsiders(now).get(Walker.NAME).going().length(), 0);
     }
 
     @Test

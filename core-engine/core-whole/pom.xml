@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.core</groupId>
+        <artifactId>core-engine</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>core-whole</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        The whole of a world, and its one tick: the things at rest and in motion together with the walkers, each
+        kind of object stepped by the engine for its kind, in one order. The things are stepped first, with the
+        walkers standing in their paths; then each walker, on the world as that left it, by the walking engine,
+        and put right for what stood in its path. It holds no state: a whole and what is asked give the next whole.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-step</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- the world's gravity, and what a thing says when it comes down -->
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-rest</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- what is under a walker is asked of the surfaces -->
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-surface</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- the walking engine -->
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-walk</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- the loose body, which the tests step things by -->
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-loose</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

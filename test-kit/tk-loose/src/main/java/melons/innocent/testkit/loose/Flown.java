@@ -18,7 +18,6 @@ import java.util.Optional;
  */
 public final class Flown {
 
-    private static final double GRAVITY = 981;
     private static final double METRE = 100;
 
     private final String thing;
@@ -27,21 +26,24 @@ public final class Flown {
     private final double upward;
     private final double round;
     private final Spot carrying;
+    private final double pull;
     private double highest;
     private Optional<Spot> down = Optional.empty();
 
     /**
      * {@code thing} thrown from {@code from} at so many centimetres a second, so many degrees {@code upward} and
-     * {@code round} from ahead, while it was going as {@code carrying} says.
+     * {@code round} from ahead, while it was going as {@code carrying} says, in a world that pulls down so
+     * many centimetres a second each second.
      */
     public Flown(final String thing, final Spot from, final double speed, final double upward, final double round,
-                 final Spot carrying) {
+                 final Spot carrying, final double pull) {
         this.thing = thing;
         this.from = from;
         this.speed = speed;
         this.upward = upward;
         this.round = round;
         this.carrying = carrying;
+        this.pull = pull;
         this.highest = from.up();
     }
 
@@ -77,12 +79,12 @@ public final class Flown {
     /** How high the reckoning without air says it rises, in centimetres. */
     public double reckonedRise() {
         final double rising = speed * Math.sin(Math.toRadians(upward));
-        return upward > 0 ? rising * rising / (2 * GRAVITY) : 0;
+        return upward > 0 ? rising * rising / (2 * pull) : 0;
     }
 
     /** How far the reckoning without air says it carries over level ground, in centimetres. */
     public double reckonedCarry() {
-        return upward > 0 ? speed * speed * Math.sin(Math.toRadians(2 * upward)) / GRAVITY : 0;
+        return upward > 0 ? speed * speed * Math.sin(Math.toRadians(2 * upward)) / pull : 0;
     }
 
     /** What it has to say of itself, in metres. */

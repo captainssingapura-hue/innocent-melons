@@ -1,5 +1,6 @@
 package melons.innocent.core.rest;
 
+import melons.innocent.core.step.Simulated;
 import melons.innocent.core.motion.Spot;
 import melons.innocent.physics.existences.Rolls;
 import melons.innocent.physics.existences.Unmoving;
@@ -15,7 +16,7 @@ import melons.innocent.physics.existences.Unmoving;
  * @param shape its shape
  * @param dense how many kilograms a cubic metre of it weighs
  */
-public record Rigid(String name, ShapeImpl<?> shape, double dense) {
+public record Rigid(String name, ShapeImpl<?> shape, double dense) implements Simulated {
 
     public Rigid {
         if (name.isBlank()) {

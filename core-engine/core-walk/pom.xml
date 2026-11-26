@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.core</groupId>
+        <artifactId>core-engine</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>core-walk</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        The walking engine: a walker as an engine in the one shape of an engine. It is handed a walker as it is
+        described, how it stands and goes, what is under it and how hard its world pulls, the tick, and what it is
+        asked; it gives how the walker stands and goes a tick on, with why. On a surface it goes along it, carried
+        with whatever provides it; in the air it is pulled down and comes down on what is under it. It keeps
+        nothing, and reads no key: what a walker is asked is a value, made from keys outside the core.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-step</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- the world's gravity, and what a thing says when it comes down -->
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-rest</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- which mover may use which form of surface -->
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-surface</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

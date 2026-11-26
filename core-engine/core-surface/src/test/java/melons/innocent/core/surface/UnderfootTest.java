@@ -3,7 +3,6 @@ package melons.innocent.core.surface;
 import com.example.fxsuite.taxonomy.Node;
 import melons.innocent.core.motion.Spot;
 import melons.innocent.core.motion.Turn;
-import melons.innocent.core.rest.Asked;
 import melons.innocent.core.rest.Box;
 import melons.innocent.core.rest.Ellipsoid;
 import melons.innocent.core.rest.Ground;
@@ -12,6 +11,7 @@ import melons.innocent.core.rest.Placed;
 import melons.innocent.core.rest.Rigid;
 import melons.innocent.core.rest.Simulator;
 import melons.innocent.core.rest.Slab;
+import melons.innocent.core.rest.Still;
 import melons.innocent.core.rest.World;
 import melons.innocent.physics.existences.Conditions;
 import melons.innocent.physics.existences.Movers;
@@ -19,9 +19,6 @@ import melons.innocent.physics.existences.Shapes;
 import melons.innocent.physics.existences.Surfaces;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -29,19 +26,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * What a mover is on, asked of a world at rest: the ground, a crate standing on it, a slab that leans, and a wagon
- * that goes. Each answers in its own frame; a provider that moves answers the same to one who moves with it, and
- * says nothing of its going, which only the frame the world keeps beside the answer tells.
+ * that goes. Each answers in its own frame.
  */
 class UnderfootTest {
 
-    private static final double TICK = 1.0 / 120;
     private static final double TILT = 12;
     /** Stand-ins for leaves of the materials' tree, which is not the core engine's: any node will do. */
     private static final String TURF = "the ground";
 
     private final Ground ground = new Ground();
     /** Nothing in this world is let go, so nothing is ever stepped. */
-    private final Simulator still = (rigid, now, around, seconds) -> new Simulator.Stepped(now, Optional.empty());
+    private final Simulator<Still.Nothing> still = new Still();
     private final World world = new World(ground, still)
             .stood(new Rigid("the crate", new Box(100, 60, 100), 600), new Placed(new Spot(500, 30, 0)))
             .stood(new Rigid("the melon", new Ellipsoid(36, 28, 26), 960), new Placed(new Spot(900, 14, 0)))
@@ -115,22 +110,6 @@ class UnderfootTest {
         assertEquals(200 + 10 / Math.cos(Math.toRadians(TILT)), found.at().up(), 1e-9);
         final Spot falls = found.frame().turned().turned(patch.falls());
         assertTrue(falls.along() < -0.9 && falls.up() < -0.1, "down the slope, toward the walk's beginning: " + falls);
-    }
-
-    @Test
-    void aProviderThatGoesAnswersTheSameToOneWhoGoesWithItAndSaysNothingOfItsGoing() {
-        final Spot onDeck = new Spot(100, 60, 50);
-        final Underfoot.Found before = underfoot.under(new Spot(-2_000, 50, 600).plus(onDeck), 100).orElseThrow();
-        assertEquals("the wagon", before.patch().provider());
-        for (int tick = 0; tick < 120; tick++) {
-            world.ticked(new Asked(List.of(), Map.of(), Map.of()), TICK);
-        }
-        final Spot wagon = world.placed("the wagon").orElseThrow().at();
-        assertEquals(-1_000, wagon.across(), 1e-6, "a second on, the wagon has gone ten metres");
-        final Underfoot.Found after = underfoot.under(wagon.plus(onDeck), 100).orElseThrow();
-        assertEquals(before.patch(), after.patch(), "the surface is as it was, to one who went with it");
-        assertEquals(new Spot(100, 50, 50), after.patch().at());
-        assertEquals(1_000, after.at().across() - before.at().across(), 1e-6, "only its frame says where it is now");
     }
 
     @Test

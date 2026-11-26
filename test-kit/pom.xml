@@ -48,6 +48,12 @@
                 <artifactId>vk-bench</artifactId>
                 <version>${vulkan.version}</version>
             </dependency>
+            <!-- the flights' chase camera, which a walk by the core follows its figure with -->
+            <dependency>
+                <groupId>com.example.fxsuite.vulkan</groupId>
+                <artifactId>vk-flight</artifactId>
+                <version>${vulkan.version}</version>
+            </dependency>
             <!-- the material lab: what the ground is covered with -->
             <dependency>
                 <groupId>com.example.fxsuite.texture</groupId>
@@ -84,6 +90,16 @@
             <dependency>
                 <groupId>melons.innocent.core</groupId>
                 <artifactId>core-surface</artifactId>
+                <version>${core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.core</groupId>
+                <artifactId>core-walk</artifactId>
+                <version>${core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.core</groupId>
+                <artifactId>core-whole</artifactId>
                 <version>${core.version}</version>
             </dependency>
             <dependency>

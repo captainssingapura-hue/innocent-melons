@@ -2,6 +2,7 @@ package melons.innocent.core.loose;
 
 import melons.innocent.core.motion.Spot;
 import melons.innocent.core.rest.Collision;
+import melons.innocent.core.rest.Gravity;
 import melons.innocent.core.rest.Moved;
 import melons.innocent.core.rest.Placed;
 import melons.innocent.core.rest.Reckoning;
@@ -29,12 +30,12 @@ import java.util.Optional;
  * @param reckoning gravity's pull, and how much of it slows what rolls
  * @param slack     how far into something it may be and count as only touching it, in centimetres
  */
-record Rolling(Reckoning reckoning, double slack) {
+record Rolling(Reckoning reckoning, double slack, Whys whys, Gravity gravity) {
 
     /** {@code rigid}, standing and moving as {@code now} says, a tick of so many {@code seconds} on. */
-    Simulator.Stepped stepped(final Rigid rigid, final Simulator.Mover now, final Simulator.Around around,
-                              final double seconds) {
-        final Flight flight = new Flight(reckoning.gravity());
+    Out stepped(final Rigid rigid, final Simulator.Mover now, final Simulator.Around around,
+                final double seconds) {
+        final Flight flight = new Flight(gravity.pull());
         final List<Touch> touches = around.touches(rigid, now.placed());
         Moved moved = flight.pulled(now.moved(), seconds);
         boolean pushed = false;
@@ -48,7 +49,7 @@ record Rolling(Reckoning reckoning, double slack) {
         }
         // slowed only by what it presses on: thrown up off the ground, or in the air, nothing slows it
         if (pushed) {
-            moved = slowed(moved, frame, reckoning.rolling() * reckoning.gravity() * seconds);
+            moved = slowed(moved, frame, reckoning.rolling() * gravity.pull() * seconds);
         }
         // pushed by nothing it is carried as flight carries it; pushed, by what it has once it has been pushed
         final Placed gone = flight.carried(now.placed(), pushed ? moved : now.moved(), moved, seconds);
@@ -61,9 +62,11 @@ record Rolling(Reckoning reckoning, double slack) {
         }
         final boolean stopped = pushed && moved.velocity().minus(frame).length() == 0 && moved.spin().length() == 0;
         // it has landed in the part of a tick it comes out of the air in, whether it stops there or rolls on
-        return new Simulator.Stepped(new Simulator.Mover(gone.moved(out), moved, stopped,
-                stopped ? now.still() + 1 : 0),
-                touches.isEmpty() && !met.isEmpty() ? Optional.of(met.getFirst().on()) : Optional.empty());
+        final Moved rolled = moved;
+        return new Out(new Simulator.Mover(gone.moved(out), moved, stopped, stopped ? now.still() + 1 : 0),
+                touches.isEmpty() && !met.isEmpty() ? Optional.of(met.getFirst().on()) : Optional.empty(),
+                whys.of(() -> new Why.Rolled(rolled.velocity().minus(now.moved().velocity()),
+                        touches.stream().map(Touch::on).distinct().toList(), stopped)));
     }
 
     /**
@@ -74,8 +77,8 @@ record Rolling(Reckoning reckoning, double slack) {
      * whatever of its path is not into what it met ({@link Barred}). Where it was hardly moving when it met it,
      * a melon leaning on someone's shin, it is stopped against it and counted toward its rest.
      */
-    Simulator.Stepped correctionS1(final Rigid rigid, final Simulator.Mover now, final Simulator.Stepped stepped,
-                                   final List<Collision> collisions, final double seconds) {
+    Out correctionS1(final Rigid rigid, final Simulator.Mover now, final Out stepped,
+                     final List<Collision> collisions, final double seconds) {
         final Barred barred = new Barred(collisions);
         Moved moved = stepped.next().moved();
         boolean pushed = false;
@@ -90,14 +93,15 @@ record Rolling(Reckoning reckoning, double slack) {
         }
         // hardly moving when it met it, and what it met hardly moving: it is leaning on it, and stopped against
         // it, as rolling is slowed to a stop on the ground; counted toward its rest where it was
-        final double hardly = reckoning.rolling() * reckoning.gravity() * seconds;
+        final double hardly = reckoning.rolling() * gravity.pull() * seconds;
         if (stepped.next().moved().velocity().length() <= hardly
                 && barred.first().touch().going().length() <= hardly) {
-            return new Simulator.Stepped(new Simulator.Mover(new Placed(barred.first().there().at(),
-                    stepped.next().placed().turned()), new Moved(), true, now.still() + 1), stepped.on());
+            return new Out(new Simulator.Mover(new Placed(barred.first().there().at(),
+                    stepped.next().placed().turned()), new Moved(), true, now.still() + 1), stepped.on(),
+                    stepped.why());
         }
-        return new Simulator.Stepped(new Simulator.Mover(barred.placed(now, stepped), moved,
-                stepped.next().landed(), stepped.next().still()), stepped.on());
+        return new Out(new Simulator.Mover(barred.placed(now, stepped.next()), moved,
+                stepped.next().landed(), stepped.next().still()), stepped.on(), stepped.why());
     }
 
     /**
