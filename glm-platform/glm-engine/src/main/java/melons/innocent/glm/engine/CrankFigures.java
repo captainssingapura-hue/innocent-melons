@@ -8,8 +8,10 @@ import java.util.List;
  * How an engine's crank is laid out, so it fires evenly: where each cylinder's crankpin stands round the crank, its
  * angle from straight up at rest; in line, a four's pins flat, a five's 72 degrees apart; in a V, the two banks'
  * rods side by side on one pin, a V8's crank cross-plane and a V12's six throws 120 degrees apart, but a 90 degree
- * V6's pins split, each bank's 30 degrees from the other's, so its three throws fire evenly too. And how big its
- * journals, pins and rods are, as a share of the bore: estimates.
+ * V6's pins split, each bank's 30 degrees from the other's, so its three throws fire evenly too; in a boxer, each
+ * cylinder its own pin, the other bank's half a spacing behind it and turned half a turn from it, so opposed pistons
+ * come in and go out together, the four's two pairs half a turn apart and the six's three a third of a turn. And how
+ * big its journals, pins and rods are, as a share of the bore: estimates.
  *
  * @param figures the engine's figures
  */
@@ -25,8 +27,14 @@ record CrankFigures(EngineFigures figures) {
     private static final List<Double> EIGHT = List.of(0.0, 90.0, 270.0, 180.0);
     private static final List<Double> TWELVE = List.of(0.0, 240.0, 120.0, 120.0, 240.0, 0.0);
     private static final List<Double> SIX = List.of(0.0, 240.0, 120.0);
+    /** A boxer's first bank's throws, the other's half a turn on: a flat four's, so 1-2-3-4; a six's, 1-6-2-4-3-5. */
+    private static final List<Double> FLAT_FOUR = List.of(0.0, 180.0);
+    private static final List<Double> FLAT_SIX = List.of(0.0, 120.0, 240.0);
     /** How far a V6's split pins are apart, each way from their throw. */
     private static final double SPLIT = 15;
+    /** How wide a rod's big end is: in line, and in a boxer, where a main bearing is between each two pins. */
+    private static final double INLINE_ROD = 2.2;
+    private static final double BOXER_ROD = 2.0;
 
     /** How far round a main journal is, a crankpin and a gudgeon pin. */
     double main() {
@@ -43,7 +51,10 @@ record CrankFigures(EngineFigures figures) {
 
     /** How wide a connecting rod's big end is: in a V, as far as the banks are set apart, so two share a pin. */
     double rodWide() {
-        return figures.banks() == 2 ? figures.offset() - 0.05 : 2.2;
+        if (figures.boxer()) {
+            return BOXER_ROD;
+        }
+        return figures.banks() == 2 ? figures.offset() - 0.05 : INLINE_ROD;
     }
 
     /**
@@ -64,13 +75,18 @@ record CrankFigures(EngineFigures figures) {
         return figures.banks() == 2 && figures.perBank() == 3 && figures.vee() == 90;
     }
 
+    /** Whether each cylinder runs on a pin of its own: in line, a V6's split pins, a boxer's. */
+    boolean own() {
+        return figures.banks() == 1 || split() || figures.boxer();
+    }
+
     /** The angle of the pin bank {@code bank}'s cylinder {@code k} runs on, from straight up at rest, in degrees. */
     double angle(final int bank, final int k) {
         final double throwAt = throwsOf().get(k);
         if (split()) {
             return throwAt + (bank == 0 ? SPLIT : -SPLIT);
         }
-        return throwAt;
+        return figures.boxer() && bank == 1 ? throwAt + 180 : throwAt;
     }
 
     /** Where that pin's middle is, under its rod, in the block's frame, at rest. */
@@ -93,13 +109,16 @@ record CrankFigures(EngineFigures figures) {
      */
     double[] span(final int bank, final int k) {
         final double w = rodWide();
-        if (figures.banks() == 1 || split()) {
+        if (own()) {
             return new double[]{figures.along(bank, k) - w / 2 - 0.1, figures.along(bank, k) + w / 2 + 0.1};
         }
         return new double[]{figures.along(0, k) - w / 2 - 0.1, figures.along(1, k) + w / 2 + 0.1};
     }
 
     private List<Double> throwsOf() {
+        if (figures.boxer()) {
+            return figures.perBank() == 2 ? FLAT_FOUR : FLAT_SIX;
+        }
         return switch (figures.perBank()) {
             case 3 -> SIX;
             case 4 -> figures.banks() == 1 ? FOUR : EIGHT;

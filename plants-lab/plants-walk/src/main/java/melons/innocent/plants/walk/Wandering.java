@@ -44,6 +44,11 @@ public final class Wandering {
         this(new Random());
     }
 
+    /** Another, straying by chances of its own drawn from this one's: how the road strays going the other way. */
+    public Wandering other() {
+        return new Wandering(new Random(chance.nextLong()));
+    }
+
     /** How far sideways the next step goes, in centimetres: its section given its drift first, if it begins one. */
     public double stepped() {
         if (steps % SECTION == 0) {

@@ -54,11 +54,12 @@ class RoadTest {
     }
 
     @Test
-    void theRoadIsSmoothSaysTheSameOfAPlaceAsItIsMadeOnAndForgetsWhatIsFarBehind() {
+    void theRoadIsSmoothSaysTheSameOfAPlaceAsItIsMadeOnAndGoesOnBothWaysTheSameWhenComeBackTo() {
         final Road road = new Road(new Wandering(new Random(11)));
         assertEquals(0, road.across(-20_000), "straight behind where the travelling begins");
         assertEquals(0, road.across(0));
-        assertTrue(road.has(120_000) && road.has(-30_000) && !road.has(130_000), "made some way ahead, and no more");
+        assertTrue(road.has(120_000) && road.has(-120_000) && !road.has(130_000) && !road.has(-130_000),
+                "to hand some way each way, and no more");
         final double there = road.across(35_000);
         final double leaning = road.slope(35_000);
         double last = road.across(0);
@@ -72,8 +73,13 @@ class RoadTest {
         assertTrue(turned < 0.2, "it turns nowhere sharply: " + turned);
         assertTrue(road.reached(100_000), "made on as it is reached");
         assertFalse(road.reached(100_000), "and not again till it is reached further");
-        assertTrue(road.has(220_000) && !road.has(35_000), "ahead of where it was reached; the far past let go");
-        assertThrows(IllegalArgumentException.class, () -> road.across(35_000));
+        assertTrue(road.has(220_000) && road.has(-20_000) && !road.has(-30_000),
+                "to hand each way of where it was reached, and what is far from it not");
+        assertThrows(IllegalArgumentException.class, () -> road.across(-30_000));
+        assertTrue(road.reached(-500_000), "made on back the other way, past where it began");
+        assertTrue(road.has(-500_000) && road.across(-450_000) != 0, "and wandering there too");
+        road.reached(100_000);
+        assertEquals(there, road.across(35_000), 1e-9, "the same road when it is come back to");
         final Road again = new Road(new Wandering(new Random(11)));
         again.reached(20_000);
         assertEquals(there, again.across(35_000), 1e-9, "the same of a place however far it has been made since");

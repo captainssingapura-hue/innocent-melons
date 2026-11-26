@@ -19,7 +19,8 @@ import java.util.List;
 
 /**
  * What moves in one cylinder, each in titanium, bare, where the crank at rest puts it: the piston, up its bore as far
- * as its rod reaches from the pin, its crown, its three rings and its skirt, its pin's bosses either side of the rod;
+ * as its rod reaches from the pin, its crown, its three rings and its skirt, a slipper's, only on the two sides the
+ * rod pushes it against, its pin's bosses either side of the rod;
  * the gudgeon pin through them; and the connecting rod, an I beam its web in the crank's plane, its big end split
  * round the crankpin and bolted, its small end round the gudgeon pin.
  *
@@ -36,6 +37,34 @@ record Cylinder(EngineFigures figures, int bank, int k) {
     private static final double CROWN = 2.4;
     private static final List<Double> RINGS = List.of(0.5, 1.0, 1.5);
     private static final double SKIRT = 2.6;
+    /** How far a slipper skirt reaches along the crank either side, of the bore's radius; in how many steps round. */
+    private static final double SLIPPER = 0.6;
+    private static final int SLIPPER_STEPS = 6;
+
+    /** How near the crank's axis its piston comes, up its bore, at the bottom of its stroke: its skirt's foot. */
+    double reach() {
+        return figures.rod() - figures.stroke() / 2 - SKIRT;
+    }
+
+    /**
+     * One side of a piston's skirt, a slipper's, from {@code foot} on its bore's axis {@code high} up: on the side
+     * {@code side} the rod pushes it against, only as far round as its pin's bosses reach along the crank, so it is
+     * cut away fore and aft where the crank's webs pass under a piston at the bottom of its stroke.
+     */
+    private Mesh slipper(final Vec3 foot, final double high, final int side) {
+        final double r = figures.bore() / 2;
+        final double round = Math.asin(SLIPPER);
+        final Vec3 thrust = up().cross(ALONG).times(side);
+        final List<List<Vec3>> rings = new ArrayList<>();
+        for (int i = 0; i <= SLIPPER_STEPS; i++) {
+            final double a = -round + 2 * round * i / SLIPPER_STEPS;
+            final Vec3 d = thrust.times(Math.cos(a)).plus(ALONG.times(Math.sin(a)));
+            final Vec3 top = foot.plus(up().times(high));
+            rings.add(List.of(foot.plus(d.times(r - 0.4)), foot.plus(d.times(r - 0.08)), top.plus(d.times(r - 0.08)),
+                    top.plus(d.times(r - 0.4))));
+        }
+        return new Shapes(ROUND).lofted(rings, foot.plus(up().times(high / 2)));
+    }
 
     /** What it is called: its bank and its place in the bank, from one. */
     String called() {
@@ -113,7 +142,9 @@ record Cylinder(EngineFigures figures, int bank, int k) {
             made.add(new Sleeve(top.minus(up().times(down)), up(), 0.18, r - 0.01, r - 0.3, ROUND).mesh());
         }
         final double skirt = figures.crown() - CROWN + SKIRT;
-        made.add(new Sleeve(top.minus(up().times(CROWN + skirt / 2)), up(), skirt, r - 0.08, r - 0.4, ROUND).mesh());
+        for (final int s : List.of(1, -1)) {
+            made.add(slipper(top.minus(up().times(CROWN + skirt)), skirt, s));
+        }
         final double bosses = figures.bore() * 0.62;
         final double boss = (bosses - crank.rodWide()) / 2 - 0.1;
         for (final int s : List.of(1, -1)) {

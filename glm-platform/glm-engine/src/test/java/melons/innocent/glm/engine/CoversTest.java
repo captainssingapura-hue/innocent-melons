@@ -28,11 +28,12 @@ class CoversTest {
             final Assembled open = new Assembly(inside.platform()).assembled();
             final Assembled covered = new Assembly(inside.platform(true)).assembled();
             assertEquals(List.of(), covered.problems(1e-6), e.name());
-            assertEquals(open.placed().size() + 2 * e.banks() + 2, covered.placed().size(), e.name());
+            final int trim = e.boxer() ? 0 : 1;
+            assertEquals(open.placed().size() + 2 * e.banks() + 1 + trim, covered.placed().size(), e.name());
             covered.placed().keySet().forEach(p -> assertEquals(0, covered.at(p).length(), 1e-9, p.part().name()));
             final long plastic = covered.placed().keySet().stream().filter(p -> inside.cover(p.part()))
                     .filter(p -> p.part().made().material() == Material.PLASTIC).count();
-            assertEquals(e.banks() + 1, plastic, e.name() + " its coils and its trim cover moulded in plastic");
+            assertEquals(e.banks() + trim, plastic, e.name() + " its coils and its trim cover moulded in plastic");
         }
     }
 
@@ -59,7 +60,7 @@ class CoversTest {
 
     @Test
     void theTrimCoverOverAllTheRest() {
-        for (final EngineFigures e : range.all()) {
+        for (final EngineFigures e : range.all().stream().filter(e -> !e.boxer()).toList()) {
             final EngineInternals inside = new EngineInternals(e);
             final Assembled covered = new Assembly(inside.platform(true)).assembled();
             double highest = -Double.MAX_VALUE;

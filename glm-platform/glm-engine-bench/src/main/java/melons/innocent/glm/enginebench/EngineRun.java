@@ -42,6 +42,6 @@ public record EngineRun(int engine, double slow, boolean turbo, double volume, B
      * titanium.
      */
     public EngineRun() {
-        this(2, 0.01, true, 0.8, Block.GLASS, Material.TITANIUM, false);
+        this(3, 0.01, true, 0.8, Block.GLASS, Material.TITANIUM, false);
     }
 }

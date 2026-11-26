@@ -16,7 +16,8 @@ import java.util.List;
  * as y, across as x. Its section, the same all along: each bank's deck standing as high over the crank as the figures
  * say, as wide as a cylinder with its liner, its water's jacket and its wall; its outer walls falling from the decks
  * to a deep skirt below the crank, open beneath for the sump; in a V, the valley between the banks closed low over
- * the crank and open above, where the turbochargers go. That section's walls carried the block's length, each deck
+ * the crank and open above, where the turbochargers go; a boxer's its own ({@link BoxerCase}), its banks lying flat
+ * out of a crankcase round the crank. That section's walls carried the block's length, each deck
  * bored through for its bank's cylinders; a liner in each bore down past the piston's reach; its ends closed but for
  * the crank's seals; a bulkhead across between each pair of cylinders and at each end, bored for the crank's main
  * bearing; and a boss each side for the engine's mount.
@@ -53,8 +54,11 @@ record BlockForm(EngineFigures figures) {
         return new Vec3(Math.sin(a), Math.cos(a), 0);
     }
 
-    /** The way out of bank {@code bank}, square to its cylinders, toward its outer wall. */
+    /** The way out of bank {@code bank}, square to its cylinders, toward its outer wall: in a boxer, up. */
     Vec3 out(final int bank) {
+        if (figures.boxer()) {
+            return new Vec3(0, 1, 0);
+        }
         final double a = Math.toRadians(figures.lean(bank));
         final Vec3 n = new Vec3(Math.cos(a), -Math.sin(a), 0);
         return figures.lean(bank) < 0 ? n.times(-1) : n;
@@ -90,6 +94,9 @@ record BlockForm(EngineFigures figures) {
      * to the valley's floor.
      */
     List<Spot> section() {
+        if (figures.boxer()) {
+            return new BoxerCase(figures, this).section();
+        }
         final double s = skirt();
         final List<Spot> right = new ArrayList<>();
         final List<Spot> left = new ArrayList<>();
@@ -134,7 +141,7 @@ record BlockForm(EngineFigures figures) {
         final List<Double> at = bulkheads();
         for (int k = 0; k < at.size(); k++) {
             final boolean end = k == 0 || k == at.size() - 1;
-            made.add(new Plate(end || figures.banks() > 1 ? section : web(), seal, new Vec3(0, 0, at.get(k)),
+            made.add(new Plate(end ? section : between(section), seal, new Vec3(0, 0, at.get(k)),
                     new Vec3(1, 0, 0), new Vec3(0, 1, 0), BULKHEAD).mesh());
         }
         for (int b = 0; b < figures.banks(); b++) {
@@ -148,6 +155,14 @@ record BlockForm(EngineFigures figures) {
         return new Shapes(ROUND).joined(made);
     }
 
+    /** A bulkhead between cylinders: in a V, the whole {@code section}; in line, a web; in a boxer, its own. */
+    private List<Spot> between(final List<Spot> section) {
+        if (figures.boxer()) {
+            return new BoxerCase(figures, this).bulkhead();
+        }
+        return figures.banks() > 1 ? section : web();
+    }
+
     /** A web between siamesed cylinders in line: the section up to the liners' feet, under the cylinders. */
     private List<Spot> web() {
         final double s = skirt();
@@ -155,8 +170,14 @@ record BlockForm(EngineFigures figures) {
         return List.of(new Spot(-s, -SKIRT), new Spot(s, -SKIRT), new Spot(s, top), new Spot(-s, top));
     }
 
-    /** How deep a liner reaches from the deck: past the piston's reach. */
-    private double deep() {
+    /**
+     * How deep a liner reaches from the deck: past the piston's reach; in a boxer, whose short deck brings its bores
+     * down into the crank's swing, short of that, the pistons' skirts leaving their bores at the bottom of the stroke.
+     */
+    double deep() {
+        if (figures.boxer()) {
+            return figures.deck() - new CrankFigures(figures).swing() - CLEAR / 2;
+        }
         return figures.stroke() + figures.crown() + 3;
     }
 
@@ -167,11 +188,17 @@ record BlockForm(EngineFigures figures) {
 
     /** Where the engine's mount is on side {@code side}: on the skirt's face, a little ahead of the middle. */
     Vec3 mount(final int side) {
+        if (figures.boxer()) {
+            return new BoxerCase(figures, this).mount(side);
+        }
         return new Vec3(side * (skirt() + 1.5), -1, figures.length() * 0.42);
     }
 
     /** Where the bulkheads stand: at each end, and between each pair of cylinders. */
     List<Double> bulkheads() {
+        if (figures.boxer()) {
+            return new BoxerCase(figures, this).bulkheads(BULKHEAD);
+        }
         final List<Double> at = new ArrayList<>();
         at.add(BULKHEAD / 2);
         for (int k = 0; k + 1 < figures.perBank(); k++) {
@@ -205,7 +232,7 @@ record BlockForm(EngineFigures figures) {
 
     /** The liner of bank {@code bank}'s cylinder {@code k}, from its deck down past the piston's reach. */
     private Mesh liner(final int bank, final int k) {
-        final double deep = figures.stroke() + figures.crown() + 3;
+        final double deep = deep();
         final Vec3 middle = up(bank).times(figures.deck() - deep / 2).plus(ALONG.times(figures.along(bank, k)));
         return new Sleeve(middle, up(bank), deep, figures.bore() / 2 + liner(), figures.bore() / 2, ROUND).mesh();
     }

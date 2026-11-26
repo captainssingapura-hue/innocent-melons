@@ -35,6 +35,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -67,9 +68,13 @@ public final class EngineBench {
     private static final double METRE = 100;
     /** How high the crank stands over the floor. */
     private static final Vec3 LIFT = new Vec3(0, 45, 0);
-    /** The car each engine of the range drives, in the range's order, its own engine put in. */
-    private static final List<Vehicle> CARS = List.of(Vehicle.HATCHBACK, Vehicle.RALLY, Vehicle.SALOON,
-            Vehicle.MUSCLE, Vehicle.SUPERCAR);
+    /**
+     * The car each engine of the range drives, by its name, its own engine put in: the boxers the cars nearest the
+     * sports cars they are after, the four the light coupe and the six the saloon of its power.
+     */
+    private static final Map<String, Vehicle> CARS = Map.of("L4", Vehicle.HATCHBACK, "B4", Vehicle.RALLY,
+            "L5", Vehicle.RALLY, "V6", Vehicle.SALOON, "B6", Vehicle.SALOON, "V8", Vehicle.MUSCLE,
+            "V12", Vehicle.SUPERCAR);
 
     private final Light noon = new Daylight().light();
     private final Asked asked = new Asked(1, true, new Asked.Sun(noon.sunHigh(), noon.sunRound()));
@@ -182,7 +187,9 @@ public final class EngineBench {
             final var whole = inside.platform(now.covered());
             view.showing(inside, firing, new Assembly(whole).assembled(), whole.root());
             if (other) {
-                final Vec3 middle = LIFT.plus(new Vec3(0, engine.deck() / 2, engine.length() / 2));
+                // a boxer's middle level with its crank, its banks lying either side of it
+                final double high = engine.boxer() ? 0 : engine.deck() / 2;
+                final Vec3 middle = LIFT.plus(new Vec3(0, high, engine.length() / 2));
                 orbit = new Orbit(middle, said("bench.yaw", 35), said("bench.pitch", 20),
                         METRE * said("bench.distance", 1.6));
             }
@@ -191,7 +198,7 @@ public final class EngineBench {
             final Engine voice = voice(now);
             sound.engine(voice);
             if (other) {
-                driven = new Drivetrain(CARS.get(now.engine()).with(voice));
+                driven = new Drivetrain(CARS.get(engine.name()).with(voice));
             } else {
                 driven.fitted(voice);
             }

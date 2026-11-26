@@ -17,7 +17,8 @@ import java.util.List;
 /**
  * An engine's crankshaft, forged from titanium, bare, at rest in its block: a main journal in each bulkhead; a pin
  * for each throw, half the stroke out, where its rods' big ends turn, one rod's wide in line, two rods' wide where a
- * V's banks share it, two pins side by side where a V6's are split; webs from each throw's ends to the journals beside
+ * V's banks share it, two pins side by side where a V6's are split, a pin to each cylinder between two journals in
+ * a boxer; webs from each throw's ends to the journals beside
  * it, each with its counterweight swung opposite the pin; the nose at the front for the timing drive, the flange at
  * the rear for the flywheel. Its points: each main journal, and each cylinder's pin under its rod.
  *
@@ -55,27 +56,43 @@ record Crankshaft(EngineFigures figures) {
             made.add(shapes.drum(new Vec3(0, 0, z - JOURNAL), new Vec3(0, 0, z + JOURNAL), crank.main()));
         }
         for (int k = 0; k < figures.perBank(); k++) {
-            final int last = crank.split() ? 1 : 0;
-            for (int b = 0; b <= last; b++) {
-                final double[] span = crank.span(b, k);
-                final Vec3 pin = crank.pin(b, k);
-                made.add(shapes.drum(new Vec3(pin.x(), pin.y(), span[0]), new Vec3(pin.x(), pin.y(), span[1]),
-                        crank.pin()));
+            if (figures.boxer()) {
+                made.addAll(throwOf(crank, mains, k, 0, 0));
+                made.addAll(throwOf(crank, mains, k, 1, 1));
+            } else {
+                made.addAll(throwOf(crank, mains, k, 0, crank.split() ? 1 : 0));
             }
-            final double front = crank.span(0, k)[0];
-            final double rear = crank.span(last, k)[1];
-            final double before = mains.stream().filter(z -> z < front).mapToDouble(z -> z + JOURNAL).max()
-                    .orElse(front - THINNEST);
-            final double after = mains.stream().filter(z -> z > rear).mapToDouble(z -> z - JOURNAL).min()
-                    .orElse(rear + THINNEST);
-            made.add(web(crank, crank.angle(0, k), Math.min(before, front - THINNEST), front));
-            made.add(web(crank, crank.angle(last, k), rear, Math.max(after, rear + THINNEST)));
         }
         made.add(shapes.drum(new Vec3(0, 0, -5), new Vec3(0, 0, mains.getFirst()), crank.main() * 0.8));
         final double end = figures.length();
         made.add(shapes.drum(new Vec3(0, 0, mains.getLast()), new Vec3(0, 0, end + 1.2), crank.main()));
         made.add(shapes.drum(new Vec3(0, 0, end), new Vec3(0, 0, end + 1.2), crank.main() * 1.7));
         return shapes.joined(made);
+    }
+
+    /**
+     * The throw cylinder {@code k}'s pins of banks {@code first} to {@code last} make: each pin, and a web each side of
+     * them all, out from the journals either side.
+     */
+    private List<Mesh> throwOf(final CrankFigures crank, final List<Double> mains, final int k, final int first,
+                               final int last) {
+        final Shapes shapes = new Shapes(ROUND);
+        final List<Mesh> made = new ArrayList<>();
+        for (int b = first; b <= last; b++) {
+            final double[] span = crank.span(b, k);
+            final Vec3 pin = crank.pin(b, k);
+            made.add(shapes.drum(new Vec3(pin.x(), pin.y(), span[0]), new Vec3(pin.x(), pin.y(), span[1]),
+                    crank.pin()));
+        }
+        final double front = crank.span(first, k)[0];
+        final double rear = crank.span(last, k)[1];
+        final double before = mains.stream().filter(z -> z < front).mapToDouble(z -> z + JOURNAL).max()
+                .orElse(front - THINNEST);
+        final double after = mains.stream().filter(z -> z > rear).mapToDouble(z -> z - JOURNAL).min()
+                .orElse(rear + THINNEST);
+        made.add(web(crank, crank.angle(first, k), Math.min(before, front - THINNEST), front));
+        made.add(web(crank, crank.angle(last, k), rear, Math.max(after, rear + THINNEST)));
+        return made;
     }
 
     /** A web from {@code from} to {@code to} along the crank, round its pin at {@code angle}, its weight opposite. */

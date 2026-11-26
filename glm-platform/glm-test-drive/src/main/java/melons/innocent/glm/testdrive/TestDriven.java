@@ -167,15 +167,15 @@ final class TestDriven implements Roaming {
 
     @Override
     public Camera camera(final double blend) {
-        return views.camera(chasing.between(chased, blend), head(blend), place(blend), tilt(blend), roll(blend));
+        return views.camera(chasing.between(chased, blend), head(blend), place(blend), nose(blend), lean(blend));
     }
 
     /** How far its nose is tipped up, {@code blend} of the way between its last two steps; and its left side up. */
-    private double tilt(final double blend) {
+    private double nose(final double blend) {
         return before.tilt() + (now.tilt() - before.tilt()) * blend;
     }
 
-    private double roll(final double blend) {
+    private double lean(final double blend) {
         return before.roll() + (now.roll() - before.roll()) * blend;
     }
 
@@ -198,7 +198,7 @@ final class TestDriven implements Roaming {
     @Override
     public void drawn(final Pass pass, final Camera camera, final double blend) {
         final double steer = before.steer() + (now.steer() - before.steer()) * blend;
-        car.drawn(pass, camera, chassis.carried(place(blend), tilt(blend), roll(blend)), steer,
+        car.drawn(pass, camera, chassis.carried(place(blend), nose(blend), lean(blend)), steer,
                 rolledBefore + (rolled - rolledBefore) * blend, lamps);
     }
 
