@@ -8,6 +8,7 @@ import melons.innocent.glm.core.Part;
 import melons.innocent.vehiclelab.forms.Section;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -39,14 +40,22 @@ record Bumper(String name, double side, double end, double face, double round, d
 
     /** It, its points where they are on the platform. */
     Part part() {
-        return MOULDED.part(name, Group.TRIM, false, Map.of("shell", mount()), new Sheets(0.1).member(
-                path(-DEEP / 2, (low + high) / 2), new Section(DEEP, high - low, 8)));
+        final Map<String, Vec3> points = new LinkedHashMap<>();
+        points.put("shell", mount());
+        points.put("number plate", plate());
+        return MOULDED.part(name, Group.TRIM, false, points, new Sheets(0.1).member(path(-DEEP / 2, (low + high) / 2),
+                new Section(DEEP, high - low, 8)));
     }
 
     /** Its chrome strip, along its outer face. */
     Part strip() {
         return CHROMED.part(name + " strip", Group.TRIM, false, Map.of("bumper", mount()), new Sheets(0.1).member(
                 path(STRIP_DEEP / 2 - 0.1, chrome), new Section(STRIP_DEEP, STRIP_HIGH, 6)));
+    }
+
+    /** Where a number plate is held on it: the middle of its face, across the front or the tail. */
+    Vec3 plate() {
+        return new Vec3(0, (low + high) / 2, face);
     }
 
     /** Where it is bolted to the shell: the middle of its bar, across the front or the tail. */

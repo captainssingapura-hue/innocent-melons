@@ -21,6 +21,7 @@ public enum Group {
     LAMPS("Lamps"),
     TAIL_LAMPS("Tail lamps"),
     SIGNALS("Rear indicators"),
+    PLATES("Number plates"),
     STEERING("Steering"),
     WHEELS("Wheels"),
     TYRES("Tyres");

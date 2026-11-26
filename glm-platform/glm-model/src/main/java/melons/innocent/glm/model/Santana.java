@@ -1,5 +1,6 @@
 package melons.innocent.glm.model;
 
+import com.example.fxsuite.vulkan.space.Vec3;
 import melons.innocent.glm.core.Connection;
 import melons.innocent.glm.core.Joining;
 import melons.innocent.glm.core.Part;
@@ -13,7 +14,8 @@ import java.util.List;
  * shell, its root its underbody, every chassis mount on it: the body sides welded along it, the bulkhead and the tail
  * panel across it, and the roof's two headers across between the body sides, a cage for the roof's glass; and its
  * four doors hung in it, its front wings, bumpers, front face and tail lamps bolted on ({@link FrontFace},
- * {@link TailLamps}), its bonnet and boot lid hinged; and its glass, the roof dark ({@link SantanaGlazing}).
+ * {@link TailLamps}), its number plates on the front bumper and the tail panel, its bonnet and boot lid hinged; and
+ * its glass, the roof dark ({@link SantanaGlazing}).
  */
 public record Santana() implements Bodywork {
 
@@ -52,6 +54,7 @@ public record Santana() implements Bodywork {
         final Part frontDoor = frontShape.part();
         final Part rearDoor = rearShape.part();
         final Part wing = new FrontWing(LINES).part();
+        final Part lid = new BootLid(LINES).part();
         final SantanaGlazing glazing = new SantanaGlazing(LINES, panels);
         final List<Connection> joined = new ArrayList<>(List.of(
                 new Connection("body side", root, "body side, right", side, "body", Joining.WELDED),
@@ -63,16 +66,22 @@ public record Santana() implements Bodywork {
                 new Connection("front door", side, "front door, hinge", frontDoor, "hinge", Joining.HINGE),
                 new Connection("rear door", side, "rear door, hinge", rearDoor, "hinge", Joining.HINGE),
                 new Connection("front wing", root, "front wing, right", wing, "shell", Joining.BOLTED),
-                new Connection("boot lid", root, "boot lid", new BootLid(LINES).part(), "hinge", Joining.HINGE)));
+                new Connection("boot lid", root, "boot lid", lid, "hinge", Joining.HINGE)));
         joined.add(new Connection("bonnet", bulkhead, "bonnet", new Bonnet(LINES).part(), "hinge", Joining.HINGE));
         for (final Bumper bumper : List.of(new SantanaBumpers(LINES).front(), new SantanaBumpers(LINES).rear())) {
             final Part bar = bumper.part();
             joined.add(new Connection(bumper.name(), root, bumper.name(), bar, "shell", Joining.BOLTED));
             joined.add(new Connection(bumper.name() + " strip", bar, "shell", bumper.strip(), "bumper",
                     Joining.SEATED));
+            if (bumper.face() > 0) {
+                joined.addAll(new NumberPlate("front number plate", bumper.plate(), 1).joined(bar, "number plate"));
+            }
         }
         joined.addAll(new FrontFace(LINES).joined(root));
         joined.addAll(new TailLamps(LINES).joined(tail));
+        final Vec3 lamp = new TailLamps(LINES).middle();
+        joined.addAll(new NumberPlate("rear number plate", new Vec3(0, lamp.y(), lamp.z()), -1).joined(tail,
+                "number plate"));
         joined.addAll(glazing.screens(front, rear));
         joined.addAll(glazing.windows(side, frontShape, frontDoor, rearShape, rearDoor));
         return joined;

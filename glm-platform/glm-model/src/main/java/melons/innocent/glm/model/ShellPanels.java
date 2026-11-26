@@ -72,6 +72,7 @@ record ShellPanels(ShellLines lines) {
         points.put("underbody", new Vec3(0, floor, z));
         points.put("tail lamp, right", lamp);
         points.put("tail lamp, left", new Vec3(-lamp.x(), lamp.y(), lamp.z()));
+        points.put("number plate", new Vec3(0, lamp.y(), lamp.z()));
         return PRESSED.part("tail panel", Group.BODYWORK, false, points, SHEETS.across(z, outline, lamps));
     }
 
