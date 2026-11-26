@@ -5,6 +5,7 @@ import com.example.fxsuite.avatar.sim.Body;
 import com.example.fxsuite.avatar.sim.Clock;
 import com.example.fxsuite.avatar.sim.Hit;
 import com.example.fxsuite.avatar.sim.Obstacles;
+import com.example.fxsuite.avatar.sim.Volume;
 import com.example.fxsuite.avatar.view.Chase;
 import com.example.fxsuite.vulkan.space.Vec3;
 import com.example.fxsuite.vulkan.view.Camera;
@@ -31,10 +32,21 @@ public final class Following {
     private static final double FIELD = 48;
     private static final double NEAR = 10;
     private static final double FULL = 360;
+    /**
+     * Seen from the avatar's own eyes: how many degrees are seen from top to bottom, from how near, and how far
+     * behind the eyes the view is taken from, in centimetres.
+     */
+    private static final double OWN_FIELD = 62;
+    private static final double OWN_NEAR = 4;
+    private static final double BEHIND_EYES = 0.5;
 
     private Chase chase;
     /** The camera before the last step moved it, to be drawn between it and the camera now. */
     private Chase was;
+    /** Whether the view is the avatar's own, from its eyes, and not from behind it. */
+    private boolean own;
+    /** Whether the avatar's own view is steadied: taken from where its eyes are standing still, not as they move. */
+    private boolean steady = true;
 
     /** Behind the avatar, with the avatar where {@code body} is. */
     public Following(final Body body) {
@@ -71,6 +83,37 @@ public final class Following {
             chase = chase.turned(circling * CIRCLE * seconds, tilt);
         }
         chase = chase.follow(head(shown), shown.yaw(), 1, seconds, circling != 0);
+    }
+
+    /** The view changed: to the avatar's own, from its eyes, or back to the one that follows behind it. */
+    public void viewed() {
+        own = !own;
+    }
+
+    /** Whether the view is the avatar's own, from its eyes. */
+    public boolean own() {
+        return own;
+    }
+
+    /** The avatar's own view steadied, or left to move as its head does, from now on. */
+    public void steadied(final boolean steadied) {
+        steady = steadied;
+    }
+
+    /** Whether the avatar's own view is steadied. */
+    public boolean steady() {
+        return steady;
+    }
+
+    /**
+     * The camera at the avatar's own eyes, which are at {@code eyes}: looking the way the avatar faces, which is
+     * {@code yaw}, and not the way the view behind it has swung round to, which lags; as far up as the view is
+     * tilted from its usual tilt, {@code blend} of the way between its last two steps. Nothing of the avatar's
+     * head is before it; whatever of its body lies where it looks is seen.
+     */
+    public Camera camera(final Vec3 eyes, final double yaw, final double blend) {
+        final double up = was.pitch() + (chase.pitch() - was.pitch()) * blend - Chase.DEFAULT_PITCH;
+        return new Orbit(eyes, yaw, -up, BEHIND_EYES).camera(OWN_FIELD, OWN_NEAR);
     }
 
     /** The engine's camera itself, for what of the engine's wants it: its sound, which is heard from where it is. */
@@ -122,6 +165,14 @@ public final class Following {
         double off = seen.distance();
         for (final Block block : inTheWay.blocks()) {
             final Hit met = block.ray(seen.pivot(), back, off);
+            if (met != null) {
+                off = Math.min(off, Math.max(Chase.NEAREST, met.distance() - Chase.WALL_GAP));
+            }
+        }
+        // a building's own shape as well as boxes: its walls, floors and roofs, so the eye follows the avatar indoors
+        for (final Volume volume : inTheWay.volumes()) {
+            final Hit met = Volume.within(volume, seen.pivot(), back, off) == null ? null
+                    : volume.ray(seen.pivot(), back, off);
             if (met != null) {
                 off = Math.min(off, Math.max(Chase.NEAREST, met.distance() - Chase.WALL_GAP));
             }

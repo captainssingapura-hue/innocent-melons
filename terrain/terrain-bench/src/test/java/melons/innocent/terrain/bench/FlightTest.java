@@ -56,9 +56,6 @@ class FlightTest {
                 CLOSE);
         assertEquals(0, put(flight.land(), new Vec3(1_100, 30, 2_000)).minus(new Vec3(1_200, 60, 2_000)).length(),
                 CLOSE);
-        assertEquals(1, flight.coarsened(), CLOSE);
-        assertEquals(4, flight.scrolled(0).turned(0, 0).flown(0, 0, 0).scrolled(-Math.log(8) / Math.log(1.1))
-                .coarsened(), 1e-6, "drawn a quarter as big, it looks as from four times as far");
         assertThrows(IllegalArgumentException.class, () -> new Flight(0, 0, 0, 0, 0, 0));
     }
 

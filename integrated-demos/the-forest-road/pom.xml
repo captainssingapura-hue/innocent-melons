@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.demos</groupId>
+        <artifactId>integrated-demos</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>the-forest-road</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        The forest road: the retro saloon built on the GLM platform, driven down a country road through a forest
+        without end. The road and its forest are the plants lab's; the car, its engine heard and its lamps lit, is
+        the GLM test drive's; this demo only puts the one on the other.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-bench</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.plants</groupId>
+            <artifactId>plants-walk</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.glm</groupId>
+            <artifactId>glm-test-drive</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- its sources in a jar beside its classes, installed with it: what the studio's checks read it by -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <!-- mvn -pl the-forest-road exec:java drives the saloon down the forest road -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.6.3</version>
+                <configuration>
+                    <mainClass>melons.innocent.demos.forestroad.ForestRoadDrive</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

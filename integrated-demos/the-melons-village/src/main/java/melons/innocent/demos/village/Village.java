@@ -4,12 +4,14 @@ import com.example.fxsuite.places.yard.Walled;
 import com.example.fxsuite.avatar.sim.Block;
 import com.example.fxsuite.avatar.sim.Num;
 import com.example.fxsuite.avatar.sim.Obstacles;
+import com.example.fxsuite.avatar.sim.Volume;
 import com.example.fxsuite.vulkan.space.Mat4;
 import com.example.fxsuite.vulkan.space.Turned;
 import com.example.fxsuite.vulkan.space.Vec3;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 /**
  * A village along a lane: so many homes, by turns on the lane's left and its right, each a yard walled round with
@@ -83,6 +85,20 @@ public record Village(int homes) {
         return new Grove(new Vec3(-9700, 0, -3400), 5000, 4500, 30);
     }
 
+    /**
+     * The village's forest: forty thousand trees of the wood's same few, on some 1.27 km by 1.58 km of ground west of
+     * the towers, its near edge some 25 m beyond them, about seven metres from tree to tree. Where it lies, how big
+     * and how thick are its author's.
+     */
+    public Grove forest() {
+        return new Grove(new Vec3(-79_200, 0, 0), 126_500, 158_100, 40_000);
+    }
+
+    /** Its woods: the small wood beside the lake, and the forest. */
+    public List<Grove> woods() {
+        return List.of(grove(), forest());
+    }
+
     /** Where each house stands, for the one half melon that is drawn once for each. */
     /**
      * Its tall brick towers: two west of the yards on the left of the lane and two south-west of the wood, so that
@@ -109,7 +125,7 @@ public record Village(int homes) {
 
     /**
      * Everything of the village that is in the way: every yard's wall, every house, the lake's kerb, every car
-     * in the car park, and the trunk of every tree in the wood.
+     * in the car park, and the trunk of every tree in the woods; and its buildings, each as its own shape is.
      */
     public Obstacles inTheWay() {
         final List<Block> blocks = new ArrayList<>();
@@ -119,9 +135,22 @@ public record Village(int homes) {
         }
         blocks.addAll(lake().inTheWay());
         blocks.addAll(carPark().inTheWay());
-        blocks.addAll(grove().inTheWay());
+        woods().forEach(wood -> blocks.addAll(wood.inTheWay()));
         towers().forEach(tower -> blocks.addAll(tower.walls().inTheWay()));
         woodCars().forEach(car -> blocks.addAll(car.inTheWay()));
-        return new Obstacles(blocks);
+        final List<Volume> built = new ArrayList<>();
+        buildings().forEach(building -> built.addAll(building.inTheWay()));
+        return new Obstacles(blocks).with(built, IntStream.range(blocks.size(), blocks.size() + built.size())
+                .boxed().toList());
+    }
+
+    /**
+     * The buildings of the buildings' own on the open ground east of the lane, each facing it ({@link Buildings}):
+     * two houses of shipping containers and a house of concrete; and across the lane, past the last yards, another
+     * house of concrete, taller; and east and north of them its blocks of public housing, two slab blocks and three
+     * point blocks.
+     */
+    public List<Built> buildings() {
+        return new Buildings().all();
     }
 }

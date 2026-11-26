@@ -27,6 +27,8 @@ import static org.lwjgl.vulkan.VK13.vkDeviceWaitIdle;
  */
 public final class Card implements AutoCloseable {
 
+    private static final double MEGABYTE = 1024.0 * 1024;
+
     private final Said said = new Said();
     private final Owner own = new Owner();
     private final Owner theirs = new Owner();
@@ -72,6 +74,13 @@ public final class Card implements AutoCloseable {
             said.closed();
             throw refused;
         }
+    }
+
+    /** How much memory is held on the card by what was made on it, and how much of its own the card has. */
+    public Memory memory() {
+        open();
+        return new Memory(reach.holding().carded() / MEGABYTE, reach.holding().reached() / MEGABYTE,
+                new Stored(reach).whole());
     }
 
     /** The card's own name, as its maker has it. */
@@ -148,9 +157,26 @@ public final class Card implements AutoCloseable {
         return made(() -> new Tracing(reach, compiler, answered(laid), vertex));
     }
 
+    /**
+     * Room for {@code most} copies of what is drawn, laid out as {@code laid} lays a copy out, to be filled and drawn
+     * many at once; more room is made as more are filled.
+     */
+    public Copies copies(final Laid laid, final int most) {
+        return made(() -> new Copies(reach, laid.copy(), most));
+    }
+
     /** {@code mesh} sent to the card, to be drawn from. */
     public Sent sent(final Packed mesh) {
         return made(() -> new Sent(reach, recording, mesh));
+    }
+
+    /**
+     * {@code mesh} sent to the card to be drawn from, but standing in the way of no ray: its triangles are not
+     * kept for rays, which spares the memory and time that takes. For what is too far off for its shadow to
+     * matter. Gathered for rays, it is passed over.
+     */
+    public Sent sentUnstanding(final Packed mesh) {
+        return made(() -> new Sent(reach, recording, mesh, false));
     }
 
     /** The card as the kit reaches it: for the kit, and for its tests to misuse the card with. */

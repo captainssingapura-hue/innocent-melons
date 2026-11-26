@@ -16,7 +16,7 @@ public record Existence() implements StatelessFunctionalObject {
 
     /** The four trees. */
     public List<Taxonomy> trees() {
-        return List.of(Terrains.TREE, Features.TREE, Made.TREE, Uses.TREE, Spaces.TREE, Elements.TREE);
+        return List.of(Terrains.TREE, Features.TREE, Made.TREE, Uses.TREE, Spaces.TREE, Elements.TREE, Things.TREE);
     }
 
     /** Everything wrong with any of them, each said with its tree's name; none if nothing is. */

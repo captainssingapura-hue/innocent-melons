@@ -1,5 +1,6 @@
 package melons.innocent.terrain;
 
+import com.example.fxsuite.math.graph.Graph;
 import com.example.fxsuite.taxonomy.Leaf;
 
 /**
@@ -13,7 +14,7 @@ import com.example.fxsuite.taxonomy.Leaf;
 public record Steep(String label, Leaf<?> kind, Hue hue, double rise) implements Feature {
 
     @Override
-    public Coverage coverage(final Terrain terrain) {
+    public Coverage coverage(final Graph<Spot, Course> map, final Ground ground) {
         return at -> at.slope() > rise;
     }
 }

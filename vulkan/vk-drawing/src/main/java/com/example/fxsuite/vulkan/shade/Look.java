@@ -34,6 +34,7 @@ public record Look(Laid laid, Surface surface) {
         laid.passed().field("at");
         laid.frame().field("seen");
         laid.draw().field("placed");
+        laid.copy().field("copied");
         laid.draw().field("coarsened");
         laid.draw().field("tint");
         laid.frame().field("beam");
@@ -71,14 +72,15 @@ public record Look(Laid laid, Surface surface) {
     public Shader vertex() {
         final List<String> lines = new ArrayList<>(List.of(VERSION));
         lines.addAll(new Declared(laid.point()).taken());
+        lines.addAll(new Declared(laid.copy()).takenFrom(laid.copyPlace()));
         lines.addAll(new Declared(laid.frame()).block(laid.frameBound(), FRAME));
         lines.addAll(new Declared(laid.draw()).pushed(DRAW));
         lines.addAll(new Declared(laid.passed()).handedOn());
         lines.addAll(List.of(
                 "void main() {",
-                "    vec4 seenFrom = draw.placed * vec4(point, 1.0);",
+                "    vec4 seenFrom = draw.placed * (copied * vec4(point, 1.0));",
                 "    at = on;",
-                "    faces = mat3(draw.placed) * facing;",
+                "    faces = mat3(draw.placed) * (mat3(copied) * facing);",
                 "    from = seenFrom.xyz;",
                 "    gl_Position = frame.seen * seenFrom;",
                 "}"));

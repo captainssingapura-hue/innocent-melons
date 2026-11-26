@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>melons.innocent.core</groupId>
+    <artifactId>core-engine</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <description>
+        The core game engine: what happens, apart from what a thing is made of and from how it is drawn. Its parts
+        are plain Java depending on nothing outside it but the concepts of physics it is typed to (the physics
+        aggregator), no card, no window and no renderer, so the simulation, the
+        parts that decide what is drawn and any renderer may all use them. It begins with how an observer moves
+        (core-motion); the rest of the engine comes to it layer by layer as the engine is made over. Its code keeps
+        CQ's basic rules, which the studio checks from each module's jar and its sources jar.
+    </description>
+
+    <modules>
+        <!-- How an observer moves: its speed and its way, its turning, and where it will be shortly. -->
+        <module>core-motion</module>
+        <!-- How well an observer could see a thing: its sharpness, a number that changes smoothly. -->
+        <module>core-visibility</module>
+        <!-- A sheet that curves: its height and its rise over any spot, worked out and never faceted. -->
+        <module>core-sheet</module>
+        <!-- The world at rest: what stands on what, and the check of its forces. -->
+        <module>core-rest</module>
+        <!-- The loose body: the simulator of what nothing drives, which falls, topples and comes to rest. -->
+        <module>core-loose</module>
+        <!-- What can be done with a thing: actions, their binding to kinds of thing, and what is at hand. -->
+        <module>core-interaction</module>
+        <!-- What moves only as it is made to: a thing on a hinge, a door's leaf first. -->
+        <module>core-mechanism</module>
+        <!-- What a mover is on: the question it asks of a surface, and the answer its provider gives. -->
+        <module>core-surface</module>
+    </modules>
+
+    <properties>
+        <maven.compiler.release>25</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- the physics aggregator, whose concepts the engine's code is typed to: the one place its version is said -->
+        <physics.version>0.1.0-SNAPSHOT</physics.version>
+        <!-- the taxonomies, of whose trees a kind of thing is a node -->
+        <taxonomy.version>0.1.0-SNAPSHOT</taxonomy.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>5.11.3</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.13.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.5.2</version>
+                </plugin>
+                <plugin>
+                    <!-- its sources in a jar beside its classes, installed with it: what the studio's checks read it by -->
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>3.3.1</version>
+                    <executions>
+                        <execution>
+                            <id>sources</id>
+                            <goals>
+                                <goal>jar-no-fork</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>

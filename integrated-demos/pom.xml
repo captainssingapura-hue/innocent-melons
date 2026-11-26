@@ -25,11 +25,15 @@
         <lab.version>0.1.0-SNAPSHOT</lab.version>
         <places.version>0.1.0-SNAPSHOT</places.version>
         <plants.version>0.1.0-SNAPSHOT</plants.version>
+        <buildings.version>0.1.0-SNAPSHOT</buildings.version>
+        <glm.version>0.1.0-SNAPSHOT</glm.version>
     </properties>
 
     <modules>
         <!-- The melons' village: eight melon houses in walled yards, a lake, and a car park with a hundred cars. -->
         <module>the-melons-village</module>
+        <!-- The forest road: the GLM platform's retro saloon driven through the plants lab's endless forest. -->
+        <module>the-forest-road</module>
     </modules>
 
     <dependencyManagement>
@@ -78,6 +82,23 @@
                 <groupId>melons.innocent.plants</groupId>
                 <artifactId>plants-walk</artifactId>
                 <version>${plants.version}</version>
+            </dependency>
+            <!-- the GLM platform's test drive: a GLM car, driven as the avatar engine drives a land vehicle -->
+            <dependency>
+                <groupId>melons.innocent.glm</groupId>
+                <artifactId>glm-test-drive</artifactId>
+                <version>${glm.version}</version>
+            </dependency>
+            <!-- the buildings: houses of containers and of concrete, as the buildings bench looks into them -->
+            <dependency>
+                <groupId>com.example.fxsuite</groupId>
+                <artifactId>building-container</artifactId>
+                <version>${buildings.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example.fxsuite</groupId>
+                <artifactId>building-bench</artifactId>
+                <version>${buildings.version}</version>
             </dependency>
             <!-- the places: the walls a yard is walled with -->
             <dependency>

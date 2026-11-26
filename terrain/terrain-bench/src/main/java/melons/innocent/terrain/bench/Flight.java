@@ -9,7 +9,9 @@ import com.example.fxsuite.vulkan.view.Camera;
  * A view flown over the land, as one flies with a jet on one's back: an eye held at a height, moved ahead, back and
  * aside along the way it is turned, raised and lowered, turned round and tipped up and down; and the land drawn so
  * many times as big as it is, scaled about the spot under the eye, so coming nearer is the land growing, not the eye
- * dropping. The arithmetic only: the keys and the mouse say what is done ({@link Pilot}).
+ * dropping. The arithmetic only: the keys and the mouse say what is done ({@link Pilot}). How fine the land's surface
+ * is drawn needs nothing from it: what a pixel covers of the land is worked out on the card from the land's own frame,
+ * however big the land is drawn.
  *
  * <p>Where the eye is over the map is in the map's own centimetres; how high it is and how far it goes are as drawn,
  * so it goes as fast over the land on the screen whatever the land's scale.
@@ -78,10 +80,5 @@ public record Flight(double x, double z, double height, double yaw, double pitch
     /** Where the land is drawn: scaled about the spot on the sea's level under the eye. */
     public Mat4 land() {
         return new Mat4(new Vec3(x, 0, z)).times(new Sized(scale).matrix()).times(new Mat4(new Vec3(-x, 0, -z)));
-    }
-
-    /** How many times as far off the land looks, drawn smaller than it is: once, drawn as big or bigger. */
-    public double coarsened() {
-        return Math.max(1, 1 / scale);
     }
 }

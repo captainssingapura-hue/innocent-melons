@@ -1,10 +1,19 @@
 package com.example.fxsuite.vulkan.device;
 
 import org.lwjgl.PointerBuffer;
+import org.lwjgl.system.MemoryStack;
 
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
+import static org.lwjgl.glfw.GLFW.glfwGetMonitorContentScale;
+import static org.lwjgl.glfw.GLFW.glfwGetMonitorName;
+import static org.lwjgl.glfw.GLFW.glfwGetMonitorWorkarea;
+import static org.lwjgl.glfw.GLFW.glfwGetMonitors;
+import static org.lwjgl.glfw.GLFW.glfwGetPrimaryMonitor;
 import static org.lwjgl.glfw.GLFW.glfwInit;
 import static org.lwjgl.glfw.GLFW.glfwPollEvents;
 import static org.lwjgl.glfw.GLFW.glfwTerminate;
@@ -43,6 +52,30 @@ public final class Desk implements AutoCloseable {
             needed.add(names.getStringASCII(at));
         }
         return needed;
+    }
+
+    /** The screens the desk has, its first screen first. */
+    public List<Monitor> monitors() {
+        mine();
+        final List<Monitor> monitors = new ArrayList<>();
+        final PointerBuffer all = glfwGetMonitors();
+        final long first = glfwGetPrimaryMonitor();
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            for (int at = 0; all != null && at < all.remaining(); at++) {
+                final IntBuffer left = stack.mallocInt(1);
+                final IntBuffer top = stack.mallocInt(1);
+                final IntBuffer wide = stack.mallocInt(1);
+                final IntBuffer high = stack.mallocInt(1);
+                glfwGetMonitorWorkarea(all.get(at), left, top, wide, high);
+                final FloatBuffer across = stack.mallocFloat(1);
+                glfwGetMonitorContentScale(all.get(at), across, null);
+                final String name = glfwGetMonitorName(all.get(at));
+                monitors.add(new Monitor(name == null ? "" : name, left.get(0), top.get(0), wide.get(0),
+                        high.get(0), across.get(0), all.get(at) == first));
+            }
+        }
+        monitors.sort(Comparator.comparing(monitor -> !monitor.primary()));
+        return monitors;
     }
 
     /** Whatever has happened to the windows since this was last asked, heard: a window closed, moved or resized. */

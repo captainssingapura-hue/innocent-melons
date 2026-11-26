@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.terrain</groupId>
+        <artifactId>terrain</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>terrain-tiles</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        The land in tiles: squares of the map, each halved into four at the next level down, its points so many to a
+        side; what lies at each point of a tile sampled from the land, worked out when asked for and kept only while
+        wanted; and which tiles are wanted around a spot, finer near it and coarser further off, no tile beside one
+        more than a level finer or coarser, and which of each tile's edges meet a coarser one. Plain Java, knowing no
+        engine: whatever draws the land, or stands on it, asks the same tiles of the same land.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>melons.innocent.terrain</groupId>
+            <artifactId>terrain-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

@@ -11,10 +11,12 @@
 
     <description>
         The land, as data: what the ground is, how high it is at any point on the map, and what lies on it, depending
-        on no engine, neither the game's nor the card's; and its bench, which draws any ground on the card to be
-        looked round and flown over. The core is plain Java (terrain-core); the Melon country is a terrain made in it
-        (melon-country), as data; the bench is the one module here that
-        knows the renderer (terrain-bench).
+        on no engine, neither the game's nor the card's; the land on the card; its benches; and flights over it. The
+        core is plain Java (terrain-core); the Melon country is a terrain made in it (melon-country), as data, and so
+        is the meadow round the village (meadow-country); its tiles' data (terrain-tiles). The land on the card, in
+        tiles built away from the card and kept on it, for every bench and flight (terrain-drawn); the benches, which
+        draw any ground to be looked round (terrain-bench); and a bot flying over any country, on the renderer's own
+        flying-only engine (terrain-flight).
     </description>
 
     <properties>
@@ -29,7 +31,11 @@
     <modules>
         <module>terrain-core</module>
         <module>melon-country</module>
+        <module>meadow-country</module>
+        <module>terrain-tiles</module>
+        <module>terrain-drawn</module>
         <module>terrain-bench</module>
+        <module>terrain-flight</module>
     </modules>
 
     <dependencyManagement>
@@ -41,7 +47,22 @@
             </dependency>
             <dependency>
                 <groupId>melons.innocent.terrain</groupId>
+                <artifactId>terrain-tiles</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.terrain</groupId>
+                <artifactId>terrain-drawn</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.terrain</groupId>
                 <artifactId>melon-country</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.terrain</groupId>
+                <artifactId>meadow-country</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

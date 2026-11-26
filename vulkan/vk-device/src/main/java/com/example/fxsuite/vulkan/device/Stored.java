@@ -18,6 +18,8 @@ import static org.lwjgl.vulkan.VK13.*;
  */
 record Stored(Reach reach) {
 
+    private static final double MEGABYTE = 1024.0 * 1024;
+
     /** Memory under {@code buffer}; where {@code addressed}, memory whose place on the card can be asked. */
     Kept<Of.Memory> under(final Kept<Of.Buffer> buffer, final int wanted, final boolean addressed) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
@@ -44,15 +46,43 @@ record Stored(Reach reach) {
     private Kept<Of.Memory> made(final String of, final VkMemoryRequirements needs, final int wanted,
                                  final boolean addressed, final MemoryStack stack) {
         final VkDevice device = reach.device();
+        final int kind = kind(needs.memoryTypeBits(), wanted, stack);
         final VkMemoryAllocateInfo asked = VkMemoryAllocateInfo.calloc(stack).sType$Default()
-                .allocationSize(needs.size()).memoryTypeIndex(kind(needs.memoryTypeBits(), wanted, stack));
+                .allocationSize(needs.size()).memoryTypeIndex(kind);
         if (addressed) {
             asked.pNext(VkMemoryAllocateFlagsInfo.calloc(stack).sType$Default()
                     .flags(VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT).address());
         }
         final LongBuffer made = stack.mallocLong(1);
         new Checked("vkAllocateMemory").of(vkAllocateMemory(device, asked, null, made));
-        return reach.owner().kept("the memory of " + of, made.get(0), raw -> vkFreeMemory(device, raw, null));
+        final long bytes = needs.size();
+        final boolean own = own(kind, stack);
+        reach.holding().more(bytes, own);
+        return reach.owner().kept("the memory of " + of, made.get(0), raw -> {
+            vkFreeMemory(device, raw, null);
+            reach.holding().more(-bytes, own);
+        });
+    }
+
+    /** Whether memory of kind number {@code kind} is the card's own, and not the computer's. */
+    private boolean own(final int kind, final MemoryStack stack) {
+        final VkPhysicalDeviceMemoryProperties has = VkPhysicalDeviceMemoryProperties.malloc(stack);
+        vkGetPhysicalDeviceMemoryProperties(reach.card(), has);
+        return (has.memoryHeaps(has.memoryTypes(kind).heapIndex()).flags() & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) != 0;
+    }
+
+    /** How many megabytes of its own memory the card has, all its own heaps together. */
+    double whole() {
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            final VkPhysicalDeviceMemoryProperties has = VkPhysicalDeviceMemoryProperties.malloc(stack);
+            vkGetPhysicalDeviceMemoryProperties(reach.card(), has);
+            double bytes = 0;
+            for (int heap = 0; heap < has.memoryHeapCount(); heap++) {
+                bytes += (has.memoryHeaps(heap).flags() & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) != 0
+                        ? has.memoryHeaps(heap).size() : 0;
+            }
+            return bytes / MEGABYTE;
+        }
     }
 
     /** Which of the card's kinds of memory is one of those {@code allowed} and has all that is {@code wanted}. */

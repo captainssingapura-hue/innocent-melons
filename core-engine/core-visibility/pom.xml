@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.core</groupId>
+        <artifactId>core-engine</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>core-visibility</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        How well an observer could see a thing, as a number that changes smoothly: its sharpness first, the share
+        of the thing's detail the observer could make out as it and the thing now move, from all of it standing still
+        to next to none of it streaking past. The engine says the number and knows nothing of pictures; whatever draws
+        takes it, with how much one of its own pixels covers, to how finely the thing need be drawn. Whether
+        anything stands between the two is not this: that is asked of what is drawn.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-motion</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

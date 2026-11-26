@@ -33,6 +33,10 @@ A bronze with zinc in it, cast for what must bear wear.
 
 Iron with a little carbon in it: strong and cheap, drawn into tube and pressed into sheet.
 
+## Aluminium
+
+A light metal, a third the weight of steel: cast into a car's nodes and knuckles, pushed out through a die into its beams.
+
 ## Masonry
 
 Stone, or what is made to stand in for stone, laid piece on piece to stand.
@@ -62,6 +66,11 @@ Stone cut square, to lie in courses.
 
 Cement, sand and stone poured wet and set hard, cast in slabs with a joint between each.
 
+## Asphalt
+
+Stones bound with tar and rolled flat, as a road is paved: dark grey, worn paler in patches, speckled with its
+stones.
+
 ## Synthetic
 
 Made by a process, not found and not grown.
@@ -73,6 +82,10 @@ A hard coat baked onto what it covers.
 ## Rubber
 
 A tough, springy stuff that gives and comes back.
+
+## RoadPaint
+
+The paint a road's lines are painted in: white and matt, worn greyer in patches, with no clear coat.
 
 ## GlossPaint
 
@@ -99,6 +112,11 @@ Glass with a light behind it.
 
 Gas, burning.
 
+## LitPaper
+
+Paper stretched over a frame, a lantern, with a light inside it: it glows in its own colour, which is the
+thing's, told with each.
+
 ## Grown
 
 What grew, and was not made.
@@ -106,6 +124,11 @@ What grew, and was not made.
 ## Rind
 
 The tough outer skin of a fruit.
+
+## Timber
+
+Wood sawn and worked, its grain running along it, under a coat of varnish that shines a little: a boat's posts,
+rails and benches.
 
 ## Bark
 
@@ -125,6 +148,21 @@ and meeting again in diamonds.
 
 A white birch's bark: chalky white and smooth, with grey bands where its papery skin peels, short dark dashes
 lying across the wood, and black patches low on an old trunk.
+
+## PoplarBark
+
+A poplar's bark: pale grey with a cast of green and smooth, marked with small dark flecks, and broken into dark
+rough ridges low on an old trunk.
+
+## WillowBark
+
+A weeping willow's bark: grey-brown and deeply furrowed on its trunk and boughs, and golden where its wood is young
+and slender, as its hanging twigs are.
+
+## PlaneBark
+
+A plane tree's bark: smooth and shed in flakes, a patchwork of pale cream, olive and grey-brown, and olive where its
+wood is young and slender.
 
 ## Liquid
 

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.vehiclelab</groupId>
+        <artifactId>vehicles-lab</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>vl-motorcycle</artifactId>
+
+    <description>
+        A motorcycle as it is made: the boxer, after the avatar's own, its frame a double cradle of tubes; its engine
+        round, the crankcase low in the frame and a cylinder lying flat out to either side; its tank, its seat, its
+        fenders, its forks and bars, its pipes, its wheels and its lamps. Each part says what it is, which of the
+        bike's finishes it is in and what it turns with: the bars, the front wheel, the back. No card, no window.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>melons.innocent.vehiclelab</groupId>
+            <artifactId>vl-frame</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.vehiclelab</groupId>
+            <artifactId>vl-forms</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-drawing</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

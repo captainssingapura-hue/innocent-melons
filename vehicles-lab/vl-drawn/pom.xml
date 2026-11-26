@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.vehiclelab</groupId>
+        <artifactId>vehicles-lab</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>vl-drawn</artifactId>
+
+    <description>
+        A vehicle on the card: each of its parts sent once, and drawn in the material lab's material for the finish its
+        owner chose for it, painted the colour chosen where it is paint; its bars and front wheel turned as steered
+        and its wheels as rolled.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>melons.innocent.vehiclelab</groupId>
+            <artifactId>vl-motorcycle</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-bench</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite.texture</groupId>
+            <artifactId>tx-materials</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

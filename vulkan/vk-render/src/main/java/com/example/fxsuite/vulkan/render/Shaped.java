@@ -19,6 +19,15 @@ public final class Shaped implements AutoCloseable {
         this.sent = card.sent(new Packed(laid.point(), form));
     }
 
+    /**
+     * {@code form} on {@code card}; where not {@code standing}, it stands in the way of no ray, and is spared what
+     * that costs: for what is too far off for its shadow to matter.
+     */
+    public Shaped(final Card card, final Laid laid, final Mesh form, final boolean standing) {
+        this.sent = standing ? card.sent(new Packed(laid.point(), form))
+                : card.sentUnstanding(new Packed(laid.point(), form));
+    }
+
     /** The form as the card has it, for a look to draw. */
     Sent sent() {
         return sent;

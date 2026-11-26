@@ -7,6 +7,7 @@ import org.lwjgl.vulkan.VkPresentInfoKHR;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.util.List;
 import java.util.function.Consumer;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
@@ -84,9 +85,69 @@ public final class Window implements Target, AutoCloseable {
         }
     }
 
+    /**
+     * Shown on the screen {@code on}, the top left corner of its frame {@code x} across that screen's part for
+     * windows and {@code y} down it, measured as the screen's own windows are.
+     */
+    public void shown(final Monitor on, final int x, final int y) {
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            final IntBuffer left = stack.mallocInt(1);
+            final IntBuffer top = stack.mallocInt(1);
+            glfwGetWindowFrameSize(glass.raw(), left, top, null, null);
+            // by the measure of the screen it is going to, which may not be the one it was made on
+            glfwSetWindowPos(glass.raw(), (int) (on.left() + Math.round(x * on.larger()) + left.get(0)),
+                    (int) (on.top() + Math.round(y * on.larger()) + top.get(0)));
+            glfwShowWindow(glass.raw());
+        }
+    }
+
+    /** Shown on the screen {@code on}, as large as that screen lets a window be. */
+    public void maximized(final Monitor on) {
+        // stood on that screen first: a window is made as large as the screen it stands on lets it be
+        glfwSetWindowPos(glass.raw(), on.left() + on.wide() / 4, on.top() + on.high() / 4);
+        glfwMaximizeWindow(glass.raw());
+        glfwShowWindow(glass.raw());
+    }
+
+    /** Its inside made {@code width} by {@code height}, as the screen measures its own windows. */
+    public void sized(final int width, final int height) {
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            final FloatBuffer across = stack.mallocFloat(1);
+            final FloatBuffer down = stack.mallocFloat(1);
+            glfwGetWindowContentScale(glass.raw(), across, down);
+            glfwSetWindowSize(glass.raw(), Math.round(width * across.get(0)), Math.round(height * down.get(0)));
+        }
+    }
+
+    /** Where it stands on the desk now, how big it is, and whether it is as large as its screen lets it be. */
+    public Stands stands() {
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            final FloatBuffer across = stack.mallocFloat(1);
+            final FloatBuffer down = stack.mallocFloat(1);
+            glfwGetWindowContentScale(glass.raw(), across, down);
+            final IntBuffer x = stack.mallocInt(1);
+            final IntBuffer y = stack.mallocInt(1);
+            glfwGetWindowPos(glass.raw(), x, y);
+            final IntBuffer left = stack.mallocInt(1);
+            final IntBuffer top = stack.mallocInt(1);
+            glfwGetWindowFrameSize(glass.raw(), left, top, null, null);
+            final IntBuffer wide = stack.mallocInt(1);
+            final IntBuffer high = stack.mallocInt(1);
+            glfwGetWindowSize(glass.raw(), wide, high);
+            return new Stands(x.get(0) - left.get(0), y.get(0) - top.get(0),
+                    Math.round(wide.get(0) / across.get(0)), Math.round(high.get(0) / down.get(0)), across.get(0),
+                    glfwGetWindowAttrib(glass.raw(), GLFW_MAXIMIZED) == GLFW_TRUE);
+        }
+    }
+
     /** What the mouse did in it since this was last asked: to be asked once a frame, after the desk has heard. */
     public Moved mouse() {
         return pointed.moved();
+    }
+
+    /** The clicks of its first button since this was last asked, each where it was in the picture, the first first. */
+    public List<Clicked> clicks() {
+        return pointed.clicks();
     }
 
     /**
@@ -96,6 +157,11 @@ public final class Window implements Target, AutoCloseable {
      */
     public void taken(final boolean taken) {
         glfwSetInputMode(glass.raw(), GLFW_CURSOR, taken ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+    }
+
+    /** Whether the mouse's first button is held down now, over this window. */
+    public boolean pressing() {
+        return glfwGetMouseButton(glass.raw(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
     }
 
     /** Whether {@code key} is held down now, with this window the one being typed in. */

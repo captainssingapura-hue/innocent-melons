@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.physics</groupId>
+        <artifactId>physics</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>physics-existences</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        What exists in physics, as far as the worlds need it: the shapes a thing that keeps its shape may have first,
+        told apart by how each meets what it stands on, and what is true of them across their tree: resting on a
+        face, tipping over an edge, rolling one way or any way, rocking, or never moving at all.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>fxsuite-taxonomy-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+        </dependency>
+    </dependencies>
+</project>

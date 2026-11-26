@@ -93,7 +93,10 @@ class TreePlaceTest {
         final Framed framed = new Framed(laid, camera, day.light());
         final Beam beam = new Beam(tree.stands(), day.light().sunTowards(), 5000, 5000).settled(2048);
         final Consumer<Pass> all = pass -> place.drawn(pass, camera);
-        canvas.drawn(day.sky(), framed.filling(1000.0 / 700, beam, 2048), shadows.cast(framed, beam, all), all);
+        canvas.drawn(day.sky(), framed.filling(1000.0 / 700, beam, 2048), shadows.cast(framed, beam, all), pass -> {
+            all.accept(pass);
+            place.seenThrough(pass, camera);
+        });
         return new Picture(canvas.width(), canvas.pixels());
     }
 }

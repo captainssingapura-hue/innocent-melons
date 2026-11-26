@@ -16,6 +16,9 @@ public record Barks() {
             case OAK -> new Materials.OakBark();
             case WALNUT -> new Materials.WalnutBark();
             case BIRCH -> new Materials.BirchBark();
+            case POPLAR -> new Materials.PoplarBark();
+            case WILLOW -> new Materials.WillowBark();
+            case PLANE -> new Materials.PlaneBark();
         };
     }
 }

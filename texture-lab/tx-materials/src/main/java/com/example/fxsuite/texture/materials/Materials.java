@@ -32,11 +32,13 @@ public record Materials() {
     /** The tree, read from its leaves, each node with its meaning. */
     public Taxonomy tree() {
         return new Taxonomy("materials", new Matter(), List.of(new Gold(), new Bronze(),
-                new Titanium(), new Gunmetal(), new Steel(), new CommonRedBrick(), new ChineseGreyBrick(),
-                new Adobe(), new Rubble(), new DressedStone(), new Concrete(),
+                new Titanium(), new Gunmetal(), new Steel(), new Aluminium(), new CommonRedBrick(),
+                new ChineseGreyBrick(), new Adobe(), new Rubble(), new DressedStone(), new Concrete(), new Asphalt(),
+                new RoadPaint(),
                 new Enamel(), new Rubber(), new GlossPaint(), new MetallicPaint(), new Glass(), new LitGlass(),
-                new Flame(),
-                new Rind(), new OakBark(), new WalnutBark(), new BirchBark(), new Water(),
+                new Flame(), new LitPaper(),
+                new Rind(), new Timber(), new OakBark(), new WalnutBark(), new BirchBark(), new PoplarBark(),
+                new WillowBark(), new PlaneBark(), new Water(),
                 new Turf(), new Topsoil(), new Sand(), new Gravel(), new Bedrock(), new Mud(),
                 new Skin(), new Lip(), new Nail(), new Hair(), new Sclera(), new Iris(), new Cornea(),
                 new ToothEnamel(), new Bone(), new Cartilage(), new Muscle(), new Tendon(), new Fat()),
@@ -54,6 +56,7 @@ public record Materials() {
     public record Titanium() implements Leaf<Metal>, Material { public Metal parent() { return new Metal(); } }
     public record Gunmetal() implements Leaf<Metal>, Material { public Metal parent() { return new Metal(); } }
     public record Steel() implements Leaf<Metal>, Material { public Metal parent() { return new Metal(); } }
+    public record Aluminium() implements Leaf<Metal>, Material { public Metal parent() { return new Metal(); } }
 
     // Masonry: laid piece on piece
     public record Masonry() implements L1<Matter> { public Matter parent() { return new Matter(); } }
@@ -67,6 +70,12 @@ public record Materials() {
     public record Rubble() implements Leaf<Masonry>, Material { public Masonry parent() { return new Masonry(); } }
     public record Concrete() implements Leaf<Masonry>, Material {
         public Masonry parent() { return new Masonry(); }
+    }
+    public record Asphalt() implements Leaf<Masonry>, Material {
+        public Masonry parent() { return new Masonry(); }
+    }
+    public record RoadPaint() implements Leaf<Synthetic>, Material {
+        public Synthetic parent() { return new Synthetic(); }
     }
     public record DressedStone() implements Leaf<Masonry>, Material {
         public Masonry parent() { return new Masonry(); }
@@ -94,14 +103,23 @@ public record Materials() {
     public record Luminous() implements L1<Matter>, Glowing { public Matter parent() { return new Matter(); } }
     public record LitGlass() implements Leaf<Luminous>, Material { public Luminous parent() { return new Luminous(); } }
     public record Flame() implements Leaf<Luminous>, Material { public Luminous parent() { return new Luminous(); } }
+    public record LitPaper() implements Leaf<Luminous>, Material {
+        public Luminous parent() { return new Luminous(); }
+    }
 
     // Grown: what grew
     public record Grown() implements L1<Matter> { public Matter parent() { return new Matter(); } }
     public record Rind() implements Leaf<Grown>, Material { public Grown parent() { return new Grown(); } }
+    public record Timber() implements Leaf<Grown>, Material, Mirroring {
+        public Grown parent() { return new Grown(); }
+    }
     public record Bark() implements L2<Grown> { public Grown parent() { return new Grown(); } }
     public record OakBark() implements Leaf<Bark>, Material { public Bark parent() { return new Bark(); } }
     public record WalnutBark() implements Leaf<Bark>, Material { public Bark parent() { return new Bark(); } }
     public record BirchBark() implements Leaf<Bark>, Material { public Bark parent() { return new Bark(); } }
+    public record PoplarBark() implements Leaf<Bark>, Material { public Bark parent() { return new Bark(); } }
+    public record WillowBark() implements Leaf<Bark>, Material { public Bark parent() { return new Bark(); } }
+    public record PlaneBark() implements Leaf<Bark>, Material { public Bark parent() { return new Bark(); } }
 
     // Liquid: what flows, and lies level
     public record Liquid() implements L1<Matter>, Mirroring { public Matter parent() { return new Matter(); } }

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.doors</groupId>
+        <artifactId>doors</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>door-walk</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        Swing doors on the card and walked through: a door drawn part by part, its leaf turned on its hinge and its
+        glass last; a brick wall on the test ground with a doorway for one door of each design; and the hands of
+        whoever walks up, which open and shut the door at hand as the core engine's bindings let a door be.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>melons.innocent.doors</groupId>
+            <artifactId>door-swing</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-drawing</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite.vulkan</groupId>
+            <artifactId>vk-bench</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite.texture</groupId>
+            <artifactId>tx-materials</artifactId>
+        </dependency>
+        <!-- the yard's walls: the wall the doors stand in -->
+        <dependency>
+            <groupId>com.example.fxsuite.places</groupId>
+            <artifactId>pl-yard</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.testkit</groupId>
+            <artifactId>tk-ground</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-mechanism</artifactId>
+        </dependency>
+        <!-- what can be done with a thing, and the tree of things a door is a kind of -->
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-interaction</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>fxsuite-existence</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <!-- mvn -pl door-walk exec:java opens the doors in their wall on a test ground -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.6.3</version>
+                <configuration>
+                    <mainClass>melons.innocent.doors.walk.DoorWalk</mainClass>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- LWJGL counting the native memory it is asked for, as in the renderer's own tests -->
+                    <argLine>-Dorg.lwjgl.util.DebugAllocator=true --enable-native-access=ALL-UNNAMED</argLine>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

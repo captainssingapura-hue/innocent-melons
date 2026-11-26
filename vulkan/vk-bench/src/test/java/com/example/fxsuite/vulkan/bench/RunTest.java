@@ -102,6 +102,92 @@ class RunTest {
         assertNotEquals(new Step(), new Step(Set.of("W"), List.of(), 0, 0, false, 0, 0, false));
     }
 
+    @Test
+    void itsJetsTakeItNoHigherThanItsCeilingAndWithNoneItGoesOnUp() {
+        final String climbing = "F;SPACE:8;W:2";
+        final Run free = new Run(new Scripted(climbing), Optional.empty(), new Skies(new Asked(1)));
+        final Run held = new Run(new Scripted(climbing), Optional.empty(), new Skies(new Asked(1))).under(1_000);
+        double highest = 0;
+        while (!held.over()) {
+            held.stepped(1.0 / 120);
+            free.stepped(1.0 / 120);
+            highest = Math.max(highest, -held.shown(1).body().position().y());
+        }
+        assertTrue(highest > 950 && highest < 1_150, "up to its ceiling of ten metres, and hardly over: " + highest);
+        assertTrue(-held.shown(1).body().position().y() > 900, "and it stays up there, still flying");
+        assertTrue(-free.shown(1).body().position().y() > 2_000, "with no ceiling it goes on up");
+    }
+
+    @Test
+    void itsJetsGoAsFastAsTheirGearSaysFromTwentyToAHundredAndFiftyKilometresAnHour() {
+        final List<String> shifts = List.of("SHIFT+DOWN;SHIFT+DOWN;", "SHIFT+DOWN;", "", "SHIFT+UP;",
+                "SHIFT+UP;SHIFT+UP;", "SHIFT+UP;SHIFT+UP;SHIFT+UP;SHIFT+UP;");
+        final List<Gear> gears = List.of(Gear.FIRST, Gear.SECOND, Gear.THIRD, Gear.FOURTH, Gear.FIFTH, Gear.FIFTH);
+        for (int shifted = 0; shifted < shifts.size(); shifted++) {
+            final Run run = new Run(new Scripted("F;SPACE:1;" + shifts.get(shifted) + "W:12"), Optional.empty(),
+                    new Skies(new Asked(1)));
+            while (!run.over()) {
+                run.stepped(1.0 / 120);
+            }
+            assertEquals(gears.get(shifted), run.gear(), "the gear it was shifted to, and no further than the top");
+            assertEquals(run.gear().fastest(), run.gear().hourly(run.shown(1).body().speed()),
+                    run.gear().fastest() * 0.03, "flat out, as fast as its gear goes");
+            assertEquals(run.gear().fastest(), run.motion().hourly(), run.gear().fastest() * 0.03,
+                    "and the core engine, from the run's steps, detects the same speed");
+        }
+        final Run slowed = new Run(new Scripted("F;SPACE:1;W+SHIFT:8"), Optional.empty(), new Skies(new Asked(1)));
+        final Run afoot = new Run(new Scripted("SHIFT+UP;SHIFT+UP;W:6"), Optional.empty(), new Skies(new Asked(1)));
+        while (!slowed.over() || !afoot.over()) {
+            slowed.stepped(1.0 / 120);
+            afoot.stepped(1.0 / 120);
+        }
+        assertEquals(70, Gear.THIRD.hourly(slowed.shown(1).body().speed()), 2.5, "flying, Shift alone slows nothing");
+        assertEquals(27.4, Gear.THIRD.hourly(afoot.shown(1).body().speed()), 1.5, "on foot a gear changes nothing");
+        assertEquals(Gear.FIRST, Gear.FIRST.lower());
+        assertEquals(2.083, Gear.FIFTH.pushed(), 0.001, "the top gear, twice the engine's own top speed and more");
+    }
+
+    @Test
+    void itGoesOnPastTheEnginesWorldsEdgeAndIsStoppedByWhatStandsOutThere() {
+        // four minutes flat out in the top gear: ten kilometres, twice as far as the engine's level world goes
+        final String far = "F;SPACE:1;SHIFT+UP;SHIFT+UP;W:240";
+        final Run free = new Run(new Scripted(far), Optional.empty(), new Skies(new Asked(1)));
+        final Run walled = new Run(new Scripted(far), Optional.empty(), new Skies(new Asked(1)));
+        // a wall across the way seven kilometres out, a hundred metres high
+        walled.inTheWay(new Obstacles(List.of(new Block(0, 700_000, 50_000, 100, 0, 0, 10_000))));
+        double last = 0;
+        while (!free.over()) {
+            free.stepped(1.0 / 120);
+            walled.stepped(1.0 / 120);
+            final double now = free.shown(1).body().position().z();
+            assertTrue(now >= last - 1e-6 && now - last < 60, "on steadily, with no jump where it is brought back");
+            last = now;
+        }
+        assertTrue(last > 950_000, "ten kilometres on, past the engine's edge at five: " + last);
+        assertEquals(0, free.shown(1).body().position().x(), 1, "straight on");
+        final double stopped = walled.shown(1).body().position().z();
+        assertTrue(stopped > 695_000 && stopped < 700_000, "stopped by the wall seven kilometres out: " + stopped);
+        final Camera eye = free.following().camera(free.inTheWay(), 1);
+        assertTrue(Math.abs(eye.eye().z() - last) < 3_000, "its camera with it, in the world");
+    }
+
+    @Test
+    void jumpsMadeOneAfterAnotherChangeLegs() {
+        final Run run = new Run(new Scripted("SPACE;W:1.5;SPACE;W:1.5;SPACE;W:0.5"), Optional.empty(),
+                new Skies(new Asked(1)));
+        final List<Boolean> legs = new ArrayList<>();
+        boolean aloft = false;
+        while (!run.over()) {
+            run.stepped(1.0 / 120);
+            final boolean now = !run.shown(1).body().grounded();
+            if (now && !aloft) {
+                legs.add(run.otherLeg());
+            }
+            aloft = now;
+        }
+        assertEquals(List.of(false, true, false), legs, "three jumps: one leg, the other, and the first again");
+    }
+
     /**
      * {@code source} run to its end, a frame every {@code frame} seconds, kept in {@code kept}, among two posts;
      * where the avatar and the chase camera's eye were at each frame, said in a line, and last where they ended.

@@ -7,6 +7,7 @@ import com.example.fxsuite.taxonomy.Taxonomy;
 import com.example.fxsuite.texture.bench.Swatch;
 import com.example.fxsuite.texture.materials.Materials;
 import com.example.fxsuite.texture.materials.Shades;
+import com.example.fxsuite.vulkan.bench.Arranged;
 import com.example.fxsuite.vulkan.bench.Asked;
 import com.example.fxsuite.vulkan.bench.LightBoard;
 import com.example.fxsuite.vulkan.space.Vec3;
@@ -78,8 +79,8 @@ public final class Console {
         this.light = new LightBoard(asked);
     }
 
-    /** Shown, its top left corner {@code x} across the screen and {@code y} down. To be called on JavaFX's thread. */
-    public void shown(final double x, final double y) {
+    /** Shown where {@code arranged} puts a console, with its two buttons. To be called on JavaFX's thread. */
+    public void shown(final Arranged arranged) {
         final Taxonomy tree = new Materials().tree();
         final ComboBox<String> material = new ComboBox<>();
         tree.leaves().forEach(leaf -> material.getItems().add(leaf.title()));
@@ -119,15 +120,14 @@ public final class Console {
         final VBox lit = new VBox(GAP, new Label("The light"), light.shown());
         lit.setPadding(new Insets(GAP));
         lit.setPrefWidth(LIGHT_WIDE);
-        final VBox middle = new VBox(GAP, new Label("The material on show"), material,
+        final VBox middle = new VBox(GAP, arranged.bar(), new Label("The material on show"), material,
                 new Label("The shapes it is looked at on"), shapes,
                 new Label("Their colour, where the material takes it"), painted, far, doubled,
                 new Label("Java's own working of the wall's face:"), worked, shell.working(), shell.figures(),
                 shell.problems());
         middle.setPadding(new Insets(GAP));
         final Stage stage = new Stage();
-        stage.setX(x);
-        stage.setY(y);
+        arranged.placed(stage);
         stage.setOnCloseRequest(closing -> asked.stop());
         shell.barless().left(new ScrollPane(lit)).middle(middle).show(stage, WIDE, TALL);
         bus.publish(first);

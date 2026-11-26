@@ -15,7 +15,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * The ground as the card draws it: a point every so far each way, the last at the far edges, each as high as the
- * ground; two triangles to a square, every one facing up; each point facing as the ground slopes there.
+ * ground; two triangles to a square, every one facing up; cut where the layers part, not along the squares; each
+ * point facing as the ground slopes there.
  */
 class SheetTest {
 
@@ -65,18 +66,22 @@ class SheetTest {
     }
 
     @Test
-    void cutIntoPartsByTheLayerAtEachSquaresNearLeftCorner() {
+    void cutIntoPartsWhereTheLayersPartNotAlongTheSquares() {
         final Grid grid = new Grid(new Slope(), 200);
         final int[] layers = new int[grid.across() * grid.along()];
         for (int p = 0; p < layers.length; p++) {
             layers[p] = grid.x(p % grid.across()) < 500 ? 0 : 1;
         }
-        final Map<Integer, Mesh> parts = Sheet.INSTANCE.parts(grid, 1, layers);
-        // squares whose near left corners lie 0, 200 and 400 across in the first, 600 and 800 in the second; four rows
+        final Map<Integer, Mesh> parts = Sheet.INSTANCE.parts(grid, 1, layers, at -> at.x() < 500 ? 0 : 1);
+        // the layers part at 500 across, halfway over the squares from 400 to 600: each half the sheet
         assertEquals(List.of(0, 1), List.copyOf(parts.keySet()));
-        assertEquals(2 * 3 * 4, parts.get(0).triangles());
-        assertEquals(2 * 2 * 4, parts.get(1).triangles());
-        assertEquals(4 * 5, parts.get(0).points().size(), "only the points its squares use");
+        final double half = 500 * 700 * Math.hypot(1, 0.5);
+        // where the layers part found to a thousandth of an edge
+        assertEquals(half, parts.get(0).area(), 700 * 0.2 * Math.hypot(1, 0.5));
+        assertEquals(half, parts.get(1).area(), 700 * 0.2 * Math.hypot(1, 0.5));
+        for (final Vec3 point : parts.get(0).points()) {
+            assertTrue(point.x() <= 500 + 1, "the first all short of 500 across: " + point);
+        }
     }
 
     @Test

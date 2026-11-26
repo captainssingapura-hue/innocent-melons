@@ -124,6 +124,78 @@ class BotTest {
         assertEquals(200 / 188.0, tall / own, 1e-9);
     }
 
+    @Test
+    void inEverySecondJumpItsLegsAreChangedAboutAndOnItsFeetNothingChanges() {
+        Avatar avatar = new Avatar(standing.jumped(), false);
+        for (int step = 0; step < 20; step++) {
+            avatar = avatar.step(Controls.NONE, Clock.STEP, Obstacles.NONE).avatar();
+        }
+        final Body body = avatar.body();
+        assertTrue(!body.grounded() && !body.flying(), "in the air, in a jump");
+        final Pose pose = Gait.of(avatar, 0, 0);
+        final Knees knees = new Knees(body);
+        assertTrue(knees.left() > knees.right() + 20, "one knee raised and the other trailing");
+        final Joints one = new Joints(pose, knees, Build.MAN);
+        final Joints other = new Joints(pose, knees.changed(), Build.MAN, true);
+        for (final Limb[] pair : new Limb[][] {{Limb.LEFT_LEG, Limb.RIGHT_LEG}, {Limb.LEFT_SHIN, Limb.RIGHT_SHIN},
+            {Limb.RIGHT_LEG, Limb.LEFT_LEG}, {Limb.RIGHT_SHIN, Limb.LEFT_SHIN}}) {
+            final Mat4 foot = one.of(pair[0]).times(new Mat4(new Vec3(0, Joints.SHIN, 0)));
+            final Mat4 mirrored = other.of(pair[1]).times(new Mat4(new Vec3(0, Joints.SHIN, 0)));
+            assertEquals(-foot.at(0, 3), mirrored.at(0, 3), 1e-9, "as far out, on the other side");
+            assertEquals(foot.at(1, 3), mirrored.at(1, 3), 1e-9, "as high");
+            assertEquals(foot.at(2, 3), mirrored.at(2, 3), 1e-9, "as far ahead");
+        }
+        assertEquals(height(one, Limb.LEFT_ARM, 30), height(other, Limb.LEFT_ARM, 30), 1e-9, "its arms as they were");
+        assertTrue(!stood(bot.placed(body, 0, pose, true)).equals(stood(bot.placed(body, 0, pose, false))),
+                "drawn changed");
+        assertEquals(stood(bot.placed(body, 0, pose)), stood(bot.placed(body, 0, pose, false)), "unchanged unless said");
+        assertEquals(stood(bot.placed(standing, 0, still, false)), stood(bot.placed(standing, 0, still, true)),
+                "on its feet nothing changes");
+    }
+
+    @Test
+    void standingAcrossASlopeEachSoleIsOnItsOwnGroundAndTheWholeAsLowAsTheLowerFootNeeds() {
+        // ground that rises thirty centimetres for each metre across, level under the figure's own middle
+        final Trodden slope = (x, z) -> 0.3 * x;
+        final List<Courier.Placed> boxes = bot.placed(standing, 0, still, false, slope);
+        final double[] left = sole(boxes, Limb.LEFT_FOOT);
+        final double[] right = sole(boxes, Limb.RIGHT_FOOT);
+        assertEquals(0.3 * left[0], left[1], 1.6, "the left sole on its ground");
+        assertEquals(0.3 * right[0], right[1], 1.6, "the right sole on its ground");
+        assertEquals(0.3 * Math.abs(left[0] - right[0]), Math.abs(left[1] - right[1]), 0.5);
+        assertTrue(Math.abs(left[1] - right[1]) > 4, "one foot well above the other");
+        final double level = bot.placed(standing, 0, still).stream().mapToDouble(box -> highest(box, 1)).max()
+                .orElseThrow();
+        final double sloped = boxes.stream().mapToDouble(box -> highest(box, 1)).max().orElseThrow();
+        assertEquals(level + Math.min(left[1], right[1]), sloped, 0.6, "its head as much lower as its lower foot");
+        assertEquals(stood(bot.placed(standing, 0, still)), stood(bot.placed(standing, 0, still, false, (x, z) -> 0)),
+                "on level ground it stands as it always did");
+        assertEquals(stood(bot.placed(standing, 0, still)).stream().map(at -> at.split(" ")[0]).toList(),
+                stood(bot.placed(standing, 0, still, false, (x, z) -> 12)).stream().map(at -> at.split(" ")[0])
+                        .toList(), "on ground higher under both alike only its height changes");
+    }
+
+    /**
+     * Where the sole of {@code foot} is among {@code boxes}, a whole bot's as drawn: how far across the middle of
+     * its lowest box is, and how low that box comes.
+     */
+    private double[] sole(final List<Courier.Placed> boxes, final Limb foot) {
+        final List<Courier.Piece> pieces = bot.pieces();
+        double[] sole = {0, Double.POSITIVE_INFINITY};
+        for (int part = 0; part < pieces.size(); part++) {
+            if (pieces.get(part).limb() == foot && -highest(boxes.get(part), -1) < sole[1]) {
+                sole = new double[] {boxes.get(part).stands().at(0, 3), -highest(boxes.get(part), -1)};
+            }
+        }
+        return sole;
+    }
+
+    /** Where the middle of each of {@code boxes} stands, to a thousandth of a centimetre, in their order. */
+    private List<String> stood(final List<Courier.Placed> boxes) {
+        return boxes.stream().map(box -> String.format("%.3f %.3f %.3f", box.stands().at(0, 3),
+                box.stands().at(1, 3), box.stands().at(2, 3))).toList();
+    }
+
     /** Where the point so far down {@code limb} is, how high, as the figure's frame has it: down, the way it grows. */
     private double height(final Joints joints, final Limb limb, final double down) {
         return joints.of(limb).times(new Mat4(new Vec3(0, down, 0))).at(1, 3);

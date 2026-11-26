@@ -13,6 +13,11 @@
     <artifactId>plants-walk</artifactId>
     <packaging>jar</packaging>
 
+    <properties>
+        <!-- which walk exec:java opens: TreeWalk, the three trees; ForestWalk, the four woods -->
+        <plants.main>TreeWalk</plants.main>
+    </properties>
+
     <description>
         A place to walk round a tree and fly up among its boughs, drawn by the card: the lab's way of looking at a
         plant close to. The walk, its keys and its camera are the renderer's bench's.
@@ -35,6 +40,24 @@
             <groupId>com.example.fxsuite.texture</groupId>
             <artifactId>tx-materials</artifactId>
         </dependency>
+        <!-- the road works: a road's surface across it, which the forest's road is paved with -->
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>road-surface</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
+        <!-- the core engine: how sharply a thing is seen as its observer moves -->
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-visibility</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
+        <!-- the curves a road is smoothed by -->
+        <dependency>
+            <groupId>melons.innocent.math</groupId>
+            <artifactId>math-curves</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -49,12 +72,12 @@
                 <artifactId>maven-source-plugin</artifactId>
             </plugin>
             <plugin>
-                <!-- mvn -pl plants-walk exec:java opens the walk round the tree -->
+                <!-- mvn -pl plants-walk exec:java opens the walk round the trees; -Dplants.main=ForestWalk the forest -->
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.6.3</version>
                 <configuration>
-                    <mainClass>melons.innocent.plants.walk.TreeWalk</mainClass>
+                    <mainClass>melons.innocent.plants.walk.${plants.main}</mainClass>
                 </configuration>
             </plugin>
             <plugin>

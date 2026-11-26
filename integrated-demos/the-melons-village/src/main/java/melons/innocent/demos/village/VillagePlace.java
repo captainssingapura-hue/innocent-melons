@@ -30,8 +30,11 @@ import java.util.List;
  * once for each. Before the village is its lake: a kerb of rubble, and still water within it, each drawn in one call
  * with the surface its material has. Off the lake's end is a car park of concrete with a hundred cars standing in
  * it ({@link CarParkDrawn}), whose windows are seen through and so are drawn after everything else; and off its
- * other end a small wood of bare oaks ({@link GroveDrawn}). What is in the
- * way is the same walls, the same houses, the same kerb, the same cars and the same trees' trunks.
+ * other end a small wood of bare trees, and west of the towers a forest of forty thousand, drawn as one wood
+ * ({@link GroveDrawn}). What is in the way is the same walls, the same houses, the same kerb, the same cars and
+ * the same trees' trunks. East of the lane and past its last yards stand a few buildings of the buildings' own,
+ * two of shipping containers and two of concrete, each drawn as the buildings bench looks into it ({@link BuiltDrawn})
+ * and in the way as its own shape is.
  */
 public final class VillagePlace implements Place {
 
@@ -48,6 +51,7 @@ public final class VillagePlace implements Place {
     /** The car park and its cars, once made: null only while the place is being made. */
     private CarParkDrawn carPark;
     private GroveDrawn grove;
+    private BuiltDrawn built;
 
     /** The village, on {@code card}, its layouts as {@code laid} says. */
     public VillagePlace(final Card card, final Laid laid) {
@@ -73,7 +77,8 @@ public final class VillagePlace implements Place {
             lake.add(kept(new Formed(card, new Look(laid, shades.of(new Materials.Rubble())), kerb.formed())));
             lake.add(kept(new Formed(card, new Look(laid, shades.of(new Materials.Water())), village.lake().sheet())));
             this.carPark = new CarParkDrawn(card, laid, village.carPark(), village.woodCars());
-            this.grove = new GroveDrawn(card, laid, village.grove());
+            this.grove = new GroveDrawn(card, laid, village.woods());
+            this.built = new BuiltDrawn(card, laid, village.buildings());
         } catch (final RuntimeException refused) {
             close();
             throw refused;
@@ -105,15 +110,24 @@ public final class VillagePlace implements Place {
         lake.forEach(part -> part.drawn(pass, new Mat4(), camera, 1));
         carPark.drawn(pass, camera);
         grove.drawn(pass, camera);
+        built.drawn(pass, camera);
     }
 
     @Override
     public void seenThrough(final Pass pass, final Camera camera) {
+        // the wood's far haze first, then the cars' windows: one before the other wherever they lie, which is wrong
+        // only where a window and a crown's haze cross in the picture, and then only in which is laid over which
+        grove.seenThrough(pass, camera);
         carPark.seenThrough(pass, camera);
+        built.seenThrough(pass, camera);
     }
 
     @Override
     public void close() {
+        if (built != null) {
+            built.close();
+            built = null;
+        }
         if (grove != null) {
             grove.close();
             grove = null;

@@ -1,13 +1,14 @@
 package melons.innocent.terrain.bench;
 
+import melons.innocent.terrain.drawn.Painting;
+
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.IntStream;
 
 /**
- * The ground coloured layer by layer, away from the card's thread: at first every point in the painting's first
- * layer, the land's raw shape; then each later layer in turn, laid over those before wherever it lies, read from the
- * grid's heights and slopes, its rows worked out side by side. After each layer what it has come to so far is told,
- * for the card's thread to take when it will.
+ * The ground coloured layer by layer, away from the card's thread, on one thread of its own: at first every point in
+ * the painting's first layer, the land's plain shape; then each later layer in turn, one after another, laid over
+ * those before wherever it lies, read from the grid's heights and slopes. After each layer what it has come to so far
+ * is told, for the card's thread to take when it will, so the features are seen to come one by one.
  */
 public final class Colouring {
 
@@ -45,14 +46,13 @@ public final class Colouring {
     private void coloured() {
         final int[] layers = new int[grid.across() * grid.along()];
         for (int layer = 1; layer < layers(); layer++) {
-            final int laying = layer;
-            IntStream.range(0, grid.along()).parallel().forEach(j -> {
+            for (int j = 0; j < grid.along(); j++) {
                 for (int i = 0; i < grid.across(); i++) {
-                    if (painting.covers(laying, grid.sample(i, j))) {
-                        layers[j * grid.across() + i] = laying;
+                    if (painting.covers(layer, grid.sample(i, j))) {
+                        layers[j * grid.across() + i] = layer;
                     }
                 }
-            });
+            }
             latest.set(new Coloured(layers.clone(), layer + 1));
         }
     }

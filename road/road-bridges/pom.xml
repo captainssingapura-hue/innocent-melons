@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.example.fxsuite</groupId>
+        <artifactId>fxsuite-road</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>road-bridges</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        What carries a road over a gap, part of the road's base: a viaduct, long and high on many spans, and a flyover,
+        a road carried over another where they cross; each a deck carrying a road's surface between its parapets, on
+        piers and abutments standing on the ground under them, as high as the ground there leaves them, worked out
+        from the terrain it stands on, level ground at first.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>road-surface</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>melons.innocent.terrain</groupId>
+            <artifactId>terrain-core</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

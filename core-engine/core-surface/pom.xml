@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>melons.innocent.core</groupId>
+        <artifactId>core-engine</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>core-surface</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        What a mover is on: the one question anything that goes over a surface asks, and the answer whatever provides
+        the surface gives, in that provider's own frame: how high it is and which way it faces, its form, what it is
+        made of, what state it is in, and how far it goes on. The providers are the things of the world at rest; a
+        provider says nothing of how it is itself moving, which the world puts together.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-motion</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- sheets that curve: what a curved provider answers from -->
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-sheet</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- the world at rest: its things are what provide surfaces -->
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-rest</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- what exists in physics: the kinds of shape the shapes here are typed to -->
+        <dependency>
+            <groupId>melons.innocent.physics</groupId>
+            <artifactId>physics-existences</artifactId>
+            <version>${physics.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

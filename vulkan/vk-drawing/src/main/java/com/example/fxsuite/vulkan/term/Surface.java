@@ -10,14 +10,15 @@ import java.util.Optional;
  * what light it gives of its own and how much it mirrors its surroundings, each of which is nothing for most
  * things; for what has a clear hard skin, how much more it mirrors when it is seen at a glancing angle; for
  * a paint with metal in it, the flakes that lie in it; and, for what is seen through, how much of what is behind
- * it shows.
+ * it shows, and whether it is a haze, which hides less toward its rim.
  * One description for every distance: seen close, every term in full; further off, each term fading to its average
  * as a pixel comes to cover more than its features ({@link Turns#pulse}); and for what is far enough, a coarser
  * surface made from this one, with what can no longer be seen worked out once and left out of the shader
  * ({@link #coarser}).
  */
 public record Surface(Colour base, List<Term> terms, Colour shine, double tightness, Colour glow, Colour mirror,
-                      Optional<Colour> glance, Optional<Flakes> flakes, double through) {
+                      Optional<Colour> glance, Optional<Flakes> flakes, double through,
+                      boolean haze) {
 
     /** A term is taken to have faded altogether once a pixel covers this many of its smallest feature. */
     private static final double FADED = 8;
@@ -37,7 +38,21 @@ public record Surface(Colour base, List<Term> terms, Colour shine, double tightn
      * never told this hides whatever is behind it.
      */
     public Surface clear(final double share) {
-        return new Surface(base, terms, shine, tightness, glow, mirror, glance, flakes, share);
+        return new Surface(base, terms, shine, tightness, glow, mirror, glance, flakes, share, haze);
+    }
+
+    /**
+     * The same surface, as the outside of a haze of fine things, a cloud of twigs, say, which is seen through: it
+     * hides most where it is looked through its middle, which is where the eye's way through it is longest, and
+     * nothing at its rim, where the way through comes to nothing; so a clump of it has no edge. Over the whole of
+     * a round clump it hides what it does not let through ({@link #clear}) on the average; through its middle,
+     * half as much again, and never more than all.
+     */
+    public Surface hazy() {
+        if (!seenThrough()) {
+            throw new IllegalStateException("only what is seen through is a haze: told clear first");
+        }
+        return new Surface(base, terms, shine, tightness, glow, mirror, glance, flakes, through, true);
     }
 
     /**
@@ -47,7 +62,7 @@ public record Surface(Colour base, List<Term> terms, Colour shine, double tightn
     public Surface marked(final Term mark) {
         final List<Term> all = new ArrayList<>(terms);
         all.add(mark);
-        return new Surface(base, all, shine, tightness, glow, mirror, glance, flakes, through);
+        return new Surface(base, all, shine, tightness, glow, mirror, glance, flakes, through, haze);
     }
 
     /** Whether anything behind it shows through it. */
@@ -58,7 +73,7 @@ public record Surface(Colour base, List<Term> terms, Colour shine, double tightn
     /** A surface that gives no light of its own. */
     public Surface(final Colour base, final List<Term> terms, final Colour shine, final double tightness) {
         this(base, terms, shine, tightness, new Colour(0, 0, 0), new Colour(0, 0, 0), Optional.empty(),
-                Optional.empty(), 0);
+                Optional.empty(), 0, false);
     }
 
     /**
@@ -66,7 +81,7 @@ public record Surface(Colour base, List<Term> terms, Colour shine, double tightn
      * its own, glittering seen close, and its colour duller seen edge on.
      */
     public Surface flaked(final Flakes lying) {
-        return new Surface(base, terms, shine, tightness, glow, mirror, glance, Optional.of(lying), through);
+        return new Surface(base, terms, shine, tightness, glow, mirror, glance, Optional.of(lying), through, haze);
     }
 
     /**
@@ -75,7 +90,7 @@ public record Surface(Colour base, List<Term> terms, Colour shine, double tightn
      * says, so gold sends on gold.
      */
     public Surface mirroring(final Colour share) {
-        return new Surface(base, terms, shine, tightness, glow, share, glance, flakes, through);
+        return new Surface(base, terms, shine, tightness, glow, share, glance, flakes, through, haze);
     }
 
     /**
@@ -85,12 +100,12 @@ public record Surface(Colour base, List<Term> terms, Colour shine, double tightn
      * A surface never told this mirrors the same from every side.
      */
     public Surface glancing(final Colour atGlance) {
-        return new Surface(base, terms, shine, tightness, glow, mirror, Optional.of(atGlance), flakes, through);
+        return new Surface(base, terms, shine, tightness, glow, mirror, Optional.of(atGlance), flakes, through, haze);
     }
 
     /** The same surface, giving {@code light} of its own besides: it shows that much whatever light falls on it. */
     public Surface glowing(final Colour light) {
-        return new Surface(base, terms, shine, tightness, light, mirror, glance, flakes, through);
+        return new Surface(base, terms, shine, tightness, light, mirror, glance, flakes, through, haze);
     }
 
     /** Its colour at a point, unlit: the terms laid over the base, what is of constants alone worked out already. */
@@ -110,7 +125,7 @@ public record Surface(Colour base, List<Term> terms, Colour shine, double tightn
     public Surface coarser(final double covers, final Averaged averaged) {
         return new Surface(base, terms.stream()
                 .map(term -> covers >= FADED * term.smallest() ? term.evened(average(term, averaged)) : term)
-                .toList(), shine, tightness, glow, mirror, glance, flakes, through);
+                .toList(), shine, tightness, glow, mirror, glance, flakes, through, haze);
     }
 
     /**
@@ -134,7 +149,8 @@ public record Surface(Colour base, List<Term> terms, Colour shine, double tightn
         final Optional<Colour> atGlance = glance.isEmpty() && under.glance.isEmpty() ? Optional.empty()
                 : Optional.of(under.glance.orElse(under.mirror).mixed(glance.orElse(mirror), share));
         return new Surface(under.base.mixed(base, share), all, under.shine.mixed(shine, share), tightness,
-                under.glow.mixed(glow, share), under.mirror.mixed(mirror, share), atGlance, Optional.empty(), 0);
+                under.glow.mixed(glow, share), under.mirror.mixed(mirror, share), atGlance, Optional.empty(), 0,
+                false);
     }
 
     /** What {@code term} comes to over the part of the thing it belongs to. */

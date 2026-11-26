@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>melons.innocent.vehicles</groupId>
+    <artifactId>vehicles</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <description>
+        Vehicles, modelled from their real figures, apart from how they are drawn and how they move: a model says what
+        a vehicle is made of, its parts, where they turn and what each is finished in; drawing it puts the parts on the
+        card in the material lab's materials. The Bell Boeing V-22 Osprey first, a tiltrotor, built to its published
+        size. Its code keeps CQ's basic rules, checked in its own build.
+    </description>
+
+    <properties>
+        <maven.compiler.release>25</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- the renderer, and the material lab: the one place each one's version is said -->
+        <vulkan.version>0.1.0-SNAPSHOT</vulkan.version>
+        <lab.version>0.1.0-SNAPSHOT</lab.version>
+        <cq.version>0.1.0</cq.version>
+    </properties>
+
+    <modules>
+        <!-- The Osprey as it is made: its parts, sized to its published figures, where they turn. No card. -->
+        <module>vh-osprey</module>
+        <!-- A fun boat for the waterways, a Singapore river boat in its livery, its hull on the typed graph. No card. -->
+        <module>vh-boat</module>
+        <!-- A vehicle on the card: its parts in the lab's materials, turned as it says. -->
+        <module>vh-drawn</module>
+        <!-- The gate: CQ's basic rules over every module here, in the build that breaks them. -->
+        <module>vh-qc</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.example.fxsuite.vulkan</groupId>
+                <artifactId>vk-drawing</artifactId>
+                <version>${vulkan.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example.fxsuite.vulkan</groupId>
+                <artifactId>vk-render</artifactId>
+                <version>${vulkan.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example.fxsuite.vulkan</groupId>
+                <artifactId>vk-flight</artifactId>
+                <version>${vulkan.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example.fxsuite.texture</groupId>
+                <artifactId>tx-materials</artifactId>
+                <version>${lab.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.vehicles</groupId>
+                <artifactId>vh-osprey</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.vehicles</groupId>
+                <artifactId>vh-drawn</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.vehicles</groupId>
+                <artifactId>vh-boat</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example.fxsuite.vulkan</groupId>
+                <artifactId>vk-afloat</artifactId>
+                <version>${vulkan.version}</version>
+            </dependency>
+            <!-- the typed graph and curves the hull's lines are, and the value types they are made of -->
+            <dependency>
+                <groupId>com.example.fxsuite</groupId>
+                <artifactId>fxsuite-math-graph</artifactId>
+                <version>0.1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>melons.innocent.math</groupId>
+                <artifactId>math-curves</artifactId>
+                <version>0.1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.captainssingapura-hue.lang.ontology</groupId>
+                <artifactId>core</artifactId>
+                <version>0.1.0</version>
+            </dependency>
+            <!-- every CQ artifact at one version -->
+            <dependency>
+                <groupId>io.github.captainssingapura-hue.homing.cq</groupId>
+                <artifactId>homing-cq-bom</artifactId>
+                <version>${cq.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>5.11.3</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.13.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.5.2</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>

@@ -6,7 +6,10 @@ import com.example.fxsuite.texture.stone.RubbleWall;
 import com.example.fxsuite.vulkan.bench.subject.FlakedLacquer;
 import com.example.fxsuite.vulkan.bench.subject.Tone;
 import com.example.fxsuite.vulkan.bench.subject.Watermelon;
+import com.example.fxsuite.vulkan.term.Colour;
 import com.example.fxsuite.vulkan.term.Surface;
+
+import java.util.List;
 
 /**
  * How each material is drawn: for every leaf of the tree of materials, its surface. Whatever is in the tree is
@@ -27,12 +30,15 @@ public record Shades() {
             case Materials.Titanium titanium -> Tone.TITANIUM.surface();
             case Materials.Gunmetal gunmetal -> Tone.GUNMETAL.surface();
             case Materials.Steel steel -> Tone.STEEL.surface();
+            case Materials.Aluminium aluminium -> aluminium();
             case Materials.CommonRedBrick brick -> Brickwork.COMMON_RED.wall().surface();
             case Materials.ChineseGreyBrick brick -> Brickwork.CHINESE_GREY.wall().surface();
             case Materials.Adobe adobe -> Brickwork.ADOBE.wall().surface();
             case Materials.Rubble rubble -> new RubbleWall().surface();
             case Materials.DressedStone stone -> new CoursedStone().wall().surface();
             case Materials.Concrete concrete -> new CastConcrete().surface();
+            case Materials.Asphalt asphalt -> new Tarmac().surface();
+            case Materials.RoadPaint paint -> new LinePaint().surface();
             case Materials.Enamel enamel -> Tone.SHELL.surface();
             case Materials.Rubber rubber -> Tone.JOINT.surface();
             case Materials.GlossPaint paint -> new Lacquer().surface();
@@ -40,10 +46,7 @@ public record Shades() {
             case Materials.Glass glass -> new SheetGlass().surface();
             case Materials.LitGlass glass -> Tone.VISOR.surface();
             case Materials.Flame flame -> Tone.FLAME.surface();
-            case Materials.Rind rind -> new Watermelon().rind();
-            case Materials.OakBark bark -> new RoughBark().surface();
-            case Materials.WalnutBark bark -> new FurrowedBark().surface();
-            case Materials.BirchBark bark -> new PaperBark().surface();
+            case Materials.LitPaper paper -> new PaperLantern().surface();
             case Materials.Water water -> new StillWater().surface();
             case Materials.Turf turf -> Grounds.TURF.surface();
             case Materials.Topsoil soil -> Grounds.TOPSOIL.surface();
@@ -64,8 +67,35 @@ public record Shades() {
             case Materials.Muscle muscle -> Tissues.MUSCLE.surface();
             case Materials.Tendon tendon -> Tissues.TENDON.surface();
             case Materials.Fat fat -> Tissues.FAT.surface();
+            default -> grown(material);
+        };
+    }
+
+    /** {@code material}'s surface, where it is something grown: a rind, timber, or a tree's bark. */
+    private Surface grown(final Material material) {
+        return switch (material) {
+            case Materials.Rind rind -> new Watermelon().rind();
+            case Materials.Timber timber -> new VarnishedTimber().surface();
+            case Materials.OakBark bark -> new RoughBark().surface();
+            case Materials.WalnutBark bark -> new FurrowedBark().surface();
+            case Materials.BirchBark bark -> new PaperBark().surface();
+            case Materials.PoplarBark bark -> new PaleBark().surface();
+            // a willow's old bark is furrowed as a walnut's is, browner; its young wood is golden
+            case Materials.WillowBark bark -> new FurrowedBark("#6f6557", "#857b6a", "#544b40", "#2b2520").surface()
+                    .marked(new Slender("#c9a53a", 0.5, 2.2).term());
+            case Materials.PlaneBark bark -> new MottledBark().surface()
+                    .marked(new Slender("#7c7f52", 0.6, 2.5).term());
             default -> throw new IllegalArgumentException(material.title() + " is in no tree of materials that is"
                     + " shaded here");
         };
+    }
+
+    /**
+     * Aluminium as cast or pushed through a die, bare: a light grey, paler than steel, that mirrors less and less
+     * sharply, its highlight broad, as a casting's skin is.
+     */
+    private Surface aluminium() {
+        return new Surface(new Colour("#5a5d62"), List.of(), new Colour("#b4b8be"), 12)
+                .mirroring(new Colour("#6e7278"));
     }
 }

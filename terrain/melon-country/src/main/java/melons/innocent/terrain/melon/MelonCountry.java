@@ -46,8 +46,11 @@ public record MelonCountry() implements StatelessFunctionalObject {
 
     private static final double M = 100;
 
-    /** The country, made. */
-    public Terrain terrain() {
+    /**
+     * The country's map: its lines, joining its spots, each straight or bowed. The shore, the river's course, the
+     * harbour's, the range's crests, and round each of its areas; what its land features lie along.
+     */
+    public Graph<Spot, Course> map() {
         final List<Edge<Spot, Course>> lines = new ArrayList<>();
         lines.addAll(lines(shore(), List.of(0.0, 0.0, -80.0, -80.0, 0.0, 60.0, 60.0, 0.0, -80.0, -80.0, 0.0, 0.0)));
         lines.addAll(lines(river(), List.of(0.0, 50.0, -60.0, 40.0, 70.0, -90.0, 60.0, -40.0, 0.0)));
@@ -65,8 +68,13 @@ public record MelonCountry() implements StatelessFunctionalObject {
         spots.addAll(eastSpur());
         spots.addAll(westRidge());
         MelonFeatures.INSTANCE.areas().forEach(spots::addAll);
-        return new Terrain("the Melon country", new Extent(-3_000 * M, -2_600 * M, 3_000 * M, 3_400 * M),
-                new Graph<>(List.copyOf(spots), lines), List.of(
+        return new Graph<>(List.copyOf(spots), lines);
+    }
+
+    /** The country as its first draft made it, of landforms laid in turn over its map. */
+    public Terrain terrain() {
+        return new Terrain("the Melon country", new Extent(-3_000 * M, -2_600 * M, 3_000 * M, 3_400 * M), map(),
+                List.of(
                         new Plain("the Melon plain", 12 * M),
                         new Ridge("the Melon Range", new Path(range()),
                                 curve(0, 420, 450, 600, 800, 520, 1_300, 760), fall()),

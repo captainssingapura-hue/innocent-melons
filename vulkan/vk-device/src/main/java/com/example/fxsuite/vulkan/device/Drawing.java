@@ -4,6 +4,7 @@ import com.example.fxsuite.vulkan.layout.Filling;
 import com.example.fxsuite.vulkan.shade.Laid;
 import com.example.fxsuite.vulkan.shade.Shader;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.lwjgl.vulkan.VK13.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
@@ -18,6 +19,8 @@ import static org.lwjgl.vulkan.VK13.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
  */
 public final class Drawing implements AutoCloseable {
 
+    private static final String COPIED = "copied";
+
     private final Laid laid;
     private final boolean mixed;
     private final Described described;
@@ -27,6 +30,8 @@ public final class Drawing implements AutoCloseable {
     private final Bytes frame;
     private final Kept<Of.Tellings> tellings;
     private final Kept<Of.Bound> bound;
+    /** One copy, unmoved: what a thing drawn once is drawn as. */
+    private final Copies once;
     /** The picture of depths it is set to look things up in, once it has been set to one. */
     private Optional<Depths> looked = Optional.empty();
     /** What it is set to ask rays of, as the card has it, once it has been set to any. */
@@ -48,6 +53,8 @@ public final class Drawing implements AutoCloseable {
                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
         this.tellings = described.tellings();
         this.bound = described.bound(tellings, told, frame);
+        this.once = new Copies(reach, laid.copy(), 1).filled(List.of(new Filling(laid.copy())
+                .with(COPIED, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)));
     }
 
     /** The layouts it was built from. */
@@ -98,8 +105,14 @@ public final class Drawing implements AutoCloseable {
         return bound;
     }
 
+    /** One copy, unmoved. */
+    Copies once() {
+        return once;
+    }
+
     @Override
     public void close() {
+        once.close();
         bound.close();
         tellings.close();
         frame.close();
