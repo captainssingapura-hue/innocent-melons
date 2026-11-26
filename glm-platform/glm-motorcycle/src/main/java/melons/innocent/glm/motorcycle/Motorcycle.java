@@ -46,7 +46,17 @@ public record Motorcycle(EngineFigures twin) {
         joined.addAll(front);
         joined.addAll(back);
         joined.addAll(again(mounts, front, back, carried(joined, "rear pulley")));
+        joined.addAll(bodywork(frames, front, back, beneath(engine)));
         return new Platform("the motorcycle", crankcase, joined);
+    }
+
+    /** How high {@code engine} reaches under where the seat goes, as far across as the seat is wide. */
+    private double beneath(final Platform engine) {
+        final double[] along = new Bodywork(figures(), null, 0).seatRun();
+        return engine.connections().stream().map(Connection::carried).distinct()
+                .flatMap(p -> p.form().points().stream())
+                .filter(v -> v.x() < along[0] && v.x() > along[1] && Math.abs(v.z() - figures().centre()) < 16)
+                .mapToDouble(v -> v.y()).max().orElse(figures().ground());
     }
 
     /** The front: the trellis on the front head, the steering head, yokes, legs and the front wheel on them. */
@@ -128,6 +138,33 @@ public record Motorcycle(EngineFigures twin) {
                 new Connection("right shock on the subframe", subframe, "shock, right", carried(back, "shock, right"),
                         "subframe", Joining.BUSHED),
                 new Connection("rear pulley on its axle", axle, "pulley", pulley, "axle", Joining.BOLTED));
+    }
+
+    /**
+     * Its bodywork: the airbox cover on the trellis's top rails; the seat, the fuel tank and the side covers on the
+     * subframe; the front fender on the fork's legs and the back one on the subframe's tail ({@link Bodywork},
+     * {@link Fenders}).
+     */
+    private List<Connection> bodywork(final Frames frames, final List<Connection> front,
+                                      final List<Connection> back, final double beneath) {
+        final Bodywork body = new Bodywork(figures(), frames, beneath);
+        final Fenders fenders = new Fenders(figures(), frames);
+        final Part subframe = carried(back, "subframe");
+        final Part fender = fenders.front();
+        return List.of(
+                new Connection("airbox cover on the trellis", carried(front, "trellis frame"), "top rail",
+                        body.airboxCover(), "trellis", Joining.BOLTED),
+                new Connection("seat on the subframe", subframe, "front", body.seat(), "subframe", Joining.BOLTED),
+                new Connection("fuel tank in the subframe", subframe, "front", body.tank(), "subframe",
+                        Joining.BOLTED),
+                new Connection("left side cover", subframe, "front", body.sideCover(-1), "subframe", Joining.BOLTED),
+                new Connection("right side cover", subframe, "front", body.sideCover(1), "subframe", Joining.BOLTED),
+                new Connection("front fender on the fork", carried(front, "fork leg, left"), "axle", fender, "fork",
+                        Joining.BOLTED),
+                new Connection("front fender on the right leg", carried(front, "fork leg, right"), "axle", fender,
+                        "fork, right", Joining.BOLTED),
+                new Connection("rear fender on the subframe", subframe, "tail", fenders.rear(), "subframe",
+                        Joining.BOLTED));
     }
 
     /** The part {@code joined} carries whose name ends {@code called}. */

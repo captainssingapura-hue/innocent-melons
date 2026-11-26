@@ -1,5 +1,7 @@
 package melons.innocent.glm.motorcycle;
 
+import com.example.fxsuite.vulkan.space.Mat4;
+import com.example.fxsuite.vulkan.space.Turned;
 import com.example.fxsuite.vulkan.space.Vec3;
 import melons.innocent.glm.engine.BeltFigures;
 import melons.innocent.glm.engine.EngineFigures;
@@ -31,6 +33,8 @@ public record BikeFigures(EngineFigures engine) {
     static final double HIGH_YOKE = 71;
     /** How far apart its fork's legs are, across. */
     static final double LEGS = 21;
+    /** How far its bars turn its front end each way, at most: an estimate. */
+    public static final double LOCK = 35;
 
     /** Where its middle is along the crank. */
     public double centre() {
@@ -79,6 +83,11 @@ public record BikeFigures(EngineFigures engine) {
     /** The place on its steering axis level with {@code along} up its legs, in its middle. */
     public Vec3 stem(final double along) {
         return leg(along).minus(ahead().times(offset()));
+    }
+
+    /** What turns its front end {@code degrees} about its steering axis, to its left as it is more. */
+    public Mat4 steered(final double degrees) {
+        return new Turned(steer(), degrees).matrix(stem(0));
     }
 
     /** How far ahead of its front tyre's foot its steering axis meets the ground: its trail, worked out. */

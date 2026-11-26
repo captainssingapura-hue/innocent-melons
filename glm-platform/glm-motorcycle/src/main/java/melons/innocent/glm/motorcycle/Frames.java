@@ -19,12 +19,12 @@ import java.util.List;
 
 /**
  * A motorcycle's frames, which its twin carries the loads between ({@link Mounts}): the trellis, steel tube in
- * triangles, a side either side of the heads, outside the timing cover, from the steering head down to the front
- * head's node and back over the V to the back head's, tubes across at each, a lug to the front head's face; the
- * mid-structure, forged aluminium, a plate either side outside the clutch cover and the belt, from the crankcase's
- * mount behind the gearbox up to the back head's node, a lug to its face, carrying the swingarm's pivot and the
- * subframe; and the subframe, aluminium tube, back from the mid-structure over the back wheel to the
- * tail, carrying the seat and the shocks' tops.
+ * triangles, a side either side of the heads, outside the timing cover, from behind the steering head, welded to
+ * its back clear of the fork's legs as they turn, down to the front head's node and back over the V to the back
+ * head's, tubes across at each, a lug to the front head's face; the mid-structure, forged aluminium, a plate either
+ * side outside the clutch cover and the belt, from the crankcase's mount behind the gearbox up to the back head's
+ * node, a lug to its face, carrying the swingarm's pivot and the subframe; and the subframe, aluminium tube, back
+ * from the mid-structure over the back wheel to the tail, carrying the seat and the shocks' tops.
  *
  * @param figures the bike's figures
  * @param mounts  where they are bolted to the engine
@@ -44,6 +44,9 @@ record Frames(BikeFigures figures, Mounts mounts) {
     private static final Vec3 TAIL = new Vec3(-12, 42, 0);
     /** How far along the subframe the shocks' tops are. */
     private static final double SHOCK = 0.42;
+    /** How far behind the steering head the trellis's sides come in, and how far round the head is. */
+    private static final double BEHIND = 9;
+    private static final double HEAD = 2.4;
 
     /** The trellis. */
     Part trellis() {
@@ -54,14 +57,14 @@ record Frames(BikeFigures figures, Mounts mounts) {
         final Vec3 rear = mounts.node(mounts.rear());
         for (final int side : List.of(-1, 1)) {
             final Vec3 across = new Vec3(0, 0, side * out);
-            final Vec3 high = figures.stem(BikeFigures.HIGH_YOKE - 4).plus(across);
-            final Vec3 low = figures.stem(BikeFigures.LOW_YOKE + 4).plus(across);
+            final Vec3 high = node(true).plus(across);
+            final Vec3 low = node(false).plus(across);
             final Vec3 f = front.plus(across);
             final Vec3 r = rear.plus(across);
             final Vec3 m = high.plus(r).times(0.5);
             for (final Vec3[] tube : List.of(new Vec3[] {high, m}, new Vec3[] {m, r}, new Vec3[] {low, f},
-                    new Vec3[] {high, f}, new Vec3[] {m, f}, new Vec3[] {f, r},
-                    new Vec3[] {high, high.minus(across)}, new Vec3[] {low, low.minus(across)})) {
+                    new Vec3[] {high, f}, new Vec3[] {m, f}, new Vec3[] {f, r}, new Vec3[] {high, low},
+                    new Vec3[] {high, head(true)}, new Vec3[] {low, head(false)})) {
                 made.add(shapes.drum(tube[0], tube[1], TUBE));
             }
         }
@@ -71,6 +74,7 @@ record Frames(BikeFigures figures, Mounts mounts) {
         made.add(lug(mounts.front()));
         return new Part("trellis frame", Group.FRAME, false, List.of(
                 new Point("front head", mounts.front().point("top").at()), new Point("rear node", rear),
+                new Point("top rail", topRail()),
                 new Point("steering head", figures.stem((BikeFigures.LOW_YOKE + BikeFigures.HIGH_YOKE) / 2))),
                 shapes.joined(made), new Made(Material.STEEL, false)).as(new MotorcycleParts.TrellisFrame());
     }
@@ -117,6 +121,7 @@ record Frames(BikeFigures figures, Mounts mounts) {
             made.add(shapes.drum(across(subframe(t), -ARMS), across(subframe(t), ARMS), RAIL * 0.8));
         }
         return new Part("subframe", Group.FRAME, false, List.of(new Point("front", subframe(0)),
+                new Point("tail", subframe(1)),
                 new Point("shock, left", shockTop(-1)), new Point("shock, right", shockTop(1))),
                 shapes.joined(made), new Made(Material.ALUMINIUM, false)).as(new MotorcycleParts.Subframe());
     }
@@ -140,9 +145,35 @@ record Frames(BikeFigures figures, Mounts mounts) {
         return new Shapes(ROUND).drum(mounts.face(head), mounts.node(head), BOSS);
     }
 
+    /**
+     * The node behind the steering head, its top one or its bottom, in the middle across, where the trellis's side
+     * comes in: behind the head, out of the way of the fork's legs as the bars turn them.
+     */
+    private Vec3 node(final boolean top) {
+        return head(top).minus(figures.ahead().times(BEHIND));
+    }
+
+    /** Where the trellis is welded to the back of the steering head, near its top or its bottom. */
+    private Vec3 head(final boolean top) {
+        return figures.stem(top ? BikeFigures.HIGH_YOKE - 4 : BikeFigures.LOW_YOKE + 4).minus(figures.ahead()
+                .times(HEAD));
+    }
+
+    /** The middle of the trellis's top rails, in the middle across, where its tube across is. */
+    Vec3 topRail() {
+        return mid();
+    }
+
+    /** How high the trellis's top rails are at {@code x} along the bike, from the steering head to the back head. */
+    double topRail(final double x) {
+        final Vec3 high = node(true);
+        final Vec3 rear = mounts.node(mounts.rear());
+        return high.y() + (x - high.x()) * (rear.y() - high.y()) / (rear.x() - high.x());
+    }
+
     /** The trellis's middle, where its tube across is. */
     private Vec3 mid() {
-        final Vec3 high = figures.stem(BikeFigures.HIGH_YOKE - 4);
+        final Vec3 high = node(true);
         return high.plus(mounts.node(mounts.rear())).times(0.5);
     }
 
