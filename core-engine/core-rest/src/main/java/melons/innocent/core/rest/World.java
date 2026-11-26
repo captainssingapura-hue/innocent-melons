@@ -1,6 +1,8 @@
 package melons.innocent.core.rest;
 
 import melons.innocent.core.motion.Spot;
+import melons.innocent.core.tick.Tick;
+import melons.innocent.core.tick.Ticker;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,6 +36,9 @@ import java.util.stream.Collectors;
  * go to rest. What happened is given back. It is kept as it is ticked, and from the same beginning and the same
  * things asked of it at the same ticks it is the same world every time.
  *
+ * <p>It counts its own ticks ({@link Tick}), each as long as its one ticker said when it was made: nobody who
+ * ticks it says how long a tick is, and how long it has gone on is its count and nothing else.
+ *
  * <p>For now every thing is looked at when one is asked what touches it, and things described as run into each
  * other are only said so, once, and left as they are.
  */
@@ -57,11 +62,19 @@ public final class World {
     private boolean looked;
     /** How many things the check has looked at, since the world began. */
     private long checks;
+    /** The tick to be taken next: its count is how many have been taken since the world began. */
+    private Tick tick;
 
-    /** A world on {@code ground}, whatever nothing drives stepped by {@code loose}. */
+    /** A world on {@code ground}, whatever nothing drives stepped by {@code loose}, ticked as the game steps. */
     public World(final Ground ground, final Simulator loose) {
+        this(ground, loose, new Ticker());
+    }
+
+    /** The same, ticked by {@code ticker}: how long its every tick is, said this once. */
+    public World(final Ground ground, final Simulator loose, final Ticker ticker) {
         this.ground = ground;
         this.loose = loose;
+        this.tick = ticker.first();
     }
 
     /**
@@ -91,19 +104,12 @@ public final class World {
         return this;
     }
 
-    /** The world a tick of so many {@code seconds} on, the things named {@code destroyed} first taken out of it. */
-    public List<Happened> ticked(final Collection<String> destroyed, final double seconds) {
-        return ticked(new Asked(destroyed, Map.of(), Map.of()), seconds);
-    }
-
-    /** The same, each thing named in {@code thrown} then given the motion said with it, on top of what it had. */
-    public List<Happened> ticked(final Collection<String> destroyed, final Map<String, Moved> thrown,
-                                 final double seconds) {
-        return ticked(new Asked(destroyed, thrown, Map.of()), seconds);
-    }
-
-    /** The world a tick of so many {@code seconds} on, what is {@code asked} of it done first. */
-    public List<Happened> ticked(final Asked asked, final double seconds) {
+    /**
+     * The world a tick on, what is {@code asked} of it done first: the tick is the world's own next one, as long
+     * as every other, and what happened is given back stamped with it.
+     */
+    public Stamped ticked(final Asked asked) {
+        final Tick taken = tick;
         final List<Happened> happened = new ArrayList<>();
         dirty.addAll(carrying.ridden(supports, resting));
         new TreeSet<>(asked.destroyed()).forEach(gone -> gone(gone, happened, new Happened.Destroyed(gone)));
@@ -114,13 +120,19 @@ public final class World {
         }
         new TreeMap<>(asked.driven()).forEach((name, going) -> redriven(name, going, happened));
         new TreeMap<>(asked.thrown()).forEach((name, with) -> thrown(name, with, happened));
-        checked(seconds, happened);
+        checked(taken.seconds(), happened);
         // who rides what, now that what is held is known; and then the driven things go on, their riders with them
         dirty.addAll(carrying.ridden(supports, resting));
-        carrying.carried(resting, seconds);
-        moved(asked.outsiders(), seconds, happened);
+        carrying.carried(resting, taken.seconds());
+        moved(asked.outsiders(), taken, happened);
         rested(happened);
-        return happened;
+        tick = taken.next();
+        return new Stamped(taken, happened);
+    }
+
+    /** The tick to be taken next: its count is how many the world has taken since it began. */
+    public Tick tick() {
+        return tick;
     }
 
     /**
@@ -129,12 +141,12 @@ public final class World {
      * the one tick, and each one's engine corrects what it worked out for what was found. Last, a thing at rest
      * that one of them struck is let go, going as the blow leaves it.
      */
-    private void moved(final Map<String, Outsider> outsiders, final double seconds, final List<Happened> happened) {
+    private void moved(final Map<String, Outsider> outsiders, final Tick taken, final List<Happened> happened) {
         final Map<String, Simulator.Mover> before = new TreeMap<>(moving);
         final Map<String, Simulator.Stepped> regular = new TreeMap<>();
         for (final String name : lowestFirst(moving.keySet())) {
             regular.put(name, loose.stepped(things.get(name), moving.get(name),
-                    (rigid, placed) -> touches(name, rigid, placed, true), seconds));
+                    (rigid, placed) -> touches(name, rigid, placed, true), taken));
             moving.put(name, regular.get(name).next());
         }
         final Others others = new Others(things, resting, carrying::going, before, regular, outsiders);
@@ -144,7 +156,7 @@ public final class World {
         found.forEach((name, collisions) -> {
             final Simulator.Stepped stepped = collisions.isEmpty() ? regular.get(name)
                     : loose.correctionS1(things.get(name), before.get(name),
-                            (rigid, placed) -> touches(name, rigid, placed, true), seconds, regular.get(name),
+                            (rigid, placed) -> touches(name, rigid, placed, true), taken, regular.get(name),
                             collisions);
             moving.put(name, stepped.next());
             stepped.on().ifPresent(on -> happened.add(new Happened.Landed(name, on)));

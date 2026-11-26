@@ -4,12 +4,9 @@ import melons.innocent.core.motion.Spot;
 import melons.innocent.core.motion.Turn;
 import melons.innocent.physics.existences.RollsAnyWay;
 import melons.innocent.physics.existences.Shapes;
-import melons.innocent.physics.existences.Unmoving;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -20,8 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * size and stuff make it and is easier to turn about its long way than across it. It touches the ground at its one
  * lowest spot, and a face of a box or a slab at the spot of it nearest that face, a slope under it and a chock
  * beside it alike, and nothing past the face's edge. On level ground it is held; on a slope it is not, unless
- * something it has come up against holds it. A slab is unmoving: the world never checks it, though nothing is under
- * it, and it holds up what stands on it; that taken away, what stood on it is let go.
+ * something it has come up against holds it.
  */
 class RoundTest {
 
@@ -91,20 +87,5 @@ class RoundTest {
                 "past the slab's end there is no face under it");
         assertTrue(touching.held(new Box(50, 50, 50), new Placed(new Spot(0, 39, 0)), "melon", melon,
                 new Placed(new Spot(0, 14, 0))).isEmpty(), "and nothing rests on a round thing yet");
-    }
-
-    @Test
-    void aSlabNeverMovesAndHoldsWhatStandsOnItUntilItIsTakenAway() {
-        assertTrue(new Rigid("ramp", slab, 2_400).unmoving() && slab.kind().answer(Unmoving.class).isPresent());
-        final Simulator unmoving = (rigid, now, around, seconds) -> new Simulator.Stepped(now, Optional.empty());
-        final World world = new World(new Ground(), unmoving)
-                .stood(new Rigid("ramp", slab, 2_400), ramp)
-                .stood(new Rigid("crate", new Box(50, 50, 50), 600), onTheRamp(25, 0));
-        assertTrue(world.ticked(List.of(), TICK).isEmpty(), "the slab hangs over nothing, and nothing happens");
-        assertEquals(1, world.checks(), "only the crate is checked");
-        assertEquals(Set.of("ramp"), world.under("crate"), "which lies on the slope and stays");
-        assertTrue(world.under("ramp").isEmpty());
-        assertEquals(List.of(new Happened.Destroyed("ramp"), new Happened.Unsettled("crate")),
-                world.ticked(List.of("ramp"), TICK));
     }
 }

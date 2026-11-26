@@ -19,6 +19,8 @@
     </description>
 
     <modules>
+        <!-- The world's one ticker: the tick as a count, and the calendar worked out from it. -->
+        <module>core-tick</module>
         <!-- How an observer moves: its speed and its way, its turning, and where it will be shortly. -->
         <module>core-motion</module>
         <!-- How well an observer could see a thing: its sharpness, a number that changes smoothly. -->

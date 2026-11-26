@@ -21,6 +21,12 @@
     </description>
 
     <dependencies>
+        <!-- the world's one ticker: the tick a world counts, and hands each engine -->
+        <dependency>
+            <groupId>melons.innocent.core</groupId>
+            <artifactId>core-tick</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>melons.innocent.core</groupId>
             <artifactId>core-motion</artifactId>

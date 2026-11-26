@@ -34,7 +34,6 @@ import java.util.TreeMap;
  */
 public final class Trial {
 
-    private static final double TICK = 1.0 / 120;
     /** What goes at the first asking, unless the run says, and at the second, of what is still there. */
     private static final String FIRST = "the stack's pillar, the beam's right pillar";
     private static final String SECOND = "the beam's left pillar";
@@ -51,7 +50,6 @@ public final class Trial {
     private final Walker walker = new Walker();
     /** How steep its ramp is, in degrees. */
     private double slope;
-    private long ticks;
     /** How many times its supports have been taken away since it began. */
     private int taken;
     private int asked;
@@ -85,19 +83,22 @@ public final class Trial {
      * whose ramp slopes so many degrees.
      */
     public Trial(final double after, final double slope) {
-        this.after = after < 0 ? -1 : Math.max(1, Math.round(after / TICK));
         this.slope = slope;
         this.world = new Scenes(listed, slope).described();
+        this.after = after < 0 ? -1 : Math.max(1, Math.round(after * world.tick().rate()));
     }
 
-    /** A tick: what is asked to go, or due to go of itself, is destroyed, and the world is a step on. */
     /** Whoever walks it now stands with their feet at {@code feet}, facing {@code yaw} degrees round. */
     public void stood(final Spot feet, final double yaw) {
         walker.stood(feet, yaw);
     }
 
+    /**
+     * A tick: what is asked to go, or due to go of itself, is destroyed, and the world is a step on. Which tick it
+     * is, the world itself counts.
+     */
     public List<Happened> ticked() {
-        ticks++;
+        final long ticks = world.tick().count() + 1;
         if (after > 0 && (ticks == after || ticks == 2 * after)) {
             asked++;
         }
@@ -120,7 +121,7 @@ public final class Trial {
                 || lifted.contains(name));
         blows.before(world);
         final List<Happened> happened = world.ticked(new Asked(going, lifted, flung, driving(going),
-                walker.outsiders()), TICK);
+                walker.outsiders(world.tick()))).happened();
         lifted.clear();
         slices.forEach(slice -> put(slice.rigid(), slice.placed(), Stuff.FLESH, new Things.MelonSlice()));
         flung.keySet().forEach(blows::thrown);
@@ -149,7 +150,7 @@ public final class Trial {
 
     /** How the wagon is driven otherwise this tick, where that is asked or it has gone far out along its track. */
     private Map<String, Moved> driving(final List<String> going) {
-        if (ticks == 1 && !System.getProperty("loose.wagon", "").isBlank()) {
+        if (world.tick().count() == 0 && !System.getProperty("loose.wagon", "").isBlank()) {
             driven(Double.parseDouble(System.getProperty("loose.wagon")));
         }
         if (world.things().contains(Scenes.WAGON) && world.moved(Scenes.WAGON).velocity().length() > 0
@@ -240,7 +241,6 @@ public final class Trial {
         slope = degrees;
         listed.clear();
         world = new Scenes(listed, slope).described();
-        ticks = 0;
         taken = 0;
         asked = 0;
         named.clear();

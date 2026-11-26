@@ -10,6 +10,7 @@ import melons.innocent.core.rest.Reckoning;
 import melons.innocent.core.rest.Rigid;
 import melons.innocent.core.rest.Simulator;
 import melons.innocent.core.rest.Touch;
+import melons.innocent.core.tick.Tick;
 
 import java.util.Comparator;
 import java.util.List;
@@ -57,7 +58,8 @@ public record Loose(Reckoning reckoning, double slack) implements Simulator {
      * rest once a tick, however many parts the tick was cut in.
      */
     @Override
-    public Stepped stepped(final Rigid rigid, final Mover now, final Around around, final double seconds) {
+    public Stepped stepped(final Rigid rigid, final Mover now, final Around around, final Tick tick) {
+        final double seconds = tick.seconds();
         final int parts = (int) Math.max(1, Math.ceil(now.moved().velocity().length() * seconds / STRIDE));
         if (parts == 1) {
             return once(rigid, now, around, seconds);
@@ -79,10 +81,10 @@ public record Loose(Reckoning reckoning, double slack) implements Simulator {
      * keeps what of its speed, and of its path, is not into that, as that is going.
      */
     @Override
-    public Stepped correctionS1(final Rigid rigid, final Mover now, final Around around, final double seconds,
+    public Stepped correctionS1(final Rigid rigid, final Mover now, final Around around, final Tick tick,
                                 final Stepped stepped, final List<Collision> collisions) {
         if (rigid.rolls()) {
-            return new Rolling(reckoning, slack).correctionS1(rigid, now, stepped, collisions, seconds);
+            return new Rolling(reckoning, slack).correctionS1(rigid, now, stepped, collisions, tick.seconds());
         }
         Spot velocity = stepped.next().moved().velocity();
         boolean pushed = false;

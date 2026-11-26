@@ -43,7 +43,6 @@ import java.util.TreeMap;
  */
 public final class Handling {
 
-    private static final double TICK = 1.0 / 120;
     /** How far under the eye the hands are, and the feet; and how far before the hands a thing is held. */
     private static final double HANDS = 55;
     private static final double FEET = 160;
@@ -87,7 +86,8 @@ public final class Handling {
             last = "";
         }
         final Hands now = new Hands(head.plus(new Spot(0, -HANDS, 0)), yaw);
-        final Spot went = hands.map(was -> now.at().minus(was.at()).times(1 / TICK)).orElse(new Spot(0, 0, 0));
+        final Spot went = hands.map(was -> now.at().minus(was.at()).times(trial.world().tick().rate()))
+                .orElse(new Spot(0, 0, 0));
         // set down somewhere else all at once, it was not going there
         walking = went.length() > 20_000 ? new Spot(0, 0, 0) : went;
         hands = Optional.of(now);
@@ -106,7 +106,7 @@ public final class Handling {
             wanted(wanted.getFirst());
         }
         if (mode.equals(Optional.of(Mode.THROWING)) && held.isPresent()) {
-            windup.stepped(step.triggered(), TICK).ifPresent(this::thrown);
+            windup.stepped(step.triggered(), trial.world().tick().seconds()).ifPresent(this::thrown);
         } else {
             windup.clear();
         }

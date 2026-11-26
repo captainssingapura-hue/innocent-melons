@@ -1,13 +1,15 @@
 package melons.innocent.core.rest;
 
+import melons.innocent.core.tick.Tick;
+
 import java.util.List;
 import java.util.Optional;
 
 /**
  * What steps a thing in motion: one for each way of moving, fitted to the core from outside it. It is told the
- * thing, how it stands and moves now, what it may ask of the world round it, and how long a tick is; it says how the
- * thing stands and moves a tick on, and what it landed on if it landed. It touches nothing else, and told the same
- * it says the same.
+ * thing, how it stands and moves now, what it may ask of the world round it, and the tick it is to work out, which
+ * is the world's own and says how long it is; it says how the thing stands and moves a tick on, and what it landed
+ * on if it landed. It touches nothing else, and told the same it says the same.
  */
 public interface Simulator {
 
@@ -43,8 +45,8 @@ public interface Simulator {
     record Stepped(Mover next, Optional<String> on) {
     }
 
-    /** {@code rigid}, standing and moving as {@code now} says, a tick of so many {@code seconds} on. */
-    Stepped stepped(Rigid rigid, Mover now, Around around, double seconds);
+    /** {@code rigid}, standing and moving as {@code now} says, the one {@code tick} on. */
+    Stepped stepped(Rigid rigid, Mover now, Around around, Tick tick);
 
     /**
      * The first correction of a tick's stepping: {@code stepped}, which is what {@link #stepped} gave for the very
@@ -53,7 +55,7 @@ public interface Simulator {
      * collisions; it says how the thing stands and moves a tick on after all. A simulator that corrects nothing
      * gives the stepping back as it was.
      */
-    default Stepped correctionS1(final Rigid rigid, final Mover now, final Around around, final double seconds,
+    default Stepped correctionS1(final Rigid rigid, final Mover now, final Around around, final Tick tick,
                                  final Stepped stepped, final List<Collision> collisions) {
         return stepped;
     }
