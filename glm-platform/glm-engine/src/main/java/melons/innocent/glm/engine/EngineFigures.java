@@ -3,8 +3,9 @@ package melons.innocent.glm.engine;
 /**
  * An engine's figures, the one modular design's, in centimetres: what it is called; how many banks of cylinders it
  * has, one in line or two in a V, and the angle between them, or two lying flat either side of the crank, opposed, a
- * boxer's, at 180 degrees; how many cylinders to a bank; each one's bore and its piston's stroke; how far apart the
- * cylinders are along the crank, and how far one bank is set back from the other, so a V's connecting rods sit side
+ * boxer's, at 180 degrees; how many cylinders to a bank, in a V twin one; each one's bore and its piston's stroke;
+ * how far apart the cylinders are along the crank, and how far one bank is set back from the other, so a V's
+ * connecting rods sit side
  * by side on the crank's pins, or a boxer's each on its own pin between the other bank's; how long a connecting rod
  * is, centre to centre; and how far a piston's pin is under its crown. From these the block is cast: how high its
  * deck stands over the crank, how long it is, and where each cylinder is.
@@ -30,9 +31,10 @@ public record EngineFigures(String name, int banks, double vee, int perBank, dou
         if (banks == 1 && vee != 0 || banks == 2 && (vee < 45 || vee > 120) && vee != 180) {
             throw new IllegalArgumentException(name + ": in line, a V of 45 to 120 degrees, or a boxer, not " + vee);
         }
-        if (banks < 1 || banks > 2 || perBank < (vee == 180 ? 2 : 3) || perBank > (vee == 180 ? 3 : 6)) {
+        final boolean twin = banks == 2 && vee != 180 && perBank == 1;
+        if (banks < 1 || banks > 2 || !twin && perBank < (vee == 180 ? 2 : 3) || perBank > (vee == 180 ? 3 : 6)) {
             throw new IllegalArgumentException(name + ": one or two banks of three to six cylinders, a boxer's two or "
-                    + "three");
+                    + "three, or a V twin's one");
         }
         if (bore <= 0 || stroke <= 0 || spacing <= bore + 0.3 || rod <= stroke || crown <= 0 || offset < 0) {
             throw new IllegalArgumentException(name + ": a bore and stroke that fit the spacing and the rod");
@@ -42,6 +44,14 @@ public record EngineFigures(String name, int banks, double vee, int perBank, dou
     /** Whether its banks lie flat, opposed either side of the crank, each piston on its own pin: a boxer. */
     public boolean boxer() {
         return banks == 2 && vee == 180;
+    }
+
+    /**
+     * Whether it is a V twin, a cylinder to each bank, as a motorcycle's is: its crankcase cast apart from its
+     * cylinders' barrels, bolted on it.
+     */
+    public boolean twin() {
+        return banks == 2 && !boxer() && perBank == 1;
     }
 
     /** How many cylinders, in all. */

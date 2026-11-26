@@ -143,7 +143,7 @@ final class EngineView implements AutoCloseable {
     private void parts(final Pass pass, final Camera camera, final double turned, final EngineRun.Block block,
                        final MadeOf madeOf, final Vec3 lift, final boolean seenThrough) {
         for (final PartAt p : built.placed().keySet()) {
-            final boolean isBlock = p.part().equals(root) || inside.head(p.part()) || inside.cover(p.part());
+            final boolean isBlock = p.part().equals(root) || inside.cast(p.part()) || inside.cover(p.part());
             if (isBlock && block == EngineRun.Block.HIDDEN) {
                 continue;
             }

@@ -128,8 +128,8 @@ public final class GlmPlace implements Place {
     /** The car with the engine the dial is at put on the card, the last taken off. */
     private void put() {
         showing = engine.step();
-        final EngineFigures chosen = showing < new EngineRange().all().size() ? new EngineRange().all().get(showing)
-                : null;
+        final EngineFigures chosen = new EngineRange().all().stream()
+                .filter(e -> e.name().equals(ENGINES.get(showing))).findFirst().orElse(null);
         built = new Assembly(new GlmPlatform(new Proportions(), new BodyFigures(), chosen == null ? null
                 : new EngineBay(chosen, true)).platform()).assembled();
         close();

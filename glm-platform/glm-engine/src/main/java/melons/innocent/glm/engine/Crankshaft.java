@@ -47,7 +47,8 @@ record Crankshaft(EngineFigures figures) {
             }
         }
         return new Part(figures.name() + " crankshaft", Group.ENGINE, false, points, mesh(crank, mains),
-                new Made(Material.TITANIUM, true)).as(new EngineParts.Crankshaft());
+                new Made(Material.TITANIUM, true))
+                .as(figures.twin() ? new EngineParts.SplitPinCrankshaft() : new EngineParts.Crankshaft());
     }
 
     private Mesh mesh(final CrankFigures crank, final List<Double> mains) {

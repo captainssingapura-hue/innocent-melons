@@ -65,7 +65,7 @@ record CylinderHead(EngineFigures figures, int bank) {
             }
         }
         return new Part(called(), Group.ENGINE, false, points, mesh(head), new Made(Material.ALUMINIUM, true))
-                .as(new EngineParts.CylinderHead());
+                .as(figures.twin() ? new EngineParts.TwinCamHead() : new EngineParts.CylinderHead());
     }
 
     /** What it is called. */

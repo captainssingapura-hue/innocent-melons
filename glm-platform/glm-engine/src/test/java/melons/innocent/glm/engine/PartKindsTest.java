@@ -15,22 +15,27 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Each engine's parts of their kinds: every part of every engine in the range, covered, of a kind in the engine
- * parts' tree and among the GLM's own; its block in line, in a V or flat as its banks are; a crank, and a rod, a
- * piston and a gudgeon pin to each cylinder; a valve and its spring to each valve, two cams to each head and a cover
- * over each, its coils, its timing cover and, but on a boxer, its trim cover.
+ * parts' tree and among the GLM's own, but the twin's crankcase, barrels, crank, heads and cam covers, which are the
+ * V2's own; its block in line, in a V or flat as its banks are; a crank, and a rod, a piston and a gudgeon pin to
+ * each cylinder; a valve and its spring to each valve, two cams to each head and a cover over each, its coils, and
+ * but on the twin its timing cover and, but on a boxer, its trim cover.
  */
 class PartKindsTest {
 
     private final Taxonomy tree = new EngineParts().tree();
 
     @Test
-    void everyPartOfAKindAmongTheGlmsOwn() {
+    void everyPartOfAKindAmongTheGlmsOwnButTheTwinsOwn() {
         for (final EngineFigures e : new EngineRange().all()) {
             for (final Part part : parts(e)) {
                 assertTrue(part.kind().isPresent(), part.name() + " of no kind");
                 assertTrue(tree.has(part.kind().get()), part.name());
                 final String side = part.kind().get().lineage().get(1).title();
-                assertTrue(side.startsWith("Glm"), part.name() + " among the GLM's own, not " + side);
+                final boolean own = e.twin() && (part.is(new EngineParts.Blocks()) || part.is(new EngineParts.Heads())
+                        && !part.is(new EngineParts.Camshaft()) && !part.is(new EngineParts.ValveSpring())
+                        && !part.is(new EngineParts.Valve()) || part.is(new EngineParts.Covers())
+                        || part.is(new EngineParts.SplitPinCrankshaft()));
+                assertTrue(side.startsWith(own ? "V2" : "Glm"), part.name() + " among the right ones, not " + side);
             }
         }
     }
@@ -41,23 +46,30 @@ class PartKindsTest {
         assertEquals(new EngineParts.InlineBlock(), new CastBlock(range.l5()).part().kind().get());
         assertEquals(new EngineParts.VeeBlock(), new CastBlock(range.v12()).part().kind().get());
         assertEquals(new EngineParts.BoxerBlock(), new CastBlock(range.b6()).part().kind().get());
+        assertEquals(new EngineParts.TwinCrankcase(), new CastBlock(range.v2()).part().kind().get());
+        final List<Part> twin = parts(range.v2());
+        assertEquals(2, count(twin, new EngineParts.CylinderBarrel()));
+        assertEquals(1, count(twin, new EngineParts.SplitPinCrankshaft()));
+        assertEquals(2, count(twin, new EngineParts.TwinCamHead()));
+        assertEquals(2, count(twin, new EngineParts.CamCover()));
         for (final EngineFigures e : range.all()) {
             final List<Part> parts = parts(e);
             final int cylinders = e.cylinders();
             final int valves = (int) count(parts, new EngineParts.Valve());
-            assertEquals(1, count(parts, new EngineParts.GlmBlocks()), e.name());
-            assertEquals(1, count(parts, new EngineParts.Crankshaft()), e.name());
+            final int glm = e.twin() ? 0 : 1;
+            assertEquals(glm, count(parts, new EngineParts.GlmBlocks()), e.name());
+            assertEquals(glm, count(parts, new EngineParts.Crankshaft()), e.name());
             assertEquals(cylinders, count(parts, new EngineParts.ConnectingRod()), e.name());
             assertEquals(cylinders, count(parts, new EngineParts.Piston()), e.name());
             assertEquals(cylinders, count(parts, new EngineParts.GudgeonPin()), e.name());
             assertTrue(valves >= 2 * cylinders, e.name() + " two valves at least to each cylinder");
             assertEquals(valves, count(parts, new EngineParts.ValveSpring()), e.name());
-            assertEquals(e.banks(), count(parts, new EngineParts.CylinderHead()), e.name());
+            assertEquals(glm * e.banks(), count(parts, new EngineParts.CylinderHead()), e.name());
             assertEquals(2 * e.banks(), count(parts, new EngineParts.Camshaft()), e.name());
-            assertEquals(e.banks(), count(parts, new EngineParts.HeadCover()), e.name());
+            assertEquals(glm * e.banks(), count(parts, new EngineParts.HeadCover()), e.name());
             assertEquals(e.banks(), count(parts, new EngineParts.CoilPack()), e.name());
-            assertEquals(1, count(parts, new EngineParts.TimingCover()), e.name());
-            assertEquals(e.boxer() ? 0 : 1, count(parts, new EngineParts.TrimCover()), e.name());
+            assertEquals(glm, count(parts, new EngineParts.TimingCover()), e.name());
+            assertEquals(e.boxer() ? 0 : glm, count(parts, new EngineParts.TrimCover()), e.name());
             assertEquals(parts.size(), count(parts, new EngineParts.EnginePart()), e.name() + " every one counted");
         }
     }

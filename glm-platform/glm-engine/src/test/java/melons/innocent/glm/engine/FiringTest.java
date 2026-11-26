@@ -11,9 +11,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The engines fired: each of the range in its makers' order, evenly, every cylinder at the top of its bore as it
- * fires; the crank turning clockwise seen from its front, carrying its pins where its figures say; and each cylinder's
- * chamber, at its top, no more than the head's.
+ * The engines fired: each of the range in its makers' order, evenly but the twin, which fires 450 degrees after its
+ * first and 270 after its second, every cylinder at the top of its bore as it fires; the crank turning clockwise
+ * seen from its front, carrying its pins where its figures say; and each cylinder's chamber, at its top, no more
+ * than the head's.
  */
 class FiringTest {
 
@@ -22,8 +23,10 @@ class FiringTest {
     @Test
     void eachOfTheRangeInItsMakersOrderEvenlyEveryCylinderAtItsTop() {
         final List<String> orders = range.all().stream().map(e -> new Firing(e).written()).toList();
-        assertEquals(List.of("1-3-4-2", "1-2-3-4", "1-2-4-5-3", "1-4-3-6-2-5", "1-6-2-4-3-5", "1-3-7-2-6-5-4-8",
-                "1-7-5-11-3-9-6-12-2-8-4-10"), orders);
+        assertEquals(List.of("1-2", "1-3-4-2", "1-2-3-4", "1-2-4-5-3", "1-4-3-6-2-5", "1-6-2-4-3-5",
+                "1-3-7-2-6-5-4-8", "1-7-5-11-3-9-6-12-2-8-4-10"), orders);
+        assertEquals(List.of(450.0, 270.0), new Firing(range.v2()).gaps(), "the twin as a 90 degree twin, unevenly");
+        assertTrue(!new Firing(range.v2()).even());
         for (final EngineFigures e : range.all()) {
             final Firing firing = new Firing(e);
             final List<Integer> order = firing.order();
@@ -33,7 +36,9 @@ class FiringTest {
                 final int next = order.get((i + 1) % order.size());
                 final double gap = (firing.fires(firing.bank(next), firing.k(next)) - at + Firing.CYCLE)
                         % Firing.CYCLE;
-                assertEquals(Firing.CYCLE / order.size(), gap, 1e-9, e.name() + " evenly after " + n);
+                assertEquals(firing.gaps().get(i), gap, 1e-9, e.name() + " after " + n);
+                assertTrue(e.twin() || Math.abs(Firing.CYCLE / order.size() - gap) < 1e-9,
+                        e.name() + " evenly after " + n);
                 final Cylinder c = new Cylinder(e, firing.bank(n), firing.k(n));
                 assertEquals(e.stroke() / 2 + e.rod(), c.smallEnd(at).dot(c.up()), 1e-9,
                         e.name() + " " + n + " at its top as it fires");

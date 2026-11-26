@@ -5,10 +5,11 @@ import com.example.fxsuite.vulkan.space.Vec3;
 import java.util.List;
 
 /**
- * How an engine's crank is laid out, so it fires evenly: where each cylinder's crankpin stands round the crank, its
- * angle from straight up at rest; in line, a four's pins flat, a five's 72 degrees apart; in a V, the two banks'
- * rods side by side on one pin, a V8's crank cross-plane and a V12's six throws 120 degrees apart, but a 90 degree
- * V6's pins split, each bank's 30 degrees from the other's, so its three throws fire evenly too; in a boxer, each
+ * How an engine's crank is laid out, so it fires as it is meant to: where each cylinder's crankpin stands round the
+ * crank, its angle from straight up at rest; in line, a four's pins flat, a five's 72 degrees apart; in a V, the two
+ * banks' rods side by side on one pin, a V8's crank cross-plane and a V12's six throws 120 degrees apart, but a 90
+ * degree V6's pins split, each bank's 30 degrees from the other's, so its three throws fire evenly too, and a narrower
+ * twin's split so it fires as a 90 degree twin does, 270 degrees then 450, and shakes as one; in a boxer, each
  * cylinder its own pin, the other bank's half a spacing behind it and turned half a turn from it, so opposed pistons
  * come in and go out together, the four's two pairs half a turn apart and the six's three a third of a turn. And how
  * big its journals, pins and rods are, as a share of the bore: estimates.
@@ -30,8 +31,11 @@ record CrankFigures(EngineFigures figures) {
     /** A boxer's first bank's throws, the other's half a turn on: a flat four's, so 1-2-3-4; a six's, 1-6-2-4-3-5. */
     private static final List<Double> FLAT_FOUR = List.of(0.0, 180.0);
     private static final List<Double> FLAT_SIX = List.of(0.0, 120.0, 240.0);
-    /** How far a V6's split pins are apart, each way from their throw. */
+    /** A twin's one throw. */
+    private static final List<Double> TWIN = List.of(0.0);
+    /** How far a V6's split pins are apart, each way from their throw; the V a twin's are split to fire as. */
     private static final double SPLIT = 15;
+    private static final double TWIN_FIRES = 90;
     /** How wide a rod's big end is: in line, and in a boxer, where a main bearing is between each two pins. */
     private static final double INLINE_ROD = 2.2;
     private static final double BOXER_ROD = 2.0;
@@ -72,10 +76,21 @@ record CrankFigures(EngineFigures figures) {
 
     /** Whether the V's pins are split, a throw for each bank. */
     boolean split() {
-        return figures.banks() == 2 && figures.perBank() == 3 && figures.vee() == 90;
+        return splitBy() > 0;
     }
 
-    /** Whether each cylinder runs on a pin of its own: in line, a V6's split pins, a boxer's. */
+    /**
+     * How far a V's split pins are turned from their throw, each way: a 90 degree V6's, so its banks' cylinders come
+     * up a third of a turn apart; a twin narrower than 90 degrees, so its two come up a quarter apart; none else.
+     */
+    double splitBy() {
+        if (figures.twin()) {
+            return Math.max(0, (TWIN_FIRES - figures.vee()) / 2);
+        }
+        return figures.banks() == 2 && figures.perBank() == 3 && figures.vee() == 90 ? SPLIT : 0;
+    }
+
+    /** Whether each cylinder runs on a pin of its own: in line, a V's split pins, a boxer's. */
     boolean own() {
         return figures.banks() == 1 || split() || figures.boxer();
     }
@@ -84,7 +99,7 @@ record CrankFigures(EngineFigures figures) {
     double angle(final int bank, final int k) {
         final double throwAt = throwsOf().get(k);
         if (split()) {
-            return throwAt + (bank == 0 ? SPLIT : -SPLIT);
+            return throwAt + (bank == 0 ? splitBy() : -splitBy());
         }
         return figures.boxer() && bank == 1 ? throwAt + 180 : throwAt;
     }
@@ -120,6 +135,7 @@ record CrankFigures(EngineFigures figures) {
             return figures.perBank() == 2 ? FLAT_FOUR : FLAT_SIX;
         }
         return switch (figures.perBank()) {
+            case 1 -> TWIN;
             case 3 -> SIX;
             case 4 -> figures.banks() == 1 ? FOUR : EIGHT;
             case 5 -> FIVE;

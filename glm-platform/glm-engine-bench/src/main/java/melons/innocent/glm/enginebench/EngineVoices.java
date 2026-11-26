@@ -15,7 +15,9 @@ import java.util.Map;
  * crank and cam make it ({@link Firing}), into its own bank's pipe; and how each idles, revs and rings, after the
  * engines it is after, as estimates: the four after the 2.0 litre turbocharged four, the five after the 2.5 litre
  * five, the V6 after the 2.9 and 3.0 litre turbocharged V6, the V8 after the 4.0 litre twin turbo V8, its crank
- * cross-plane so each bank's pulses come unevenly, and the V12, after none, its two banks even sixes. Their turbos
+ * cross-plane so each bank's pulses come unevenly, and the V12, after none, its two banks even sixes; the twin after
+ * the adventure bike's 1,252 cc twin, short of stroke and revving to 9,500, its two beats uneven, each cylinder into
+ * its own pipe and breathing freely, never turbocharged. Their turbos
  * sit in the V, fed by both banks, so a V's pipes are mixed a little. It revs as quickly as what turns in it is light:
  * of all that turns, the crank, rods and pistons are taken as some two fifths, the rest the flywheel and all the
  * engine drives, so in titanium it revs up some fifth quicker than in steel.
@@ -27,6 +29,7 @@ public final class EngineVoices {
 
     /** How each sounds, by its name in the range. */
     private static final Map<String, Tone> TONES = Map.of(
+            "V2", new Tone(1100, 9500, 9000, 5800, new double[] {100, 290, 780}, 3.2, 4.6, 1.2, 400, 0.9),
             "L4", new Tone(720, 6500, 8500, 5000, new double[] {190, 520, 1350}, 3.5, 3.2, 1.6, 520, 1),
             "L5", new Tone(780, 7000, 8200, 5000, new double[] {125, 340, 950}, 3.5, 3.4, 1.5, 480, 1),
             "V6", new Tone(650, 6700, 7600, 4800, new double[] {150, 410, 1100}, 3.5, 3.6, 1.4, 430, 0.85),
@@ -54,11 +57,18 @@ public final class EngineVoices {
         }
         final double light = 1 - TURNING + TURNING * made.density() / Material.STEEL.density();
         final Engine voice = new Engine("GLM_" + figures.name(), "GLM " + figures.name(),
-                "Fires " + firing.written() + ", every " + Math.round(Firing.CYCLE / all) + " degrees of crank.", 4,
+                "Fires " + firing.written() + ", " + apart(firing) + " degrees of crank.", 4,
                 when, bank, tone.far(), tone.idle(), tone.redline(), tone.climb() / light, tone.fall() / light,
                 tone.pipes(), tone.ring(), tone.pulse(), tone.rasp(), tone.intake())
-                .piped(new Exhaust(fired, runners, figures.banks() == 2 ? Exhaust.H_PIPE : Exhaust.NONE));
-        return turbo ? voice.with(Turbo.STANDARD) : voice;
+                .piped(new Exhaust(fired, runners,
+                        figures.banks() == 2 && !figures.twin() ? Exhaust.H_PIPE : Exhaust.NONE));
+        return turbo && !figures.twin() ? voice.with(Turbo.STANDARD) : voice;
+    }
+
+    /** How far apart its cylinders fire: every so many degrees, or, unevenly, so many then so many. */
+    private String apart(final Firing firing) {
+        final List<String> gaps = firing.gaps().stream().map(g -> String.valueOf(Math.round(g))).toList();
+        return firing.even() ? "every " + gaps.getFirst() : String.join(" then ", gaps) + " apart";
     }
 
     /**

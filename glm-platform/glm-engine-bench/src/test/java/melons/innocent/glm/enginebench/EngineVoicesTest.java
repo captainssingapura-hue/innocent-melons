@@ -14,27 +14,31 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The GLM engines' voices: each firing evenly in its own order, each cylinder into its own bank's pipe; turbocharged
- * when asked; and quicker to rev in titanium than in steel.
+ * The GLM engines' voices: each firing as its crank fires it in its own order, evenly but the twin, each cylinder
+ * into its own bank's pipe; turbocharged when asked, but the twin; and quicker to rev in titanium than in steel.
  */
 class EngineVoicesTest {
 
     private final EngineVoices voices = new EngineVoices();
 
     @Test
-    void eachFiringEvenlyInItsOwnOrderIntoItsOwnBanksPipe() {
+    void eachFiringAsItsCrankFiresItInItsOwnOrderIntoItsOwnBanksPipe() {
         for (final EngineFigures e : new EngineRange().all()) {
             final Engine voice = voices.voiced(e, Material.TITANIUM, false);
             final Firing firing = new Firing(e);
             assertArrayEquals(firing.order().stream().mapToInt(Integer::intValue).toArray(), voice.exhaust().order(),
                     e.name());
             final double[] when = voice.firing();
+            double at = 0;
             for (int i = 0; i < when.length; i++) {
-                assertEquals(i * Firing.CYCLE / when.length, when[i], 1e-9, e.name() + " evenly");
+                assertEquals(at, when[i], 1e-9, e.name() + " as its crank fires it");
                 assertEquals(firing.bank(firing.order().get(i)), voice.bank()[i], e.name() + " into its bank");
+                at += firing.gaps().get(i);
             }
+            assertTrue(e.twin() || firing.even(), e.name() + " evenly");
             assertTrue(!voice.charged());
-            assertTrue(voices.voiced(e, Material.TITANIUM, true).turbocharged(), e.name() + " turbocharged");
+            assertEquals(!e.twin(), voices.voiced(e, Material.TITANIUM, true).turbocharged(),
+                    e.name() + " turbocharged, but the twin");
         }
     }
 
