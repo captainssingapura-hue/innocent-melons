@@ -7,6 +7,7 @@ import melons.innocent.glm.core.Made;
 import melons.innocent.glm.core.Material;
 import melons.innocent.glm.core.Part;
 import melons.innocent.glm.core.Point;
+import melons.innocent.glm.existences.EngineParts;
 import melons.innocent.vehiclelab.forms.Outlines;
 import melons.innocent.vehiclelab.forms.Plate;
 import melons.innocent.vehiclelab.forms.Shapes;
@@ -42,7 +43,7 @@ record HeadCover(EngineFigures figures, int bank) {
         final HeadFigures head = new HeadFigures(figures);
         return new Part(figures.name() + " cylinder head cover" + (figures.banks() == 2 ? ", bank " + (bank + 1)
                 : ""), Group.COVERS, false, List.of(new Point("head", head.top(bank)), new Point("top", middle())),
-                mesh(head), new Made(Material.ALUMINIUM, true));
+                mesh(head), new Made(Material.ALUMINIUM, true)).as(new EngineParts.HeadCover());
     }
 
     /** How high its top stands over its bank's deck: clear of its cams' lobes at their highest and the caps' bolts. */

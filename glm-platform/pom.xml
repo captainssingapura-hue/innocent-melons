@@ -22,13 +22,16 @@
     <properties>
         <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <!-- the renderer and its bench, and the material lab: the one place each one's version is said -->
+        <!-- the renderer, its bench, the material lab and the taxonomies: the one place each one's version is said -->
         <vulkan.version>0.1.0-SNAPSHOT</vulkan.version>
         <lab.version>0.1.0-SNAPSHOT</lab.version>
         <vehicles.version>0.1.0-SNAPSHOT</vehicles.version>
+        <taxonomy.version>0.1.0-SNAPSHOT</taxonomy.version>
     </properties>
 
     <modules>
+        <!-- What exists in the platform: the kinds of engine part, the GLM's own and the V2's. No card, no window. -->
+        <module>glm-existences</module>
         <!-- Parts, their points, how they are joined, and the platform put together from them. No card, no window. -->
         <module>glm-core</module>
         <!-- The GLM engines: blocks cast from one modular design, inline fours and fives, V6, V8 and V12. No card. -->
@@ -87,7 +90,18 @@
                 <artifactId>vl-wheels</artifactId>
                 <version>${vehicles.version}</version>
             </dependency>
+            <!-- the taxonomies' core, which its trees are built of -->
+            <dependency>
+                <groupId>com.example.fxsuite</groupId>
+                <artifactId>fxsuite-taxonomy-core</artifactId>
+                <version>${taxonomy.version}</version>
+            </dependency>
             <!-- its own modules, at its own version -->
+            <dependency>
+                <groupId>melons.innocent.glm</groupId>
+                <artifactId>glm-existences</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>melons.innocent.glm</groupId>
                 <artifactId>glm-core</artifactId>

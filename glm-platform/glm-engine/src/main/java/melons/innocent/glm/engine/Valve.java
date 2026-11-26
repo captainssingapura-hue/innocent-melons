@@ -8,6 +8,7 @@ import melons.innocent.glm.core.Made;
 import melons.innocent.glm.core.Material;
 import melons.innocent.glm.core.Part;
 import melons.innocent.glm.core.Point;
+import melons.innocent.glm.existences.EngineParts;
 import melons.innocent.vehiclelab.forms.Shapes;
 
 import java.util.ArrayList;
@@ -60,7 +61,7 @@ record Valve(EngineFigures figures, int bank, int k, boolean inlet, int side) {
                 shapes.drum(along(stem - HELD - 0.25), along(stem - HELD), RETAINER),
                 shapes.drum(along(stem - 0.3), along(cup), bucket())));
         return new Part(figures.name() + " " + called(), Group.ENGINE, false, List.of(new Point("seat", along(0))),
-                shapes.joined(made), new Made(Material.TITANIUM, true));
+                shapes.joined(made), new Made(Material.TITANIUM, true)).as(new EngineParts.Valve());
     }
 
     /** Its spring, from its seat on the head up to the retainer, as fitted with the valve shut. */
@@ -77,7 +78,7 @@ record Valve(EngineFigures figures, int bank, int k, boolean inlet, int side) {
         }
         return new Part(figures.name() + " " + called().replace("valve", "valve spring"), Group.ENGINE, false,
                 List.of(new Point("seat", along(springSeat()))), new Shapes(6).pipe(coil, WIRE),
-                new Made(Material.STEEL, true));
+                new Made(Material.STEEL, true)).as(new EngineParts.ValveSpring());
     }
 
     /** How far round its bucket is. */

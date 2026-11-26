@@ -7,6 +7,7 @@ import melons.innocent.glm.core.Made;
 import melons.innocent.glm.core.Material;
 import melons.innocent.glm.core.Part;
 import melons.innocent.glm.core.Point;
+import melons.innocent.glm.existences.EngineParts;
 import melons.innocent.vehiclelab.forms.Plate;
 import melons.innocent.vehiclelab.forms.Shapes;
 import melons.innocent.vehiclelab.forms.Spot;
@@ -46,7 +47,7 @@ record Crankshaft(EngineFigures figures) {
             }
         }
         return new Part(figures.name() + " crankshaft", Group.ENGINE, false, points, mesh(crank, mains),
-                new Made(Material.TITANIUM, true));
+                new Made(Material.TITANIUM, true)).as(new EngineParts.Crankshaft());
     }
 
     private Mesh mesh(final CrankFigures crank, final List<Double> mains) {

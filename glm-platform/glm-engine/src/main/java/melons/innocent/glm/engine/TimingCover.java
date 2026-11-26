@@ -7,6 +7,7 @@ import melons.innocent.glm.core.Made;
 import melons.innocent.glm.core.Material;
 import melons.innocent.glm.core.Part;
 import melons.innocent.glm.core.Point;
+import melons.innocent.glm.existences.EngineParts;
 import melons.innocent.vehiclelab.forms.Outlines;
 import melons.innocent.vehiclelab.forms.Plate;
 import melons.innocent.vehiclelab.forms.Shapes;
@@ -64,7 +65,7 @@ record TimingCover(EngineFigures figures) {
         }
         return new Part(figures.name() + " timing cover", Group.COVERS, false,
                 List.of(new Point("crank", new Vec3(0, 0, 0))), new Shapes(ROUND)
-                .joined(made), new Made(Material.ALUMINIUM, true));
+                .joined(made), new Made(Material.ALUMINIUM, true)).as(new EngineParts.TimingCover());
     }
 
     /** Where its face is along the crank. */

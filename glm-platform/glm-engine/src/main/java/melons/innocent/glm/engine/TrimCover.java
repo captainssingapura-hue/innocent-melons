@@ -7,6 +7,7 @@ import melons.innocent.glm.core.Made;
 import melons.innocent.glm.core.Material;
 import melons.innocent.glm.core.Part;
 import melons.innocent.glm.core.Point;
+import melons.innocent.glm.existences.EngineParts;
 import melons.innocent.vehiclelab.forms.Plate;
 import melons.innocent.vehiclelab.forms.Shapes;
 import melons.innocent.vehiclelab.forms.Spot;
@@ -58,7 +59,7 @@ record TrimCover(EngineFigures figures) {
         }
         return new Part(figures.name() + " trim cover", Group.COVERS, false,
                 List.of(new Point("clip", new HeadCover(figures, 0).middle())), shapes.joined(made),
-                new Made(Material.PLASTIC, true));
+                new Made(Material.PLASTIC, true)).as(new EngineParts.TrimCover());
     }
 
     /**

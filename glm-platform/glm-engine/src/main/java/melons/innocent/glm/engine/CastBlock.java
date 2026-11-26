@@ -1,11 +1,13 @@
 package melons.innocent.glm.engine;
 
+import com.example.fxsuite.taxonomy.Leaf;
 import com.example.fxsuite.vulkan.space.Vec3;
 import melons.innocent.glm.core.Group;
 import melons.innocent.glm.core.Made;
 import melons.innocent.glm.core.Material;
 import melons.innocent.glm.core.Part;
 import melons.innocent.glm.core.Point;
+import melons.innocent.glm.existences.EngineParts;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +44,14 @@ public record CastBlock(EngineFigures figures) {
         points.add(new Point("mount, right", form.mount(-1)));
         points.add(new Point("mount, left", form.mount(1)));
         return new Part(figures.name() + " block", Group.ENGINE, false, points, form.mesh(),
-                new Made(Material.ALUMINIUM, true));
+                new Made(Material.ALUMINIUM, true)).as(kind());
+    }
+
+    /** What kind of block it is: for one bank in line, two in a V, or two lying flat. */
+    private Leaf<?> kind() {
+        if (figures.boxer()) {
+            return new EngineParts.BoxerBlock();
+        }
+        return figures.banks() == 1 ? new EngineParts.InlineBlock() : new EngineParts.VeeBlock();
     }
 }

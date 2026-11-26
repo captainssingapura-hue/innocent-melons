@@ -22,6 +22,11 @@
             <groupId>melons.innocent.glm</groupId>
             <artifactId>glm-core</artifactId>
         </dependency>
+        <!-- the kinds of engine part each of its parts is -->
+        <dependency>
+            <groupId>melons.innocent.glm</groupId>
+            <artifactId>glm-existences</artifactId>
+        </dependency>
         <dependency>
             <groupId>melons.innocent.vehiclelab</groupId>
             <artifactId>vl-forms</artifactId>

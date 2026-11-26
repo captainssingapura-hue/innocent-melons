@@ -7,6 +7,7 @@ import melons.innocent.glm.core.Made;
 import melons.innocent.glm.core.Material;
 import melons.innocent.glm.core.Part;
 import melons.innocent.glm.core.Point;
+import melons.innocent.glm.existences.EngineParts;
 import melons.innocent.vehiclelab.forms.Outlines;
 import melons.innocent.vehiclelab.forms.Plate;
 import melons.innocent.vehiclelab.forms.Shapes;
@@ -63,7 +64,8 @@ record CylinderHead(EngineFigures figures, int bank) {
                 }
             }
         }
-        return new Part(called(), Group.ENGINE, false, points, mesh(head), new Made(Material.ALUMINIUM, true));
+        return new Part(called(), Group.ENGINE, false, points, mesh(head), new Made(Material.ALUMINIUM, true))
+                .as(new EngineParts.CylinderHead());
     }
 
     /** What it is called. */

@@ -9,6 +9,7 @@ import melons.innocent.glm.core.Made;
 import melons.innocent.glm.core.Material;
 import melons.innocent.glm.core.Part;
 import melons.innocent.glm.core.Point;
+import melons.innocent.glm.existences.EngineParts;
 import melons.innocent.vehiclelab.forms.Plate;
 import melons.innocent.vehiclelab.forms.Shapes;
 import melons.innocent.vehiclelab.forms.Spot;
@@ -65,7 +66,7 @@ record Camshaft(EngineFigures figures, int bank, boolean inlet) {
             }
         }
         return new Part(called(), Group.ENGINE, false, List.of(new Point("front", axis(front))), shapes.joined(made),
-                new Made(Material.STEEL, true));
+                new Made(Material.STEEL, true)).as(new EngineParts.Camshaft());
     }
 
     /** How far round its lobes' base circle is: no lift. */

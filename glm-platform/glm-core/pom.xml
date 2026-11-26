@@ -24,6 +24,11 @@
             <groupId>com.example.fxsuite.vulkan</groupId>
             <artifactId>vk-drawing</artifactId>
         </dependency>
+        <!-- a part's kind, a leaf of a tree of kinds -->
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>fxsuite-taxonomy-core</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
