@@ -17,12 +17,13 @@ import java.util.Map;
 
 /**
  * What turns and runs inside an engine's block, joined as it moves, and the heads over it, each bolted to its bank's
- * deck ({@link CylinderHead}), with what opens and shuts their valves ({@link Valvetrain}): the crankshaft turning in
- * the block's main
- * bearings; each connecting rod's big end turning on its crankpin and its small end on its gudgeon pin; each gudgeon
- * pin seated in its piston; each piston sliding in its bore. Made once, its parts kept, so it can say how far each has
- * moved from where it was made when the crank has turned so far: the crank turned about its axis, each rod carried
- * with its crankpin and swung about it, each piston and its pin slid up or down its bore.
+ * deck ({@link CylinderHead}), with what opens and shuts their valves ({@link Valvetrain}) and the chains that turn
+ * their cams from the crank ({@link TimingDrive}); a twin's barrels bolted on its crankcase, its heads on them
+ * ({@link Barrel}): the crankshaft turning in the block's main bearings; each connecting rod's big end turning on its
+ * crankpin and its small end on its gudgeon pin; each gudgeon pin seated in its piston; each piston sliding in its
+ * bore. Made once, its parts kept, so it can say how far each has moved from where it was made when the crank has
+ * turned so far: the crank turned about its axis, each rod carried with its crankpin and swung about it, each piston
+ * and its pin slid up or down its bore.
  */
 public final class EngineInternals {
 
@@ -35,7 +36,9 @@ public final class EngineInternals {
     private final List<Connection> inside = new ArrayList<>();
     private final Map<Part, String> pistons = new LinkedHashMap<>();
     private final List<Part> heads = new ArrayList<>();
+    private final List<Part> barrels = new ArrayList<>();
     private final Valvetrain valvetrain;
+    private final TimingDrive drive;
     private final Covers covers;
 
     /** Its parts, made to {@code figures}. */
@@ -43,9 +46,13 @@ public final class EngineInternals {
         this.figures = figures;
         this.crank = new Crankshaft(figures).part();
         this.valvetrain = new Valvetrain(figures);
+        this.drive = new TimingDrive(figures);
         this.covers = new Covers(figures);
         for (int b = 0; b < figures.banks(); b++) {
             heads.add(new CylinderHead(figures, b).part());
+            if (figures.twin()) {
+                barrels.add(new Barrel(figures, b).part());
+            }
             for (int k = 0; k < figures.perBank(); k++) {
                 final Cylinder cylinder = new Cylinder(figures, b, k);
                 final Part rod = cylinder.rod();
@@ -91,18 +98,28 @@ public final class EngineInternals {
             joined.add(new Connection(figures.name() + " main bearing " + j, block, "main bearing " + j, crank,
                     "main " + j, Joining.HINGE));
         }
+        for (int b = 0; b < barrels.size(); b++) {
+            joined.add(new Connection(barrels.get(b).name() + " on the crankcase", block, "barrel, bank " + (b + 1),
+                    barrels.get(b), "foot", Joining.BOLTED));
+        }
         for (int b = 0; b < heads.size(); b++) {
-            joined.add(new Connection(heads.get(b).name() + " on its deck", block, "deck, bank " + (b + 1),
+            joined.add(new Connection(heads.get(b).name() + " on its deck", bored(block, b), "deck, bank " + (b + 1),
                     heads.get(b), "deck", Joining.BOLTED));
         }
         joined.addAll(valvetrain.joined(heads));
+        joined.addAll(drive.joined(block, crank));
         joined.addAll(inside);
         pistons.forEach((piston, at) -> joined.add(new Connection(figures.name() + " " + at + " in its bore", piston,
-                "bore", block, "cylinder " + at, Joining.SLIDING)));
+                "bore", bored(block, sliding.get(piston).bank()), "cylinder " + at, Joining.SLIDING)));
         if (covered) {
             joined.addAll(covers.joined(block, heads));
         }
         return joined;
+    }
+
+    /** What bank {@code bank}'s cylinders are bored in: {@code block}, or a twin's barrel. */
+    private Part bored(final Part block, final int bank) {
+        return barrels.isEmpty() ? block : barrels.get(bank);
     }
 
     /** Whether {@code part} is one of what closes it in: a head's cover, its coils, the timing cover, the trim. */
@@ -136,6 +153,24 @@ public final class EngineInternals {
         return worked != null ? worked : new Mat4();
     }
 
+    /**
+     * Whether {@code part} is one of its timing chains, which runs round its sprockets rather than moving whole: drawn
+     * as its links, each where it has run to ({@link #links}).
+     */
+    public boolean chain(final Part part) {
+        return drive.chain(part);
+    }
+
+    /** Where timing chain {@code part}'s links are, the crank turned {@code turned} degrees on from rest. */
+    public List<Mat4> links(final Part part, final double turned) {
+        return drive.links(part, turned);
+    }
+
+    /** One link of timing chain {@code part}, in its own frame. */
+    public Mesh link(final Part part) {
+        return drive.link(part);
+    }
+
     /** What opens and shuts its valves. */
     Valvetrain valvetrain() {
         return valvetrain;
@@ -144,6 +179,11 @@ public final class EngineInternals {
     /** Whether {@code part} is one of its cylinder heads, cast as its block is. */
     public boolean head(final Part part) {
         return heads.contains(part);
+    }
+
+    /** Whether {@code part} is cast as its block is, apart from it: one of its heads, or a twin's barrels. */
+    public boolean cast(final Part part) {
+        return heads.contains(part) || barrels.contains(part);
     }
 
     /** A cylinder's combustion chamber whole, in its own frame, as the charge burning in it fills it. */

@@ -66,6 +66,8 @@ final class EngineView implements AutoCloseable {
     private final Shaped charge;
     private final Finishes finishes = new Finishes();
     private final Map<PartAt, Shaped> parts = new IdentityHashMap<>();
+    /** One link of each timing chain, drawn where each of its links has run to. */
+    private final Map<PartAt, Shaped> links = new IdentityHashMap<>();
     private Assembled built;
     private EngineInternals inside;
     private Part root;
@@ -101,6 +103,8 @@ final class EngineView implements AutoCloseable {
         this.firing = fires;
         this.block = assembled.placed().keySet().stream().filter(p -> p.part().equals(on)).findFirst()
                 .map(assembled::at).orElse(new Vec3(0, 0, 0));
+        links.values().forEach(Shaped::close);
+        links.clear();
         parts.values().forEach(Shaped::close);
         parts.clear();
         if (flame != null) {
@@ -110,6 +114,8 @@ final class EngineView implements AutoCloseable {
         this.inside = engine;
         this.built = assembled;
         assembled.placed().keySet().forEach(p -> parts.put(p, new Shaped(card, laid, p.shape().form())));
+        assembled.placed().keySet().stream().filter(p -> engine.chain(p.part()))
+                .forEach(p -> links.put(p, new Shaped(card, laid, engine.link(p.part()))));
     }
 
     /**
@@ -143,12 +149,18 @@ final class EngineView implements AutoCloseable {
     private void parts(final Pass pass, final Camera camera, final double turned, final EngineRun.Block block,
                        final MadeOf madeOf, final Vec3 lift, final boolean seenThrough) {
         for (final PartAt p : built.placed().keySet()) {
-            final boolean isBlock = p.part().equals(root) || inside.head(p.part()) || inside.cover(p.part());
+            final boolean isBlock = p.part().equals(root) || inside.cast(p.part()) || inside.cover(p.part());
             if (isBlock && block == EngineRun.Block.HIDDEN) {
                 continue;
             }
             final Coat coat = isBlock && block == EngineRun.Block.GLASS ? GLASS : finishes.of(p.part(), madeOf);
             if (coats.seenThrough(coat) == seenThrough) {
+                if (links.containsKey(p)) {
+                    final Mat4 from = new Mat4(lift.plus(built.at(p)));
+                    inside.links(p.part(), turned).forEach(m -> coats.drawn(pass, links.get(p), from.times(m), camera,
+                            coat));
+                    continue;
+                }
                 final Mat4 at = new Mat4(lift.plus(built.at(p))).times(inside.moved(p.part(), turned));
                 coats.drawn(pass, parts.get(p), at, camera, coat);
             }
@@ -182,6 +194,8 @@ final class EngineView implements AutoCloseable {
         burning.close();
         parts.values().forEach(Shaped::close);
         parts.clear();
+        links.values().forEach(Shaped::close);
+        links.clear();
         overlay.close();
         shadows.close();
         cast.close();

@@ -70,10 +70,11 @@ public final class EngineBench {
     private static final Vec3 LIFT = new Vec3(0, 45, 0);
     /**
      * The car each engine of the range drives, by its name, its own engine put in: the boxers the cars nearest the
-     * sports cars they are after, the four the light coupe and the six the saloon of its power.
+     * sports cars they are after, the four the light coupe and the six the saloon of its power; the twin a motorcycle,
+     * the cruiser of its torque.
      */
-    private static final Map<String, Vehicle> CARS = Map.of("L4", Vehicle.HATCHBACK, "B4", Vehicle.RALLY,
-            "L5", Vehicle.RALLY, "V6", Vehicle.SALOON, "B6", Vehicle.SALOON, "V8", Vehicle.MUSCLE,
+    private static final Map<String, Vehicle> CARS = Map.of("V2", Vehicle.CRUISER, "L4", Vehicle.HATCHBACK,
+            "B4", Vehicle.RALLY, "L5", Vehicle.RALLY, "V6", Vehicle.SALOON, "B6", Vehicle.SALOON, "V8", Vehicle.MUSCLE,
             "V12", Vehicle.SUPERCAR);
 
     private final Light noon = new Daylight().light();

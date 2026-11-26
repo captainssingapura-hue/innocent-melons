@@ -16,7 +16,7 @@ import java.util.List;
  * @param figures the engine's figures
  * @param block   how the block is cast
  */
-record BoxerCase(EngineFigures figures, BlockForm block) {
+record BoxerCase(EngineFigures figures, BlockForm block) implements Casing {
 
     /** How thick the crankcase is cast round what turns; how far across its opening beneath is, of its round. */
     private static final double SHELL = 0.5;
@@ -43,7 +43,8 @@ record BoxerCase(EngineFigures figures, BlockForm block) {
      * right bank leaves it, along its lower wall out to its deck, up the deck, back along its upper wall, and over
      * the crank; and the left the same way down.
      */
-    List<Spot> section() {
+    @Override
+    public List<Spot> section() {
         final double c = round();
         final double s = c * OPEN;
         final double h = block.half();
@@ -58,7 +59,8 @@ record BoxerCase(EngineFigures figures, BlockForm block) {
     }
 
     /** A bulkhead between two pins: the crankcase's section, short of where the pistons come down to either side. */
-    List<Spot> bulkhead() {
+    @Override
+    public List<Spot> between(final List<Spot> section) {
         final double c = round();
         final double s = c * OPEN;
         final double h = block.half();
@@ -88,7 +90,8 @@ record BoxerCase(EngineFigures figures, BlockForm block) {
     }
 
     /** Where the engine's mount is on side {@code side}: under its bank, where it leaves the crankcase. */
-    Vec3 mount(final int side) {
+    @Override
+    public Vec3 mount(final int side) {
         return new Vec3(side * (leaves() + OUT), -block.half() - UNDER, figures.length() * 0.42);
     }
 }

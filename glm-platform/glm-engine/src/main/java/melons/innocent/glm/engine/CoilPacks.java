@@ -7,6 +7,7 @@ import melons.innocent.glm.core.Made;
 import melons.innocent.glm.core.Material;
 import melons.innocent.glm.core.Part;
 import melons.innocent.glm.core.Point;
+import melons.innocent.glm.existences.EngineParts;
 import melons.innocent.vehiclelab.forms.Shapes;
 
 import java.util.ArrayList;
@@ -44,7 +45,7 @@ record CoilPacks(EngineFigures figures, int bank) {
         }
         return new Part(figures.name() + " ignition coils" + (figures.banks() == 2 ? ", bank " + (bank + 1) : ""),
                 Group.COVERS, false, List.of(new Point("cover", cover.middle())), shapes.joined(made),
-                new Made(Material.PLASTIC, true));
+                new Made(Material.PLASTIC, true)).as(new EngineParts.CoilPack());
     }
 
     /** How high their bodies stand over the head cover's top. */

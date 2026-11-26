@@ -11,9 +11,17 @@ import java.util.List;
  * And the boxers, after the group's sports cars' flat engines, the four after their 2.0 litre and the six after their
  * 3.0 litre, which share one cylinder, 91 by 76.4 mm, 118 mm apart, as all their boxers are; one bank set back half
  * that from the other, so each rod has its own pin between two main bearings; their rods 127 mm long, as the
- * flat sixes' with that stroke have had, and their crowns estimates.
+ * flat sixes' with that stroke have had, and their crowns estimates. And a motorcycle's V twin, after the 1,252 cc
+ * liquid cooled twin of an American maker's adventure bike, 105 by 72.3 mm in a 60 degree V, its pins split 30 degrees
+ * so it fires as a 90 degree twin; its spacing, bank offset, rods and crowns estimates, its rods twice its stroke,
+ * as short stroke twins' are, so its pistons pass each other across its narrow V.
  */
 public record EngineRange() {
+
+    /** The V twin. */
+    public EngineFigures v2() {
+        return new EngineFigures("V2", 2, 60, 1, 10.5, 7.23, 12.0, 2.3, 14.5, 2.7);
+    }
 
     /** The inline four. */
     public EngineFigures l4() {
@@ -52,7 +60,7 @@ public record EngineRange() {
 
     /** Every one of them, smallest first. */
     public List<EngineFigures> all() {
-        return List.of(l4(), b4(), l5(), v6(), b6(), v8(), v12());
+        return List.of(v2(), l4(), b4(), l5(), v6(), b6(), v8(), v12());
     }
 
     private EngineFigures boxer(final String name, final int perBank) {

@@ -12,8 +12,10 @@ import java.util.Map;
  * the five 1-2-4-5-3, the V6 1-4-3-6-2-5, the V8 1-3-7-2-6-5-4-8, as their makers' training says; the V12, after none,
  * 1-7-5-11-3-9-6-12-2-8-4-10, an even order its crank makes; the flat six 1-6-2-4-3-5, as the group's flat sixes
  * fire, and the flat four, as its crank brings them, 1-2-3-4. Other figures fire as their crank brings each cylinder
- * up, the lowest numbered first. The first cylinder fires at its top in the first turn, each after it the cycle
- * shared evenly on; refused if its crank does not bring each cylinder to its top then.
+ * up, the lowest numbered first. The first cylinder fires at its top in the first turn, each after it at whichever of
+ * its two tops comes nearest an even share of the cycle on from the one before: evenly where its crank lets it, and
+ * where not, as a twin does, 270 degrees on and then 450. Refused if its crank does not bring each cylinder to its
+ * top then, or if they do not all fire within the cycle.
  */
 public final class Firing {
 
@@ -33,6 +35,7 @@ public final class Firing {
     private final EngineFigures figures;
     private final CrankFigures crank;
     private final List<Integer> order;
+    private final List<Double> fired;
 
     /** {@code figures}' firing, refused if its crank does not bring each cylinder to its top as it fires. */
     public Firing(final EngineFigures figures) {
@@ -40,6 +43,14 @@ public final class Firing {
         this.crank = new CrankFigures(figures);
         final List<Integer> known = KNOWN.get(List.of(figures.banks(), figures.perBank(), (int) figures.vee()));
         this.order = known != null ? known : derived();
+        final List<Double> at = new ArrayList<>(List.of(top(bank(order.getFirst()), k(order.getFirst()))));
+        for (int i = 1; i < order.size(); i++) {
+            at.add(next(at.getLast(), order.get(i)));
+        }
+        if (at.getLast() - at.getFirst() >= CYCLE - CLOSE) {
+            throw new IllegalArgumentException(figures.name() + ": its cylinders do not all fire within the cycle");
+        }
+        this.fired = at.stream().map(a -> around(a, CYCLE)).toList();
         for (final int n : order) {
             if (apart(fires(bank(n), k(n)), top(bank(n), k(n)), TURN) > CLOSE) {
                 throw new IllegalArgumentException(figures.name() + ": its crank does not bring cylinder " + n
@@ -75,8 +86,7 @@ public final class Firing {
 
     /** How far through the cycle that cylinder fires, from the crank at rest. */
     public double fires(final int bank, final int k) {
-        final int first = order.getFirst();
-        return around(top(bank(first), k(first)) + order.indexOf(number(bank, k)) * CYCLE / order.size(), CYCLE);
+        return fired.get(order.indexOf(number(bank, k)));
     }
 
     /** How far the crank has turned since that cylinder last fired, the crank turned {@code turned} from rest. */
@@ -84,25 +94,54 @@ public final class Firing {
         return around(turned - fires(bank, k), CYCLE);
     }
 
+    /** How far the crank turns from each cylinder's firing to the next's, in order, and from the last to the first. */
+    public List<Double> gaps() {
+        final List<Double> gaps = new ArrayList<>();
+        for (int i = 0; i < fired.size(); i++) {
+            gaps.add(around(fired.get((i + 1) % fired.size()) - fired.get(i), CYCLE));
+        }
+        return gaps;
+    }
+
+    /** Whether each cylinder fires as far on from the one before as every other does. */
+    public boolean even() {
+        return gaps().stream().allMatch(g -> Math.abs(g - CYCLE / order.size()) < CLOSE);
+    }
+
     /** Its order written as its makers write it: 1-3-4-2. */
     public String written() {
         return String.join("-", order.stream().map(String::valueOf).toList());
     }
 
-    /** The order its crank fires in where none is known: at each step of the cycle, the lowest numbered up then. */
+    /** Where in the cycle cylinder {@code n} fires next after {@code after}: its top nearest an even share on. */
+    private double next(final double after, final int n) {
+        final double even = after + CYCLE / figures.cylinders();
+        double d = around(top(bank(n), k(n)) - even, TURN);
+        if (d > TURN / 2) {
+            d -= TURN;
+        }
+        return even + d;
+    }
+
+    /**
+     * The order its crank fires in where none is known: at each step, the cylinder up nearest an even share on, the
+     * lowest numbered of those as near.
+     */
     private List<Integer> derived() {
         final int all = figures.cylinders();
         final List<Integer> made = new ArrayList<>(List.of(1));
+        double at = top(0, 0);
         for (int i = 1; i < all; i++) {
-            final double at = top(0, 0) + i * CYCLE / all;
-            for (int n = 2; n <= all && made.size() <= i; n++) {
-                if (!made.contains(n) && apart(at, top(bank(n), k(n)), TURN) < CLOSE) {
-                    made.add(n);
+            final double even = at + CYCLE / all;
+            int best = 0;
+            for (int n = 2; n <= all; n++) {
+                if (!made.contains(n) && (best == 0
+                        || Math.abs(next(at, n) - even) < Math.abs(next(at, best) - even) - CLOSE)) {
+                    best = n;
                 }
             }
-            if (made.size() <= i) {
-                throw new IllegalArgumentException(figures.name() + ": its crank fires unevenly");
-            }
+            made.add(best);
+            at = next(at, best);
         }
         return List.copyOf(made);
     }

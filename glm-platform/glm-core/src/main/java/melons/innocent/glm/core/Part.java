@@ -1,18 +1,22 @@
 package melons.innocent.glm.core;
 
+import com.example.fxsuite.taxonomy.Leaf;
+import com.example.fxsuite.taxonomy.Node;
 import com.example.fxsuite.vulkan.form.Mesh;
 import com.example.fxsuite.vulkan.space.Vec3;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
  * One part of the platform: what it is called, which group it belongs to, whether there is one on each side, the
- * points it is joined at, by name, its form, and what it is made of; its points and its form in its own frame. A part
- * on each side is said as the right one; the left is its mirror. A part down the middle that is joined to both sides
- * names its points on each side {@code ", right"} and {@code ", left"}.
+ * points it is joined at, by name, its form, what it is made of, and what kind of part it is, where a tree of kinds
+ * says; its points and its form in its own frame. A part on each side is said as the right one; the left is its
+ * mirror. A part down the middle that is joined to both sides names its points on each side {@code ", right"} and
+ * {@code ", left"}.
  *
  * @param name   what it is called
  * @param group  which group it belongs to
@@ -20,12 +24,14 @@ import java.util.Set;
  * @param points where it is joined
  * @param form   its form
  * @param made   what it is made of, and whether its skin is bare
+ * @param kind   what kind of part it is, a leaf of a tree of kinds; none yet if no tree says
  */
-public record Part(String name, Group group, boolean paired, List<Point> points, Mesh form, Made made) {
+public record Part(String name, Group group, boolean paired, List<Point> points, Mesh form, Made made,
+                   Optional<Leaf<?>> kind) {
 
     public Part {
         points = List.copyOf(points);
-        if (name == null || group == null || form == null || made == null) {
+        if (name == null || group == null || form == null || made == null || kind == null) {
             throw new IllegalArgumentException("a part is named, of some group, has a form and is made of something: "
                     + name);
         }
@@ -35,6 +41,22 @@ public record Part(String name, Group group, boolean paired, List<Point> points,
                 throw new IllegalArgumentException(name + ": two points called " + p.name());
             }
         }
+    }
+
+    /** A part of no kind yet. */
+    public Part(final String name, final Group group, final boolean paired, final List<Point> points, final Mesh form,
+                final Made made) {
+        this(name, group, paired, points, form, made, Optional.empty());
+    }
+
+    /** The same part, of the kind {@code kind}. */
+    public Part as(final Leaf<?> kind) {
+        return new Part(name, group, paired, points, form, made, Optional.of(kind));
+    }
+
+    /** Whether it is of the kind {@code node}, or of a kind under it. */
+    public boolean is(final Node node) {
+        return kind.map(k -> k.lineage().contains(node)).orElse(false);
     }
 
     /** Whether {@code other} is this part: a part is itself, not any other of the same shape. */
@@ -61,7 +83,8 @@ public record Part(String name, Group group, boolean paired, List<Point> points,
 
     /** The same, on the other side of the middle: its points and its form mirrored. */
     public Part mirrored() {
-        return new Part(name, group, paired, points.stream().map(Point::mirrored).toList(), mirrored(form), made);
+        return new Part(name, group, paired, points.stream().map(Point::mirrored).toList(), mirrored(form), made,
+                kind);
     }
 
     /** {@code mesh} mirrored across the middle, its triangles turned so they still face out. */

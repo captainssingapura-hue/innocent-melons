@@ -7,6 +7,7 @@ import melons.innocent.glm.core.Made;
 import melons.innocent.glm.core.Material;
 import melons.innocent.glm.core.Part;
 import melons.innocent.glm.core.Point;
+import melons.innocent.glm.existences.EngineParts;
 import melons.innocent.vehiclelab.forms.Outlines;
 import melons.innocent.vehiclelab.forms.Plate;
 import melons.innocent.vehiclelab.forms.Shapes;
@@ -37,12 +38,14 @@ record HeadCover(EngineFigures figures, int bank) {
     /** How far round a coil's hole is. */
     private static final double COIL = 1.6;
 
-    /** It, called as its head is. */
+    /** It, called as its head is: on a twin, its cam cover. */
     Part part() {
         final HeadFigures head = new HeadFigures(figures);
-        return new Part(figures.name() + " cylinder head cover" + (figures.banks() == 2 ? ", bank " + (bank + 1)
-                : ""), Group.COVERS, false, List.of(new Point("head", head.top(bank)), new Point("top", middle())),
-                mesh(head), new Made(Material.ALUMINIUM, true));
+        final String called = figures.twin() ? " cam cover" : " cylinder head cover";
+        return new Part(figures.name() + called + (figures.banks() == 2 ? ", bank " + (bank + 1) : ""),
+                Group.COVERS, false, List.of(new Point("head", head.top(bank)), new Point("top", middle())),
+                mesh(head), new Made(Material.ALUMINIUM, true))
+                .as(figures.twin() ? new EngineParts.CamCover() : new EngineParts.HeadCover());
     }
 
     /** How high its top stands over its bank's deck: clear of its cams' lobes at their highest and the caps' bolts. */

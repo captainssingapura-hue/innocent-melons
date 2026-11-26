@@ -9,6 +9,7 @@ import melons.innocent.glm.core.Made;
 import melons.innocent.glm.core.Material;
 import melons.innocent.glm.core.Part;
 import melons.innocent.glm.core.Point;
+import melons.innocent.glm.existences.EngineParts;
 import melons.innocent.vehiclelab.forms.Plate;
 import melons.innocent.vehiclelab.forms.Shapes;
 import melons.innocent.vehiclelab.forms.Spot;
@@ -18,9 +19,10 @@ import java.util.List;
 
 /**
  * A bank's inlet or exhaust camshaft, in steel: a shaft along the head over its valves, a journal in each of the head's
- * towers, at the front the wheel its chain drives it by, and a lobe under each valve's bucket, its base circle round
- * and its nose lifting the valve as {@link ValveTiming} says. Turned by the crank's chain at half the crank's speed the
- * same way round, so each lobe's nose stands toward its valve when its cylinder's cycle wants that valve open the most.
+ * towers, at the front the sprocket its timing chain drives it by, in the chain's plane ({@link ChainFigures}), and a
+ * lobe under each valve's bucket, its base circle round and its nose lifting the valve as {@link ValveTiming} says.
+ * Turned by the crank's chain at half the crank's speed the same way round, its sprocket twice the crank's, so each
+ * lobe's nose stands toward its valve when its cylinder's cycle wants that valve open the most.
  * Its point: its axis at the head's front, where it turns in the head.
  *
  * @param figures the engine's figures
@@ -31,11 +33,10 @@ record Camshaft(EngineFigures figures, int bank, boolean inlet) {
 
     private static final int ROUND = 20;
     private static final Vec3 ALONG = new Vec3(0, 0, 1);
-    /** How many points round a lobe is drawn in; how wide it is; how wide a journal; how big the front wheel. */
+    /** How many points round a lobe is drawn in; how wide it is; how wide a journal. */
     private static final int LOBE = 90;
     private static final double LOBE_WIDE = 1.5;
     private static final double JOURNAL_WIDE = 1.8;
-    static final double WHEEL = 3.2;
 
     /** What it is called. */
     String called() {
@@ -50,8 +51,10 @@ record Camshaft(EngineFigures figures, int bank, boolean inlet) {
         final double front = head.front(bank);
         final double rear = head.rear(bank);
         final List<Mesh> made = new ArrayList<>();
-        made.add(shapes.drum(axis(front - 2.5), axis(rear - 0.5), head.journal() * 0.75));
-        made.add(shapes.drum(axis(front - 2.5), axis(front - 1.2), WHEEL));
+        final ChainFigures chain = new ChainFigures(figures, bank);
+        final double wheel = chain.plane();
+        made.add(shapes.drum(axis(wheel - ChainFigures.WIDE / 2), axis(rear - 0.5), head.journal() * 0.75));
+        made.add(new Sprocket(chain.camTeeth(), chain.cam(), ChainFigures.WIDE + 0.2).mesh(axis(wheel), 0));
         for (final double z : List.of(front + 1, rear - 1)) {
             made.add(shapes.drum(axis(z - JOURNAL_WIDE / 2), axis(z + JOURNAL_WIDE / 2), head.journal()));
         }
@@ -65,7 +68,7 @@ record Camshaft(EngineFigures figures, int bank, boolean inlet) {
             }
         }
         return new Part(called(), Group.ENGINE, false, List.of(new Point("front", axis(front))), shapes.joined(made),
-                new Made(Material.STEEL, true));
+                new Made(Material.STEEL, true)).as(new EngineParts.Camshaft());
     }
 
     /** How far round its lobes' base circle is: no lift. */

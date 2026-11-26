@@ -30,7 +30,8 @@ public record Carrying(Mat4 by) {
     /** {@code part}, its form and its points carried. */
     public Part carried(final Part part) {
         return new Part(part.name(), part.group(), part.paired(), part.points().stream()
-                .map(p -> new Point(p.name(), at(p.at()))).toList(), carried(part.form()), part.made());
+                .map(p -> new Point(p.name(), at(p.at()))).toList(), carried(part.form()), part.made(),
+                part.kind());
     }
 
     /** Where {@code p} is carried to. */

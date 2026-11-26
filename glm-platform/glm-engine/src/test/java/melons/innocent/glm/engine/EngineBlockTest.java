@@ -1,5 +1,6 @@
 package melons.innocent.glm.engine;
 
+import com.example.fxsuite.vulkan.space.Mat4;
 import com.example.fxsuite.vulkan.space.Vec3;
 import melons.innocent.glm.core.Assembled;
 import melons.innocent.glm.core.Assembly;
@@ -7,6 +8,7 @@ import melons.innocent.glm.core.Material;
 import melons.innocent.glm.core.Part;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -32,6 +34,51 @@ class EngineBlockTest {
         assertEquals(5990, range.v12().displacement(), 1, "a 6.0 litre V12, the same cylinder again");
         assertEquals(1988, range.b4().displacement(), 1, "a 2.0 litre flat four");
         assertEquals(2981, range.b6().displacement(), 1, "a 3.0 litre flat six, the same cylinder");
+        assertEquals(1252, range.v2().displacement(), 1, "a 1,252 cc twin");
+    }
+
+    @Test
+    void aTwinsCrankcaseItsBarrelsBoltedOnItsPinsSplit() {
+        final EngineFigures v2 = range.v2();
+        final Part crankcase = new CastBlock(v2).part();
+        assertTrue(v2.twin() && !range.v6().twin() && !range.b4().twin());
+        assertTrue(crankcase.name().endsWith("crankcase") && !crankcase.has("deck, bank 1"));
+        final BlockForm form = new BlockForm(v2);
+        for (int b = 0; b < 2; b++) {
+            final Part barrel = new Barrel(v2, b).part();
+            final String bank = ", bank " + (b + 1);
+            assertEquals(0, barrel.point("foot").at().minus(crankcase.point("barrel" + bank).at()).length(), 1e-9);
+            assertEquals(v2.deck(), barrel.point("cylinder " + (b + 1) + ".1").at().minus(new Vec3(0, 0,
+                    v2.along(b, 0))).length(), 1e-9, "its deck as high over the crank as said");
+            assertTrue(form.top() < v2.deck() - 5, "its foot well down its bank");
+        }
+        final Vec3 inner = form.up(1).times(form.top()).minus(form.out(1).times(form.half()));
+        assertTrue(inner.x() > 0 && inner.x() < 0.5, "the barrels' feet clear of each other over the middle");
+        final CrankFigures crank = new CrankFigures(v2);
+        assertEquals(30, crank.angle(0, 0) - crank.angle(1, 0), 1e-9, "its pins split 30 degrees");
+        assertEquals(90, new Firing(v2).top(1, 0) - new Firing(v2).top(0, 0) + 360, 1e-9,
+                "its pistons at their tops a quarter turn apart, as a 90 degree twin's");
+        assertEquals(2, form.bulkheads().size(), "a main bearing at each end, its two pins between");
+    }
+
+    @Test
+    void aTwinsBanksClearOfEachOtherAcrossItsV() {
+        final EngineInternals inside = new EngineInternals(range.v2());
+        final Assembled covered = new Assembly(inside.platform(true)).assembled();
+        final List<Part> outside = covered.placed().keySet().stream().map(p -> p.part())
+                .filter(p -> inside.cast(p) || inside.cover(p)).toList();
+        final TurnedTouching touching = new TurnedTouching();
+        final List<String> touched = new ArrayList<>();
+        for (final Part a : outside) {
+            for (final Part b : outside) {
+                if (a.name().endsWith("bank 1") && b.name().endsWith("bank 2")
+                        && !touching.wheres(a.form(), new Mat4(), b.form(), new Mat4()).isEmpty()) {
+                    touched.add(a.name() + " on " + b.name());
+                }
+            }
+        }
+        assertEquals(9, outside.size(), "two barrels, two heads, two cam covers, their coils and the timing cover");
+        assertEquals(List.of(), touched, "each bank's barrel, head, cover and coils clear of the other's");
     }
 
     @Test
@@ -74,9 +121,10 @@ class EngineBlockTest {
     void theRangePutTogetherOnItsStands() {
         final Assembled shown = new Assembly(new EngineShow().platform()).assembled();
         assertEquals(List.of(), shown.problems(1e-6));
-        assertEquals(1 + 7 + 7 + 3 * (1 + 2 + 1 + 2 + 2 + 2 + 2) + 11 * (4 + 4 + 5 + 6 + 6 + 8 + 12),
-                shown.placed().size(), "the stands, seven blocks, seven cranks, a head and two camshafts on every bank,"
-                        + " and a rod, a piston, a pin, four valves and four springs in every cylinder");
+        assertEquals(1 + 8 + 2 + 8 + 6 * (2 + 1 + 2 + 1 + 2 + 2 + 2 + 2) + 11 * (2 + 4 + 4 + 5 + 6 + 6 + 8 + 12),
+                shown.placed().size(), "the stands, eight blocks, the twin's two barrels, eight cranks; a head, two"
+                        + " camshafts, a timing chain, its guide and its tensioner on every bank; and a rod, a piston,"
+                        + " a pin, four valves and four springs in every cylinder");
     }
 
     @Test

@@ -7,6 +7,7 @@ import melons.innocent.glm.core.Made;
 import melons.innocent.glm.core.Material;
 import melons.innocent.glm.core.Part;
 import melons.innocent.glm.core.Point;
+import melons.innocent.glm.existences.EngineParts;
 import melons.innocent.vehiclelab.forms.Course;
 import melons.innocent.vehiclelab.forms.Outlines;
 import melons.innocent.vehiclelab.forms.Profiled;
@@ -126,7 +127,7 @@ record Cylinder(EngineFigures figures, int bank, int k) {
         }
         final List<Point> points = List.of(new Point("big end", p), new Point("small end", q));
         return new Part(figures.name() + " rod " + where(), Group.ENGINE, false, points, shapes.joined(made),
-                TITANIUM);
+                TITANIUM).as(new EngineParts.ConnectingRod());
     }
 
     /** The piston. */
@@ -153,7 +154,7 @@ record Cylinder(EngineFigures figures, int bank, int k) {
         }
         final List<Point> points = List.of(new Point("pin", q), new Point("bore", deck()));
         return new Part(figures.name() + " piston " + where(), Group.ENGINE, false, points, shapes.joined(made),
-                TITANIUM);
+                TITANIUM).as(new EngineParts.Piston());
     }
 
     /** The gudgeon pin, through the piston's bosses and the rod's small end. */
@@ -162,7 +163,7 @@ record Cylinder(EngineFigures figures, int bank, int k) {
         final Vec3 q = smallEnd();
         return new Part(figures.name() + " gudgeon pin " + where(), Group.ENGINE, false,
                 List.of(new Point("middle", q)), new Sleeve(q, ALONG, figures.bore() * 0.62 - 0.2, crank.gudgeon(),
-                crank.gudgeon() * 0.55, ROUND).mesh(), TITANIUM);
+                crank.gudgeon() * 0.55, ROUND).mesh(), TITANIUM).as(new EngineParts.GudgeonPin());
     }
 
     private String where() {
