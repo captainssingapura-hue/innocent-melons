@@ -88,7 +88,7 @@ public final class BodyView implements AutoCloseable {
                     new Materials.ToothEnamel()));
             all.addAll(new WornShown(List.of(), new Materials.Steel(), new Vec3(1, 1, 1), new Vec3(0, 0, 0),
                     new Vec3(1, 1, 1))
-                    .offered());
+                    .drawnIn());
             for (final Material m : all) {
                 final Looked look = new Looked(card, new Look(laid, shades.of(m)));
                 closing.add(look::close);

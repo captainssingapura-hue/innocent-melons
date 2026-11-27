@@ -52,6 +52,7 @@ public final class LineupView implements AutoCloseable {
     private final Map<Material, Looked> looks = new LinkedHashMap<>();
     private final List<List<Sent>> figures = new ArrayList<>();
     private final List<Rig> bound = new ArrayList<>();
+    private final List<Double> raised = new ArrayList<>();
     private final Cast cast;
     private final Shaded shadows;
     private final List<Runnable> closing = new ArrayList<>();
@@ -86,16 +87,22 @@ public final class LineupView implements AutoCloseable {
         return shadows.offered();
     }
 
-    /** {@code avatar}'s pieces sent to the card, to be drawn from now on, the next figure along the line. */
+    /**
+     * {@code avatar}'s pieces sent to the card, to be drawn from now on, the next figure along the line; its fingers'
+     * with their hands, as a hand hangs at rest.
+     */
     public void add(final Avatar avatar) {
         final List<Sent> sent = new ArrayList<>();
-        for (final Avatar.Piece p : avatar.pieces()) {
+        final List<Avatar.Piece> all = new ArrayList<>(avatar.pieces());
+        avatar.fingers().forEach(f -> all.add(new Avatar.Piece(f.hand(), f.paint(), f.mesh())));
+        for (final Avatar.Piece p : all) {
             final Shaped shaped = new Shaped(card, laid, p.mesh());
             closing.add(shaped::close);
             sent.add(new Sent(p, shaped));
         }
         figures.add(sent);
         bound.add(avatar.bound());
+        raised.add(avatar.raised());
     }
 
     /** How many of its figures are on the card. */
@@ -105,15 +112,16 @@ public final class LineupView implements AutoCloseable {
 
     /**
      * One frame drawn on {@code target}: those of its figures that are made, where and as tall as {@code shown} says,
-     * each held as {@code rig} holds the body, its soles lifted {@code lift} cm; seen by {@code camera} in
+     * each held as {@code rig} holds the body, its soles lifted {@code lift} cm and as far again as its boots' heels
+     * are deep, if it is in boots ({@link Avatar#raised}); seen by {@code camera} in
      * {@code time}'s light and under its sky; with shadows found {@code by} that way, where {@code shadowed}.
      */
     public void drawn(final Target target, final LineupShown shown, final Rig rig, final double lift,
                       final Camera camera, final Daylight time, final boolean shadowed, final Shadowing by) {
         final Consumer<Pass> standing = pass -> {
             for (int i = 0; i < figures.size() && i < shown.tall().size(); i++) {
-                stood(pass, figures.get(i), shown.paint().get(i), moves(rig, bound.get(i), placed(shown, i, lift)),
-                        camera);
+                final Mat4 at = placed(shown, i, lift + raised.get(i));
+                stood(pass, figures.get(i), shown.paint().get(i), moves(rig, bound.get(i), at), camera);
             }
         };
         final Consumer<Pass> all = pass -> {

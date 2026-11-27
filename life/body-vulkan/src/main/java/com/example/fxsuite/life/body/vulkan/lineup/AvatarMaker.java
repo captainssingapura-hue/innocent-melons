@@ -1,6 +1,7 @@
 package com.example.fxsuite.life.body.vulkan.lineup;
 
 import com.example.fxsuite.baked.Baker;
+import com.example.fxsuite.baked.Piece;
 import com.example.fxsuite.baked.Recipe;
 import com.example.fxsuite.baked.Resolution;
 import com.example.fxsuite.baked.TreeShelf;
@@ -11,6 +12,7 @@ import com.example.fxsuite.life.body.Paint;
 import com.example.fxsuite.life.body.Proportions;
 import com.example.fxsuite.life.body.Rig;
 import com.example.fxsuite.life.body.RobotParts;
+import com.example.fxsuite.life.body.robot.RobotHands;
 import com.example.fxsuite.life.body.robot.RobotRecipes;
 import com.example.fxsuite.life.body.vulkan.Sheet;
 import com.example.fxsuite.taxonomy.Leaf;
@@ -21,11 +23,11 @@ import java.util.function.Consumer;
 
 /**
  * The line-up's first batch, made away from the screen as the robots' recipes say ({@link RobotRecipes}), fine: two
- * robots built as the body shop's male model is, 188 cm ({@link Proportions#MODEL}). The framed robot, its frame bare:
- * made in a moment. The shelled robot, its frame within a shell of plates shaped over the model's skin: dear to make,
- * a minute and a half, so taken from the shelf if it is baked there, made by the body shop as it is now
- * ({@link Baker}), else made and baked. Each piece of what it is of, its shell, its frame or another ({@link Paint}),
- * drawn as each figure's paintwork has that ({@link Paintwork}).
+ * robots built as the body shop's male model is, 188 cm ({@link Proportions#MODEL}), each in riding boots: the framed
+ * robot, its frame bare; the shelled robot, its frame within a shell of plates shaped over the model's skin. Each dear
+ * to make, the model's skin made first, so taken from the shelf if it is baked there, made by the body shop as it is
+ * now ({@link Baker}), else made and baked. Each piece of what it is of, its shell, its frame, its boots' leather or
+ * soles or another ({@link Paint}), drawn as each figure's paintwork has that ({@link Paintwork}).
  */
 public final class AvatarMaker {
 
@@ -50,10 +52,24 @@ public final class AvatarMaker {
     /** Each of the batch made or taken as baked, in turn, and given to {@code made} as it is, each step told. */
     public void made(final Consumer<String> told, final Consumer<Avatar> made) {
         final Rig bound = new Rig(Proportions.MODEL, BoundPose.INSTANCE.pose(), false);
+        final RobotHands hands = new RobotHands();
         for (final Recipe r : recipes.all()) {
-            made.accept(new Avatar(r.leaf(), bound,
-                    pieces(recipes.pieces().made(baker.pieces(r, Resolution.FINE, told)))));
+            final List<Piece> kept = baker.pieces(r, Resolution.FINE, told);
+            made.accept(new Avatar(r.leaf(), bound, pieces(recipes.pieces().made(kept)),
+                    fingers(hands.fingers(kept))));
         }
+    }
+
+    /** {@code made}, each finger's piece as the card draws it; any with no triangle left out. */
+    List<Avatar.Finger> fingers(final List<RobotHands.Finger> made) {
+        final List<Avatar.Finger> fingers = new ArrayList<>();
+        for (final RobotHands.Finger f : made) {
+            final var mesh = new Sheet(f.mesh().points(), f.mesh().triangles()).mesh();
+            if (!mesh.corners().isEmpty()) {
+                fingers.add(new Avatar.Finger(f.hand(), f.segment(), f.paint(), mesh));
+            }
+        }
+        return fingers;
     }
 
     /** {@code made}, each piece as the card draws it; any with no triangle left out. */
@@ -74,7 +90,8 @@ public final class AvatarMaker {
      * offered: a shelled robot's shell first; every robot's panels, visor, frame, housings and rods.
      */
     public List<Paint> roles(final Leaf<?> kind) {
-        final List<Paint> robot = List.of(Paint.PANEL, Paint.VISOR, Paint.FRAME, Paint.HOUSING, Paint.ROD);
+        final List<Paint> robot = List.of(Paint.PANEL, Paint.VISOR, Paint.FRAME, Paint.HOUSING, Paint.ROD,
+                Paint.BOOT, Paint.SOLE);
         if (kind instanceof Figures.ShelledRobot) {
             final List<Paint> shelled = new ArrayList<>(List.of(Paint.SHELL));
             shelled.addAll(robot);

@@ -18,6 +18,7 @@ import com.example.fxsuite.life.body.muscle.MuscleBody;
 import com.example.fxsuite.life.body.skin.Skins;
 import com.example.fxsuite.life.body.wear.Armour;
 import com.example.fxsuite.life.body.wear.Beneath;
+import com.example.fxsuite.life.body.wear.Boots;
 import com.example.fxsuite.life.body.wear.Garment;
 import com.example.fxsuite.life.body.wear.Tailor;
 
@@ -78,9 +79,11 @@ public final class BodyMaker {
                 Tailor.INSTANCE.briefs(beneath, bound, CLOTH));
         told.accept("its helmet and its armour");
         final List<BodyPieces.Worn> wears = new ArrayList<>(new BodyPieces().worn(bound, Helmet.INSTANCE.made()));
+        final List<Beneath> cloth = clothes.stream().map(c -> skins.beneath(c.cloth())).toList();
         wears.addAll(new BodyPieces().worn(Armour.INSTANCE.of(beneath,
-                skins.beneath(skin, new Rig(p, Armour.INSTANCE.held(), false)),
-                clothes.stream().map(c -> skins.beneath(c.cloth())).toList(), bound)));
+                skins.beneath(skin, new Rig(p, Armour.INSTANCE.held(), false)), cloth, bound)));
+        told.accept("its riding boots");
+        wears.addAll(new BodyPieces().worn(Boots.INSTANCE.of(beneath, cloth, bound)));
         return new Made(bones, worn, muscles, bound, wears, clothes);
     }
 

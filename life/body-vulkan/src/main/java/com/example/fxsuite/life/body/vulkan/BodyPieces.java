@@ -13,6 +13,7 @@ import com.example.fxsuite.life.body.V3;
 import com.example.fxsuite.life.body.flesh.Flesh;
 import com.example.fxsuite.life.body.head.Helmet;
 import com.example.fxsuite.life.body.muscle.MuscleBody;
+import com.example.fxsuite.life.body.wear.Boots;
 import com.example.fxsuite.life.body.wear.Garment;
 import com.example.fxsuite.life.body.wear.Plate;
 import com.example.fxsuite.taxonomy.Leaf;
@@ -52,22 +53,33 @@ public final class BodyPieces {
     }
 
     /**
-     * A thing worn as the body is bound, of {@code kind}, a hard piece moving with its part, {@code bone}; its glass,
-     * if {@code glass}, drawn in a glass and not in what the rest is made of.
+     * What a hard piece worn is drawn in: what the armour is made of; a glass, a visor's; a boot's leather; a boot's
+     * sole.
      */
-    public record Worn(Leaf<?> kind, boolean glass, Bone bone) {
+    public enum Coat { ARMOUR, GLASS, LEATHER, SOLE }
+
+    /** A thing worn as the body is bound, of {@code kind}, a hard piece moving with its part, {@code bone}, in coat. */
+    public record Worn(Leaf<?> kind, Coat coat, Bone bone) {
     }
 
     /** {@code helmet}, made in the head's frame, on the body {@code bound} holds: its shell, and its visor in glass. */
     public List<Worn> worn(final Rig bound, final Helmet.Made helmet) {
         final Leaf<?> kind = new Wearables.Helmet();
-        return List.of(new Worn(kind, false, worn(Part.HEAD, placed(bound.frame(Part.HEAD), helmet.shell()))),
-                new Worn(kind, true, worn(Part.HEAD, placed(bound.frame(Part.HEAD), helmet.visor()))));
+        return List.of(new Worn(kind, Coat.ARMOUR, worn(Part.HEAD, placed(bound.frame(Part.HEAD), helmet.shell()))),
+                new Worn(kind, Coat.GLASS, worn(Part.HEAD, placed(bound.frame(Part.HEAD), helmet.visor()))));
     }
 
     /** {@code plates}, made as the body is bound, each moving with its part. */
     public List<Worn> worn(final List<Plate> plates) {
-        return plates.stream().map(p -> new Worn(p.kind(), false, worn(p.part(), p.mesh()))).toList();
+        return plates.stream().map(p -> new Worn(p.kind(), Coat.ARMOUR, worn(p.part(), p.mesh()))).toList();
+    }
+
+    /** A pair of boots, made as the body is bound, each piece moving with its part: its leather, and its soles. */
+    public List<Worn> worn(final Boots.Made boots) {
+        final List<Worn> worn = new ArrayList<>();
+        boots.leather().forEach(p -> worn.add(new Worn(p.kind(), Coat.LEATHER, worn(p.part(), p.mesh()))));
+        boots.soles().forEach(p -> worn.add(new Worn(p.kind(), Coat.SOLE, worn(p.part(), p.mesh()))));
+        return worn;
     }
 
     /** {@code mesh}, made in {@code f}'s frame, in the body's. */

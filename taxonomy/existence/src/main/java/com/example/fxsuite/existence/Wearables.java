@@ -9,9 +9,9 @@ import com.example.fxsuite.taxonomy.Taxonomy;
 import java.util.List;
 
 /**
- * Wearables: what is put on the body and goes with it as it moves, until it is taken off: garments, of cloth, and
- * armour, hard. A wearable says what it is, never how it is made nor what it is made of. Only the kinds something has
- * so far been made as are here.
+ * Wearables: what is put on the body and goes with it as it moves, until it is taken off: garments, of cloth;
+ * armour, hard; and footwear, walked on. A wearable says what it is, never how it is made nor what it is made of.
+ * Only the kinds something has so far been made as are here.
  *
  * <p>Each node is a record, its parent in its type; what each means is beside this class, in {@code Wearables.md}.
  */
@@ -23,7 +23,8 @@ public final class Wearables {
     /** The tree, read once from its leaves. */
     public static final Taxonomy TREE = new Taxonomy("wearables", new Wearable(), List.of(new Briefs(), new Tights(),
             new Helmet(), new Gorget(), new Cuirass(), new Pauldron(), new Couter(), new Vambrace(), new Gauntlet(),
-            new Fauld(), new Cuisse(), new Poleyn(), new Greave(), new Sabaton()), Meanings.INSTANCE.beside(Wearables.class));
+            new Fauld(), new Cuisse(), new Poleyn(), new Greave(), new Sabaton(), new Boot()),
+            Meanings.INSTANCE.beside(Wearables.class));
 
     /** The root. What is put on the body and goes with it. */
     public record Wearable() implements L0 {
@@ -48,4 +49,8 @@ public final class Wearables {
     public record Cuisse() implements Leaf<Armour> { public Armour parent() { return new Armour(); } }
     public record Poleyn() implements Leaf<Armour> { public Armour parent() { return new Armour(); } }
     public record Sabaton() implements Leaf<Armour> { public Armour parent() { return new Armour(); } }
+
+    // Footwear: worn on the feet, under them as well as over, and walked on
+    public record Footwear() implements L1<Wearable> { public Wearable parent() { return new Wearable(); } }
+    public record Boot() implements Leaf<Footwear> { public Footwear parent() { return new Footwear(); } }
 }

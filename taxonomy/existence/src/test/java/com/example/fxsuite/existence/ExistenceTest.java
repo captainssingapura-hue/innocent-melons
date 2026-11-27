@@ -33,11 +33,11 @@ class ExistenceTest {
         assertEquals(20, Spaces.TREE.leaves().size());
         assertEquals(38, Elements.TREE.leaves().size());
         assertEquals(12, Things.TREE.leaves().size());
-        assertEquals(14, Wearables.TREE.leaves().size());
+        assertEquals(15, Wearables.TREE.leaves().size());
         assertEquals(2, Figures.TREE.leaves().size());
         assertEquals(List.of(new Things.Watermelon(), new Things.Melon(), new Things.Fruit(), new Things.Thing()),
                 new Things.Watermelon().lineage());
-        assertEquals(275,Existence.INSTANCE.trees().stream().mapToInt(tree -> tree.nodes().size()).sum());
+        assertEquals(277,Existence.INSTANCE.trees().stream().mapToInt(tree -> tree.nodes().size()).sum());
         assertEquals("Rooms let by the night, served from a lobby.", Uses.TREE.meaning(new Uses.HotelRooms()));
         assertEquals("A wide ditch round a town or a castle, often holding water, to keep out.",
                 Made.TREE.meaning(new Earthworks.Moat()));
