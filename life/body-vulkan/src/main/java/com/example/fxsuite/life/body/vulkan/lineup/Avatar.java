@@ -1,11 +1,10 @@
 package com.example.fxsuite.life.body.vulkan.lineup;
 
+import com.example.fxsuite.life.body.Paint;
 import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Rig;
 import com.example.fxsuite.taxonomy.Leaf;
-import com.example.fxsuite.texture.materials.Material;
 import com.example.fxsuite.vulkan.form.Mesh;
-import com.example.fxsuite.vulkan.space.Vec3;
 
 import java.util.List;
 
@@ -25,10 +24,11 @@ public record Avatar(Leaf<?> kind, Rig bound, List<Piece> pieces) {
     }
 
     /**
-     * A piece of {@code part}, drawn in {@code material}, of the colour {@code colour} if the material takes one, its
-     * surface {@code mesh}, in centimetres, up the way {@code y} grows.
+     * A piece of {@code part}, of what {@code paint} says it is of, its shell, its frame or another, drawn as the
+     * figure's paintwork has that ({@link Paintwork}); its surface {@code mesh}, in centimetres, up the way {@code y}
+     * grows.
      */
-    public record Piece(Part part, Material material, Vec3 colour, Mesh mesh) {
+    public record Piece(Part part, Paint paint, Mesh mesh) {
     }
 
     /** How many triangles it is drawn with. */

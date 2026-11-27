@@ -34,7 +34,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * The line-up's view on the card: two framed robots standing on their feet, by day with shadows, nothing said by the
  * validation layer; the sky in a corner; the robots covering some of the picture, and more of it when one is made
- * taller; drawn too with no shadows. Pictures of each are kept in {@code target/card}.
+ * taller; drawn too with no shadows; one painted gunmetal and gold drawn otherwise. Pictures of each are kept in
+ * {@code target/card}.
  */
 class LineupViewOnTheCardTest {
 
@@ -45,7 +46,7 @@ class LineupViewOnTheCardTest {
     private final Path folder = Path.of("target", "card");
 
     @Test
-    void twoFramedRobotsAreDrawnWithNothingSaidAndOneMadeTallerCoversMore() throws IOException {
+    void twoFramedRobotsAreDrawnWithNothingSaidOneMadeTallerCoversMoreAndOnePaintedLooksOtherwise() throws IOException {
         Files.createDirectories(folder);
         final Rig bound = new Rig(Proportions.MODEL, BoundPose.INSTANCE.pose(), false);
         final AvatarMaker maker = new AvatarMaker();
@@ -70,11 +71,15 @@ class LineupViewOnTheCardTest {
             final Picture taller = kept(canvas, "lineup-one-taller.png");
             view.drawn(canvas, new LineupShown(2), rest, lift, camera, day, false, by);
             kept(canvas, "lineup-no-shadows.png");
+            view.drawn(canvas, new LineupShown(2).picking(1).painting(Looks.GUNMETAL_AND_GOLD.work()), rest, lift,
+                    camera, day, true, by);
+            final Picture gold = kept(canvas, "lineup-one-gunmetal-and-gold.png");
             assertEquals(List.of(), card.heard(), "the validation layer has nothing to say");
             assertEquals(empty.at(4, 4), two.at(4, 4), "the sky in a corner");
             final int covered = changed(empty, two);
             assertTrue(covered > WIDTH * HEIGHT / 100, "the robots cover some of the picture: " + covered);
             assertTrue(changed(empty, taller) > covered, "and more of it with one taller");
+            assertTrue(changed(two, gold) > covered / 10, "one painted gunmetal and gold is drawn otherwise");
         }
     }
 

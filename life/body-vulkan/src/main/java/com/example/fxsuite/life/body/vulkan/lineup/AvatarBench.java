@@ -40,8 +40,8 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * <p>{@code -Dbench.yaw}, {@code -Dbench.pitch} and {@code -Dbench.distance} (cm) where it is seen from;
  * {@code -Dlineup.tall} (cm) how tall each stands first, {@code -Dlineup.picked} which is picked first (counted from
- * 0), {@code -Dlineup.speed} (cm/s) and {@code -Dlineup.going} how
- * they move first; the light's options as the material bench has them ({@code bench.shadows},
+ * 0), {@code -Dlineup.look} the whole look each is given first ({@link Looks}, as {@code racing_red}),
+ * {@code -Dlineup.speed} (cm/s) and {@code -Dlineup.going} how they move first; the light's options as the material bench has them ({@code bench.shadows},
  * {@code bench.shadows.mode}, {@code bench.sun.high}, {@code bench.sun.round}); {@code -Dbench.settle=} so many
  * thousandths of a second after the whole batch is made ends it; {@code -Dbench.snapshot.card=} a file saves the
  * card's picture then.</p>
@@ -84,7 +84,7 @@ public final class AvatarBench {
     private void run() throws IOException {
         bus.subscribe(LineupShown.class, shown::set, Bus.HERE);
         bus.subscribe(Motion.class, motion::set, Bus.HERE);
-        final LineupConsole console = new LineupConsole(bus, asked, maker.batch(), shown.get(), motion.get());
+        final LineupConsole console = new LineupConsole(bus, asked, maker, shown.get(), motion.get());
         final Thread making = new Thread(this::make, "the line-up");
         making.setDaemon(true);
         making.start();
@@ -109,12 +109,16 @@ public final class AvatarBench {
         }
     }
 
-    /** The line-up to begin with: each of the batch as tall as the run was told, the one it was told picked. */
+    /**
+     * The line-up to begin with: each of the batch as tall as the run was told and given the look it was told, the
+     * one it was told picked.
+     */
     private LineupShown first() {
         LineupShown all = new LineupShown(maker.batch().size());
         final double tall = said("lineup.tall", all.tall().getFirst());
+        final Looks look = Looks.valueOf(System.getProperty("lineup.look", "as_built").toUpperCase(Locale.ROOT));
         for (int i = 0; i < all.tall().size(); i++) {
-            all = all.picking(i).standing(tall);
+            all = all.picking(i).standing(tall).painting(look.work());
         }
         return all.picking(Integer.getInteger("lineup.picked", 0));
     }

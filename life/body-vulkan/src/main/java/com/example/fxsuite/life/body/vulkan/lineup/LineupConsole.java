@@ -27,14 +27,15 @@ import java.util.Locale;
 /**
  * The avatar bench's JavaFX window, beside the card's, laid out by the engine's bench kit as every bench's is: on its
  * left, the light; in its middle, the line-up, each of its figures to be picked, what kind of figure it is and what
- * that means, and how tall the picked one stands; how they move, all alike (how they go, how fast, going or stopped);
- * and what the card says it draws. It draws nothing itself: what is on show and how they move go out on the bench's
+ * that means, how tall the picked one stands and what each of its pieces is drawn in ({@link PaintPanel}); how they
+ * move, all alike (how they go, how fast, going or stopped); and what the card says it draws. It draws nothing
+ * itself: what is on show and how they move go out on the bench's
  * bus ({@link LineupShown}, {@link Motion}).
  */
 public final class LineupConsole {
 
     private static final double WIDE = 640;
-    private static final double TALL = 760;
+    private static final double TALL = 900;
     private static final double LIGHT_WIDE = 350;
     private static final double GAP = 8;
     private static final double FASTEST = 800;
@@ -43,26 +44,29 @@ public final class LineupConsole {
     private final Bus bus;
     private final Asked asked;
     private final List<Leaf<?>> kinds;
+    private final AvatarMaker maker;
     private final LightBoard light;
     private LineupShown shown;
     private final Motion firstMotion;
     // JavaFX's own, made once JavaFX has begun, when the window is shown
     private Slider tall;
     private Label meaning;
+    private PaintPanel painting;
     private ChoiceBox<Move> how;
     private Slider speed;
     private Button play;
     private boolean playing;
 
     /**
-     * A console on {@code bus}, its light asking {@code asked}, for a line-up of {@code kinds} of figure, with
+     * A console on {@code bus}, its light asking {@code asked}, for a line-up of the figures {@code maker} makes, with
      * {@code first} on show and the figures moving as {@code motion} says to begin with.
      */
-    public LineupConsole(final Bus bus, final Asked asked, final List<Leaf<?>> kinds, final LineupShown first,
+    public LineupConsole(final Bus bus, final Asked asked, final AvatarMaker maker, final LineupShown first,
                          final Motion motion) {
         this.bus = bus;
         this.asked = asked;
-        this.kinds = List.copyOf(kinds);
+        this.maker = maker;
+        this.kinds = maker.batch();
         this.shown = first;
         this.firstMotion = motion;
         this.light = new LightBoard(asked);
@@ -86,7 +90,7 @@ public final class LineupConsole {
         moved();
     }
 
-    /** Its figures, one picked at a time; what the picked one is; how tall it stands. */
+    /** Its figures, one picked at a time; what the picked one is; how tall it stands; what it is drawn in. */
     private Node lineup() {
         final ToggleGroup group = new ToggleGroup();
         final VBox picks = new VBox(GAP / 2);
@@ -114,13 +118,20 @@ public final class LineupConsole {
         final GridPane grid = new GridPane();
         grid.setHgap(GAP);
         grid.addRow(0, new Label("How tall it stands"), tall, cm);
-        return new VBox(GAP / 2, picks, meaning, grid);
+        painting = new PaintPanel();
+        painting.shown(maker.roles(kinds.get(shown.picked())), shown.paint().get(shown.picked()));
+        painting.listen(work -> {
+            shown = shown.painting(work);
+            bus.publish(shown);
+        });
+        return new VBox(GAP / 2, picks, meaning, grid, new Label("What it is drawn in"), painting.node());
     }
 
-    /** Figure {@code i} picked: its meaning shown, and the slider set to how tall it stands. */
+    /** Figure {@code i} picked: its meaning shown, the slider set to how tall it stands, its paintwork shown. */
     private void picked(final int i) {
         shown = shown.picking(i);
         meaning.setText(Figures.TREE.meaning(kinds.get(i)));
+        painting.shown(maker.roles(kinds.get(i)), shown.paint().get(i));
         tall.setValue(shown.tall().get(i));
         bus.publish(shown);
     }

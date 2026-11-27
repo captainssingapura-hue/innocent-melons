@@ -18,9 +18,6 @@ import com.example.fxsuite.life.body.vulkan.Sheet;
 import com.example.fxsuite.life.body.wear.Armour;
 import com.example.fxsuite.life.body.wear.Plate;
 import com.example.fxsuite.taxonomy.Leaf;
-import com.example.fxsuite.texture.materials.Material;
-import com.example.fxsuite.texture.materials.Materials;
-import com.example.fxsuite.vulkan.space.Vec3;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,9 +28,8 @@ import java.util.function.Consumer;
  * ({@link Proportions#MODEL}), its design the default ({@link RobotDesign#DEFAULT}). The framed robot, its frame bare
  * ({@link RobotParts}): made in a moment. The shelled robot, its frame within a shell of plates shaped over the
  * model's skin ({@link Shell}), its helmet in the shell's colour, its chest's cage left out, which is broader than the
- * chest and would stand through its plate: made in a minute or two, the skin first. Each painted
- * as the body shop paints a robot ({@link Paint}): its frame steel, its housings gunmetal, its shell, its panels and
- * its rings a lacquer of their colours, its visor and its core lit glass.
+ * chest and would stand through its plate: made in a minute or two, the skin first. Each piece of what it is of, its
+ * shell, its frame or another ({@link Paint}), drawn as each figure's paintwork has that ({@link Paintwork}).
  */
 public final class AvatarMaker {
 
@@ -65,34 +61,30 @@ public final class AvatarMaker {
         made.accept(new Avatar(new Figures.ShelledRobot(), bound, pieces(shelled)));
     }
 
-    /** {@code made}, each piece as the card draws it, in what its paint is drawn in; any with no triangle left out. */
+    /** {@code made}, each piece as the card draws it; any with no triangle left out. */
     List<Avatar.Piece> pieces(final List<RobotParts.Piece> made) {
         final List<Avatar.Piece> pieces = new ArrayList<>();
         for (final RobotParts.Piece p : made) {
             final Mesher.Mesh m = p.mesh();
             final var mesh = new Sheet(m.points(), m.triangles()).mesh();
             if (!mesh.corners().isEmpty()) {
-                pieces.add(new Avatar.Piece(p.part(), material(p.paint()), colour(p.paint()), mesh));
+                pieces.add(new Avatar.Piece(p.part(), p.paint(), mesh));
             }
         }
         return pieces;
     }
 
     /**
-     * What {@code paint} is drawn in: lit glass if it glows; a bare metal, gunmetal for a housing and steel for the
-     * rest, if it is a metal; a lacquer of its colour else.
+     * What {@code kind}'s pieces are of, each drawn in a coat of its own ({@link Paintwork}), in the order they are
+     * offered: a shelled robot's shell first; every robot's panels, visor, frame, housings and rods.
      */
-    Material material(final Paint paint) {
-        return switch (paint.finish()) {
-            case GLOW -> new Materials.LitGlass();
-            case METAL -> paint == Paint.HOUSING ? new Materials.Gunmetal() : new Materials.Steel();
-            case GLOSS, MATTE -> new Materials.GlossPaint();
-        };
-    }
-
-    /** {@code paint}'s colour, as much red, green and blue as it has. */
-    Vec3 colour(final Paint paint) {
-        final int rgb = Integer.parseInt(paint.colour().substring(1), 16);
-        return new Vec3((rgb >> 16 & 0xff) / 255.0, (rgb >> 8 & 0xff) / 255.0, (rgb & 0xff) / 255.0);
+    public List<Paint> roles(final Leaf<?> kind) {
+        final List<Paint> robot = List.of(Paint.PANEL, Paint.VISOR, Paint.FRAME, Paint.HOUSING, Paint.ROD);
+        if (kind instanceof Figures.ShelledRobot) {
+            final List<Paint> shelled = new ArrayList<>(List.of(Paint.SHELL));
+            shelled.addAll(robot);
+            return shelled;
+        }
+        return robot;
     }
 }

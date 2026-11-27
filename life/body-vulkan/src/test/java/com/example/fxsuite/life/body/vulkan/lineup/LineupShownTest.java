@@ -18,10 +18,13 @@ class LineupShownTest {
     private static final double CLOSE = 1e-9;
 
     @Test
-    void itRefusesNobodyAPickOfNoneAndAFigureTooShortOrTooTall() {
-        assertThrows(IllegalArgumentException.class, () -> new LineupShown(List.of(), 0));
-        assertThrows(IllegalArgumentException.class, () -> new LineupShown(List.of(188.0), 1));
-        assertThrows(IllegalArgumentException.class, () -> new LineupShown(List.of(188.0, 100.0), 0));
+    void itRefusesNobodyAPickOfNoneAFigureTooShortOrTooTallAndAFigureNotPainted() {
+        final Paintwork built = new Paintwork();
+        assertThrows(IllegalArgumentException.class, () -> new LineupShown(List.of(), List.of(), 0));
+        assertThrows(IllegalArgumentException.class, () -> new LineupShown(List.of(188.0), List.of(built), 1));
+        assertThrows(IllegalArgumentException.class,
+                () -> new LineupShown(List.of(188.0, 100.0), List.of(built, built), 0));
+        assertThrows(IllegalArgumentException.class, () -> new LineupShown(List.of(188.0, 188.0), List.of(built), 0));
         assertThrows(IllegalArgumentException.class, () -> new LineupShown(2).standing(260));
     }
 

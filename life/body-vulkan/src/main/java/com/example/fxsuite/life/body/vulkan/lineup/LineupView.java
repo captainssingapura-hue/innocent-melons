@@ -4,7 +4,6 @@ import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Rig;
 import com.example.fxsuite.life.body.V3;
 import com.example.fxsuite.texture.materials.Material;
-import com.example.fxsuite.texture.materials.Materials;
 import com.example.fxsuite.texture.materials.Shades;
 import com.example.fxsuite.vulkan.bench.Cast;
 import com.example.fxsuite.vulkan.device.Card;
@@ -32,10 +31,11 @@ import java.util.function.Consumer;
 
 /**
  * The line-up's view, on the card: the ground, and on it its figures side by side, each where the line-up says and as
- * tall ({@link LineupShown}), facing the noon sun. Each figure's pieces are sent once, when it is made, each drawn
- * every frame moved as its part has moved since the body was bound, so that it goes as the body does; all of them
- * moving alike. Each material's look is built once, when the view is. They cast shadows on the ground and on each
- * other when shadows are asked for. Closed, all of it is gone from the card.
+ * tall and painted ({@link LineupShown}), facing the noon sun. Each figure's pieces are sent once, when it is made,
+ * each drawn every frame moved as its part has moved since the body was bound, so that it goes as the body does; all
+ * of them moving alike. Each material any piece may be drawn in has its look built once, when the view is, so that a
+ * figure is painted afresh at once. They cast shadows on the ground and on each other when shadows are asked for.
+ * Closed, all of it is gone from the card.
  */
 public final class LineupView implements AutoCloseable {
 
@@ -66,8 +66,7 @@ public final class LineupView implements AutoCloseable {
         this.laid = laid;
         final Shades shades = new Shades();
         try {
-            for (final Material m : List.of(new Materials.Steel(), new Materials.Gunmetal(),
-                    new Materials.GlossPaint(), new Materials.LitGlass())) {
+            for (final Material m : new Paintwork().offered()) {
                 final Looked look = new Looked(card, new Look(laid, shades.of(m)));
                 closing.add(look::close);
                 looks.put(m, look);
@@ -113,7 +112,8 @@ public final class LineupView implements AutoCloseable {
                       final Camera camera, final Daylight time, final boolean shadowed, final Shadowing by) {
         final Consumer<Pass> standing = pass -> {
             for (int i = 0; i < figures.size() && i < shown.tall().size(); i++) {
-                stood(pass, figures.get(i), moves(rig, bound.get(i), placed(shown, i, lift)), camera);
+                stood(pass, figures.get(i), shown.paint().get(i), moves(rig, bound.get(i), placed(shown, i, lift)),
+                        camera);
             }
         };
         final Consumer<Pass> all = pass -> {
@@ -130,11 +130,15 @@ public final class LineupView implements AutoCloseable {
         }
     }
 
-    /** {@code figure}'s pieces drawn by {@code pass}, each moved as its part has, {@code moved}. */
-    private void stood(final Pass pass, final List<Sent> figure, final Map<Part, Mat4> moved, final Camera camera) {
+    /**
+     * {@code figure}'s pieces drawn by {@code pass}, each moved as its part has, {@code moved}, in the coat
+     * {@code work} gives what it is of.
+     */
+    private void stood(final Pass pass, final List<Sent> figure, final Paintwork work, final Map<Part, Mat4> moved,
+                       final Camera camera) {
         for (final Sent s : figure) {
-            looks.get(s.piece().material()).drawn(pass, s.shaped(), moved.get(s.piece().part()), camera, 1,
-                    s.piece().colour());
+            final Paintwork.Coat coat = work.of(s.piece().paint());
+            looks.get(coat.material()).drawn(pass, s.shaped(), moved.get(s.piece().part()), camera, 1, coat.colour());
         }
     }
 
