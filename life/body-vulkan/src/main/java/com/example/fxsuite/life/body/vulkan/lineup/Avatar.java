@@ -12,16 +12,36 @@ import java.util.List;
 /**
  * A figure on the line-up as the card draws it: what kind of figure it is
  * ({@link com.example.fxsuite.existence.Figures}), the body it is built as, as that body is bound, and its pieces,
- * every one hard, each in the body's frame as bound and moving with its part, so that it goes as the body does.
+ * every one hard, each in the body's frame as bound and moving with its part, so that it goes as the body does;
+ * and its hands' pieces again, closed round a grip, to be drawn in place of the open ones when it holds one.
  *
- * @param kind   what kind of figure it is
- * @param bound  its body as bound, which its pieces are made on
- * @param pieces its pieces
+ * @param kind     what kind of figure it is
+ * @param bound    its body as bound, which its pieces are made on
+ * @param pieces   its pieces
+ * @param gripping its hands' pieces, closed round a grip
  */
-public record Avatar(Leaf<?> kind, Rig bound, List<Piece> pieces) {
+public record Avatar(Leaf<?> kind, Rig bound, List<Piece> pieces, List<Piece> gripping) {
 
     public Avatar {
         pieces = List.copyOf(pieces);
+        gripping = List.copyOf(gripping);
+    }
+
+    /** A figure whose hands are not to be drawn otherwise: as {@code pieces} has them, whatever they hold. */
+    public Avatar(final Leaf<?> kind, final Rig bound, final List<Piece> pieces) {
+        this(kind, bound, pieces, List.of());
+    }
+
+    /** Its pieces as drawn holding a grip: its hands closed round it, if it has them so, else as they are. */
+    public List<Piece> holding() {
+        if (gripping.isEmpty()) {
+            return pieces;
+        }
+        final java.util.Set<Part> hands = java.util.Set.of(Part.RIGHT_HAND, Part.LEFT_HAND);
+        final List<Piece> held = new java.util.ArrayList<>(pieces.stream().filter(p -> !hands.contains(p.part()))
+                .toList());
+        held.addAll(gripping);
+        return held;
     }
 
     /**
