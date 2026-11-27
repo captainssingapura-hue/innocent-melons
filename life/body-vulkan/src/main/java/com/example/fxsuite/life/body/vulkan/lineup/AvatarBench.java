@@ -33,7 +33,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * The avatar bench on the card: a line-up of figures standing side by side on the ground in daylight, with shadows,
  * all moving alike, walking, running or marching on the spot, or standing; each as tall as asked. Its first batch two
  * robots built as the body shop's male model is ({@link AvatarMaker}): the framed one shown in a moment, the shelled
- * one when its shell is made. Drawn in a window of the card's own, with a JavaFX window beside it
+ * one as soon as it is read from where it is baked, or, the first time or once the body shop has changed, when its
+ * shell is made and baked. Drawn in a window of the card's own, with a JavaFX window beside it
  * ({@link LineupConsole}): the mouse in the card's window turns the view about the picked figure (drag to turn,
  * right-drag or Shift-drag to move across, scroll to come nearer); picking another looks at it. Closing either window
  * ends the bench.
@@ -41,8 +42,10 @@ import java.util.concurrent.atomic.AtomicReference;
  * <p>{@code -Dbench.yaw}, {@code -Dbench.pitch} and {@code -Dbench.distance} (cm) where it is seen from;
  * {@code -Dlineup.tall} (cm) how tall each stands first, {@code -Dlineup.picked} which is picked first (counted from
  * 0), {@code -Dlineup.look} the whole look each is given first ({@link Looks}, as {@code racing_red}),
- * {@code -Dlineup.speed} (cm/s) and {@code -Dlineup.going} how they move first; the light's options as the material bench has them ({@code bench.shadows},
- * {@code bench.shadows.mode}, {@code bench.sun.high}, {@code bench.sun.round}); {@code -Dbench.settle=} so many
+ * {@code -Dlineup.speed} (cm/s) and {@code -Dlineup.going} how they move first; the light's options as the material
+ * bench has them ({@code bench.shadows}, {@code bench.shadows.mode}, {@code bench.sun.high},
+ * {@code bench.sun.round}); {@code -Dbaked.dir} where what is
+ * baked is kept, if not in the user's {@code .cache/innocent-melons/baked}; {@code -Dbench.settle=} so many
  * thousandths of a second after the whole batch is made ends it; {@code -Dbench.snapshot.card=} a file saves the
  * card's picture then.</p>
  */

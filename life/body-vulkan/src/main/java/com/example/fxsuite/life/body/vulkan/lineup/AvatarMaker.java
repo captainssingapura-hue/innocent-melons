@@ -1,22 +1,18 @@
 package com.example.fxsuite.life.body.vulkan.lineup;
 
+import com.example.fxsuite.baked.Baker;
+import com.example.fxsuite.baked.Recipe;
+import com.example.fxsuite.baked.Resolution;
+import com.example.fxsuite.baked.TreeShelf;
 import com.example.fxsuite.existence.Figures;
 import com.example.fxsuite.life.body.BoundPose;
-import com.example.fxsuite.life.body.Detail;
 import com.example.fxsuite.life.body.Mesher;
 import com.example.fxsuite.life.body.Paint;
-import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Proportions;
 import com.example.fxsuite.life.body.Rig;
-import com.example.fxsuite.life.body.RobotDesign;
 import com.example.fxsuite.life.body.RobotParts;
-import com.example.fxsuite.life.body.fat.FatPattern;
-import com.example.fxsuite.life.body.flesh.Flesh;
-import com.example.fxsuite.life.body.robot.Shell;
-import com.example.fxsuite.life.body.skin.Skins;
+import com.example.fxsuite.life.body.robot.RobotRecipes;
 import com.example.fxsuite.life.body.vulkan.Sheet;
-import com.example.fxsuite.life.body.wear.Armour;
-import com.example.fxsuite.life.body.wear.Plate;
 import com.example.fxsuite.taxonomy.Leaf;
 
 import java.util.ArrayList;
@@ -24,41 +20,40 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * The line-up's first batch, made away from the screen: two robots built as the body shop's male model is, 188 cm
- * ({@link Proportions#MODEL}), its design the default ({@link RobotDesign#DEFAULT}). The framed robot, its frame bare
- * ({@link RobotParts}): made in a moment. The shelled robot, its frame within a shell of plates shaped over the
- * model's skin ({@link Shell}), its helmet in the shell's colour, its chest's cage left out, which is broader than the
- * chest and would stand through its plate: made in a minute or two, the skin first. Each piece of what it is of, its
- * shell, its frame or another ({@link Paint}), drawn as each figure's paintwork has that ({@link Paintwork}).
+ * The line-up's first batch, made away from the screen as the robots' recipes say ({@link RobotRecipes}), fine: two
+ * robots built as the body shop's male model is, 188 cm ({@link Proportions#MODEL}). The framed robot, its frame bare:
+ * made in a moment. The shelled robot, its frame within a shell of plates shaped over the model's skin: dear to make,
+ * a minute and a half, so taken from the shelf if it is baked there, made by the body shop as it is now
+ * ({@link Baker}), else made and baked. Each piece of what it is of, its shell, its frame or another ({@link Paint}),
+ * drawn as each figure's paintwork has that ({@link Paintwork}).
  */
 public final class AvatarMaker {
 
-    /** How finely its bones are made, cm. */
-    private static final double BONES = 0.4;
+    private final RobotRecipes recipes = new RobotRecipes();
+    private final Baker baker;
+
+    /** A maker looking for what is dear on the user's shelf, or the one {@code -Dbaked.dir} says. */
+    public AvatarMaker() {
+        this(new Baker(new TreeShelf()));
+    }
+
+    /** A maker looking for what is dear as {@code baker} does. */
+    public AvatarMaker(final Baker baker) {
+        this.baker = baker;
+    }
 
     /** The kinds of figure it makes, in the order it makes them. */
     public List<Leaf<?>> batch() {
-        return List.of(new Figures.FramedRobot(), new Figures.ShelledRobot());
+        return recipes.all().stream().<Leaf<?>>map(Recipe::leaf).toList();
     }
 
-    /** Each of the batch made in turn and given to {@code made} as it is, each step told to {@code told}. */
+    /** Each of the batch made or taken as baked, in turn, and given to {@code made} as it is, each step told. */
     public void made(final Consumer<String> told, final Consumer<Avatar> made) {
-        final Proportions p = Proportions.MODEL;
-        final Rig bound = new Rig(p, BoundPose.INSTANCE.pose(), false);
-        final Detail detail = new Detail(BONES);
-        told.accept("the framed robot");
-        made.accept(new Avatar(new Figures.FramedRobot(), bound,
-                pieces(RobotParts.INSTANCE.of(bound, RobotDesign.DEFAULT, Paint.FRAME, detail))));
-        told.accept("the skin the shelled robot's shell is shaped over");
-        final Skins skins = new Skins(FatPattern.LEAN);
-        final Flesh skin = skins.of(p);
-        told.accept("the shelled robot's shell");
-        final List<Plate> plates = Shell.INSTANCE.of(skins.beneath(skin),
-                skins.beneath(skin, new Rig(p, Armour.INSTANCE.held(), false)), bound);
-        final List<RobotParts.Piece> shelled = new ArrayList<>(RobotParts.INSTANCE.of(bound, RobotDesign.DEFAULT,
-                Paint.SHELL, detail).stream().filter(piece -> piece.part() != Part.CHEST).toList());
-        plates.forEach(plate -> shelled.add(new RobotParts.Piece(plate.part(), Paint.SHELL, plate.mesh())));
-        made.accept(new Avatar(new Figures.ShelledRobot(), bound, pieces(shelled)));
+        final Rig bound = new Rig(Proportions.MODEL, BoundPose.INSTANCE.pose(), false);
+        for (final Recipe r : recipes.all()) {
+            made.accept(new Avatar(r.leaf(), bound,
+                    pieces(recipes.pieces().made(baker.pieces(r, Resolution.FINE, told)))));
+        }
     }
 
     /** {@code made}, each piece as the card draws it; any with no triangle left out. */
