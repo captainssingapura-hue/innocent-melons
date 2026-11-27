@@ -60,8 +60,8 @@ final class WornDrawn {
         for (final Hard on : hard) {
             final Mat4 at = moved.get(on.worn().bone().part());
             if (at != null && w.wears(on.worn().kind())) {
-                looks.get(on.worn().glass() ? w.glass() : w.material()).drawn(pass, on.shaped(), at, camera, 1,
-                        on.worn().glass() ? w.visor() : w.colour());
+                final BodyPieces.Coat coat = on.worn().coat();
+                looks.get(w.material(coat)).drawn(pass, on.shaped(), at, camera, 1, w.colour(coat));
             }
         }
         for (final Soft on : soft) {

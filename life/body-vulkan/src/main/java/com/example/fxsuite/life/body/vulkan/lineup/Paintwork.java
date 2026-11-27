@@ -71,7 +71,7 @@ public record Paintwork(Map<Paint, Coat> coats) {
         return switch (paint.finish()) {
             case GLOW -> new Materials.LitGlass();
             case METAL -> paint == Paint.HOUSING ? new Materials.Gunmetal() : new Materials.Steel();
-            case GLOSS, MATTE -> new Materials.GlossPaint();
+            case GLOSS, MATTE -> paint == Paint.SOLE ? new Materials.Rubber() : new Materials.GlossPaint();
         };
     }
 

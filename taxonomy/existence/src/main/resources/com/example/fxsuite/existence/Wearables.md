@@ -70,3 +70,12 @@ Armour over a knee, a cap over its front and sides, open behind so that it bends
 ## Sabaton
 
 Armour over a foot, its top and sides from the ankle to the toes, open under its sole.
+
+## Footwear
+
+Worn on the feet, under them as well as over, and walked on.
+
+## Boot
+
+Footwear closed round the foot and up the leg: an upper over the foot, the ankle and the calf, a sole under it and a
+heel under the sole's back; a riding boot to the middle of the calf, its low heel for a peg to rest against.

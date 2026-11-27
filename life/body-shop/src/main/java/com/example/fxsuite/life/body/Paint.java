@@ -5,8 +5,8 @@ import java.util.List;
 /**
  * What a piece of a body is coloured as, and how it takes the light: a robot's shell (lofted as skin first), its
  * panel bands, its joint rings and its visor, its frame (made of bones, its radius apart) and the housings at its
- * joints, its pistons' barrels and rods; what it carries; a skeleton's bone as it is, its teeth and its cartilage; and
- * the marks of its balance. Each its own colour by default, the courier's for a robot's, any of them changed by a
+ * joints, its pistons' barrels and rods; what it carries; the leather of its boots and their soles; a skeleton's bone
+ * as it is, its teeth and its cartilage; and the marks of its balance. Each its own colour by default, the courier's for a robot's, any of them changed by a
  * palette ({@link Palette}).
  */
 public enum Paint {
@@ -26,6 +26,8 @@ public enum Paint {
     AMMUNITION("Ammunition box", "#4b5320", Finish.MATTE),
     STRAP("Strap", "#3b2f25", Finish.MATTE),
     FLASH("Muzzle flash", "#fff3b0", Finish.GLOW),
+    BOOT("Boots", "#2b211c", Finish.GLOSS),
+    SOLE("Soles", "#1c1c1c", Finish.MATTE),
     IVORY("Bone, as it is", "#e6dcc6", Finish.MATTE),
     TEETH("Teeth", "#f3efe3", Finish.GLOSS),
     CARTILAGE("Cartilage", "#c9d6d2", Finish.GLOSS),

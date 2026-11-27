@@ -72,8 +72,20 @@ public record Plating() implements StatelessFunctionalObject {
      * one: standing off whichever is further out, cloth stretched across a hollow of the skin as much as the skin.
      */
     public Plate of(final Nearness near, final List<Nearness> over, final Cut cut) {
+        return plate(cut, shaped(near, over, cut));
+    }
+
+    /**
+     * How far outside what {@code near} finds and what is worn over it, each of {@code over} finding one, each point of
+     * {@code cut}'s box is, smoothed: what a piece of it is shaped over.
+     */
+    Field.Sampled shaped(final Nearness near, final List<Nearness> over, final Cut cut) {
         final List<Nearness> reached = over.stream().filter(o -> reaches(o.beneath(), cut)).toList();
-        final Field.Sampled d = Blur.INSTANCE.smoothed(distance(near, reached, cut), REACH, PASSES);
+        return Blur.INSTANCE.smoothed(distance(near, reached, cut), REACH, PASSES);
+    }
+
+    /** {@code cut} shaped over {@code d}, how far outside what is beneath it each point is. */
+    Plate plate(final Cut cut, final Field.Sampled d) {
         final List<Field.Element> e = new ArrayList<>(List.of(
                 new Field.Element("outside", swollen(d, cut.off()), Field.Op.ADD, 0),
                 new Field.Element("inside", swollen(d, cut.off() - cut.thick()), Field.Op.CARVE, 0)));
@@ -113,7 +125,7 @@ public record Plating() implements StatelessFunctionalObject {
     }
 
     /** {@code shape} swollen all round by {@code by}. */
-    private Field.Shape swollen(final Field.Shape shape, final double by) {
+    Field.Shape swollen(final Field.Shape shape, final double by) {
         return new Reshaped(shape, V3.ZERO, V3.ZERO, Rot.NONE, new V3(1, 1, 1), by);
     }
 
