@@ -28,8 +28,8 @@ public record MotorcycleParts() {
                 new SteeringHead(), new Swingarm(), new Subframe(), new EngineMount(),
                 new TrellisFrame(), new MidStructure(),
                 new ForkLeg(), new TopYoke(), new BottomYoke(), new RearShock(),
-                new Handlebar(), new HandGrip(), new HandLever(), new FootPeg(), new FootPedal(), new Mirror(),
-                new Gauge(),
+                new Handlebar(), new HandGrip(), new HandLever(), new FootPeg(), new FootPedal(),
+                new FootrestHanger(), new ShiftLinkage(), new Mirror(), new Gauge(),
                 new CastWheel(), new Tyre(), new Axle(),
                 new BrakeDisc(), new BrakeCaliper(), new MasterCylinder(),
                 new DriveBelt(), new RearPulley(), new BeltGuard(),
@@ -95,6 +95,12 @@ public record MotorcycleParts() {
         public MotoControls parent() { return new MotoControls(); }
     }
     public record FootPedal() implements Leaf<MotoControls> {
+        public MotoControls parent() { return new MotoControls(); }
+    }
+    public record FootrestHanger() implements Leaf<MotoControls> {
+        public MotoControls parent() { return new MotoControls(); }
+    }
+    public record ShiftLinkage() implements Leaf<MotoControls> {
         public MotoControls parent() { return new MotoControls(); }
     }
     public record Mirror() implements Leaf<MotoControls> { public MotoControls parent() { return new MotoControls(); } }

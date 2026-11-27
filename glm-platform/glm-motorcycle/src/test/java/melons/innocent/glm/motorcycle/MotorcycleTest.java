@@ -81,7 +81,7 @@ class MotorcycleTest {
         final long own = ownParts(platform).stream()
                 .filter(p -> p.kind().map(k -> kinds.tree().has(k)).orElse(false)).count();
         assertEquals(ownParts(platform).size(), own, "every one of its own parts of a motorcycle's kind");
-        assertEquals(28 + 9 + 5, ownParts(platform).size());
+        assertEquals(28 + 9 + 5 + 8, ownParts(platform).size());
     }
 
     @Test

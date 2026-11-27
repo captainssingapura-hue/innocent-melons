@@ -31,6 +31,8 @@ record GearboxFigures(EngineFigures figures) {
     private static final double APART = 7.0;
     private static final double MAIN_DOWN = 10;
     private static final double COUNTER_DOWN = 25;
+    /** Which way the shift shaft lies from the countershaft, in degrees under level. */
+    private static final double SHIFT_DOWN = 38;
 
     /** How far the crank's axis is from the mainshaft's: the crank's swing and the mainshaft's biggest gear clear. */
     double primary() {
@@ -74,6 +76,14 @@ record GearboxFigures(EngineFigures figures) {
 
     double counterCase() {
         return counterGear() + TOOTH + CLEAR + WALL;
+    }
+
+    /**
+     * Where the shift shaft lies across the crank: behind the countershaft and under it, just inside its case's wall,
+     * clear of the clutch's basket, out through the case's front end, the bike's left, behind the clutch cover.
+     */
+    Spot shiftShaft() {
+        return toward(countershaft(), counterCase() - WALL - 0.2, SHIFT_DOWN);
     }
 
     /** How far down the case's bottom is: under the countershaft's case. */

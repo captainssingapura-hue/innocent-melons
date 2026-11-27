@@ -28,8 +28,8 @@ class ExistencesTest {
                 new Existences().trees().stream().map(Taxonomy::name).toList());
         assertEquals(58, parts.leaves().size());
         assertEquals(83, parts.nodes().size());
-        assertEquals(44, bike.leaves().size());
-        assertEquals(69, bike.nodes().size());
+        assertEquals(46, bike.leaves().size());
+        assertEquals(71, bike.nodes().size());
         assertEquals("What turns one head's cams from the crank, up its own cylinder's side.",
                 parts.meaning(new EngineParts.CamChain()));
         assertEquals("The fuel tank under the seat, low, so the bike's weight is lower.",

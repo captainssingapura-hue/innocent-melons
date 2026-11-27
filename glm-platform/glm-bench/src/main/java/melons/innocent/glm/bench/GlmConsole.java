@@ -5,11 +5,13 @@ import com.example.fxsuite.avatar.bench.kit.Shell;
 import com.example.fxsuite.vulkan.bench.Asked;
 import com.example.fxsuite.vulkan.bench.LightBoard;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Slider;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -30,9 +32,10 @@ import java.util.Set;
 /**
  * The bench's JavaFX window, beside the card's, laid out by the engine's bench kit as every bench's is. On its left,
  * the light. In its middle: for each group of the platform's parts, whether it is shown, what it is finished in, and
- * its colour where its finish takes one; for each metal the parts are designed in, which metal they are made of
- * instead; and what the assembly found, said back from the bench. It draws nothing itself: it says what is on show
- * as a message on the bench's bus ({@link OnShow}), and never calls what draws.
+ * its colour where its finish takes one, and over them, for the motorcycle, how far it is leaned over; for each metal
+ * the parts are designed in, which metal they are made of instead; and what the assembly found, said back from the
+ * bench. It draws nothing itself: it says what is on show, and how far the motorcycle is leaned, as messages on the
+ * bench's bus ({@link OnShow}, {@link Leaned}), and never calls what draws.
  */
 public final class GlmConsole {
 
@@ -46,17 +49,21 @@ public final class GlmConsole {
     private final OnShow first;
     private final LightBoard light;
     private final List<Material> used;
+    private final Leaned leaning;
 
     /**
      * A console on {@code bus}, its light asking {@code asked}, with {@code first} on show to begin with, offering
-     * another metal for each in {@code used}.
+     * another metal for each in {@code used}; and, where it is a motorcycle on show, leaned as {@code leaning} to begin
+     * with, a slider to lean it over, or none where {@code leaning} is null.
      */
-    public GlmConsole(final Bus bus, final Asked asked, final OnShow first, final Collection<Material> used) {
+    public GlmConsole(final Bus bus, final Asked asked, final OnShow first, final Collection<Material> used,
+                      final Leaned leaning) {
         this.bus = bus;
         this.asked = asked;
         this.first = first;
         this.light = new LightBoard(asked);
         this.used = List.copyOf(used);
+        this.leaning = leaning;
     }
 
     /** Shown, its top left corner {@code x} across the screen and {@code y} down. To be called on JavaFX's thread. */
@@ -97,6 +104,9 @@ public final class GlmConsole {
         final VBox middle = new VBox(GAP, new Label("The groups: shown, and their coated parts coated in"), groups,
                 new Label("What their parts are made of, seen where bare"), made.shown(changed),
                 shell.working(), shell.figures(), shell.problems());
+        if (leaning != null) {
+            middle.getChildren().addAll(0, leans());
+        }
         middle.setPadding(new Insets(GAP));
         final Stage window = new Stage();
         window.setX(x);
@@ -104,6 +114,24 @@ public final class GlmConsole {
         window.setOnCloseRequest(closing -> asked.stop());
         shell.barless().left(new ScrollPane(lit)).middle(new ScrollPane(middle)).show(window, WIDE, TALL);
         bus.publish(first);
+    }
+
+    /** A slider to lean the motorcycle over, to its left or its right, and what it says it is leaned. */
+    private List<Node> leans() {
+        final Slider slider = new Slider(-Riding.MOST, Riding.MOST, leaning.degrees());
+        slider.setShowTickMarks(true);
+        slider.setShowTickLabels(true);
+        slider.setMajorTickUnit(15);
+        slider.setBlockIncrement(1);
+        final Label said = new Label();
+        final Runnable leant = () -> {
+            said.setText(String.format(Locale.ENGLISH, "Leaned %.0f° to its %s", Math.abs(slider.getValue()),
+                    slider.getValue() < 0 ? "left" : "right"));
+            bus.publish(new Leaned(slider.getValue()));
+        };
+        slider.valueProperty().addListener((seen, was, now) -> leant.run());
+        leant.run();
+        return List.of(said, slider);
     }
 
     /** What each group is finished in, as the window says. */

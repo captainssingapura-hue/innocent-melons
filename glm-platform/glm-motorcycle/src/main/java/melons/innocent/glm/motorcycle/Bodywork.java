@@ -41,6 +41,8 @@ record Bodywork(BikeFigures figures, Frames frames) {
     private static final double SEAT_FRONT = -8;
     private static final double SEAT_BACK = -62;
     private static final double RISE = 3;
+    /** How far behind the seat's front its rider sits. */
+    private static final double SIT = 22;
     /** How thick the seat is over its pan. */
     private static final double CUSHION = 6;
     /** How high the tank's top and bottom are, over the ground. */
@@ -73,7 +75,8 @@ record Bodywork(BikeFigures figures, Frames frames) {
             final double wide = 9 + 7 * Math.sin(Math.PI / 2 * Math.min(1, t / 0.45));
             rings.add(section(x, pan(x) + CUSHION + rise, pan(x), wide, wide - 1.5));
         }
-        return new Part("seat", Group.TRIM, false, List.of(new Point("subframe", frames.subframe().front())),
+        return new Part("seat", Group.TRIM, false, List.of(new Point("subframe", frames.subframe().front()),
+                new Point(Riding.SITS, sits())),
                 new Shapes(16).lofted(rings, frames.subframe().front()), new Made(Material.PLASTIC, false))
                 .as(new MotorcycleParts.Seat());
     }
@@ -106,6 +109,12 @@ record Bodywork(BikeFigures figures, Frames frames) {
         return new Part("side cover, " + (side < 0 ? "left" : "right"), Group.BODYWORK, false,
                 List.of(new Point("subframe", frames.subframe().front())), panel, new Made(Material.PLASTIC, false))
                 .as(new MotorcycleParts.SideCover());
+    }
+
+    /** Where its rider sits on the seat: on its cushion's top, in the middle, where its rails run level. */
+    private Vec3 sits() {
+        final double x = SEAT_FRONT - SIT;
+        return new Vec3(x, pan(x) + CUSHION, figures.centre());
     }
 
     /** How high the seat's pan is {@code x} along the bike: on the subframe's rails. */

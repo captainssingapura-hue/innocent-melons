@@ -95,6 +95,14 @@ Where the rider's feet rest.
 
 What the rider presses with a foot: the back brake's on the right, the gear shift's on the left.
 
+## FootrestHanger
+
+What carries a footpeg and its pedal, bolted to the frame.
+
+## ShiftLinkage
+
+What turns the gearbox's shift shaft from the gear lever: an arm on the shaft and a rod from it to the lever.
+
 ## Mirror
 
 What shows the rider the road behind.

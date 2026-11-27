@@ -12,12 +12,14 @@ import melons.innocent.vehiclelab.forms.Shapes;
 import java.util.List;
 
 /**
- * A motorcycle's exhaust, two into one, low on its left, as the reference bike's is: the front header out of the
- * front head's exhaust port, down ahead of the crankcase, across to the left and back low, outside the clutch cover;
- * the back header out of the back head's, over the clutch cover to the left and down outside the mid-structure's plate,
- * welded into the front one where they meet; the
- * collector where they meet, behind the engine; and the muffler on back from it, low beside the back wheel, under
- * the swingarm and outside the shock, a heat shield over its front. Its places estimates, as the frame leaves room.
+ * A motorcycle's exhaust, two into one, on its left, as the reference bike's is: the front header out of the front
+ * head's exhaust port, down ahead of the crankcase, across to the left and back outside the clutch cover, over the
+ * shift shaft and inside the gear linkage; the back header out of the back head's, over the clutch cover to the left,
+ * back over the left footrest and down outside the mid-structure's plate, welded into the front one where they meet;
+ * the collector where they meet, behind the engine, outside the swingarm's arm; and the muffler on back from it,
+ * beside the back wheel, outside the swingarm's arm and under the shock, a heat shield over its front. All of it high
+ * enough that the bike leans 35 degrees to its left before any of it touches the ground, as bikes of its kind lean
+ * some 32. Its places estimates, as the frame leaves room.
  *
  * @param figures the bike's figures
  * @param front   the front cylinder's head
@@ -38,13 +40,21 @@ record Exhaust(BikeFigures figures, Part front, Part rear) {
     private static final double OUT_BACK = 3;
     private static final double DROP = 5.5;
     private static final double AHEAD = 16.5;
-    /** How high the headers' low run is over the ground, and how far to the left. */
-    private static final double LOW = 14;
+    /** How far ahead of where the headers meet the back one comes down, behind the gear linkage and the left peg. */
+    private static final double BEHIND = 2;
+    /**
+     * How high the headers' low run is over the ground, over the shift shaft, and how far to the left, inside the
+     * gear linkage; how far behind the shift shaft it runs so, and how far to the left the headers meet, outside the
+     * swingarm's arm.
+     */
+    private static final double LOW = 23;
     private static final double LEFT = 23.5;
+    private static final double PAST = 6;
+    private static final double MEETS = 24.5;
     /** How far the muffler stands out to the left, how high its front and back are, and how far back it reaches. */
-    private static final double MUFFLER_LEFT = 26;
-    private static final double MUFFLER_FRONT = 16;
-    private static final double MUFFLER_BACK = 21;
+    private static final double MUFFLER_LEFT = 26.5;
+    private static final double MUFFLER_FRONT = 25;
+    private static final double MUFFLER_BACK = 25;
     private static final double REACH = 8;
 
     /** The front header. */
@@ -54,7 +64,8 @@ record Exhaust(BikeFigures figures, Part front, Part rear) {
         final Vec3 ahead = new Vec3(AHEAD, out.y() - 8, figures.centre());
         final Vec3 down = new Vec3(AHEAD, ground(LOW + 2), figures.centre());
         final Vec3 side = new Vec3(AHEAD - 1, ground(LOW), left(LEFT));
-        final List<Vec3> path = List.of(port, out, ahead, down, side, meeting());
+        final Vec3 past = new Vec3(figures.pivot().x() + PAST, ground(LOW), left(LEFT));
+        final List<Vec3> path = List.of(port, out, ahead, down, side, past, meeting());
         return new Part("front header", Group.EXHAUST, false, List.of(new Point("port", port),
                 new Point("collector", meeting())), new Shapes(ROUND).pipe(path, HEADER),
                 new Made(Material.STEEL, false)).as(new MotorcycleParts.HeaderPipe());
@@ -65,9 +76,9 @@ record Exhaust(BikeFigures figures, Part front, Part rear) {
         final Vec3 port = port(rear, "exhaust port 1.1");
         final Vec3 out = port.plus(outward(rear).times(OUT_BACK));
         final Vec3 drop = new Vec3(out.x() + 1, port.y() - DROP, port.z());
-        final Vec3 over = new Vec3(drop.x(), drop.y(), left(LEFT));
-        final Vec3 down = new Vec3(drop.x() - 2, ground(LOW + 4), left(LEFT));
-        final List<Vec3> path = List.of(port, out, drop, over, down, meeting());
+        final Vec3 over = new Vec3(drop.x(), drop.y(), left(MEETS));
+        final Vec3 back = new Vec3(meeting().x() + BEHIND, drop.y(), left(MEETS));
+        final List<Vec3> path = List.of(port, out, drop, over, back, meeting());
         return new Part("rear header", Group.EXHAUST, false, List.of(new Point("port", port),
                 new Point("collector", meeting())), new Shapes(ROUND).pipe(path, HEADER),
                 new Made(Material.STEEL, false)).as(new MotorcycleParts.HeaderPipe());
@@ -97,7 +108,7 @@ record Exhaust(BikeFigures figures, Part front, Part rear) {
 
     /** Where the headers meet, behind the crankcase, low on the left. */
     Vec3 meeting() {
-        return new Vec3(figures.pivot().x(), ground(LOW), left(LEFT));
+        return new Vec3(figures.pivot().x(), ground(LOW), left(MEETS));
     }
 
     /** The place {@code t} of the way along the muffler, from its front to its back. */

@@ -55,11 +55,13 @@ record Controls(BikeFigures figures) {
                 shapes.joined(made), new Made(Material.STEEL, false)).as(new MotorcycleParts.Handlebar());
     }
 
-    /** The grip on side {@code side}, -1 the left. */
+    /** The grip on side {@code side}, -1 the left; where the rider's hand holds it, halfway along it. */
     Part grip(final int side) {
-        return new Part("grip, " + called(side), Group.TRIM, false, List.of(new Point("bar", at(-14, 2,
-                INNER * side))), new Shapes(ROUND).drum(at(-14, 2, INNER * side), at(-16, 1, (OUTER + 0.5) * side),
-                GRIP), new Made(Material.RUBBER, true)).as(new MotorcycleParts.HandGrip());
+        final Vec3 inner = at(-14, 2, INNER * side);
+        final Vec3 outer = at(-16, 1, (OUTER + 0.5) * side);
+        return new Part("grip, " + called(side), Group.TRIM, false, List.of(new Point("bar", inner),
+                new Point(Riding.HOLDS, inner.plus(outer).times(0.5))), new Shapes(ROUND).drum(inner, outer, GRIP),
+                new Made(Material.RUBBER, true)).as(new MotorcycleParts.HandGrip());
     }
 
     /**
