@@ -11,19 +11,20 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * What exists: nothing wrong with its eight trees, every node with its meaning. The land in its layers: the base
+ * What exists: nothing wrong with its nine trees, every node with its meaning. The land in its layers: the base
  * terrain, its features, the canal a river people dug among them, and the made in its departments, highways, bridges,
  * tunnels, earthworks and buildings, the city wall an earthwork. Ground level where it says, water wet, boats where it
  * is navigable; what can carry traffic, whatever layer it lies in, so that a network may join them. A use occupied or
  * not by its branch, louvred where it says; the kinds the worlds have built so far each in their tree. What is worn
- * a garment, of cloth, or armour, hard.
+ * a garment, of cloth, or armour, hard. A figure a robot, its frame bare or shelled.
  */
 class ExistenceTest {
 
     @Test
-    void nothingWrongWithItsEightTreesEveryNodeWithItsMeaning() {
+    void nothingWrongWithItsNineTreesEveryNodeWithItsMeaning() {
         assertEquals(List.of(), Existence.INSTANCE.problems());
-        assertEquals(List.of("terrains", "features", "made", "uses", "spaces", "elements", "things", "wearables"),
+        assertEquals(List.of("terrains", "features", "made", "uses", "spaces", "elements", "things", "wearables",
+                "figures"),
                 Existence.INSTANCE.trees().stream().map(Taxonomy::name).toList());
         assertEquals(20, Terrains.TREE.leaves().size());
         assertEquals(11, Features.TREE.leaves().size());
@@ -33,9 +34,10 @@ class ExistenceTest {
         assertEquals(38, Elements.TREE.leaves().size());
         assertEquals(12, Things.TREE.leaves().size());
         assertEquals(14, Wearables.TREE.leaves().size());
+        assertEquals(2, Figures.TREE.leaves().size());
         assertEquals(List.of(new Things.Watermelon(), new Things.Melon(), new Things.Fruit(), new Things.Thing()),
                 new Things.Watermelon().lineage());
-        assertEquals(271,Existence.INSTANCE.trees().stream().mapToInt(tree -> tree.nodes().size()).sum());
+        assertEquals(275,Existence.INSTANCE.trees().stream().mapToInt(tree -> tree.nodes().size()).sum());
         assertEquals("Rooms let by the night, served from a lobby.", Uses.TREE.meaning(new Uses.HotelRooms()));
         assertEquals("A wide ditch round a town or a castle, often holding water, to keep out.",
                 Made.TREE.meaning(new Earthworks.Moat()));
@@ -139,5 +141,14 @@ class ExistenceTest {
                 new Wearables.Fauld(), new Wearables.Cuisse(), new Wearables.Poleyn(), new Wearables.Greave(),
                 new Wearables.Sabaton()), Wearables.TREE.under(new Wearables.Armour()));
         assertTrue(Wearables.TREE.has(new Wearables.Helmet()) && !Things.TREE.has(new Wearables.Helmet()));
+    }
+
+    @Test
+    void aFigureMovesItselfARobotItsFrameBareOrShelled() {
+        assertEquals(List.of(new Figures.ShelledRobot(), new Figures.Robot(), new Figures.Figure()),
+                new Figures.ShelledRobot().lineage());
+        assertEquals(List.of(new Figures.FramedRobot(), new Figures.ShelledRobot()),
+                Figures.TREE.under(new Figures.Robot()));
+        assertTrue(Figures.TREE.has(new Figures.FramedRobot()) && !Things.TREE.has(new Figures.FramedRobot()));
     }
 }
