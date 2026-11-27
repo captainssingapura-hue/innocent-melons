@@ -23,6 +23,11 @@
             <groupId>melons.innocent.glm</groupId>
             <artifactId>glm-model</artifactId>
         </dependency>
+        <!-- the motorcycle round the twin, to be looked at as the cars are -->
+        <dependency>
+            <groupId>melons.innocent.glm</groupId>
+            <artifactId>glm-motorcycle</artifactId>
+        </dependency>
         <dependency>
             <groupId>melons.innocent.vehiclelab</groupId>
             <artifactId>vl-drawn</artifactId>

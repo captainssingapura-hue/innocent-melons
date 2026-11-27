@@ -37,8 +37,9 @@ public final class EngineInternals {
     private final Map<Part, String> pistons = new LinkedHashMap<>();
     private final List<Part> heads = new ArrayList<>();
     private final List<Part> barrels = new ArrayList<>();
+    private final List<Part> pan = new ArrayList<>();
     private final Valvetrain valvetrain;
-    private final TimingDrive drive;
+    private final Drives drives;
     private final Covers covers;
 
     /** Its parts, made to {@code figures}. */
@@ -46,8 +47,11 @@ public final class EngineInternals {
         this.figures = figures;
         this.crank = new Crankshaft(figures).part();
         this.valvetrain = new Valvetrain(figures);
-        this.drive = new TimingDrive(figures);
+        this.drives = new Drives(figures);
         this.covers = new Covers(figures);
+        if (figures.twin()) {
+            pan.add(new OilPan(figures).part());
+        }
         for (int b = 0; b < figures.banks(); b++) {
             heads.add(new CylinderHead(figures, b).part());
             if (figures.twin()) {
@@ -98,6 +102,8 @@ public final class EngineInternals {
             joined.add(new Connection(figures.name() + " main bearing " + j, block, "main bearing " + j, crank,
                     "main " + j, Joining.HINGE));
         }
+        pan.forEach(part -> joined.add(new Connection(part.name() + " under the crankcase", block, "sump", part, "rim",
+                Joining.BOLTED)));
         for (int b = 0; b < barrels.size(); b++) {
             joined.add(new Connection(barrels.get(b).name() + " on the crankcase", block, "barrel, bank " + (b + 1),
                     barrels.get(b), "foot", Joining.BOLTED));
@@ -107,7 +113,7 @@ public final class EngineInternals {
                     heads.get(b), "deck", Joining.BOLTED));
         }
         joined.addAll(valvetrain.joined(heads));
-        joined.addAll(drive.joined(block, crank));
+        joined.addAll(drives.joined(block, crank));
         joined.addAll(inside);
         pistons.forEach((piston, at) -> joined.add(new Connection(figures.name() + " " + at + " in its bore", piston,
                 "bore", bored(block, sliding.get(piston).bank()), "cylinder " + at, Joining.SLIDING)));
@@ -154,21 +160,16 @@ public final class EngineInternals {
     }
 
     /**
-     * Whether {@code part} is one of its timing chains, which runs round its sprockets rather than moving whole: drawn
-     * as its links, each where it has run to ({@link #links}).
+     * The same, the bike having rolled {@code rolled} forward too: a twin's belt's pulleys turned as far as that rolls
+     * them ({@link Drives}).
      */
-    public boolean chain(final Part part) {
-        return drive.chain(part);
+    public Mat4 moved(final Part part, final double turned, final double rolled) {
+        return drives.rolling(part) ? drives.rolled(part, rolled) : moved(part, turned);
     }
 
-    /** Where timing chain {@code part}'s links are, the crank turned {@code turned} degrees on from rest. */
-    public List<Mat4> links(final Part part, final double turned) {
-        return drive.links(part, turned);
-    }
-
-    /** One link of timing chain {@code part}, in its own frame. */
-    public Mesh link(final Part part) {
-        return drive.link(part);
+    /** What it drives round wheels: its timing chains, and a twin's belt, each drawn as its links where they run. */
+    public Drives drives() {
+        return drives;
     }
 
     /** What opens and shuts its valves. */
@@ -181,9 +182,9 @@ public final class EngineInternals {
         return heads.contains(part);
     }
 
-    /** Whether {@code part} is cast as its block is, apart from it: one of its heads, or a twin's barrels. */
+    /** Whether {@code part} is cast as its block is, apart from it: one of its heads, or a twin's barrels or oil pan. */
     public boolean cast(final Part part) {
-        return heads.contains(part) || barrels.contains(part);
+        return heads.contains(part) || barrels.contains(part) || pan.contains(part);
     }
 
     /** A cylinder's combustion chamber whole, in its own frame, as the charge burning in it fills it. */

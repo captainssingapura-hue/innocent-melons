@@ -229,18 +229,6 @@ The motorcycle twin's own: up each cylinder to its head's cams, and on from the 
 
 What turns one head's cams from the crank, up its own cylinder's side.
 
-## PrimaryDrive
-
-What carries the crank's turning to the clutch, gear to gear.
-
-## WetClutch
-
-What lets the engine turn without driving the gearbox, its plates running in the engine's oil.
-
-## Gearbox
-
-What sets how fast the wheel turns for the engine's speed, its gears chosen in turn.
-
 ## Fluids
 
 What keeps the oil round the engine and the water through it.

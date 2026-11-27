@@ -25,8 +25,9 @@ import java.util.List;
  * standing to its camshafts' axes, opened where the ports come out; and a tower across between each pair of cylinders
  * and at each end, its camshafts' bearings in its top and their caps bolted over them ({@link CamTower}). Open on
  * top, for its camshafts and its cover. Its points: the middle of its deck, bolted to the block's; the middle of its
- * top, where its cover is bolted; each chamber at its deck; each camshaft's axis at its front; and each valve's seat
- * and each valve spring's.
+ * top, where its cover is bolted; each chamber at its deck; each cylinder's exhaust port, between its two exhaust
+ * ports where they come out of its side; each camshaft's axis at its front; and each valve's seat and each valve
+ * spring's.
  *
  * @param figures the engine's figures
  * @param bank    which bank it is, from nought
@@ -51,6 +52,8 @@ record CylinderHead(EngineFigures figures, int bank) {
         points.add(new Point("top", head.top(bank)));
         for (int k = 0; k < figures.perBank(); k++) {
             points.add(new Point("chamber " + (bank + 1) + "." + (k + 1), head.at(bank, k, new Vec3(0, 0, 0))));
+            points.add(new Point("exhaust port " + (bank + 1) + "." + (k + 1), head.at(bank, k,
+                    new Vec3(-head.side(false), PORT, 0))));
         }
         for (final boolean inlet : List.of(true, false)) {
             final Vec3 cam = head.cam(inlet);

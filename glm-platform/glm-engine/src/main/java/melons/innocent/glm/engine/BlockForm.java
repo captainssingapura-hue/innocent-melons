@@ -32,8 +32,9 @@ record BlockForm(EngineFigures figures) {
     private static final double WALL = 0.5;
     private static final double SHELL = 0.5;
     private static final double BULKHEAD = 2;
-    /** How far round a main bearing's bore is. */
+    /** How far round a main bearing's bore is, and a gearbox shaft's bearing's. */
     private static final double MAIN = 3.4;
+    private static final double SHAFT = 1.8;
     /** How far the crankcase's walls stand clear of all that turns on the crank. */
     private static final double CLEAR = 0.6;
 
@@ -94,10 +95,12 @@ record BlockForm(EngineFigures figures) {
         }
         final Outlines outlines = new Outlines(ROUND);
         final List<List<Spot>> seal = List.of(outlines.circle(new Spot(0, 0), MAIN));
+        final List<List<Spot>> ends = new ArrayList<>(seal);
+        casing.shafts().forEach(shaft -> ends.add(outlines.circle(shaft, SHAFT)));
         final List<Double> at = bulkheads();
         for (int k = 0; k < at.size(); k++) {
             final boolean end = k == 0 || k == at.size() - 1;
-            made.add(new Plate(end ? section : casing.between(section), seal, new Vec3(0, 0, at.get(k)),
+            made.add(new Plate(end ? section : casing.between(section), end ? ends : seal, new Vec3(0, 0, at.get(k)),
                     new Vec3(1, 0, 0), new Vec3(0, 1, 0), BULKHEAD).mesh());
         }
         for (int b = 0; b < figures.banks() && !figures.twin(); b++) {
