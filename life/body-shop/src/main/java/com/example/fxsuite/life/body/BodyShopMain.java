@@ -17,8 +17,9 @@ import java.util.Arrays;
  * bones ({@link MuscleBench}); with {@code soft} or {@code fea}, a region to be simulated soft
  * ({@link com.example.fxsuite.life.body.soft.SoftBench}); with {@code play}, the game, its humanoids offered as the avatar
  * ({@link HumanoidFigure}) beside the courier, the exposed robot chosen unless {@code -Davatar.figure} says
- * otherwise; anything after {@code play} given to the game. Started from a class that is not JavaFX's, so the jar
- * runs with JavaFX on its class path.
+ * otherwise; anything after {@code play} given to the game; with {@code bake}, every robot dear to make baked ahead
+ * ({@link com.example.fxsuite.life.body.robot.RobotRecipes}), no window opened. Started from a class that is not
+ * JavaFX's, so the jar runs with JavaFX on its class path.
  */
 public final class BodyShopMain {
 
@@ -35,6 +36,7 @@ public final class BodyShopMain {
                 }
                 com.example.fxsuite.avatar.Main.main(Arrays.copyOfRange(args, 1, args.length));
             }
+            case "bake" -> new com.example.fxsuite.life.body.robot.RobotRecipes().bake();
             case "parts" -> javafx.application.Application.launch(RobotPartsBench.class, args);
             case "motion" -> javafx.application.Application.launch(MotionBench.class, args);
             case "skin", "fat" -> javafx.application.Application.launch(

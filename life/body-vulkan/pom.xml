@@ -14,6 +14,7 @@
         the card in the material lab's tissues, in daylight, with shadows, still, as the body is bound; each group of
         its parts drawn as deep as chosen. The body shop knows nothing of the card: this depends on it, never the
         other way round. The soft bench too: the region to be simulated by finite elements and what it takes in.
+        The avatar bench too: a line-up of figures, its first batch robots built as the male model is.
         mvn -pl life/body-vulkan exec:java
     </description>
 
@@ -69,9 +70,14 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.5.2</version>
+                <configuration>
+                    <!-- the tests that open the card are checked for what they leave unfreed -->
+                    <argLine>-Dorg.lwjgl.util.DebugAllocator=true --enable-native-access=ALL-UNNAMED</argLine>
+                </configuration>
             </plugin>
             <plugin>
-                <!-- mvn -pl life/body-vulkan exec:java opens the body bench on the card; -Dbench.main=soft.SoftBench the soft bench -->
+                <!-- mvn -pl life/body-vulkan exec:java opens the body bench on the card; -Dbench.main=soft.SoftBench the
+                     soft bench; -Dbench.main=lineup.AvatarBench the avatar bench -->
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.6.3</version>

@@ -12,8 +12,9 @@
     <description>
         The taxonomies: the kinds of thing the worlds are about, each kind a type in a tree, its place in its
         declaration, its meaning written beside it; read once and checked all at once. The core (how a tree is written
-        and read) and the trees themselves, each a module: what exists first (uses, spaces, elements, buildings). Plain
-        Java, depending on nothing, for every lab and world to share.
+        and read) and the trees themselves, each a module: what exists first (uses, spaces, elements, buildings); and
+        what is made of their leaves ahead and kept, filed as the trees are (baked). Plain Java, depending on nothing,
+        for every lab and world to share.
     </description>
 
     <properties>
@@ -24,6 +25,7 @@
     <modules>
         <module>taxonomy-core</module>
         <module>existence</module>
+        <module>baked</module>
     </modules>
 
     <dependencyManagement>
@@ -31,6 +33,11 @@
             <dependency>
                 <groupId>com.example.fxsuite</groupId>
                 <artifactId>fxsuite-taxonomy-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example.fxsuite</groupId>
+                <artifactId>fxsuite-baked</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

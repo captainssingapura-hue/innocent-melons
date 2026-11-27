@@ -45,6 +45,12 @@
             <artifactId>fxsuite-existence</artifactId>
             <version>0.1.0-SNAPSHOT</version>
         </dependency>
+        <!-- what is made ahead and kept, filed as the trees are: the shelled robot, dear to make -->
+        <dependency>
+            <groupId>com.example.fxsuite</groupId>
+            <artifactId>fxsuite-baked</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
         <!-- what kind of object each thing is: the stateless bones, the immutable values -->
         <dependency>
             <groupId>io.github.captainssingapura-hue.lang.ontology</groupId>
