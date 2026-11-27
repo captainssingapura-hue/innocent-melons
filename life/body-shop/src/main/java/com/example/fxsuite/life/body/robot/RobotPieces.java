@@ -42,10 +42,14 @@ public final class RobotPieces {
                 p.mesh().triangles())).toList();
     }
 
-    /** {@code kept}, each piece as it was made: its part and its paint read from what is said of it. */
+    /**
+     * {@code kept}, each piece as it was made: its part and its paint read from what is said of it; its fingers' pieces
+     * left out ({@link RobotHands#fingers}).
+     */
     public List<RobotParts.Piece> made(final List<Piece> kept) {
-        return kept.stream().map(p -> new RobotParts.Piece(Part.valueOf(p.labels().get(PART)),
-                Paint.valueOf(p.labels().get(PAINT)), new Mesher.Mesh(p.points(), p.triangles()))).toList();
+        return kept.stream().filter(p -> p.labels().size() == 2).map(p -> new RobotParts.Piece(
+                Part.valueOf(p.labels().get(PART)), Paint.valueOf(p.labels().get(PAINT)),
+                new Mesher.Mesh(p.points(), p.triangles()))).toList();
     }
 
     /** The body every robot is built as, as it is bound. */

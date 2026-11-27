@@ -3,6 +3,7 @@ package com.example.fxsuite.life.body.vulkan.lineup;
 import com.example.fxsuite.life.body.Paint;
 import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Rig;
+import com.example.fxsuite.life.body.hand.Segment;
 import com.example.fxsuite.life.body.wear.Boots;
 import com.example.fxsuite.taxonomy.Leaf;
 import com.example.fxsuite.vulkan.form.Mesh;
@@ -13,35 +14,31 @@ import java.util.List;
  * A figure on the line-up as the card draws it: what kind of figure it is
  * ({@link com.example.fxsuite.existence.Figures}), the body it is built as, as that body is bound, and its pieces,
  * every one hard, each in the body's frame as bound and moving with its part, so that it goes as the body does;
- * and its hands' pieces again, closed round a grip, to be drawn in place of the open ones when it holds one.
+ * and its fingers' pieces, if its hands are mechanical, each moving with its segment of its hand
+ * ({@link com.example.fxsuite.life.body.hand.HandRig}).
  *
- * @param kind     what kind of figure it is
- * @param bound    its body as bound, which its pieces are made on
- * @param pieces   its pieces
- * @param gripping its hands' pieces, closed round a grip
+ * @param kind    what kind of figure it is
+ * @param bound   its body as bound, which its pieces are made on
+ * @param pieces  its pieces
+ * @param fingers its fingers' pieces
  */
-public record Avatar(Leaf<?> kind, Rig bound, List<Piece> pieces, List<Piece> gripping) {
+public record Avatar(Leaf<?> kind, Rig bound, List<Piece> pieces, List<Finger> fingers) {
 
     public Avatar {
         pieces = List.copyOf(pieces);
-        gripping = List.copyOf(gripping);
+        fingers = List.copyOf(fingers);
     }
 
-    /** A figure whose hands are not to be drawn otherwise: as {@code pieces} has them, whatever they hold. */
+    /** A figure with no fingers of their own: its hands whole, each as one piece with its hand. */
     public Avatar(final Leaf<?> kind, final Rig bound, final List<Piece> pieces) {
         this(kind, bound, pieces, List.of());
     }
 
-    /** Its pieces as drawn holding a grip: its hands closed round it, if it has them so, else as they are. */
-    public List<Piece> holding() {
-        if (gripping.isEmpty()) {
-            return pieces;
-        }
-        final java.util.Set<Part> hands = java.util.Set.of(Part.RIGHT_HAND, Part.LEFT_HAND);
-        final List<Piece> held = new java.util.ArrayList<>(pieces.stream().filter(p -> !hands.contains(p.part()))
-                .toList());
-        held.addAll(gripping);
-        return held;
+    /**
+     * A piece of a finger on {@code hand}, moving with its {@code segment}, of what {@code paint} says it is of; its
+     * surface {@code mesh}, in the body's frame as bound.
+     */
+    public record Finger(Part hand, Segment segment, Paint paint, Mesh mesh) {
     }
 
     /**

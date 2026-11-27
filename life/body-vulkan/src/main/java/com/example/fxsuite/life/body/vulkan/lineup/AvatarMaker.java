@@ -1,6 +1,7 @@
 package com.example.fxsuite.life.body.vulkan.lineup;
 
 import com.example.fxsuite.baked.Baker;
+import com.example.fxsuite.baked.Piece;
 import com.example.fxsuite.baked.Recipe;
 import com.example.fxsuite.baked.Resolution;
 import com.example.fxsuite.baked.TreeShelf;
@@ -8,12 +9,10 @@ import com.example.fxsuite.existence.Figures;
 import com.example.fxsuite.life.body.BoundPose;
 import com.example.fxsuite.life.body.Mesher;
 import com.example.fxsuite.life.body.Paint;
-import com.example.fxsuite.life.body.Part;
 import com.example.fxsuite.life.body.Proportions;
 import com.example.fxsuite.life.body.Rig;
 import com.example.fxsuite.life.body.RobotParts;
-import com.example.fxsuite.life.body.V3;
-import com.example.fxsuite.life.body.bone.hand.Grasp;
+import com.example.fxsuite.life.body.robot.RobotHands;
 import com.example.fxsuite.life.body.robot.RobotRecipes;
 import com.example.fxsuite.life.body.vulkan.Sheet;
 import com.example.fxsuite.taxonomy.Leaf;
@@ -53,39 +52,24 @@ public final class AvatarMaker {
     /** Each of the batch made or taken as baked, in turn, and given to {@code made} as it is, each step told. */
     public void made(final Consumer<String> told, final Consumer<Avatar> made) {
         final Rig bound = new Rig(Proportions.MODEL, BoundPose.INSTANCE.pose(), false);
+        final RobotHands hands = new RobotHands();
         for (final Recipe r : recipes.all()) {
-            final List<RobotParts.Piece> robot = recipes.pieces().made(baker.pieces(r, Resolution.FINE, told));
-            made.accept(new Avatar(r.leaf(), bound, pieces(robot), pieces(gripping(robot, bound))));
+            final List<Piece> kept = baker.pieces(r, Resolution.FINE, told);
+            made.accept(new Avatar(r.leaf(), bound, pieces(recipes.pieces().made(kept)),
+                    fingers(hands.fingers(kept))));
         }
     }
 
-    /**
-     * The hands' pieces of {@code made}, on the body {@code bound} holds, closed round a grip ({@link Grasp}): each
-     * point taken into its hand's own frame, closed there, and put back.
-     */
-    List<RobotParts.Piece> gripping(final List<RobotParts.Piece> made, final Rig bound) {
-        final List<RobotParts.Piece> held = new ArrayList<>();
-        for (final RobotParts.Piece p : made) {
-            if (p.part() == Part.RIGHT_HAND || p.part() == Part.LEFT_HAND) {
-                final Rig.Frame f = bound.frame(p.part());
-                final float[] at = p.mesh().points().clone();
-                for (int i = 0; i < at.length; i += 3) {
-                    final V3 own = f.local(new V3(at[i], at[i + 1], at[i + 2]));
-                    at[i] = (float) own.x();
-                    at[i + 1] = (float) own.y();
-                    at[i + 2] = (float) own.z();
-                }
-                final float[] closed = Grasp.INSTANCE.held(at);
-                for (int i = 0; i < closed.length; i += 3) {
-                    final V3 back = f.place(new V3(closed[i], closed[i + 1], closed[i + 2]));
-                    closed[i] = (float) back.x();
-                    closed[i + 1] = (float) back.y();
-                    closed[i + 2] = (float) back.z();
-                }
-                held.add(new RobotParts.Piece(p.part(), p.paint(), new Mesher.Mesh(closed, p.mesh().triangles())));
+    /** {@code made}, each finger's piece as the card draws it; any with no triangle left out. */
+    List<Avatar.Finger> fingers(final List<RobotHands.Finger> made) {
+        final List<Avatar.Finger> fingers = new ArrayList<>();
+        for (final RobotHands.Finger f : made) {
+            final var mesh = new Sheet(f.mesh().points(), f.mesh().triangles()).mesh();
+            if (!mesh.corners().isEmpty()) {
+                fingers.add(new Avatar.Finger(f.hand(), f.segment(), f.paint(), mesh));
             }
         }
-        return held;
+        return fingers;
     }
 
     /** {@code made}, each piece as the card draws it; any with no triangle left out. */

@@ -87,10 +87,15 @@ public final class LineupView implements AutoCloseable {
         return shadows.offered();
     }
 
-    /** {@code avatar}'s pieces sent to the card, to be drawn from now on, the next figure along the line. */
+    /**
+     * {@code avatar}'s pieces sent to the card, to be drawn from now on, the next figure along the line; its fingers'
+     * with their hands, as a hand hangs at rest.
+     */
     public void add(final Avatar avatar) {
         final List<Sent> sent = new ArrayList<>();
-        for (final Avatar.Piece p : avatar.pieces()) {
+        final List<Avatar.Piece> all = new ArrayList<>(avatar.pieces());
+        avatar.fingers().forEach(f -> all.add(new Avatar.Piece(f.hand(), f.paint(), f.mesh())));
+        for (final Avatar.Piece p : all) {
             final Shaped shaped = new Shaped(card, laid, p.mesh());
             closing.add(shaped::close);
             sent.add(new Sent(p, shaped));

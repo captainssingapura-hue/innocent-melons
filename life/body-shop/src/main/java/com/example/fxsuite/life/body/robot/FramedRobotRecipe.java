@@ -19,8 +19,9 @@ import java.util.function.Consumer;
 /**
  * How a framed robot is made: its frame bare ({@link RobotParts}), on the body shop's male model as it is bound,
  * 188 cm ({@link Proportions#MODEL}), its design the default, its helmet in the frame's metal; in riding boots, shaped
- * over the model's skin. Coarse, its bones made a centimetre fine; fine, four millimetres. Its boots wanting the skin
- * made first, dear at either: kept once made.
+ * over the model's skin; its hands mechanical, their fingers turning on their own ({@link RobotHands}). Coarse, its
+ * bones made a centimetre fine; fine, four millimetres. Its boots wanting the skin made first, dear at either: kept
+ * once made.
  */
 public final class FramedRobotRecipe implements Recipe {
 
@@ -62,9 +63,14 @@ public final class FramedRobotRecipe implements Recipe {
     @Override
     public List<Piece> made(final Resolution resolution, final Consumer<String> told) {
         told.accept("the framed robot, " + resolution.named());
-        final List<RobotParts.Piece> made = new ArrayList<>(RobotParts.INSTANCE.of(pieces.bound(), RobotDesign.DEFAULT,
-                Paint.FRAME, new Detail(resolution == Resolution.COARSE ? COARSE : FINE)));
+        final RobotHands hands = new RobotHands();
+        final RobotHands.Made held = hands.of(pieces.bound(), Paint.FRAME);
+        final List<RobotParts.Piece> made = new ArrayList<>(hands.handless(RobotParts.INSTANCE.of(pieces.bound(),
+                RobotDesign.DEFAULT, Paint.FRAME, new Detail(resolution == Resolution.COARSE ? COARSE : FINE))));
+        made.addAll(held.palms());
         made.addAll(pieces.boots(List.of(), told));
-        return pieces.kept(made);
+        final List<Piece> kept = new ArrayList<>(pieces.kept(made));
+        kept.addAll(hands.kept(held.fingers()));
+        return kept;
     }
 }
