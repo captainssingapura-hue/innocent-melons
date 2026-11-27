@@ -12,6 +12,7 @@ import com.example.fxsuite.vulkan.device.Target;
 import com.example.fxsuite.vulkan.device.Window;
 import com.example.fxsuite.vulkan.shade.Laid;
 import com.example.fxsuite.vulkan.shade.Light;
+import com.example.fxsuite.vulkan.space.Mat4;
 import com.example.fxsuite.vulkan.space.Vec3;
 import com.example.fxsuite.vulkan.view.Orbit;
 import com.example.fxsuite.vulkan.worked.Daylight;
@@ -50,9 +51,10 @@ import java.util.stream.Collectors;
  *
  * <p>For a run with nobody at it: {@code -Dglm.engine=} the engine in its bay, L4, L5, V6, V8 or V12, or none;
  * {@code -Dbench.hidden=} the groups hidden to begin with, COVERS for the engine without its covers, say;
- * {@code -Dbench.yaw=}, {@code -Dbench.pitch=} and {@code -Dbench.distance=}
- * (metres) where it is seen from; the light's options as on every bench; {@code -Dbench.settle=} so many thousandths
- * of a second ends it; {@code -Dbench.snapshot.card=} a file the card's picture is saved to as it ends.
+ * {@code -Dbench.yaw=}, {@code -Dbench.pitch=} and {@code -Dbench.distance=} (metres) where it is seen from;
+ * {@code -Dbench.lean=} how far the motorcycle is leaned, in degrees, to its right as it is more; the light's options
+ * as on every bench; {@code -Dbench.settle=} so many thousandths of a second ends it; {@code -Dbench.snapshot.card=}
+ * a file the card's picture is saved to as it ends.
  */
 public final class GlmBench {
 
@@ -88,6 +90,9 @@ public final class GlmBench {
             ? new Santana().platform(bay()) : new GlmPlatform(proportions, new BodyFigures(), bay())).platform())
             .assembled();
     private final Vec3 middle = bike ? new Riding().middle() : new Vec3(0, proportions.tyre(), proportions.back() / 2);
+    /** How far the motorcycle is leaned, as its window or the run said; and how far it leans before what touches. */
+    private final AtomicReference<Leaned> leaned = new AtomicReference<>(new Leaned(said("bench.lean", 0)));
+    private final String limits = bike ? new Riding().limits(built) : "";
     private Orbit orbit = new Orbit(middle, said("bench.yaw", 35), said("bench.pitch", 18),
             METRE * said("bench.distance", 6));
 
@@ -99,8 +104,9 @@ public final class GlmBench {
         asked.night(Boolean.getBoolean("bench.night"));
         asked.shadowing(System.getProperty("bench.shadows.mode", ""));
         bus.subscribe(OnShow.class, shown::set, Bus.HERE);
+        bus.subscribe(Leaned.class, leaned::set, Bus.HERE);
         final GlmConsole console = new GlmConsole(bus, asked, shown.get(), built.placed().keySet().stream()
-                .map(p -> p.part().made().material()).collect(Collectors.toSet()));
+                .map(p -> p.part().made().material()).collect(Collectors.toSet()), bike ? leaned.get() : null);
         try (Desk desk = new Desk();
              Card card = new Card(desk);
              Window window = card.window("The GLM bench, drawn on " + card.name(), WIDTH, HEIGHT);
@@ -161,7 +167,8 @@ public final class GlmBench {
                 + "%d places where parts meet again, the widest %.4f cm apart%n"
                 + "Seen from %.1f m off, %.0f° up%nA frame: %.1f ms%n%s%n%nDrawn on %s", built.placed().size(),
                 built.gaps().size(), widest, orbit.distance() / METRE, orbit.pitch(), frame, card.memory().said(),
-                card.name());
+                card.name()) + (bike ? String.format("%n%n%s%n%s", new Riding().said(built, leaned.get().degrees()),
+                limits) : "");
     }
 
     /** The way of looking, moved as the mouse moved. */
@@ -174,7 +181,9 @@ public final class GlmBench {
 
     /** One frame of what is on show, looked at as it is now, drawn on {@code target}. */
     private void frame(final Target target, final GlmView view) {
-        view.drawn(target, shown.get(), orbit.camera(48, 10), skies.lit(), asked.shadowed(), asked.shadowing());
+        final Mat4 moved = bike ? new Riding().leaned(leaned.get().degrees()) : new Mat4();
+        view.drawn(target, shown.get(), moved, orbit.camera(48, 10), skies.lit(), asked.shadowed(),
+                asked.shadowing());
     }
 
     /**

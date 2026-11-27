@@ -19,7 +19,7 @@ import java.util.List;
  * bearing; the middle of each bank's deck, where its head is bolted, and each cylinder's middle at its deck, or in a
  * twin's crankcase each barrel's foot ({@link Barrel}); its mounts, right and left, a twin's ahead and behind; and a
  * twin's oil pan's rim on its bottom ({@link OilPan}) and its countershaft at its back end, where the output
- * pulley turns ({@link BeltDrive}).
+ * pulley turns ({@link BeltDrive}), and its shift shaft at its front end, where the gear lever's linkage turns it.
  *
  * @param figures the engine's figures
  */
@@ -55,6 +55,8 @@ public record CastBlock(EngineFigures figures) {
             points.add(new Point("sump", new OilPan(figures).rim()));
             final Spot shaft = new GearboxFigures(figures).countershaft();
             points.add(new Point("countershaft, right", new Vec3(shaft.u(), shaft.v(), figures.length())));
+            final Spot shift = new GearboxFigures(figures).shiftShaft();
+            points.add(new Point("shift shaft, left", new Vec3(shift.u(), shift.v(), 0)));
         }
         return new Part(figures.name() + (figures.twin() ? " crankcase" : " block"), Group.ENGINE, false, points,
                 form.mesh(), new Made(Material.ALUMINIUM, true)).as(kind());

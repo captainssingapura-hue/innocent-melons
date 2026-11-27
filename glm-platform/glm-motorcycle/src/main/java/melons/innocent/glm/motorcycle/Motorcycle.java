@@ -17,7 +17,8 @@ import java.util.List;
  * yokes turning in the steering head and the fork's legs clamped in them, the front axle, wheel, tyre, brake disc and
  * caliper on them; the mid-structure bolted to the crankcase behind the gearbox, the subframe on it and the swingarm
  * pivoting in it; the back axle, wheel, tyre, brake disc and caliper on the swingarm, and a shock either side from it
- * up to the subframe ({@link BikeFigures}).
+ * up to the subframe ({@link BikeFigures}); its bodywork; and its controls, its exhaust and its footrests, where its
+ * rider meets it ({@link Fittings}, {@link Riding}).
  *
  * @param twin the engine's figures
  */
@@ -47,53 +48,16 @@ public record Motorcycle(EngineFigures twin) {
         joined.addAll(back);
         joined.addAll(again(mounts, front, back, carried(joined, "rear pulley")));
         joined.addAll(bodywork(frames, front, back));
-        joined.addAll(controls(carried(front, "top yoke")));
-        joined.addAll(exhaust(mounts));
+        final Fittings fittings = new Fittings(figures());
+        joined.addAll(fittings.controls(carried(front, "top yoke")));
+        joined.addAll(fittings.exhaust(mounts));
+        joined.addAll(fittings.footrests(crankcase, carried(back, "mid-structure")));
         return new Platform("the motorcycle", crankcase, joined);
     }
 
-    /** What it is ridden with, at its bars, on the top yoke ({@link Controls}). */
-    private List<Connection> controls(final Part yoke) {
-        final Controls made = new Controls(figures());
-        final Part bar = made.handlebar();
-        final Part cylinder = made.masterCylinder();
-        final List<Connection> joined = new ArrayList<>(List.of(
-                new Connection("handlebar on its risers", yoke, "bars", bar, "yoke", Joining.BOLTED),
-                new Connection("gauge on the top yoke", yoke, "bars", made.gauge(), "yoke", Joining.BOLTED),
-                new Connection("front master cylinder on the bar", bar, "grip, right", cylinder, "bar",
-                        Joining.BOLTED),
-                new Connection("brake lever on its master cylinder", cylinder, "bar", made.lever(1), "bar",
-                        Joining.HINGE),
-                new Connection("clutch lever on the bar", bar, "grip, left", made.lever(-1), "bar", Joining.HINGE)));
-        for (final int side : List.of(-1, 1)) {
-            final String grip = "grip, " + (side < 0 ? "left" : "right");
-            joined.add(new Connection(grip + " on the bar", bar, grip, made.grip(side), "bar", Joining.SEATED));
-            joined.add(new Connection(grip + "'s mirror", bar, grip, made.mirror(side), "bar", Joining.BOLTED));
-        }
-        return joined;
-    }
-
-    /** Its exhaust, from the heads' exhaust ports back to the muffler ({@link Exhaust}). */
-    private List<Connection> exhaust(final Mounts mounts) {
-        final Exhaust made = new Exhaust(figures(), mounts.front(), mounts.rear());
-        final Part front = made.frontHeader();
-        final Part rear = made.rearHeader();
-        final Part collector = made.collector();
-        final Part muffler = made.muffler();
-        return List.of(
-                new Connection("front header on its port", mounts.front(), "exhaust port 2.1", front, "port",
-                        Joining.BOLTED),
-                new Connection("collector on the front header", front, "collector", collector, "headers",
-                        Joining.WELDED),
-                new Connection("back header on its port", mounts.rear(), "exhaust port 1.1", rear, "port",
-                        Joining.BOLTED),
-                new Connection("muffler on the collector", collector, "muffler", muffler, "collector",
-                        Joining.SEATED),
-                new Connection("heat shield on the muffler", muffler, "collector", made.heatShield(), "muffler",
-                        Joining.BOLTED),
-                new Connection("collector on the back header", rear, "collector", collector, "headers",
-                        Joining.WELDED),
-                new Connection("back header into the front", front, "collector", rear, "collector", Joining.WELDED));
+    /** Where its rider meets it: its seat, its grips, its pegs and its pedals. */
+    public Riding riding() {
+        return new Riding(platform());
     }
 
     /** How high {@code engine} reaches under where the seat goes, as far across as the seat is wide. */

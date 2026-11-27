@@ -23,8 +23,9 @@ import java.util.List;
  * its back clear of the fork's legs as they turn, down to the front head's node and back over the V to the back
  * head's, tubes across at each, a lug to the front head's face; the mid-structure, forged aluminium, a plate either
  * side outside the clutch cover and the belt, from the crankcase's mount behind the gearbox up to the back head's
- * node, a lug to its face, carrying the swingarm's pivot and the subframe; and the subframe, back from the
- * mid-structure over the back wheel to the tail, carrying the seat and the shocks' tops ({@link Subframe}).
+ * node, a lug to its face, carrying the swingarm's pivot, the subframe and the footrests' hangers; and the
+ * subframe, back from the mid-structure over the back wheel to the tail, carrying the seat and the shocks' tops
+ * ({@link Subframe}).
  *
  * @param figures the bike's figures
  * @param mounts  where they are bolted to the engine
@@ -101,9 +102,12 @@ record Frames(BikeFigures figures, Mounts mounts, double beneath) {
             made.add(shapes.drum(across(through, -PLATES), across(through, PLATES), through == pivot ? 1.2 : 1.0));
         }
         made.add(lug(mounts.rear()));
+        final FootPlaces feet = new FootPlaces(figures);
         return new Part("mid-structure", Group.FRAME, false, List.of(new Point("crankcase", mount),
                 new Point("pivot", pivot), new Point("subframe", top), new Point("trellis", rear),
-                new Point("back head", mounts.rear().point("top").at())), shapes.joined(made),
+                new Point("back head", mounts.rear().point("top").at()),
+                new Point("footrest, left", feet.out(feet.bolt(true), -PLATES)),
+                new Point("footrest, right", feet.out(feet.bolt(true), PLATES))), shapes.joined(made),
                 new Made(Material.ALUMINIUM, false)).as(new MotorcycleParts.MidStructure());
     }
 

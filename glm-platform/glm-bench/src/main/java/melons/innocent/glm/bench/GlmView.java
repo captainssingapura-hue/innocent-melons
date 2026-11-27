@@ -8,15 +8,18 @@ import com.example.fxsuite.vulkan.render.Framed;
 import com.example.fxsuite.vulkan.render.Shaded;
 import com.example.fxsuite.vulkan.render.Shadowing;
 import com.example.fxsuite.vulkan.shade.Laid;
+import com.example.fxsuite.vulkan.space.Mat4;
 import com.example.fxsuite.vulkan.space.Vec3;
 import com.example.fxsuite.vulkan.view.Beam;
 import com.example.fxsuite.vulkan.view.Camera;
 import com.example.fxsuite.vulkan.worked.Daylight;
 import melons.innocent.glm.core.Assembled;
+import melons.innocent.glm.core.PartAt;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * The bench's view, on the card: the platform put together, standing on level ground where its own frame has it, its
@@ -28,6 +31,8 @@ public final class GlmView implements AutoCloseable {
     /** How many pixels wide and tall the sun's picture is, and how much ground it covers, in centimetres. */
     private static final int PIXELS = 4096;
     private static final double SHADED = 1_200;
+    /** Each part where it was put. */
+    private static final Function<PartAt, Mat4> STILL = part -> new Mat4();
 
     private final Laid laid;
     private final PlatformDrawn platform;
@@ -59,17 +64,18 @@ public final class GlmView implements AutoCloseable {
     }
 
     /**
-     * One frame drawn on {@code target}: {@code shown}, seen by {@code camera} in {@code time}'s light and under its
-     * sky; with shadows, found {@code by} that way, where {@code shadowed}.
+     * One frame drawn on {@code target}: {@code shown}, the whole of it moved by {@code moved}, leaned over, say, seen
+     * by {@code camera} in {@code time}'s light and under its sky; with shadows, found {@code by} that way, where
+     * {@code shadowed}.
      */
-    public void drawn(final Target target, final OnShow shown, final Camera camera, final Daylight time,
-                      final boolean shadowed, final Shadowing by) {
+    public void drawn(final Target target, final OnShow shown, final Mat4 moved, final Camera camera,
+                      final Daylight time, final boolean shadowed, final Shadowing by) {
         final Framed framed = new Framed(laid, camera, time.light());
-        final Consumer<Pass> casting = pass -> platform.drawn(pass, camera, shown);
+        final Consumer<Pass> casting = pass -> platform.drawn(pass, camera, shown, moved, STILL);
         final Consumer<Pass> all = pass -> {
             cast.ground(pass, camera);
             casting.accept(pass);
-            platform.seenThrough(pass, camera, shown);
+            platform.seenThrough(pass, camera, shown, moved, STILL);
         };
         if (shadowed) {
             final Beam beam = new Beam(middle, time.light().sunTowards(), SHADED, SHADED);
